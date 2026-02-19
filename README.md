@@ -41,9 +41,9 @@ Verba Scripta is a structured home library management system designed to catalog
     - Custom tags
 
 ### Technical Stack (Suggested)
-- Frontend: React or Vue.js
-- Backend: Node.js with Express or Django
-- Database: PostgreSQL or MongoDB
+- Frontend: Angular
+- Backend: ASP.NET Core Web API
+- Database: PostgreSQL
 
 ---
 
@@ -60,7 +60,7 @@ Verba Scripta is a structured home library management system designed to catalog
   - Use OpenAI API to extract and infer book information
 
 ### Technical Stack (Suggested)
-- Mobile: PWA or native app (React Native / Flutter)
+- Mobile: PWA or native app
 - Image recognition: OpenAI API or Google Vision API
 - ISBN lookup: Google Books API or ISBNdb
 
