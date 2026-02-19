@@ -16,7 +16,7 @@ The application provides a relational domain model for managing books, authors, 
 - Integration tests
 
 
-# Verba Scripta MVP Plan
+# MVP Plan
 
 Verba Scripta is a structured home library management system designed to catalog, organize, and track personal book collections with precision. This document outlines the Minimum Viable Product (MVP) features planned for the initial development phases.
 
