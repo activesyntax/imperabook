@@ -1,4 +1,4 @@
-# Verba Scripta
+<img src="verba-scripta-logo-color.png" height="300" alt="Verba Scripta - home library management system" />
 
 Verba Scripta is a structured home library management system designed to catalog, organize, and track personal book collections with precision.
 
