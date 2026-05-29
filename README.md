@@ -2,6 +2,8 @@
 
 Verba Scripta is a structured home library management system designed to catalog, organize, and track personal book collections with precision.
 
+[Design concept](./design-concept.png)
+
 ## Tech Stack
 
 The application provides a relational domain model for managing books, authors, publishers, categories, and lending records. Built on a robust backend stack using PostgreSQL and Entity Framework, it emphasizes data integrity, clean architecture, and maintainable schema evolution.
@@ -15,7 +17,6 @@ The application provides a relational domain model for managing books, authors, 
 - Swagger
 - Integration tests
 
-
 # MVP Plan
 
 Verba Scripta is a structured home library management system designed to catalog, organize, and track personal book collections with precision. This document outlines the Minimum Viable Product (MVP) features planned for the initial development phases.
@@ -25,6 +26,7 @@ Verba Scripta is a structured home library management system designed to catalog
 ## MVP1: Core Book Management (Web Interface)
 
 ### Features
+
 - **CRUD Operations**: Create, Read, Update, Delete books in the personal library.
 - **Statistics Dashboard**:
   - Total books
@@ -41,6 +43,7 @@ Verba Scripta is a structured home library management system designed to catalog
     - Custom tags
 
 ### Technical Stack (Suggested)
+
 - Frontend: Angular
 - Backend: ASP.NET Core Web API
 - Database: PostgreSQL
@@ -50,6 +53,7 @@ Verba Scripta is a structured home library management system designed to catalog
 ## MVP2: Smart Book Entry & Metadata Enrichment
 
 ### Features
+
 - **Web Service Integration**:
   - Fetch book metadata (title, author, publisher, cover image, etc.) from external APIs (e.g., Google Books, Open Library)
 - **ISBN Scanning via Mobile**:
@@ -60,6 +64,7 @@ Verba Scripta is a structured home library management system designed to catalog
   - Use OpenAI API to extract and infer book information
 
 ### Technical Stack (Suggested)
+
 - Mobile: PWA or native app
 - Image recognition: OpenAI API or Google Vision API
 - ISBN lookup: Google Books API or ISBNdb
@@ -67,6 +72,7 @@ Verba Scripta is a structured home library management system designed to catalog
 ---
 
 ## Future Considerations
+
 - User authentication and profiles
 - Cloud sync and multi-device access
 - Lending and borrowing tracking
@@ -76,9 +82,11 @@ Verba Scripta is a structured home library management system designed to catalog
 ---
 
 ## License
-MIT License 
+
+MIT License
 
 ## Contact
+
 For questions or contributions, please open an issue or submit a pull request.
 
 ---
