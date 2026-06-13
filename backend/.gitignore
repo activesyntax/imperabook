@@ -1,0 +1,45 @@
+# ---------- .NET ----------
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+.vs/
+artifacts/
+project.lock.json
+*.binlog
+# F# / MSBuild leftovers are all under bin/ obj/, so already covered
+
+# ---------- Rider / VS Code ----------
+.idea/
+*.sln.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ---------- Node / Angular ----------
+node_modules/
+dist/
+.angular/
+coverage/
+*.log
+npm-debug.log*
+yarn-error.log*
+.pnpm-store/
+
+# ---------- AWS CDK (deploy/cdk) ----------
+cdk.out/
+*.d.ts          # compiled CDK output; remove this line if you hand-write any .d.ts
+deploy/cdk/*.js  # CDK TS compiles to JS next to source
+deploy/cdk/*.js.map
+
+# ---------- Secrets / local config ----------
+.env
+.env.*
+appsettings.*.local.json
+*.pfx
+*.key
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
