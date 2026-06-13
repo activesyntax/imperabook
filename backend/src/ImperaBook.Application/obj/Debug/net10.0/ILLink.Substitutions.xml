@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<linker>
+  <assembly fullname="ImperaBook.Application">
+    <resource name="FSharpSignatureData.ImperaBook.Application" action="remove"></resource>
+    <resource name="FSharpSignatureCompressedData.ImperaBook.Application" action="remove"></resource>
+    <resource name="FSharpSignatureDataB.ImperaBook.Application" action="remove"></resource>
+    <resource name="FSharpSignatureCompressedDataB.ImperaBook.Application" action="remove"></resource>
+    <resource name="FSharpOptimizationData.ImperaBook.Application" action="remove"></resource>
+    <resource name="FSharpOptimizationCompressedData.ImperaBook.Application" action="remove"></resource>
+    <resource name="FSharpOptimizationDataB.ImperaBook.Application" action="remove"></resource>
+    <resource name="FSharpOptimizationCompressedDataB.ImperaBook.Application" action="remove"></resource>
+    <resource name="FSharpOptimizationInfo.ImperaBook.Application" action="remove"></resource>
+    <resource name="FSharpSignatureInfo.ImperaBook.Application" action="remove"></resource>
+  </assembly>
+</linker>

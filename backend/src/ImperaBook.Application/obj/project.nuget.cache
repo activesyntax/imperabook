@@ -1,11 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "jbjKbAJekc0=",
+  "dgSpecHash": "9WUtck0u64A=",
   "success": true,
   "projectFilePath": "/home/codemaster/imperabook/backend/src/ImperaBook.Application/ImperaBook.Application.fsproj",
   "expectedPackageFiles": [
-    "/home/codemaster/.nuget/packages/fsharp.core/10.0.108/fsharp.core.10.0.108.nupkg.sha512",
-    "/home/codemaster/.nuget/packages/microsoft.aspnetcore.app.ref/10.0.8/microsoft.aspnetcore.app.ref.10.0.8.nupkg.sha512"
+    "/home/codemaster/.nuget/packages/fsharp.core/10.0.108/fsharp.core.10.0.108.nupkg.sha512"
   ],
   "logs": []
 }

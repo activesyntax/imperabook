@@ -1,0 +1,14 @@
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/bin/Debug/net10.0/ImperaBook.Domain.deps.json
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/bin/Debug/net10.0/ImperaBook.Domain.dll
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/bin/Debug/net10.0/ImperaBook.Domain.pdb
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/bin/Debug/net10.0/ImperaBook.Domain.xml
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/obj/Debug/net10.0/ImperaBook.Domain.fsproj.AssemblyReference.cache
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/obj/Debug/net10.0/ImperaBook.Domain.AssemblyInfoInputs.cache
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/obj/Debug/net10.0/ImperaBook.Domain.AssemblyInfo.fs
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/obj/Debug/net10.0/ImperaBook.Domain.fsproj.CoreCompileInputs.cache
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/obj/Debug/net10.0/ImperaBook.Domain.sourcelink.json
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/obj/Debug/net10.0/ImperaBook.Domain.dll
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/obj/Debug/net10.0/refint/ImperaBook.Domain.dll
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/obj/Debug/net10.0/ImperaBook.Domain.xml
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/obj/Debug/net10.0/ImperaBook.Domain.pdb
+/home/codemaster/imperabook/backend/src/ImperaBook.Domain/obj/Debug/net10.0/ref/ImperaBook.Domain.dll
