@@ -1,96 +1,74 @@
-# Impera Book
+# ImperaBook
 
-## Home Library Management System
+## Command-Based Home Library Management System
 
-Impera Book is a structured home library management system designed to catalog, organize, and track personal book collections with precision.
+ImperaBook is a minimalist, high-performance home library management and cataloging ecosystem. Designed for power users, researchers, and collectors, it combines the speed of a keyboard-driven, command-based control interface with a highly polished typography-driven visual hierarchy.
 
-<img src="./verba-scripta-ui-concept.jpg" alt="Design concept" width="100%">
+<img src="./ux/imperabook-ui-concept.jpg" alt="ImperaBook UI Concept" width="100%">
 
-## Tech Stack
+## What Makes ImperaBook Unique?
 
-The application provides a relational domain model for managing books, authors, publishers, categories, and lending records. Built on a robust backend stack using PostgreSQL and Entity Framework, it emphasizes data integrity, clean architecture, and maintainable schema evolution.
+Unlike traditional click-heavy library apps, ImperaBook treats your catalog like an efficient command center:
 
-- ASP.NET Core Web API
-- PostgreSQL
-- EF Core
-- Repository pattern
-- Unit of Work
-- JWT auth
-- Swagger
-- Integration tests
-
-# MVP Plan
-
-Impera Book is a structured home library management system designed to catalog, organize, and track personal book collections with precision. This document outlines the Minimum Viable Product (MVP) features planned for the initial development phases.
+- **Command-Based Fluid Control**: A powerful, built-in command palette (accessible via shortcuts like `:` or `Ctrl+K`) allows you to query, catalog, lend, and batch-edit your library entirely from the keyboard—inspired by modern terminal tools like Vim and Helix.
+- **Typography-Driven Aesthetic**: A dark, modern, minimalist user interface designed to maximize text legibility, screen real estate, and scannability.
+- **Type-Safe Domain Modeling**: The system leverages functional domain modeling to guarantee data consistency, making invalid library states literally unrepresentable.
 
 ---
 
-## MVP1: Core Book Management (Web Interface)
+## Tech Stack & Architecture
 
-### Features
+ImperaBook is built as a highly optimized, enterprise-grade polyglot monorepo to showcase modern **Clean Architecture** and **CQRS (Command Query Responsibility Segregation)** principles.
 
-- **CRUD Operations**: Create, Read, Update, Delete books in the personal library.
-- **Statistics Dashboard**:
-  - Total books
-  - Books per category
-  - Reading status breakdown
-  - Author distribution
-- **Search Functionality**:
-  - Full-text search across titles, authors, descriptions, and notes
-  - Filter by:
-    - Author
-    - Category
-    - Language
-    - Publication year
-    - Custom tags
+### Frontend
 
-### Technical Stack (Suggested)
+- **Angular**: Structured single-page application utilizing reactive **Signals** for fine-grained state management and fast rendering.
 
-- Frontend: Angular
-- Backend: ASP.NET Core Web API
-- Database: PostgreSQL
+### Backend (Polyglot .NET 10)
+
+- **ImperaBook.Domain (F#)**: Pure functional core capturing the strict business rules, subscription tiers, and library invariants using Discriminated Unions and Records.
+- **ImperaBook.Application (F#)**: Orchestrates the use cases, explicitly separating write operations (**Commands**) from read operations (**Queries**).
+- **ImperaBook.Infrastructure.Data (C#)**: Isolates object-oriented mutability and leverages **Entity Framework Core (EF Core)** for robust migrations and LINQ queries.
+- **ImperaBook.API (F#)**: High-performance ASP.NET Core **Minimal APIs** exposed as clean, composable HTTP pipelines.
+
+### Database & Cloud Infrastructure
+
+- **PostgreSQL**: Relational database maximizing data integrity, deep JSONB querying for dynamic book metadata, and advanced full-text search.
+- **AWS (Cloud-Native Deployment)**: Automated infrastructure managed via AWS CDK, utilizing Amazon RDS for PostgreSQL and low-latency API hosting.
 
 ---
 
-## MVP2: Smart Book Entry & Metadata Enrichment
+## MVP Plan
 
-### Features
+### MVP1: Keyboard-Driven Core Management & Dashboard
 
-- **Web Service Integration**:
-  - Fetch book metadata (title, author, publisher, cover image, etc.) from external APIs (e.g., Google Books, Open Library)
-- **ISBN Scanning via Mobile**:
-  - Scan ISBN barcode using smartphone camera
-  - Auto-fill book details via API lookup
-- **Image-Based Book Entry**:
-  - Take a picture of the book cover or page
-  - Use OpenAI API to extract and infer book information
+- **Command Palette Execution**: Core CRUD operations driven by an inline command engine (e.g., `:add "The Hobbit" --author "Tolkien"`).
+- **Relational Dashboard**: Real-time analytical widgets showing reading status breakdowns, category distributions, and total collection metrics.
+- **Advanced Query Engine**: Multi-token full-text search combined with strict dynamic filtering (Language, publication year, custom metadata tags).
 
-### Technical Stack (Suggested)
+### MVP2: Automation, AI & Metadata Enrichment (Pro Tiers)
 
-- Mobile: PWA or native app
-- Image recognition: OpenAI API or Google Vision API
-- ISBN lookup: Google Books API or ISBNdb
+- **ISBN Smart Scan**: Camera-based mobile barcode scanning coupled with instant metadata population from external APIs (Google Books, Open Library).
+- **AI-Powered Cover/Page Inference**: Image ingestion through OpenAI API to extract title, publishing data, or cataloging records from a photo of a book cover.
+- **Advanced Export Utilities**: High-fidelity, print-ready document rendering alongside strict e-book configuration outputs (EPUB, PDF layouts).
 
 ---
 
-## Future Considerations
+## Monetization Model (Open-Core & Managed SaaS)
 
-- User authentication and profiles
-- Cloud sync and multi-device access
-- Lending and borrowing tracking
-- Reading progress and notes
-- Export/import library data (CSV, JSON)
+ImperaBook operates on a **Commercial Open Source (COSS)** / Open-Core methodology:
+
+- **Self-Hosted Core**: The entire architecture is completely open and free to self-host for personal use under the AGPLv3 terms.
+- **Managed SaaS (Subscription)**: A subscription tier providing instant infrastructure deployment, automatic cloud backups (AWS S3), cross-device cloud synchronization, real-time collaboration, and metered AI assistant allocations.
 
 ---
 
 ## License
 
-MIT License
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPLv3)**.
 
-## Contact
-
-For questions or contributions, please open an issue or submit a pull request.
+*Note: For closed-source commercial deployments, alternative hosting models, or enterprise white-labeling that bypasses the AGPL network-disclosure requirements, a separate **Commercial License** must be obtained from the author.*
 
 ---
 
-**Verba Scripta** — Organize your library, one book at a time.
+**ImperaBook** — Your library, at your fingertips.
