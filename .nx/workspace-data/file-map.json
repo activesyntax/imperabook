@@ -1,0 +1,46 @@
+{
+  "version": "6.0",
+  "nxVersion": "22.7.5",
+  "pathMappings": {},
+  "nxJsonPlugins": [],
+  "fileMap": {
+    "nonProjectFiles": [],
+    "projectFileMap": {
+      "imperabook": [
+        {
+          "file": "LICENSE",
+          "hash": "740379895880214500"
+        },
+        {
+          "file": "README.md",
+          "hash": "17256208023010915150"
+        },
+        {
+          "file": "nx.json",
+          "hash": "14389255270623875236"
+        },
+        {
+          "file": "package-lock.json",
+          "hash": "1348542542182442351"
+        },
+        {
+          "file": "package.json",
+          "hash": "286756283276146443"
+        },
+        {
+          "file": "verba-scripta-logo-color.png",
+          "hash": "8409611432137172906"
+        },
+        {
+          "file": "verba-scripta-logo-mono.png",
+          "hash": "3542495719358315485"
+        },
+        {
+          "file": "verba-scripta-ui-concept.jpg",
+          "hash": "2353065046174350277"
+        }
+      ]
+    }
+  },
+  "externalNodesHash": "18216166031406030076"
+}
