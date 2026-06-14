@@ -188,7 +188,7 @@ let ``Author.create generates a unique id each time`` () =
 [<Fact; Trait("Category", "Unit")>]
 let ``Book.create exposes its fields through accessors`` () =
     let title = aTitle ()
-    let book = Book.create title None None Unknown
+    let book = Book.create title None None Attribution.Unknown Location.Unknown
     Assert.Equal(title, Book.title book)
     Assert.True(Book.subtitle book |> Option.isNone)
     Assert.True(Book.summary book |> Option.isNone)
@@ -200,7 +200,7 @@ let ``Book.create stores subtitle, summary and attribution`` () =
     let subtitle = Subtitle.create "There and Back Again" |> expectOk
     let summary = Summary.create "A hobbit goes on an adventure." |> expectOk
     let attribution = Attribution.ofAuthorIds [ authorId () ]
-    let book = Book.create title (Some subtitle) (Some summary) attribution
+    let book = Book.create title (Some subtitle) (Some summary) attribution Location.Unknown
     Assert.Equal(Some subtitle, Book.subtitle book)
     Assert.Equal(Some summary, Book.summary book)
     Assert.Equal(attribution, Book.attribution book)
@@ -208,8 +208,8 @@ let ``Book.create stores subtitle, summary and attribution`` () =
 [<Fact; Trait("Category", "Unit")>]
 let ``Book.create generates a unique id each time`` () =
     let title = aTitle ()
-    let b1 = Book.create title None None Unknown
-    let b2 = Book.create title None None Unknown
+    let b1 = Book.create title None None Attribution.Unknown Location.Unknown
+    let b2 = Book.create title None None Attribution.Unknown Location.Unknown
     Assert.NotEqual(Book.id b1, Book.id b2)
 
 

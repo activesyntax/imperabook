@@ -111,6 +111,8 @@ type Library =
           Name: LibraryName }
 
 
+type Location = Library of Library | Unknown
+
 type Attribution =
     | Unknown
     | ByAuthors of Authors
@@ -132,16 +134,22 @@ type Book =
           Subtitle: Subtitle option
           Summary: Summary option
           Attribution: Attribution
-          LibraryId: Id<Library> option } // todo: will be required
+          Location:Location } 
 
 module Book =
-    let create (title: Title) (subtitle: Subtitle option) (summary: Summary option) (attribution: Attribution) : Book =
+    let create
+        (title: Title)
+        (subtitle: Subtitle option)
+        (summary: Summary option)
+        (attribution: Attribution)
+        (location: Location)
+        : Book =
         { Id = Id.create ()
           Title = title
           Subtitle = subtitle
           Summary = summary
           Attribution = attribution
-          LibraryId = None }
+          Location = location }
 
     let id (b: Book) = b.Id
     let title (b: Book) = b.Title
