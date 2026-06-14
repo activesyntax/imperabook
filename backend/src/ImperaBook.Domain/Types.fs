@@ -163,7 +163,7 @@ module Book =
 //   Parse.optional PersonName.create raw : Result<PersonName option, ValidationError>
 // ---------------------------------------------------------------------------
 
-
-// module Parse =
-//    let s = if isNull raw then "" else raw.Trim()
-//    if s = "" then Ok None else create s |> Result.map Some
+module Parse =
+    let optional (create: string -> Result<'T, ValidationError>) (raw: string) : Result<'T option, ValidationError> =
+        let s = if isNull raw then "" else raw.Trim()
+        if s = "" then Ok None else create s |> Result.map Some
