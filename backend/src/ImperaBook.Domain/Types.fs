@@ -8,7 +8,13 @@ type AuthorId = AuthorId of Guid
 type BookId = BookId of Guid
 type Title = private Title of string
 
-type Book = private { Id: BookId; Title: Title }
+type Book =
+    private
+        { Id: BookId
+          Title: Title
+          Subtitle: Title option
+          Summary: string option
+          Authors: AuthorId list }
 
 type Author =
     private
@@ -57,7 +63,6 @@ module Author =
     let create (firstName: string option) (lastName: string) : Result<Author, ValidationError> =
         let trimmedLast = if isNull lastName then "" else lastName.Trim()
 
-        // A present-but-blank first name is treated as absent.
         let normalizedFirst =
             firstName
             |> Option.map (fun s -> if isNull s then "" else s.Trim())
@@ -79,6 +84,9 @@ module Author =
                   LastName = trimmedLast }
 
 module Book =
-    let create (rawTitle: string) : Result<Book, ValidationError> =
-        Title.create rawTitle
-        |> Result.map (fun title -> { Id = BookId.create (); Title = title })
+    let create (title: Title) (subtitle: Title option) (Authors: AuthorId list) (summary: string option) : Book =
+        { Id = BookId.create ()
+          Title = title
+          Subtitle = subtitle
+          Summary = summary
+          Authors = Authors }
