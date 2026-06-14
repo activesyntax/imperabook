@@ -97,6 +97,19 @@ module Authors =
 // AGGREGATES
 // ---------------------------------------------------------------------------
 
+type LibraryOwner =
+    private
+        { Id: Id<LibraryOwner>
+          FIrstName: PersonName
+          LastName: PersonName }
+
+type LibraryName = private LibraryName of string
+
+type Library =
+    private
+        { Owner: LibraryOwner
+          Name: LibraryName }
+
 
 type Attribution =
     | Unknown
@@ -118,7 +131,8 @@ type Book =
           Title: Title
           Subtitle: Subtitle option
           Summary: Summary option
-          Attribution: Attribution }
+          Attribution: Attribution
+          LibraryId: Id<Library> option } // todo: will be required
 
 module Book =
     let create (title: Title) (subtitle: Subtitle option) (summary: Summary option) (attribution: Attribution) : Book =
@@ -126,7 +140,8 @@ module Book =
           Title = title
           Subtitle = subtitle
           Summary = summary
-          Attribution = attribution }
+          Attribution = attribution
+          LibraryId = None }
 
     let id (b: Book) = b.Id
     let title (b: Book) = b.Title
@@ -145,17 +160,6 @@ module Attribution =
         | Unknown -> []
         | ByAuthors authors -> Authors.toList authors
 
-
-type LibraryOwner =
-    private
-        { Id: Id<LibraryOwner>
-          FIrstName: PersonName
-          LastName: PersonName }
-
-type Library =
-    private
-        { Owner: LibraryOwner
-          Books: Book list }
 
 
 // ---------------------------------------------------------------------------
