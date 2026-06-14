@@ -1,4 +1,4 @@
-﻿module DomainTests
+module DomainTests
 
 open System
 open Xunit
@@ -16,7 +16,24 @@ let private expectError result =
     | Ok v -> failwithf "Expected Error but got Ok: %A" v
     | Error e -> e
 
+// Id.create () can't infer 'Entity with no context, so pin it here.
+let private authorId () : Id<Author> = Id.create ()
 let private aTitle () = Title.create "The Hobbit" |> expectOk
+
+
+// --- Id<'Entity> -----------------------------------------------------------
+
+[<Fact; Trait("Category", "Unit")>]
+let ``Id.value round-trips the guid`` () =
+    let guid = Guid.NewGuid()
+    let id: Id<Book> = Id guid
+    Assert.Equal(guid, Id.value id)
+
+[<Fact; Trait("Category", "Unit")>]
+let ``Id.create generates a unique id each time`` () =
+    let a: Id<Author> = Id.create ()
+    let b: Id<Author> = Id.create ()
+    Assert.NotEqual(a, b)
 
 
 // --- Title -----------------------------------------------------------------
@@ -48,7 +65,7 @@ let ``Title.create accepts exactly the max length`` () =
     Assert.Equal(Title.MaxLength, (Title.value title).Length)
 
 
-// --- Subtitle / Summary / PersonName (same shape, spot-checked) ------------
+// --- Subtitle / Summary / PersonName ---------------------------------------
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Subtitle.create accepts a valid subtitle`` () =
@@ -101,15 +118,15 @@ let ``Authors.create rejects an empty list with AuthorsRequired`` () =
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Authors.create keeps a single author as primary`` () =
-    let id = AuthorId.create ()
+    let id = authorId ()
     let authors = Authors.create [ id ] |> expectOk
     Assert.True([ id ] = Authors.toList authors)
     Assert.Equal(id, Authors.primary authors)
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Authors.create de-duplicates while preserving order`` () =
-    let a = AuthorId.create ()
-    let b = AuthorId.create ()
+    let a = authorId ()
+    let b = authorId ()
     let authors = Authors.create [ a; b; a ] |> expectOk
     Assert.True([ a; b ] = Authors.toList authors)
     Assert.Equal(a, Authors.primary authors)
@@ -123,7 +140,7 @@ let ``Attribution.ofAuthorIds with no ids is Unknown`` () =
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Attribution.ofAuthorIds with ids is ByAuthors`` () =
-    let id = AuthorId.create ()
+    let id = authorId ()
 
     match Attribution.ofAuthorIds [ id ] with
     | ByAuthors authors -> Assert.True([ id ] = Authors.toList authors)
@@ -135,8 +152,8 @@ let ``Attribution.authorIds of Unknown is empty`` () =
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Attribution.authorIds round-trips known authors in order`` () =
-    let a = AuthorId.create ()
-    let b = AuthorId.create ()
+    let a = authorId ()
+    let b = authorId ()
     let attribution = Attribution.ofAuthorIds [ a; b ]
     Assert.True([ a; b ] = Attribution.authorIds attribution)
 
@@ -182,7 +199,7 @@ let ``Book.create stores subtitle, summary and attribution`` () =
     let title = aTitle ()
     let subtitle = Subtitle.create "There and Back Again" |> expectOk
     let summary = Summary.create "A hobbit goes on an adventure." |> expectOk
-    let attribution = Attribution.ofAuthorIds [ AuthorId.create () ]
+    let attribution = Attribution.ofAuthorIds [ authorId () ]
     let book = Book.create title (Some subtitle) (Some summary) attribution
     Assert.Equal(Some subtitle, Book.subtitle book)
     Assert.Equal(Some summary, Book.summary book)
@@ -220,15 +237,3 @@ let ``Parse.optional validates and wraps present input`` () =
 let ``Parse.optional propagates validation errors`` () =
     let raw = String('a', Subtitle.MaxLength + 1)
     Assert.Equal(SubtitleTooLong Subtitle.MaxLength, Parse.optional Subtitle.create raw |> expectError)
-
-
-// --- Identities ------------------------------------------------------------
-
-[<Fact; Trait("Category", "Unit")>]
-let ``BookId.value round-trips the guid`` () =
-    let guid = Guid.NewGuid()
-    Assert.Equal(guid, BookId.value (BookId guid))
-
-[<Fact; Trait("Category", "Unit")>]
-let ``AuthorId.create generates unique ids`` () =
-    Assert.NotEqual(AuthorId.create (), AuthorId.create ())

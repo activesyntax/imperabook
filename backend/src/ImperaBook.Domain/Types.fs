@@ -6,17 +6,11 @@ open System
 // IDENTITIES
 // ---------------------------------------------------------------------------
 
-type AuthorId = AuthorId of Guid
-type BookId = BookId of Guid
+type Id<'Entity> = Id of Guid
 
-module AuthorId =
-    let create () = AuthorId(Guid.NewGuid())
-    let value (AuthorId id) = id
-
-module BookId =
-    let create () = BookId(Guid.NewGuid())
-    let value (BookId id) = id
-
+module Id =
+    let create<'Entity> () : Id<'Entity> = Id(Guid.NewGuid())
+    let value (Id guid) = guid
 
 // ---------------------------------------------------------------------------
 // CONSTRAINED TEXT
@@ -80,10 +74,16 @@ module PersonName =
 // AUTHORS
 // ---------------------------------------------------------------------------
 
-type Authors = private Authors of AuthorId * AuthorId list // at least one author must be there
+type Author =
+    private
+        { Id: Id<Author>
+          FirstName: PersonName option
+          LastName: PersonName }
+
+type Authors = private Authors of Id<Author> * Id<Author> list // at least one author must be there
 
 module Authors =
-    let create (ids: AuthorId list) : Result<Authors, ValidationError> =
+    let create (ids: Id<Author> list) : Result<Authors, ValidationError> =
         match List.distinct ids with
         | [] -> Error AuthorsRequired
         | head :: tail -> Ok(Authors(head, tail))
@@ -92,39 +92,19 @@ module Authors =
     let primary (Authors(head, _)) = head
 
 
-// ---------------------------------------------------------------------------
-// ATTRIBUTION
-// ---------------------------------------------------------------------------
-
-type Attribution =
-    | Unknown
-    | ByAuthors of Authors
-
-module Attribution =
-    let ofAuthorIds (ids: AuthorId list) : Attribution =
-        match Authors.create ids with
-        | Ok authors -> ByAuthors authors
-        | Error _ -> Unknown // the only error is "empty" -> treated as Unknown
-
-    let authorIds (attribution: Attribution) : AuthorId list =
-        match attribution with
-        | Unknown -> []
-        | ByAuthors authors -> Authors.toList authors
-
 
 // ---------------------------------------------------------------------------
 // AGGREGATES
 // ---------------------------------------------------------------------------
 
-type Author =
-    private
-        { Id: AuthorId
-          FirstName: PersonName option
-          LastName: PersonName }
+
+type Attribution =
+    | Unknown
+    | ByAuthors of Authors
 
 module Author =
     let create (firstName: PersonName option) (lastName: PersonName) : Author =
-        { Id = AuthorId.create ()
+        { Id = Id.create ()
           FirstName = firstName
           LastName = lastName }
 
@@ -134,7 +114,7 @@ module Author =
 
 type Book =
     private
-        { Id: BookId
+        { Id: Id<Book>
           Title: Title
           Subtitle: Subtitle option
           Summary: Summary option
@@ -142,7 +122,7 @@ type Book =
 
 module Book =
     let create (title: Title) (subtitle: Subtitle option) (summary: Summary option) (attribution: Attribution) : Book =
-        { Id = BookId.create ()
+        { Id = Id.create ()
           Title = title
           Subtitle = subtitle
           Summary = summary
@@ -153,6 +133,29 @@ module Book =
     let subtitle (b: Book) = b.Subtitle
     let summary (b: Book) = b.Summary
     let attribution (b: Book) = b.Attribution
+
+module Attribution =
+    let ofAuthorIds (ids: Id<Author> list) : Attribution =
+        match Authors.create ids with
+        | Ok authors -> ByAuthors authors
+        | Error _ -> Unknown // the only error is "empty" -> treated as Unknown
+
+    let authorIds (attribution: Attribution) : Id<Author> list =
+        match attribution with
+        | Unknown -> []
+        | ByAuthors authors -> Authors.toList authors
+
+
+type LibraryOwner =
+    private
+        { Id: Id<LibraryOwner>
+          FIrstName: PersonName
+          LastName: PersonName }
+
+type Library =
+    private
+        { Owner: LibraryOwner
+          Books: Book list }
 
 
 // ---------------------------------------------------------------------------
