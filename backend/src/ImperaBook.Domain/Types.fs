@@ -2,32 +2,6 @@
 
 open System
 
-type ValidationError =
-    | TitleRequired
-    | TitleTooLong of maxLength: int
-    | SubtitleRequired
-    | SubtitleTooLong of maxLength: int
-    | SummaryRequired
-    | SummaryTooLong of maxLength: int
-    | NameRequired
-    | NameTooLong of maxLength: int
-    | AuthorsRequired
-
-
-module TextRules =
-    type Checked =
-        | Empty
-        | TooLong
-        | Valid of string
-
-    let check (maxLength: int) (raw: string) : Checked =
-        let s = if isNull raw then "" else raw.Trim()
-
-        if s = "" then Empty
-        elif s.Length > maxLength then TooLong
-        else Valid s
-
-
 // ---------------------------------------------------------------------------
 // IDENTITIES
 // ---------------------------------------------------------------------------
@@ -193,4 +167,3 @@ module Book =
 // module Parse =
 //    let s = if isNull raw then "" else raw.Trim()
 //    if s = "" then Ok None else create s |> Result.map Some
-    

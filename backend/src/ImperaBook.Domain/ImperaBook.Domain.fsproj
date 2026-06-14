@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="TextRules.fs" />
+    <Compile Include="Validation.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="Operations.fs" />
   </ItemGroup>
