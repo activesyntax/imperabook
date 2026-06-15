@@ -3,10 +3,58 @@
 open System
 
 // ---------------------------------------------------------------------------
-// IDENTITIES
+// TYPES
 // ---------------------------------------------------------------------------
 
 type Id<'Entity> = Id of Guid
+
+type Title = private Title of string
+type Subtitle = private Subtitle of string
+type Summary = private Summary of string
+type PersonName = private PersonName of string
+
+type Author =
+    private
+        { Id: Id<Author>
+          FirstName: PersonName option
+          LastName: PersonName }
+
+type Authors = private Authors of Id<Author> * Id<Author> list // at least one author must be there
+
+type LibraryOwner =
+    private
+        { Id: Id<LibraryOwner>
+          FirstName: PersonName
+          LastName: PersonName }
+
+type LibraryName = private LibraryName of string
+
+type Library =
+    private
+        { Owner: LibraryOwner
+          Name: LibraryName }
+
+type Location =
+    | Library of Library
+    | Unknown
+
+type Attribution =
+    | Unknown
+    | ByAuthors of Authors
+
+type Book =
+    private
+        { Id: Id<Book>
+          Title: Title
+          Subtitle: Subtitle option
+          Summary: Summary option
+          Attribution: Attribution
+          Location: Location }
+
+
+// ---------------------------------------------------------------------------
+// IDENTITIES
+// ---------------------------------------------------------------------------
 
 module Id =
     let create<'Entity> () : Id<'Entity> = Id(Guid.NewGuid())
@@ -15,11 +63,6 @@ module Id =
 // ---------------------------------------------------------------------------
 // CONSTRAINED TEXT
 // ---------------------------------------------------------------------------
-
-type Title = private Title of string
-type Subtitle = private Subtitle of string
-type Summary = private Summary of string
-type PersonName = private PersonName of string
 
 module Title =
     [<Literal>]
@@ -74,14 +117,6 @@ module PersonName =
 // AUTHORS
 // ---------------------------------------------------------------------------
 
-type Author =
-    private
-        { Id: Id<Author>
-          FirstName: PersonName option
-          LastName: PersonName }
-
-type Authors = private Authors of Id<Author> * Id<Author> list // at least one author must be there
-
 module Authors =
     let create (ids: Id<Author> list) : Result<Authors, DomainValidationError> =
         match List.distinct ids with
@@ -97,28 +132,6 @@ module Authors =
 // AGGREGATES
 // ---------------------------------------------------------------------------
 
-type LibraryOwner =
-    private
-        { Id: Id<LibraryOwner>
-          FIrstName: PersonName
-          LastName: PersonName }
-
-type LibraryName = private LibraryName of string
-
-type Library =
-    private
-        { Owner: LibraryOwner
-          Name: LibraryName }
-
-
-type Location =
-    | Library of Library
-    | Unknown
-
-type Attribution =
-    | Unknown
-    | ByAuthors of Authors
-
 module Author =
     let create (firstName: PersonName option) (lastName: PersonName) : Author =
         { Id = Id.create ()
@@ -129,14 +142,6 @@ module Author =
     let firstName (a: Author) = a.FirstName
     let lastName (a: Author) = a.LastName
 
-type Book =
-    private
-        { Id: Id<Book>
-          Title: Title
-          Subtitle: Subtitle option
-          Summary: Summary option
-          Attribution: Attribution
-          Location: Location }
 
 module Book =
     let create
