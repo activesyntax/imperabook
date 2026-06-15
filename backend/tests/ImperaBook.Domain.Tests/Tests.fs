@@ -19,6 +19,10 @@ let private expectError result =
 // Id.create () can't infer 'Entity with no context, so pin it here.
 let private authorId () : Id<Author> = Id.create ()
 let private aTitle () = Title.create "The Hobbit" |> expectOk
+let private aName raw = PersonName.create raw |> expectOk
+let private aLibraryName () = LibraryName.create "Home Library" |> expectOk
+let private anOwner () = LibraryOwner.create (Id.create ()) (aName "Jane") (aName "Doe")
+let private aLibrary () = Library.create (Id.create ()) (anOwner ()) (aLibraryName ())
 
 
 // --- Id<'Entity> -----------------------------------------------------------
@@ -27,6 +31,12 @@ let private aTitle () = Title.create "The Hobbit" |> expectOk
 let ``Id.value round-trips the guid`` () =
     let guid = Guid.NewGuid()
     let id: Id<Book> = Id guid
+    Assert.Equal(guid, Id.value id)
+
+[<Fact; Trait("Category", "Unit")>]
+let ``Id.ofGuid wraps an existing guid`` () =
+    let guid = Guid.NewGuid()
+    let id: Id<Book> = Id.ofGuid guid
     Assert.Equal(guid, Id.value id)
 
 [<Fact; Trait("Category", "Unit")>]
@@ -136,7 +146,7 @@ let ``Authors.create de-duplicates while preserving order`` () =
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Attribution.ofAuthorIds with no ids is Unknown`` () =
-    Assert.Equal(Unknown, Attribution.ofAuthorIds [])
+    Assert.Equal(Attribution.Unknown, Attribution.ofAuthorIds [])
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Attribution.ofAuthorIds with ids is ByAuthors`` () =
@@ -144,11 +154,11 @@ let ``Attribution.ofAuthorIds with ids is ByAuthors`` () =
 
     match Attribution.ofAuthorIds [ id ] with
     | ByAuthors authors -> Assert.True([ id ] = Authors.toList authors)
-    | Unknown -> failwith "Expected ByAuthors"
+    | Attribution.Unknown -> failwith "Expected ByAuthors"
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Attribution.authorIds of Unknown is empty`` () =
-    Assert.Empty(Attribution.authorIds Unknown)
+    Assert.Empty(Attribution.authorIds Attribution.Unknown)
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Attribution.authorIds round-trips known authors in order`` () =
@@ -164,23 +174,22 @@ let ``Attribution.authorIds round-trips known authors in order`` () =
 let ``Author.create exposes first and last name`` () =
     let first = PersonName.create "J.R.R." |> expectOk
     let last = PersonName.create "Tolkien" |> expectOk
-    let author = Author.create (Id.create()) (Some first) last
+    let author = Author.create (Id.create ()) (Some first) last
     Assert.Equal(Some first, Author.firstName author)
     Assert.Equal(last, Author.lastName author)
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Author.create allows an absent first name`` () =
     let last = PersonName.create "Homer" |> expectOk
-    let author = Author.create (Id.create()) None last
+    let author = Author.create (Id.create ()) None last
     Assert.True(Author.firstName author |> Option.isNone)
     Assert.Equal(last, Author.lastName author)
 
 [<Fact; Trait("Category", "Unit")>]
-let ``Author.create generates a unique id each time`` () =
-    let last = PersonName.create "Tolkien" |> expectOk
-    let a1 = Author.create (Id.create()) None last
-    let a2 = Author.create (Id.create()) None last
-    Assert.NotEqual(Author.id a1, Author.id a2)
+let ``Author.create stores the supplied id`` () =
+    let id: Id<Author> = Id.create ()
+    let author = Author.create id None (aName "Tolkien")
+    Assert.Equal(id, Author.id author)
 
 
 // --- Book ------------------------------------------------------------------
@@ -188,11 +197,11 @@ let ``Author.create generates a unique id each time`` () =
 [<Fact; Trait("Category", "Unit")>]
 let ``Book.create exposes its fields through accessors`` () =
     let title = aTitle ()
-    let book = Book.create (Id.create()) title None None Attribution.Unknown Location.Unknown
+    let book = Book.create (Id.create ()) title None None Attribution.Unknown Location.Unknown
     Assert.Equal(title, Book.title book)
     Assert.True(Book.subtitle book |> Option.isNone)
     Assert.True(Book.summary book |> Option.isNone)
-    Assert.Equal(Unknown, Book.attribution book)
+    Assert.Equal(Attribution.Unknown, Book.attribution book)
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Book.create stores subtitle, summary and attribution`` () =
@@ -200,40 +209,87 @@ let ``Book.create stores subtitle, summary and attribution`` () =
     let subtitle = Subtitle.create "There and Back Again" |> expectOk
     let summary = Summary.create "A hobbit goes on an adventure." |> expectOk
     let attribution = Attribution.ofAuthorIds [ authorId () ]
-    let book = Book.create (Id.create()) title (Some subtitle) (Some summary) attribution Location.Unknown
+    let book = Book.create (Id.create ()) title (Some subtitle) (Some summary) attribution Location.Unknown
     Assert.Equal(Some subtitle, Book.subtitle book)
     Assert.Equal(Some summary, Book.summary book)
     Assert.Equal(attribution, Book.attribution book)
 
 [<Fact; Trait("Category", "Unit")>]
-let ``Book.create generates a unique id each time`` () =
-    let title = aTitle ()
-    let b1 = Book.create (Id.create()) title None None Attribution.Unknown Location.Unknown
-    let b2 = Book.create (Id.create()) title None None Attribution.Unknown Location.Unknown
-    Assert.NotEqual(Book.id b1, Book.id b2)
+let ``Book.create stores the supplied id`` () =
+    let id: Id<Book> = Id.create ()
+    let book = Book.create id (aTitle ()) None None Attribution.Unknown Location.Unknown
+    Assert.Equal(id, Book.id book)
 
 
-// --- Parse.optional --------------------------------------------------------
+// --- LibraryName -----------------------------------------------------------
+
+[<Fact; Trait("Category", "Unit")>]
+let ``LibraryName.create trims and accepts a valid name`` () =
+    let name = LibraryName.create "  Home Library  " |> expectOk
+    Assert.Equal("Home Library", LibraryName.value name)
 
 [<Theory; Trait("Category", "Unit")>]
 [<InlineData("")>]
 [<InlineData("   ")>]
-let ``Parse.optional maps blank to None`` (raw: string) =
-    let result = Parse.optional Subtitle.create raw |> expectOk
-    Assert.True(result |> Option.isNone)
+let ``LibraryName.create rejects blank with LibraryNameRequired`` (raw: string) =
+    Assert.Equal(LibraryNameRequired, LibraryName.create raw |> expectError)
 
 [<Fact; Trait("Category", "Unit")>]
-let ``Parse.optional maps null to None`` () =
-    let result = Parse.optional Subtitle.create (null: string) |> expectOk
-    Assert.True(result |> Option.isNone)
+let ``LibraryName.create treats null as blank`` () =
+    Assert.Equal(LibraryNameRequired, LibraryName.create (null: string) |> expectError)
 
 [<Fact; Trait("Category", "Unit")>]
-let ``Parse.optional validates and wraps present input`` () =
-    match Parse.optional Subtitle.create "A Subtitle" |> expectOk with
-    | Some s -> Assert.Equal("A Subtitle", Subtitle.value s)
-    | None -> failwith "Expected Some"
+let ``LibraryName.create rejects names over the max length`` () =
+    let raw = String('a', LibraryName.MaxLength + 1)
+    Assert.Equal(LibraryNameTooLong LibraryName.MaxLength, LibraryName.create raw |> expectError)
 
 [<Fact; Trait("Category", "Unit")>]
-let ``Parse.optional propagates validation errors`` () =
-    let raw = String('a', Subtitle.MaxLength + 1)
-    Assert.Equal(SubtitleTooLong Subtitle.MaxLength, Parse.optional Subtitle.create raw |> expectError)
+let ``LibraryName.create accepts exactly the max length`` () =
+    let raw = String('a', LibraryName.MaxLength)
+    let name = LibraryName.create raw |> expectOk
+    Assert.Equal(LibraryName.MaxLength, (LibraryName.value name).Length)
+
+
+// --- LibraryOwner ----------------------------------------------------------
+
+[<Fact; Trait("Category", "Unit")>]
+let ``LibraryOwner.create exposes id and both names`` () =
+    let id: Id<LibraryOwner> = Id.create ()
+    let first = aName "Jane"
+    let last = aName "Doe"
+    let owner = LibraryOwner.create id first last
+    Assert.Equal(id, LibraryOwner.id owner)
+    Assert.Equal(first, LibraryOwner.firstName owner)
+    Assert.Equal(last, LibraryOwner.lastName owner)
+
+
+// --- Library ---------------------------------------------------------------
+
+[<Fact; Trait("Category", "Unit")>]
+let ``Library.create exposes id, owner and name`` () =
+    let id: Id<Library> = Id.create ()
+    let owner = anOwner ()
+    let name = aLibraryName ()
+    let library = Library.create id owner name
+    Assert.Equal(id, Library.id library)
+    Assert.Equal(owner, Library.owner library)
+    Assert.Equal(name, Library.name library)
+
+[<Fact; Trait("Category", "Unit")>]
+let ``Library.create lets one owner hold multiple libraries with distinct ids`` () =
+    let owner = anOwner ()
+    let fiction = Library.create (Id.create ()) owner (LibraryName.create "Fiction" |> expectOk)
+    let reference = Library.create (Id.create ()) owner (LibraryName.create "Reference" |> expectOk)
+    Assert.NotEqual(Library.id fiction, Library.id reference)
+    Assert.Equal(Library.owner fiction, Library.owner reference)
+
+
+// --- Location --------------------------------------------------------------
+
+[<Fact; Trait("Category", "Unit")>]
+let ``Location.Library wraps a library`` () =
+    let library = aLibrary ()
+
+    match Location.Library library with
+    | Location.Library l -> Assert.Equal(library, l)
+    | Location.Unknown -> failwith "Expected Library"

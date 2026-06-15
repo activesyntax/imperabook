@@ -208,18 +208,3 @@ module LibraryOwner =
     let id (o: LibraryOwner) = o.Id
     let firstName (o: LibraryOwner) = o.FirstName
     let lastName (o: LibraryOwner) = o.LastName
-
-// ---------------------------------------------------------------------------
-// PARSING HELPER (for the command layer)
-// Optional fields share the same `create`: blank input becomes None, present
-// input is validated. One combinator instead of an "optional" variant per type.
-//   Parse.optional Subtitle.create raw   : Result<Subtitle option, ValidationError>
-//   Parse.optional PersonName.create raw : Result<PersonName option, ValidationError>
-// ---------------------------------------------------------------------------
-module Parse =
-    let optional
-        (create: string -> Result<'T, DomainValidationError>)
-        (raw: string)
-        : Result<'T option, DomainValidationError> =
-        let s = if isNull raw then "" else raw.Trim()
-        if s = "" then Ok None else create s |> Result.map Some
