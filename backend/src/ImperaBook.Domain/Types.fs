@@ -133,8 +133,8 @@ module Authors =
 // ---------------------------------------------------------------------------
 
 module Author =
-    let create (firstName: PersonName option) (lastName: PersonName) : Author =
-        { Id = Id.create ()
+    let create (id: Id<Author>) (firstName: PersonName option) (lastName: PersonName) : Author =
+        { Id = id 
           FirstName = firstName
           LastName = lastName }
 

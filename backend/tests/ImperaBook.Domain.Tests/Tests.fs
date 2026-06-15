@@ -164,22 +164,22 @@ let ``Attribution.authorIds round-trips known authors in order`` () =
 let ``Author.create exposes first and last name`` () =
     let first = PersonName.create "J.R.R." |> expectOk
     let last = PersonName.create "Tolkien" |> expectOk
-    let author = Author.create (Some first) last
+    let author = Author.create (Id.create()) (Some first) last
     Assert.Equal(Some first, Author.firstName author)
     Assert.Equal(last, Author.lastName author)
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Author.create allows an absent first name`` () =
     let last = PersonName.create "Homer" |> expectOk
-    let author = Author.create None last
+    let author = Author.create (Id.create()) None last
     Assert.True(Author.firstName author |> Option.isNone)
     Assert.Equal(last, Author.lastName author)
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Author.create generates a unique id each time`` () =
     let last = PersonName.create "Tolkien" |> expectOk
-    let a1 = Author.create None last
-    let a2 = Author.create None last
+    let a1 = Author.create (Id.create()) None last
+    let a2 = Author.create (Id.create()) None last
     Assert.NotEqual(Author.id a1, Author.id a2)
 
 
