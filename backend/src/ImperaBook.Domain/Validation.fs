@@ -7,6 +7,5 @@ type DomainValidationError =
     | SummaryTooLong of maxLength: int
     | NameRequired
     | NameTooLong of maxLength: int
-    | AuthorsRequired
     | LibraryNameRequired
     | LibraryNameTooLong of maxLength: int

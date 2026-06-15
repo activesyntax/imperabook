@@ -121,10 +121,10 @@ module PersonName =
 // ---------------------------------------------------------------------------
 
 module Authors =
-    let create (ids: Id<Author> list) : Result<Authors, DomainValidationError> =
+    let create (ids: Id<Author> list) : Authors option =   // option, not Result
         match List.distinct ids with
-        | [] -> Error AuthorsRequired
-        | head :: tail -> Ok(Authors(head, tail))
+        | [] -> None
+        | head :: tail -> Some(Authors(head, tail))
 
     let toList (Authors(head, tail)) = head :: tail
     let primary (Authors(head, _)) = head
@@ -171,15 +171,13 @@ module Book =
 module Attribution =
     let ofAuthorIds (ids: Id<Author> list) : Attribution =
         match Authors.create ids with
-        | Ok authors -> Attribution.ByAuthors authors
-        | Error _ -> Attribution.Unknown // the only error is "empty" -> treated as Unknown
+        | Some authors -> Attribution.ByAuthors authors
+        | None -> Attribution.Unknown
 
     let authorIds (attribution: Attribution) : Id<Author> list =
         match attribution with
         | Attribution.Unknown -> []
         | Attribution.ByAuthors authors -> Authors.toList authors
-
-// --- module (near Author / Book / LibraryOwner) ---
 
 module Library =
     let create (id: Id<Library>) (owner: LibraryOwner) (name: LibraryName) : Library =

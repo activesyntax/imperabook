@@ -143,16 +143,16 @@ let ``PersonName.create rejects over-long input`` () =
     Assert.Equal(NameTooLong PersonName.MaxLength, PersonName.create raw |> expectError)
 
 
-// --- Authors (non-empty, de-duplicated, ordered) ---------------------------
+// --- Authors (non-empty, de-duplicated, ordered; empty -> None) ------------
 
 [<Fact; Trait("Category", "Unit")>]
-let ``Authors.create rejects an empty list with AuthorsRequired`` () =
-    Assert.Equal(AuthorsRequired, Authors.create [] |> expectError)
+let ``Authors.create returns None for an empty list`` () =
+    Assert.True(Authors.create [] |> Option.isNone)
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Authors.create keeps a single author as primary`` () =
     let id = authorId ()
-    let authors = Authors.create [ id ] |> expectOk
+    let authors = Authors.create [ id ] |> expectSome
     Assert.True([ id ] = Authors.toList authors)
     Assert.Equal(id, Authors.primary authors)
 
@@ -160,7 +160,7 @@ let ``Authors.create keeps a single author as primary`` () =
 let ``Authors.create de-duplicates while preserving order`` () =
     let a = authorId ()
     let b = authorId ()
-    let authors = Authors.create [ a; b; a ] |> expectOk
+    let authors = Authors.create [ a; b; a ] |> expectSome
     Assert.True([ a; b ] = Authors.toList authors)
     Assert.Equal(a, Authors.primary authors)
 
