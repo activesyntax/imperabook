@@ -25,7 +25,7 @@ module Title =
     [<Literal>]
     let MaxLength = 500
 
-    let create (raw: string) : Result<Title, ValidationError> =
+    let create (raw: string) : Result<Title, DomainValidationError> =
         match TextRules.check MaxLength raw with
         | TextRules.Empty -> Error TitleRequired
         | TextRules.TooLong -> Error(TitleTooLong MaxLength)
@@ -37,7 +37,7 @@ module Subtitle =
     [<Literal>]
     let MaxLength = 500
 
-    let create (raw: string) : Result<Subtitle, ValidationError> =
+    let create (raw: string) : Result<Subtitle, DomainValidationError> =
         match TextRules.check MaxLength raw with
         | TextRules.Empty -> Error SubtitleRequired
         | TextRules.TooLong -> Error(SubtitleTooLong MaxLength)
@@ -49,7 +49,7 @@ module Summary =
     [<Literal>]
     let MaxLength = 4000
 
-    let create (raw: string) : Result<Summary, ValidationError> =
+    let create (raw: string) : Result<Summary, DomainValidationError> =
         match TextRules.check MaxLength raw with
         | TextRules.Empty -> Error SummaryRequired
         | TextRules.TooLong -> Error(SummaryTooLong MaxLength)
@@ -61,7 +61,7 @@ module PersonName =
     [<Literal>]
     let MaxLength = 300
 
-    let create (raw: string) : Result<PersonName, ValidationError> =
+    let create (raw: string) : Result<PersonName, DomainValidationError> =
         match TextRules.check MaxLength raw with
         | TextRules.Empty -> Error NameRequired
         | TextRules.TooLong -> Error(NameTooLong MaxLength)
@@ -83,7 +83,7 @@ type Author =
 type Authors = private Authors of Id<Author> * Id<Author> list // at least one author must be there
 
 module Authors =
-    let create (ids: Id<Author> list) : Result<Authors, ValidationError> =
+    let create (ids: Id<Author> list) : Result<Authors, DomainValidationError> =
         match List.distinct ids with
         | [] -> Error AuthorsRequired
         | head :: tail -> Ok(Authors(head, tail))
@@ -111,7 +111,9 @@ type Library =
           Name: LibraryName }
 
 
-type Location = Library of Library | Unknown
+type Location =
+    | Library of Library
+    | Unknown
 
 type Attribution =
     | Unknown
@@ -134,7 +136,7 @@ type Book =
           Subtitle: Subtitle option
           Summary: Summary option
           Attribution: Attribution
-          Location:Location } 
+          Location: Location }
 
 module Book =
     let create
@@ -179,6 +181,9 @@ module Attribution =
 // ---------------------------------------------------------------------------
 
 module Parse =
-    let optional (create: string -> Result<'T, ValidationError>) (raw: string) : Result<'T option, ValidationError> =
+    let optional
+        (create: string -> Result<'T, DomainValidationError>)
+        (raw: string)
+        : Result<'T option, DomainValidationError> =
         let s = if isNull raw then "" else raw.Trim()
         if s = "" then Ok None else create s |> Result.map Some

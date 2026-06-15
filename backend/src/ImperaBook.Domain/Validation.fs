@@ -1,6 +1,6 @@
 namespace ImperaBook.Domain
 
-type ValidationError =
+type DomainValidationError =
     | TitleRequired
     | TitleTooLong of maxLength: int
     | SubtitleRequired
