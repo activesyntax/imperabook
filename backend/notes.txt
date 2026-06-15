@@ -1,0 +1,26 @@
+# Solution fájl létrehozása
+dotnet new sln -n ImperaBook
+
+# 1. Domain réteg (F#)
+dotnet new classlib -lang "F#" -n ImperaBook.Domain
+dotnet sln add ImperaBook.Domain
+
+# 2. Infrastructure/Data réteg (C#) - Ide kerül az EF Core
+dotnet new classlib -lang "C#" -n ImperaBook.Infrastructure.Data
+dotnet sln add ImperaBook.Infrastructure.Data
+
+# 3. Web API réteg (F#) - Minimal API
+dotnet new web -lang "F#" -n ImperaBook.API
+dotnet sln add ImperaBook.API
+
+
+# Az API látja a Domain-t és az Adatbázist
+dotnet add ImperaBook.API/ImperaBook.API.fsproj reference ImperaBook.Domain/ImperaBook.Domain.fsproj
+dotnet add ImperaBook.API/ImperaBook.API.fsproj reference ImperaBook.Infrastructure.Data/ImperaBook.Infrastructure.Data.csproj
+
+# Az Adatbázis réteg látja a Domain-t (hogy tudjon map-elni)
+dotnet add ImperaBook.Infrastructure.Data/ImperaBook.Infrastructure.Data.csproj reference ImperaBook.Domain/ImperaBook.Domain.fsproj
+
+cd ImperaBook.Infrastructure.Data
+dotnet add package Microsoft.EntityFrameworkCore.PostgreSQL
+dotnet add package Microsoft.EntityFrameworkCore.Design
