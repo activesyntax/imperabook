@@ -16,6 +16,11 @@ let private expectError result =
     | Ok v -> failwithf "Expected Error but got Ok: %A" v
     | Error e -> e
 
+let private expectSome opt =
+    match opt with
+    | Some v -> v
+    | None -> failwith "Expected Some but got None"
+
 // Id.create () can't infer 'Entity with no context, so pin it here.
 let private authorId () : Id<Author> = Id.create ()
 let private aTitle () = Title.create "The Hobbit" |> expectOk
@@ -75,35 +80,53 @@ let ``Title.create accepts exactly the max length`` () =
     Assert.Equal(Title.MaxLength, (Title.value title).Length)
 
 
-// --- Subtitle / Summary / PersonName ---------------------------------------
+// --- Subtitle (optional: blank -> None) ------------------------------------
 
 [<Fact; Trait("Category", "Unit")>]
-let ``Subtitle.create accepts a valid subtitle`` () =
-    let s = Subtitle.create "There and Back Again" |> expectOk
+let ``Subtitle.create trims and accepts a valid subtitle`` () =
+    let s = Subtitle.create "  There and Back Again  " |> expectOk |> expectSome
     Assert.Equal("There and Back Again", Subtitle.value s)
 
+[<Theory; Trait("Category", "Unit")>]
+[<InlineData("")>]
+[<InlineData("   ")>]
+let ``Subtitle.create maps blank to None`` (raw: string) =
+    Assert.True(Subtitle.create raw |> expectOk |> Option.isNone)
+
 [<Fact; Trait("Category", "Unit")>]
-let ``Subtitle.create rejects blank with SubtitleRequired`` () =
-    Assert.Equal(SubtitleRequired, Subtitle.create "  " |> expectError)
+let ``Subtitle.create treats null as None`` () =
+    Assert.True(Subtitle.create (null: string) |> expectOk |> Option.isNone)
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Subtitle.create rejects over-long input`` () =
     let raw = String('a', Subtitle.MaxLength + 1)
     Assert.Equal(SubtitleTooLong Subtitle.MaxLength, Subtitle.create raw |> expectError)
 
-[<Fact; Trait("Category", "Unit")>]
-let ``Summary.create accepts a valid summary`` () =
-    let s = Summary.create "A hobbit goes on an adventure." |> expectOk
-    Assert.Equal("A hobbit goes on an adventure.", Summary.value s)
+
+// --- Summary (optional: blank -> None) -------------------------------------
 
 [<Fact; Trait("Category", "Unit")>]
-let ``Summary.create rejects blank with SummaryRequired`` () =
-    Assert.Equal(SummaryRequired, Summary.create "" |> expectError)
+let ``Summary.create trims and accepts a valid summary`` () =
+    let s = Summary.create "  A hobbit goes on an adventure.  " |> expectOk |> expectSome
+    Assert.Equal("A hobbit goes on an adventure.", Summary.value s)
+
+[<Theory; Trait("Category", "Unit")>]
+[<InlineData("")>]
+[<InlineData("   ")>]
+let ``Summary.create maps blank to None`` (raw: string) =
+    Assert.True(Summary.create raw |> expectOk |> Option.isNone)
+
+[<Fact; Trait("Category", "Unit")>]
+let ``Summary.create treats null as None`` () =
+    Assert.True(Summary.create (null: string) |> expectOk |> Option.isNone)
 
 [<Fact; Trait("Category", "Unit")>]
 let ``Summary.create rejects over-long input`` () =
     let raw = String('a', Summary.MaxLength + 1)
     Assert.Equal(SummaryTooLong Summary.MaxLength, Summary.create raw |> expectError)
+
+
+// --- PersonName (required) -------------------------------------------------
 
 [<Fact; Trait("Category", "Unit")>]
 let ``PersonName.create accepts a valid name`` () =
@@ -153,7 +176,7 @@ let ``Attribution.ofAuthorIds with ids is ByAuthors`` () =
     let id = authorId ()
 
     match Attribution.ofAuthorIds [ id ] with
-    | ByAuthors authors -> Assert.True([ id ] = Authors.toList authors)
+    | Attribution.ByAuthors authors -> Assert.True([ id ] = Authors.toList authors)
     | Attribution.Unknown -> failwith "Expected ByAuthors"
 
 [<Fact; Trait("Category", "Unit")>]
@@ -209,9 +232,9 @@ let ``Book.create stores subtitle, summary and attribution`` () =
     let subtitle = Subtitle.create "There and Back Again" |> expectOk
     let summary = Summary.create "A hobbit goes on an adventure." |> expectOk
     let attribution = Attribution.ofAuthorIds [ authorId () ]
-    let book = Book.create (Id.create ()) title (Some subtitle) (Some summary) attribution Location.Unknown
-    Assert.Equal(Some subtitle, Book.subtitle book)
-    Assert.Equal(Some summary, Book.summary book)
+    let book = Book.create (Id.create ()) title subtitle summary attribution Location.Unknown
+    Assert.Equal(subtitle, Book.subtitle book)
+    Assert.Equal(summary, Book.summary book)
     Assert.Equal(attribution, Book.attribution book)
 
 [<Fact; Trait("Category", "Unit")>]

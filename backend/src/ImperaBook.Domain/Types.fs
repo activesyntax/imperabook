@@ -34,11 +34,12 @@ type Library =
         { Id: Id<Library>
           Owner: LibraryOwner
           Name: LibraryName }
-
+[<RequireQualifiedAccess>]
 type Location =
     | Library of Library
     | Unknown
 
+[<RequireQualifiedAccess>]
 type Attribution =
     | Unknown
     | ByAuthors of Authors
@@ -82,11 +83,11 @@ module Subtitle =
     [<Literal>]
     let MaxLength = 500
 
-    let create (raw: string) : Result<Subtitle, DomainValidationError> =
+    let create (raw: string) : Result<Subtitle option, DomainValidationError> =
         match TextRules.check MaxLength raw with
-        | TextRules.Empty -> Error SubtitleRequired
+        | TextRules.Empty -> Ok None
         | TextRules.TooLong -> Error(SubtitleTooLong MaxLength)
-        | TextRules.Valid s -> Ok(Subtitle s)
+        | TextRules.Valid s -> Ok(Some(Subtitle s))
 
     let value (Subtitle t) = t
 
@@ -94,11 +95,11 @@ module Summary =
     [<Literal>]
     let MaxLength = 4000
 
-    let create (raw: string) : Result<Summary, DomainValidationError> =
+    let create (raw: string) : Result<Summary option, DomainValidationError> =
         match TextRules.check MaxLength raw with
-        | TextRules.Empty -> Error SummaryRequired
+        | TextRules.Empty -> Ok None 
         | TextRules.TooLong -> Error(SummaryTooLong MaxLength)
-        | TextRules.Valid s -> Ok(Summary s)
+        | TextRules.Valid s -> Ok(Some(Summary s))
 
     let value (Summary t) = t
 
@@ -170,13 +171,13 @@ module Book =
 module Attribution =
     let ofAuthorIds (ids: Id<Author> list) : Attribution =
         match Authors.create ids with
-        | Ok authors -> ByAuthors authors
+        | Ok authors -> Attribution.ByAuthors authors
         | Error _ -> Attribution.Unknown // the only error is "empty" -> treated as Unknown
 
     let authorIds (attribution: Attribution) : Id<Author> list =
         match attribution with
-        | Unknown -> []
-        | ByAuthors authors -> Authors.toList authors
+        | Attribution.Unknown -> []
+        | Attribution.ByAuthors authors -> Authors.toList authors
 
 // --- module (near Author / Book / LibraryOwner) ---
 
