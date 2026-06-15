@@ -10,3 +10,5 @@ type DomainValidationError =
     | NameRequired
     | NameTooLong of maxLength: int
     | AuthorsRequired
+    | LibraryNameRequired
+    | LibraryNameTooLong of maxLength: int

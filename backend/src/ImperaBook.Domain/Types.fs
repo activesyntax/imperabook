@@ -31,7 +31,8 @@ type LibraryName = private LibraryName of string
 
 type Library =
     private
-        { Owner: LibraryOwner
+        { Id: Id<Library>
+          Owner: LibraryOwner
           Name: LibraryName }
 
 type Location =
@@ -59,6 +60,7 @@ type Book =
 module Id =
     let create<'Entity> () : Id<'Entity> = Id(Guid.NewGuid())
     let value (Id guid) = guid
+    let ofGuid<'Entity> (g: Guid) : Id<'Entity> = Id g
 
 // ---------------------------------------------------------------------------
 // CONSTRAINED TEXT
@@ -134,7 +136,7 @@ module Authors =
 
 module Author =
     let create (id: Id<Author>) (firstName: PersonName option) (lastName: PersonName) : Author =
-        { Id = id 
+        { Id = id
           FirstName = firstName
           LastName = lastName }
 
@@ -169,14 +171,43 @@ module Attribution =
     let ofAuthorIds (ids: Id<Author> list) : Attribution =
         match Authors.create ids with
         | Ok authors -> ByAuthors authors
-        | Error _ -> Unknown // the only error is "empty" -> treated as Unknown
+        | Error _ -> Attribution.Unknown // the only error is "empty" -> treated as Unknown
 
     let authorIds (attribution: Attribution) : Id<Author> list =
         match attribution with
         | Unknown -> []
         | ByAuthors authors -> Authors.toList authors
 
+// --- module (near Author / Book / LibraryOwner) ---
 
+module Library =
+    let create (id: Id<Library>) (owner: LibraryOwner) (name: LibraryName) : Library =
+        { Id = id; Owner = owner; Name = name }
+
+    let id (l: Library) = l.Id
+    let owner (l: Library) = l.Owner
+    let name (l: Library) = l.Name 
+
+module LibraryName =
+    [<Literal>]
+    let MaxLength = 200
+
+    let create (raw: string) : Result<LibraryName, DomainValidationError> =
+        match TextRules.check MaxLength raw with
+        | TextRules.Empty -> Error LibraryNameRequired
+        | TextRules.TooLong -> Error(LibraryNameTooLong MaxLength)
+        | TextRules.Valid s -> Ok(LibraryName s)
+
+    let value (LibraryName n) = n
+
+
+module LibraryOwner =
+    let create (id: Id<LibraryOwner>) (firstName: PersonName) (lastName: PersonName) : LibraryOwner =
+        { Id = id; FirstName = firstName; LastName = lastName }
+
+    let id (o: LibraryOwner) = o.Id
+    let firstName (o: LibraryOwner) = o.FirstName
+    let lastName (o: LibraryOwner) = o.LastName
 
 // ---------------------------------------------------------------------------
 // PARSING HELPER (for the command layer)
@@ -185,7 +216,6 @@ module Attribution =
 //   Parse.optional Subtitle.create raw   : Result<Subtitle option, ValidationError>
 //   Parse.optional PersonName.create raw : Result<PersonName option, ValidationError>
 // ---------------------------------------------------------------------------
-
 module Parse =
     let optional
         (create: string -> Result<'T, DomainValidationError>)
