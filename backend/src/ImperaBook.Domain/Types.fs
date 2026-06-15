@@ -179,13 +179,14 @@ module Attribution =
         | Attribution.Unknown -> []
         | Attribution.ByAuthors authors -> Authors.toList authors
 
-module Library =
-    let create (id: Id<Library>) (owner: LibraryOwner) (name: LibraryName) : Library =
-        { Id = id; Owner = owner; Name = name }
 
-    let id (l: Library) = l.Id
-    let owner (l: Library) = l.Owner
-    let name (l: Library) = l.Name 
+module LibraryOwner =
+    let create (id: Id<LibraryOwner>) (firstName: PersonName) (lastName: PersonName) : LibraryOwner =
+        { Id = id; FirstName = firstName; LastName = lastName }
+
+    let id (o: LibraryOwner) = o.Id
+    let firstName (o: LibraryOwner) = o.FirstName
+    let lastName (o: LibraryOwner) = o.LastName
 
 module LibraryName =
     [<Literal>]
@@ -200,10 +201,11 @@ module LibraryName =
     let value (LibraryName n) = n
 
 
-module LibraryOwner =
-    let create (id: Id<LibraryOwner>) (firstName: PersonName) (lastName: PersonName) : LibraryOwner =
-        { Id = id; FirstName = firstName; LastName = lastName }
 
-    let id (o: LibraryOwner) = o.Id
-    let firstName (o: LibraryOwner) = o.FirstName
-    let lastName (o: LibraryOwner) = o.LastName
+module Library =
+    let create (id: Id<Library>) (owner: LibraryOwner) (name: LibraryName) : Library =
+        { Id = id; Owner = owner; Name = name }
+
+    let id (l: Library) = l.Id
+    let owner (l: Library) = l.Owner
+    let name (l: Library) = l.Name 
