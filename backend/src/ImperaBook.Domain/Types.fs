@@ -142,16 +142,16 @@ module Author =
     let firstName (a: Author) = a.FirstName
     let lastName (a: Author) = a.LastName
 
-
 module Book =
     let create
+        (id: Id<Book>)
         (title: Title)
         (subtitle: Subtitle option)
         (summary: Summary option)
         (attribution: Attribution)
         (location: Location)
         : Book =
-        { Id = Id.create ()
+        { Id = id
           Title = title
           Subtitle = subtitle
           Summary = summary
@@ -163,6 +163,7 @@ module Book =
     let subtitle (b: Book) = b.Subtitle
     let summary (b: Book) = b.Summary
     let attribution (b: Book) = b.Attribution
+    let location (b: Book) = b.Location
 
 module Attribution =
     let ofAuthorIds (ids: Id<Author> list) : Attribution =
