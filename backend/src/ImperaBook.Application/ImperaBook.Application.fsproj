@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Compile Include="ApplicationError.fs" />
+    <Compile Include="Abstractions.fs" />
   </ItemGroup>
 
   <ItemGroup>
