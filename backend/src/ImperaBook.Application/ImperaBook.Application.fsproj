@@ -11,10 +11,15 @@
     <Compile Include="GetAllBooks.fs" />
     <Compile Include="GetBooks.fs" />
     <Compile Include="GetLibraryBooks.fs" />
+    <Compile Include="AddBook.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ImperaBook.Domain\ImperaBook.Domain.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FsToolkit.ErrorHandling" Version="5.2.0" />
   </ItemGroup>
 
 </Project>
