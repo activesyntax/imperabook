@@ -312,7 +312,8 @@ let ``Library.create lets one owner hold multiple libraries with distinct ids`` 
 [<Fact; Trait("Category", "Unit")>]
 let ``Location.Library wraps a library`` () =
     let library = aLibrary ()
+    let libraryId = Library.id library 
 
-    match Location.Library library with
-    | Location.Library l -> Assert.Equal(library, l)
+    match Location.Library libraryId with
+    | Location.Library l -> Assert.Equal(libraryId, l)
     | Location.Unknown -> failwith "Expected Library"

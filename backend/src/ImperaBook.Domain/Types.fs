@@ -36,7 +36,7 @@ type Library =
           Name: LibraryName }
 [<RequireQualifiedAccess>]
 type Location =
-    | Library of Library
+    | Library of Id<Library>
     | Unknown
 
 [<RequireQualifiedAccess>]

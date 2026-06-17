@@ -6,7 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
+    <Compile Include="ApplicationError.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ImperaBook.Domain\ImperaBook.Domain.fsproj" />
   </ItemGroup>
 
 </Project>
