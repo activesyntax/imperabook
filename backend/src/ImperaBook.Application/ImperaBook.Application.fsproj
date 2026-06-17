@@ -9,6 +9,8 @@
     <Compile Include="ApplicationError.fs" />
     <Compile Include="Abstractions.fs" />
     <Compile Include="GetAllBooks.fs" />
+    <Compile Include="GetBooks.fs" />
+    <Compile Include="GetLibraryBooks.fs" />
   </ItemGroup>
 
   <ItemGroup>
