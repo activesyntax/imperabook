@@ -16,9 +16,6 @@ type AddBook =
 
 module AddBook =
 
-    /// Independent field validations run together and accumulate *every* error
-    /// (`let!` + `and!` = applicative). Domain errors are then lifted into the
-    /// application error vocabulary in one place.
     let private validateFields
         (cmd: AddBook)
         : Result<Title * Subtitle option * Summary option, ApplicationError> =
@@ -30,9 +27,6 @@ module AddBook =
         }
         |> Result.mapError ApplicationError.Validation
 
-    /// Resolve the optional library placement. Location references the library
-    /// by identity, so we only confirm the target exists, then carry the id —
-    /// no aggregate load, nothing to reconstruct.
     let private resolveLocation
         (libraries: ILibraryRepository)
         (ct: CancellationToken)
@@ -49,7 +43,6 @@ module AddBook =
                 return Location.Library(Id.ofGuid id)
             }
 
-    /// Flatten the validated aggregate into the persistence write model.
     let private toRecord (book: Book) : BookRecord =
         { Id = Book.id book |> Id.value
           Title = Book.title book |> Title.value
