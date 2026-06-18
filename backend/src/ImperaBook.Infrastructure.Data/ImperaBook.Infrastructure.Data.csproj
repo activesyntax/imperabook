@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ImperaBook.Application\ImperaBook.Application.fsproj" />
+    <ProjectReference Include="..\ImperaBook.Domain\ImperaBook.Domain.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

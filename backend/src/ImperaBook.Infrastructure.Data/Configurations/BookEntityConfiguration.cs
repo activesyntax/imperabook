@@ -1,6 +1,7 @@
 using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using ImperaBook.Domain;
 
 namespace ImperaBook.Infrastructure.Data.Configurations;
 
@@ -13,13 +14,13 @@ public class BookEntityConfiguration : IEntityTypeConfiguration<BookEntity>
 
         builder.Property(b => b.Title)
             .IsRequired()
-            .HasMaxLength(500);
+            .HasMaxLength(TitleModule.MaxLength);
 
         builder.Property(b => b.Subtitle)
-            .HasMaxLength(500);
+            .HasMaxLength(SubtitleModule.MaxLength);
 
         builder.Property(b => b.Summary)
-            .HasMaxLength(4000);
+            .HasMaxLength(SummaryModule.MaxLength);
 
         // LibraryId stays a plain nullable Guid for now — no FK yet,
         // because the libraries table doesn't exist. That comes later.
