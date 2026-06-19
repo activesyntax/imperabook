@@ -7,6 +7,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ImperaBook.API.IntegrationTests/ImperaBook.API.IntegrationTests.csproj" />
-    <Project Path="tests/ImperaBook.Domain.Tests/ImperaBook.Domain.Tests.fsproj" />
+    <Project Path="tests/ImperaBook.Domain.Tests/ImperaBook.Domain.Tests.csproj" />
   </Folder>
 </Solution>

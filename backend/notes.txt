@@ -5,7 +5,7 @@ dotnet new sln -n ImperaBook
 |   DOTNET PROJECT 
 =======================================
 
-dotnet new classlib -lang "F#" -n ImperaBook.Domain
+dotnet new classlib -lang "C#" -n ImperaBook.Domain
 dotnet sln add ImperaBook.Domain
 
 =======================================
