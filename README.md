@@ -12,24 +12,24 @@ Unlike traditional click-heavy library apps, ImperaBook treats your catalog like
 
 - **Command-Based Fluid Control**: A powerful, built-in command palette (accessible via shortcuts like `:` or `Ctrl+K`) allows you to query, catalog, lend, and batch-edit your library entirely from the keyboard—inspired by modern terminal tools like Vim and Helix.
 - **Typography-Driven Aesthetic**: A dark, modern, minimalist user interface designed to maximize text legibility, screen real estate, and scannability.
-- **Type-Safe Domain Modeling**: The system leverages functional domain modeling to guarantee data consistency, making invalid library states literally unrepresentable.
+- **Type-Driven Domain Modeling**: A pure, immutable C# core using closed sealed-record hierarchies, smart-constructor value objects, and phantom-typed identifiers to make invalid library states literally unrepresentable.
 
 ---
 
 ## Tech Stack & Architecture
 
-ImperaBook is built as a highly optimized, enterprise-grade polyglot monorepo to showcase modern **Clean Architecture** and **CQRS (Command Query Responsibility Segregation)** principles.
+ImperaBook is built as a monorepo demonstrating modern **Clean Architecture**, **CQRS (Command Query Responsibility Segregation)**, and **type-driven domain modeling** in C#.
 
 ### Frontend
 
 - **Angular**: Structured single-page application utilizing reactive **Signals** for fine-grained state management and fast rendering.
 
-### Backend (Polyglot .NET 10)
+### Backend (.NET 10, C#)
 
-- **ImperaBook.Domain (F#)**: Pure functional core capturing the strict business rules, subscription tiers, and library invariants using Discriminated Unions and Records.
-- **ImperaBook.Application (F#)**: Orchestrates the use cases, explicitly separating write operations (**Commands**) from read operations (**Queries**).
-- **ImperaBook.Infrastructure.Data (C#)**: Isolates object-oriented mutability and leverages **Entity Framework Core (EF Core)** for robust migrations and LINQ queries.
-- **ImperaBook.API (F#)**: High-performance ASP.NET Core **Minimal APIs** exposed as clean, composable HTTP pipelines.
+- **ImperaBook.Domain**: Pure, immutable domain core capturing the business rules and library invariants. Algebraic data types are modeled as closed sealed-record hierarchies, constrained values are wrapped in smart-constructor value objects returning explicit `Result` types, and identities are phantom-typed (`Id<TEntity>`)—keeping invalid states unrepresentable and the core free of side effects.
+- **ImperaBook.Application**: Orchestrates the use cases, explicitly separating write operations (**Commands**) from read operations (**Queries**), with flat read models projected for the query side.
+- **ImperaBook.Infrastructure.Data**: Isolates persistence behind repository interfaces and leverages **Entity Framework Core (EF Core)** for robust migrations and LINQ queries, keeping EF Core's mutable, change-tracking model out of the domain.
+- **ImperaBook.API**: High-performance ASP.NET Core **Minimal APIs** exposed as clean, composable HTTP pipelines.
 
 ### Database & Cloud Infrastructure
 
