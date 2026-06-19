@@ -32,3 +32,38 @@ dotnet add package Microsoft.EntityFrameworkCore.Design
 =======================================
 dotnet new tool-manifest          # if you don't already have .config/dotnet-tools.json
 dotnet tool install dotnet-ef
+
+============================
+MIGRATION
+============================
+dotnet ef migrations add InitialCreate \
+  --project src/ImperaBook.Infrastructure.Data \
+  --startup-project src/ImperaBook.Infrastructure.Data
+
+============================
+DOCKER COMPOSE
+============================
+docker compose up -d
+# wait for healthy (a few seconds); check with:
+docker compose ps
+
+
+============================
+UPDATE
+============================
+dotnet ef database update \
+  --project src/ImperaBook.Infrastructure.Data \
+  --startup-project src/ImperaBook.Infrastructure.Data
+
+
+============================
+VERIFY
+============================
+docker compose exec db psql -U imperabook -d imperabook -c "\dt"
+
+
+============================
+PSQL
+============================
+
+docker compose exec db psql -U imperabook -d imperabook
