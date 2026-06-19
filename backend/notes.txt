@@ -17,6 +17,12 @@ dotnet sln add ImperaBook.Domain
 
 
 =======================================
+|   MINIMAL WEB API
+=======================================
+
+dotnet new web -o ImperaBook.API
+
+=======================================
 |   ADD REFERENCE 
 =======================================
 

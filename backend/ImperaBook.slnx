@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/ImperaBook.API/ImperaBook.API.fsproj" />
+    <Project Path="src/ImperaBook.API/ImperaBook.API.csproj" />
     <Project Path="src/ImperaBook.Application/ImperaBook.Application.csproj" />
     <Project Path="src/ImperaBook.Domain/ImperaBook.Domain.csproj" />
     <Project Path="src/ImperaBook.Infrastructure.Data/ImperaBook.Infrastructure.Data.csproj" />
