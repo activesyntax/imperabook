@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace ImperaBook.Domain;
 
 public abstract record Attribution
@@ -8,6 +5,7 @@ public abstract record Attribution
     private Attribution() { }
 
     public sealed record Unknown : Attribution;
+
     public sealed record ByAuthors(Authors Authors) : Attribution;
 
     public static Attribution OfAuthorIds(IEnumerable<Id<Author>> ids)
@@ -21,6 +19,6 @@ public abstract record Attribution
         {
             ByAuthors b => b.Authors.ToList(),
             Unknown => Array.Empty<Id<Author>>(),
-            _ => throw new InvalidOperationException("Unhandled Attribution case.")
+            _ => throw new InvalidOperationException("Unhandled Attribution case."),
         };
 }

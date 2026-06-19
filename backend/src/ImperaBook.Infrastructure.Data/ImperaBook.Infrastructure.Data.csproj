@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\ImperaBook.Application\ImperaBook.Application.fsproj" />
-    <ProjectReference Include="..\ImperaBook.Domain\ImperaBook.Domain.fsproj" />
+    <ProjectReference Include="..\ImperaBook.Application\ImperaBook.Application.csproj" />
+    <ProjectReference Include="..\ImperaBook.Domain\ImperaBook.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
