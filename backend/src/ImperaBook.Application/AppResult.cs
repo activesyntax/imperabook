@@ -3,40 +3,40 @@ using System;
 namespace ImperaBook.Application;
 
 /// <summary>
-/// Success-or-single-error result for the Application layer (error type = <see cref="ApplicationError"/>).
-/// Mirrors the domain's Result&lt;T&gt;; kept separate because the error type differs.
-/// Construct only via <see cref="Ok"/> / <see cref="Fail"/>.
+/// Success-or-error result for the Application layer. The implicit conversions let a handler
+/// return a value or an <see cref="ApplicationError"/> directly (`return value;` / `return error;`),
+/// so orchestration reads as straight-line code instead of explicit result-wrapping.
 /// </summary>
 public readonly record struct AppResult<T>
 {
     private readonly T _value;
     private readonly ApplicationError? _error;
 
-    public bool IsOk { get; }
-
     private AppResult(T value)
     {
         _value = value;
         _error = null;
-        IsOk = true;
     }
 
     private AppResult(ApplicationError error)
     {
         _value = default!;
         _error = error;
-        IsOk = false;
     }
 
-    public static AppResult<T> Ok(T value) => new(value);
-    public static AppResult<T> Fail(ApplicationError error) => new(error);
+    public bool IsError => _error is not null;
+    public bool IsOk => _error is null;
 
-    public T Value =>
-        IsOk ? _value : throw new InvalidOperationException("AppResult is in an error state; check IsOk first.");
+    public T Value => _error is null
+        ? _value
+        : throw new InvalidOperationException("Result is in an error state; check IsError first.");
 
     public ApplicationError Error =>
-        IsOk ? throw new InvalidOperationException("AppResult is in a success state.") : _error!;
+        _error ?? throw new InvalidOperationException("Result is in a success state.");
+
+    public static implicit operator AppResult<T>(T value) => new(value);
+    public static implicit operator AppResult<T>(ApplicationError error) => new(error);
 
     public TOut Match<TOut>(Func<T, TOut> onOk, Func<ApplicationError, TOut> onError) =>
-        IsOk ? onOk(_value) : onError(_error!);
+        _error is null ? onOk(_value) : onError(_error);
 }

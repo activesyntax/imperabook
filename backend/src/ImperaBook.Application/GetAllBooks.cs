@@ -3,8 +3,7 @@ using System.Threading.Tasks;
 
 namespace ImperaBook.Application.Books;
 
-public static class GetAllBooksHandler
+public sealed class GetAllBooksHandler(IBookReadRepository books)
 {
-    public static Task<BookListItem[]> Handle(IBookReadRepository books, CancellationToken ct) =>
-        books.ListAll(ct);
+    public Task<BookListItem[]> Handle(CancellationToken ct) => books.ListAll(ct);
 }

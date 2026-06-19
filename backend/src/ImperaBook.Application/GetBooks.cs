@@ -10,13 +10,13 @@ public sealed record GetBooks
     public string? TitleContains { get; init; }
 }
 
-public static class GetBooksHandler
+public sealed class GetBooksHandler(IBookReadRepository books)
 {
-    public static Task<BookListItem[]> Handle(IBookReadRepository books, GetBooks query, CancellationToken ct)
+    public Task<BookListItem[]> Handle(GetBooks query, CancellationToken ct)
     {
-        var titleContains = query.TitleContains?.Trim();
-        if (string.IsNullOrEmpty(titleContains))
-            titleContains = null;
+        var titleContains = string.IsNullOrWhiteSpace(query.TitleContains)
+            ? null
+            : query.TitleContains.Trim();
 
         return books.List(query.LibraryId, titleContains, ct);
     }

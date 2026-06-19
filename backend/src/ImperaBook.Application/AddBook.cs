@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using ImperaBook.Domain;
 
 namespace ImperaBook.Application.Books;
@@ -11,79 +16,56 @@ public sealed record AddBook
     public Guid? LibraryId { get; init; }
 }
 
-public static class AddBookHandler
+public sealed class AddBookHandler(IBookWriteRepository books, ILibraryRepository libraries)
 {
-    // The manual equivalent of F#'s `validation { let! ... and! ... }`: every field is validated,
-    // ALL errors are collected (no short-circuit), and the result is built only if the list is empty.
-    private static AppResult<(Title, Subtitle?, Summary?)> ValidateFields(AddBook cmd)
+    public async Task<AppResult<Guid>> Handle(AddBook command, CancellationToken ct)
     {
-        var errors = new List<DomainValidationError>();
-
-        var title = Title.Create(cmd.Title);
-        if (!title.IsOk)
-            errors.Add(title.Error);
-
-        var subtitle = Subtitle.Create(cmd.Subtitle);
-        if (!subtitle.IsOk)
-            errors.Add(subtitle.Error);
-
-        var summary = Summary.Create(cmd.Summary);
-        if (!summary.IsOk)
-            errors.Add(summary.Error);
-
-        if (errors.Count > 0)
-            return AppResult<(Title, Subtitle?, Summary?)>.Fail(
-                new ApplicationError.Validation(errors)
-            );
-
-        return AppResult<(Title, Subtitle?, Summary?)>.Ok(
-            (title.Value, subtitle.Value, summary.Value)
-        );
-    }
-
-    private static async Task<AppResult<Location>> ResolveLocation(
-        ILibraryRepository libraries,
-        Guid? libraryId,
-        CancellationToken ct
-    )
-    {
-        if (libraryId is null)
-            return AppResult<Location>.Ok(new Location.Unknown());
-
-        var id = libraryId.Value;
-
-        var exists = await libraries.Exists(id, ct);
-        if (!exists)
-            return AppResult<Location>.Fail(new ApplicationError.LibraryNotFound(id));
-
-        return AppResult<Location>.Ok(new Location.Library(Id<Library>.From(id)));
-    }
-
-    // The railway orchestration that `taskResult { }` gave you for free: each `let!` becomes
-    // a check-and-early-return on the result before moving on.
-    public static async Task<AppResult<Guid>> Handle(
-        IBookWriteRepository books,
-        ILibraryRepository libraries,
-        AddBook cmd,
-        CancellationToken ct
-    )
-    {
-        var fields = ValidateFields(cmd);
-        if (!fields.IsOk)
-            return AppResult<Guid>.Fail(fields.Error);
+        var fields = ValidateFields(command);
+        if (fields.IsError)
+            return fields.Error;
 
         var (title, subtitle, summary) = fields.Value;
 
-        var attribution = Attribution.OfAuthorIds(cmd.AuthorIds.Select(Id<Author>.From));
+        var location = await ResolveLocation(command.LibraryId, ct);
+        if (location.IsError)
+            return location.Error;
 
-        var location = await ResolveLocation(libraries, cmd.LibraryId, ct);
-        if (!location.IsOk)
-            return AppResult<Guid>.Fail(location.Error);
+        var attribution = Attribution.OfAuthorIds(command.AuthorIds.Select(Id<Author>.From));
 
         var bookId = Id<Book>.New();
         var book = Book.Create(bookId, title, subtitle, summary, attribution, location.Value);
 
         await books.Add(book, ct);
-        return AppResult<Guid>.Ok(bookId.Value);
+        return bookId.Value;
+    }
+
+    // Every field is validated and all errors are collected before returning — the explicit,
+    // dependency-free stand-in for applicative error accumulation.
+    private static AppResult<(Title Title, Subtitle? Subtitle, Summary? Summary)> ValidateFields(AddBook command)
+    {
+        var title = Title.Create(command.Title);
+        var subtitle = Subtitle.Create(command.Subtitle);
+        var summary = Summary.Create(command.Summary);
+
+        List<DomainValidationError> errors = [];
+        if (!title.IsOk) errors.Add(title.Error);
+        if (!subtitle.IsOk) errors.Add(subtitle.Error);
+        if (!summary.IsOk) errors.Add(summary.Error);
+
+        if (errors.Count > 0)
+            return new ApplicationError.Validation(errors);
+
+        return (title.Value, subtitle.Value, summary.Value);
+    }
+
+    private async Task<AppResult<Location>> ResolveLocation(Guid? libraryId, CancellationToken ct)
+    {
+        if (libraryId is not { } id)
+            return new Location.Unknown();
+
+        if (!await libraries.Exists(id, ct))
+            return new ApplicationError.LibraryNotFound(id);
+
+        return new Location.Library(Id<Library>.From(id));
     }
 }

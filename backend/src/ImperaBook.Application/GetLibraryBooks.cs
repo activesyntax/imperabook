@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 
 namespace ImperaBook.Application.Books;
 
-public static class GetLibraryBooksHandler
+public sealed class GetLibraryBooksHandler(IBookReadRepository books)
 {
-    public static Task<BookListItem[]> Handle(IBookReadRepository books, Guid libraryId, CancellationToken ct) =>
+    public Task<BookListItem[]> Handle(Guid libraryId, CancellationToken ct) =>
         books.ListByLibrary(libraryId, ct);
 }
