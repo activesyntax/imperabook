@@ -18,4 +18,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ImperaBook.Domain\ImperaBook.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

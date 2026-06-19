@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using ImperaBook.Domain;
 
 namespace ImperaBook.Application.Books;
@@ -37,15 +32,20 @@ public static class AddBookHandler
             errors.Add(summary.Error);
 
         if (errors.Count > 0)
-            return AppResult<(Title, Subtitle?, Summary?)>.Fail(new ApplicationError.Validation(errors));
+            return AppResult<(Title, Subtitle?, Summary?)>.Fail(
+                new ApplicationError.Validation(errors)
+            );
 
-        return AppResult<(Title, Subtitle?, Summary?)>.Ok((title.Value, subtitle.Value, summary.Value));
+        return AppResult<(Title, Subtitle?, Summary?)>.Ok(
+            (title.Value, subtitle.Value, summary.Value)
+        );
     }
 
     private static async Task<AppResult<Location>> ResolveLocation(
         ILibraryRepository libraries,
         Guid? libraryId,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         if (libraryId is null)
             return AppResult<Location>.Ok(new Location.Unknown());
@@ -65,7 +65,8 @@ public static class AddBookHandler
         IBookWriteRepository books,
         ILibraryRepository libraries,
         AddBook cmd,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         var fields = ValidateFields(cmd);
         if (!fields.IsOk)
