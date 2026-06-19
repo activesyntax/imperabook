@@ -48,6 +48,57 @@ namespace ImperaBook.Infrastructure.Data.Migrations
 
                     b.ToTable("books", (string)null);
                 });
+
+            modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.LibraryEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("libraries", (string)null);
+                });
+
+            modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.UserEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.LibraryEntity", b =>
+                {
+                    b.HasOne("ImperaBook.Infrastructure.Data.Entities.UserEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
 #pragma warning restore 612, 618
         }
     }
