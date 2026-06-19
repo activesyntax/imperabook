@@ -24,3 +24,11 @@ dotnet add ImperaBook.Infrastructure.Data/ImperaBook.Infrastructure.Data.csproj 
 cd ImperaBook.Infrastructure.Data
 dotnet add package Microsoft.EntityFrameworkCore.PostgreSQL
 dotnet add package Microsoft.EntityFrameworkCore.Design
+
+
+
+=======================================
+|    EFCORE
+=======================================
+dotnet new tool-manifest          # if you don't already have .config/dotnet-tools.json
+dotnet tool install dotnet-ef
