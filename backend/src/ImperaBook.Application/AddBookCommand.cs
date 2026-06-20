@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using ErrorOr;
 using ImperaBook.Domain;
 
@@ -42,10 +37,6 @@ public sealed class AddBookCommandHandler(IBookWriteRepository books, ILibraryRe
         return bookId.Value;
     }
 
-    /// <summary>
-    /// Evaluates all domain invariants concurrently and aggregates any failures
-    /// into a single ErrorOr container, preventing early short-circuiting.
-    /// </summary>
     private static ErrorOr<(Title Title, Subtitle? Subtitle, Summary? Summary)> ValidateFields(
         AddBookCommand command
     )
@@ -54,21 +45,12 @@ public sealed class AddBookCommandHandler(IBookWriteRepository books, ILibraryRe
         var subtitleResult = Subtitle.Create(command.Subtitle);
         var summaryResult = Summary.Create(command.Summary);
 
-        if (titleResult.IsError || subtitleResult.IsError || summaryResult.IsError)
-        {
-            var errors = new List<Error>();
+        List<ErrorOr<object>> fields = [titleResult, subtitleResult, summaryResult];
+        var errors = fields.Where(f => f.IsError).SelectMany(f => f.Errors).ToList();
 
-            if (titleResult.IsError)
-                errors.AddRange(titleResult.Errors);
-            if (subtitleResult.IsError)
-                errors.AddRange(subtitleResult.Errors);
-            if (summaryResult.IsError)
-                errors.AddRange(summaryResult.Errors);
-
-            return errors;
-        }
-
-        return (titleResult.Value, subtitleResult.Value, summaryResult.Value);
+        return errors.Any()
+            ? errors
+            : (titleResult.Value, subtitleResult.Value, summaryResult.Value);
     }
 
     private async Task<ErrorOr<Location>> ResolveLocation(Guid? libraryId, CancellationToken ct)
