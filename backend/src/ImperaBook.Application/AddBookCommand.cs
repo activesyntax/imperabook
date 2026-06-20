@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ErrorOr;
 using ImperaBook.Domain;
 
 namespace ImperaBook.Application.Books.Commands;
@@ -18,57 +19,70 @@ public sealed record AddBookCommand
 
 public sealed class AddBookCommandHandler(IBookWriteRepository books, ILibraryRepository libraries)
 {
-    public async Task<AppResult<Guid>> Handle(AddBookCommand command, CancellationToken ct)
+    public async Task<ErrorOr<Guid>> Handle(AddBookCommand command, CancellationToken ct)
     {
-        var fields = ValidateFields(command);
-        if (fields.IsError)
-            return fields.Error;
+        // 1. Accumulate all field validation errors
+        var fieldsResult = ValidateFields(command);
+        if (fieldsResult.IsError)
+            return fieldsResult.Errors;
 
-        var (title, subtitle, summary) = fields.Value;
+        var (title, subtitle, summary) = fieldsResult.Value;
 
-        var location = await ResolveLocation(command.LibraryId, ct);
-        if (location.IsError)
-            return location.Error;
+        // 2. Resolve target location safely
+        var locationResult = await ResolveLocation(command.LibraryId, ct);
+        if (locationResult.IsError)
+            return locationResult.Errors;
 
+        // 3. Construct domain aggregates and persist
         var attribution = Attribution.OfAuthorIds(command.AuthorIds.Select(Id<Author>.From));
-
         var bookId = Id<Book>.New();
-        var book = Book.Create(bookId, title, subtitle, summary, attribution, location.Value);
+        var book = Book.Create(bookId, title, subtitle, summary, attribution, locationResult.Value);
 
         await books.Add(book, ct);
         return bookId.Value;
     }
 
-    // Every field is validated and all errors are collected before returning — the explicit,
-    // dependency-free stand-in for applicative error accumulation.
-    private static Result<(Title Title, Subtitle? Subtitle, Summary? Summary)> ValidateFields(
+    /// <summary>
+    /// Evaluates all domain invariants concurrently and aggregates any failures
+    /// into a single ErrorOr container, preventing early short-circuiting.
+    /// </summary>
+    private static ErrorOr<(Title Title, Subtitle? Subtitle, Summary? Summary)> ValidateFields(
         AddBookCommand command
     )
     {
-        var title = Title.Create(command.Title);
-        if (!title.IsOk)
-            return Result<(Title, Subtitle?, Summary?)>.Fail();
+        var titleResult = Title.Create(command.Title);
+        var subtitleResult = Subtitle.Create(command.Subtitle);
+        var summaryResult = Summary.Create(command.Summary);
 
-        var subtitle = Subtitle.Create(command.Subtitle);
-        if (!subtitle.IsOk)
-            return Result<(Title, Subtitle?, Summary?)>.Fail(subtitle.Error);
+        if (titleResult.IsError || subtitleResult.IsError || summaryResult.IsError)
+        {
+            var errors = new List<Error>();
 
-        var summary = Summary.Create(command.Summary);
-        if (!summary.IsOk)
-            return Result<(Title, Subtitle?, Summary?)>.Fail(summary.Error);
+            if (titleResult.IsError)
+                errors.AddRange(titleResult.Errors);
+            if (subtitleResult.IsError)
+                errors.AddRange(subtitleResult.Errors);
+            if (summaryResult.IsError)
+                errors.AddRange(summaryResult.Errors);
 
-        return Result<(Title, Subtitle?, Summary?)>.Ok(
-            (title.Value, subtitle.Value, summary.Value)
-        );
+            return errors;
+        }
+
+        return (titleResult.Value, subtitleResult.Value, summaryResult.Value);
     }
 
-    private async Task<Result<Location>> ResolveLocation(Guid? libraryId, CancellationToken ct)
+    private async Task<ErrorOr<Location>> ResolveLocation(Guid? libraryId, CancellationToken ct)
     {
         if (libraryId is not { } id)
-            return new Location.Unknown();
+            return new Location.Unknown(); // Valid state, implicitly converts to success
 
         if (!await libraries.Exists(id, ct))
-            return new ApplicationError.LibraryNotFound(id);
+        {
+            return Error.NotFound(
+                code: "Library.NotFound",
+                description: $"The specified library with ID '{id}' does not exist."
+            );
+        }
 
         return new Location.Library(Id<Library>.From(id));
     }
