@@ -1,0 +1,56 @@
+# API tests (Hurl)
+
+Black-box HTTP checks against a running `ImperaBook.API`. These are end-to-end
+tests against the live host — not part of the build — which is why they live
+beside `src/` rather than inside the API project.
+
+## Prerequisites
+
+- The API running locally with the development seed applied
+  (`DevelopmentDataSeeder` inserts the user, library, and three books these
+  assertions expect).
+- [Hurl](https://hurl.dev) installed: `pacman -S hurl` on Arch, or see the docs.
+
+## Configure
+
+Edit `host` in `vars.env` to match your Kestrel dev port (check
+`launchSettings.json`). The seeded `libraryId` / `ownerId` are also there and
+must stay in sync with `DevelopmentDataSeeder`.
+
+## Run
+
+Whole suite:
+
+```sh
+hurl --variables-file vars.env --test *.hurl
+```
+
+A single file, with full request/response output:
+
+```sh
+hurl --variables-file vars.env --verbose get-all-books.hurl
+```
+
+Override the host without editing the file (e.g. a deployed environment):
+
+```sh
+hurl --variables-file vars.env --variable host=https://api.example.com --test *.hurl
+```
+
+## Files
+
+| File                        | Use case                                      |
+|-----------------------------|-----------------------------------------------|
+| `get-all-books.hurl`        | `GET /books`                                  |
+| `search-books.hurl`         | `GET /books/search` (library and/or title)    |
+| `get-library-books.hurl`    | `GET /libraries/{id}/books`                    |
+| `add-book.hurl`             | `POST /books` (shelved + unshelved)            |
+| `add-book-errors.hurl`      | `POST /books` validation / not-found / 400s    |
+
+## Notes
+
+- `add-book.hurl` mutates state. Re-running accumulates "Clean Architecture"
+  rows; assertions use the captured returned id, so they stay correct, but a
+  clean run starts from a fresh DB (drop the Docker volume to reset).
+- Title filtering is case-sensitive (Postgres `LIKE`); the substrings here match
+  the seeded casing.
