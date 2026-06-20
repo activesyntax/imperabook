@@ -1,20 +1,23 @@
+using CSharpFunctionalExtensions;
 using Xunit.Sdk;
 
 namespace ImperaBook.Domain.Tests;
 
 internal static class ResultAssert
 {
-    public static T ExpectOk<T>(Result<T> result) =>
-        result.Match(
-            onOk: value => value,
-            onError: error => throw new XunitException($"Expected Ok but was Error: {error}")
-        );
+    public static T ExpectOk<T>(Result<T, DomainValidationError> result)
+    {
+        if (result.IsFailure)
+            throw new XunitException($"Expected Ok but was Error: {result.Error}");
+        return result.Value;
+    }
 
-    public static DomainValidationError ExpectError<T>(Result<T> result) =>
-        result.Match(
-            onOk: value => throw new XunitException($"Expected Error but was Ok: {value}"),
-            onError: error => error
-        );
+    public static DomainValidationError ExpectError<T>(Result<T, DomainValidationError> result)
+    {
+        if (result.IsSuccess)
+            throw new XunitException($"Expected Error but was Ok: {result.Value}");
+        return result.Error;
+    }
 }
 
 internal static class OptionAssert
