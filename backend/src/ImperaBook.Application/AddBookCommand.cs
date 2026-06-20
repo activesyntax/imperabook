@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using ImperaBook.Domain;
 
-namespace ImperaBook.Application.Books;
+namespace ImperaBook.Application.Books.Commands;
 
-public sealed record AddBook
+public sealed record AddBookCommand
 {
     public required string Title { get; init; }
     public string? Subtitle { get; init; }
@@ -16,9 +16,9 @@ public sealed record AddBook
     public Guid? LibraryId { get; init; }
 }
 
-public sealed class AddBookHandler(IBookWriteRepository books, ILibraryRepository libraries)
+public sealed class AddBookCommandHandler(IBookWriteRepository books, ILibraryRepository libraries)
 {
-    public async Task<AppResult<Guid>> Handle(AddBook command, CancellationToken ct)
+    public async Task<AppResult<Guid>> Handle(AddBookCommand command, CancellationToken ct)
     {
         var fields = ValidateFields(command);
         if (fields.IsError)
@@ -41,21 +41,23 @@ public sealed class AddBookHandler(IBookWriteRepository books, ILibraryRepositor
 
     // Every field is validated and all errors are collected before returning — the explicit,
     // dependency-free stand-in for applicative error accumulation.
-    private static AppResult<(Title Title, Subtitle? Subtitle, Summary? Summary)> ValidateFields(AddBook command)
+    private static AppResult<(Title Title, Subtitle? Subtitle, Summary? Summary)> ValidateFields(AddBookCommand command)
     {
         var title = Title.Create(command.Title);
         var subtitle = Subtitle.Create(command.Subtitle);
         var summary = Summary.Create(command.Summary);
 
         List<DomainValidationError> errors = [];
-        if (!title.IsOk) errors.Add(title.Error);
-        if (!subtitle.IsOk) errors.Add(subtitle.Error);
-        if (!summary.IsOk) errors.Add(summary.Error);
+        if (title.TryGetError(out var titleError)) errors.Add(titleError);
+        if (subtitle.TryGetError(out var subtitleError)) errors.Add(subtitleError);
+        if (summary.TryGetError(out var summaryError)) errors.Add(summaryError);
 
         if (errors.Count > 0)
             return new ApplicationError.Validation(errors);
 
-        return (title.Value, subtitle.Value, summary.Value);
+        return (title.Expect("validated above"),
+                subtitle.Expect("validated above"),
+                summary.Expect("validated above"));
     }
 
     private async Task<AppResult<Location>> ResolveLocation(Guid? libraryId, CancellationToken ct)
