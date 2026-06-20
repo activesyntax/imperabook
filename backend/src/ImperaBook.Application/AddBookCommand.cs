@@ -41,26 +41,28 @@ public sealed class AddBookCommandHandler(IBookWriteRepository books, ILibraryRe
 
     // Every field is validated and all errors are collected before returning — the explicit,
     // dependency-free stand-in for applicative error accumulation.
-    private static AppResult<(Title Title, Subtitle? Subtitle, Summary? Summary)> ValidateFields(AddBookCommand command)
+    private static Result<(Title Title, Subtitle? Subtitle, Summary? Summary)> ValidateFields(
+        AddBookCommand command
+    )
     {
         var title = Title.Create(command.Title);
+        if (!title.IsOk)
+            return Result<(Title, Subtitle?, Summary?)>.Fail();
+
         var subtitle = Subtitle.Create(command.Subtitle);
+        if (!subtitle.IsOk)
+            return Result<(Title, Subtitle?, Summary?)>.Fail(subtitle.Error);
+
         var summary = Summary.Create(command.Summary);
+        if (!summary.IsOk)
+            return Result<(Title, Subtitle?, Summary?)>.Fail(summary.Error);
 
-        List<DomainValidationError> errors = [];
-        if (title.TryGetError(out var titleError)) errors.Add(titleError);
-        if (subtitle.TryGetError(out var subtitleError)) errors.Add(subtitleError);
-        if (summary.TryGetError(out var summaryError)) errors.Add(summaryError);
-
-        if (errors.Count > 0)
-            return new ApplicationError.Validation(errors);
-
-        return (title.Expect("validated above"),
-                subtitle.Expect("validated above"),
-                summary.Expect("validated above"));
+        return Result<(Title, Subtitle?, Summary?)>.Ok(
+            (title.Value, subtitle.Value, summary.Value)
+        );
     }
 
-    private async Task<AppResult<Location>> ResolveLocation(Guid? libraryId, CancellationToken ct)
+    private async Task<Result<Location>> ResolveLocation(Guid? libraryId, CancellationToken ct)
     {
         if (libraryId is not { } id)
             return new Location.Unknown();
