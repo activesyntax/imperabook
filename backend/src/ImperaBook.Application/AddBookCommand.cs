@@ -1,4 +1,4 @@
-using ErrorOr;
+using CSharpFunctionalExtensions;
 using ImperaBook.Domain;
 
 namespace ImperaBook.Application.Books.Commands;
@@ -14,64 +14,62 @@ public sealed record AddBookCommand
 
 public sealed class AddBookCommandHandler(IBookWriteRepository books, ILibraryRepository libraries)
 {
-    public async Task<ErrorOr<Guid>> Handle(AddBookCommand command, CancellationToken ct)
+    public async Task<Result<Guid, ApplicationError>> Handle(
+        AddBookCommand command,
+        CancellationToken ct
+    )
     {
-        // 1. Accumulate all field validation errors
-        var fieldsResult = ValidateFields(command);
-        if (fieldsResult.IsError)
-            return fieldsResult.Errors;
+        var fields = ValidateFields(command);
+        if (fields.IsFailure)
+            return fields.Error;
 
-        var (title, subtitle, summary) = fieldsResult.Value;
+        var (title, subtitle, summary) = fields.Value;
 
-        // 2. Resolve target location safely
-        var locationResult = await ResolveLocation(command.LibraryId, ct);
-        if (locationResult.IsError)
-            return locationResult.Errors;
+        var location = await ResolveLocation(command.LibraryId, ct);
+        if (location.IsFailure)
+            return location.Error;
 
-        // 3. Construct domain aggregates and persist
         var attribution = Attribution.OfAuthorIds(command.AuthorIds.Select(Id<Author>.From));
         var bookId = Id<Book>.New();
-        var book = Book.Create(bookId, title, subtitle, summary, attribution, locationResult.Value);
+        var book = Book.Create(bookId, title, subtitle, summary, attribution, location.Value);
 
         await books.Add(book, ct);
         return bookId.Value;
     }
 
-    private static ErrorOr<(Title Title, Subtitle? Subtitle, Summary? Summary)> ValidateFields(
-        AddBookCommand command
-    )
+    private static Result<
+        (Title Title, Subtitle? Subtitle, Summary? Summary),
+        ApplicationError
+    > ValidateFields(AddBookCommand command)
     {
-        var titleResult = Title.Create(command.Title);
-        var subtitleResult = Subtitle.Create(command.Subtitle);
-        var summaryResult = Summary.Create(command.Summary);
+        var title = Title.Create(command.Title);
+        var subtitle = Subtitle.Create(command.Subtitle);
+        var summary = Summary.Create(command.Summary);
 
-        var errors = new List<Error>();
-        if (titleResult.IsError)
-            errors.AddRange(titleResult.Errors);
+        DomainValidationError?[] errors =
+        [
+            title.IsFailure ? title.Error : null,
+            subtitle.IsFailure ? subtitle.Error : null,
+            summary.IsFailure ? summary.Error : null,
+        ];
 
-        if (subtitleResult.IsError)
-            errors.AddRange(subtitleResult.Errors);
+        var failures = errors.OfType<DomainValidationError>().ToList();
+        if (failures.Count > 0)
+            return new ApplicationError.Validation(failures);
 
-        if (summaryResult.IsError)
-            errors.AddRange(summaryResult.Errors);
-
-        return errors.Any()
-            ? errors
-            : (titleResult.Value, subtitleResult.Value, summaryResult.Value);
+        return (title.Value, subtitle.Value, summary.Value);
     }
 
-    private async Task<ErrorOr<Location>> ResolveLocation(Guid? libraryId, CancellationToken ct)
+    private async Task<Result<Location, ApplicationError>> ResolveLocation(
+        Guid? libraryId,
+        CancellationToken ct
+    )
     {
         if (libraryId is not { } id)
-            return new Location.Unknown(); // Valid state, implicitly converts to success
+            return new Location.Unknown();
 
         if (!await libraries.Exists(id, ct))
-        {
-            return Error.NotFound(
-                code: "Library.NotFound",
-                description: $"The specified library with ID '{id}' does not exist."
-            );
-        }
+            return new ApplicationError.LibraryNotFound(id);
 
         return new Location.Library(Id<Library>.From(id));
     }

@@ -28,7 +28,6 @@ public readonly record struct Subtitle
 
     private Subtitle(string value) => Value = value;
 
-    // Blank maps to a successful null — faithful to the optional value object.
     public static Result<Subtitle?, DomainValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
