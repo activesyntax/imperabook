@@ -1,6 +1,5 @@
+using ImperaBook.Application.Books;
 using Microsoft.Extensions.DependencyInjection;
-using ImperaBook.Application.Books.Commands;
-using ImperaBook.Application.Books.Queries;
 
 namespace ImperaBook.Application;
 

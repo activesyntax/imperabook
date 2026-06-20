@@ -17,7 +17,7 @@ var app = builder.Build();
 
 app.MapGet(
     "/books",
-    async (GetAllBooksHandler handler, CancellationToken ct) =>
+    async (GetAllBooksQueryHandler handler, CancellationToken ct) =>
     {
         var books = await handler.Handle(ct);
         return Results.Ok(books);

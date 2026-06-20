@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ImperaBook.Application.Books.Queries;
+namespace ImperaBook.Application.Books;
 
 // No GetAllBooksQuery record: with no parameters and no mediator dispatch, an empty
 // request object is pure ceremony. The handler suffix carries the convention.

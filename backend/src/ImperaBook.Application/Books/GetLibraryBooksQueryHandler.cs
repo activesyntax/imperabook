@@ -1,8 +1,4 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace ImperaBook.Application.Books.Queries;
+namespace ImperaBook.Application.Books;
 
 public sealed class GetLibraryBooksQueryHandler(IBookReadRepository books)
 {

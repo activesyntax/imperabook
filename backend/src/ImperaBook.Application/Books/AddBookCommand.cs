@@ -1,7 +1,7 @@
 using CSharpFunctionalExtensions;
 using ImperaBook.Domain;
 
-namespace ImperaBook.Application.Books.Commands;
+namespace ImperaBook.Application.Books;
 
 public sealed record AddBookCommand
 {
