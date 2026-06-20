@@ -45,8 +45,15 @@ public sealed class AddBookCommandHandler(IBookWriteRepository books, ILibraryRe
         var subtitleResult = Subtitle.Create(command.Subtitle);
         var summaryResult = Summary.Create(command.Summary);
 
-        List<ErrorOr<object>> fields = [titleResult, subtitleResult, summaryResult];
-        var errors = fields.Where(f => f.IsError).SelectMany(f => f.Errors).ToList();
+        var errors = new List<Error>();
+        if (titleResult.IsError)
+            errors.AddRange(titleResult.Errors);
+
+        if (subtitleResult.IsError)
+            errors.AddRange(subtitleResult.Errors);
+
+        if (summaryResult.IsError)
+            errors.AddRange(summaryResult.Errors);
 
         return errors.Any()
             ? errors

@@ -1,5 +1,4 @@
-#nullable enable
-using ErrorOr;
+using CSharpFunctionalExtensions;
 
 namespace ImperaBook.Domain;
 
@@ -11,14 +10,11 @@ public readonly record struct Title
 
     private Title(string value) => Value = value;
 
-    public static ErrorOr<Title> Create(string? raw) =>
+    public static Result<Title, DomainValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
-            TextRules.Checked.Empty => Error.Validation("Title.Required", "Title is required."),
-            TextRules.Checked.TooLong => Error.Validation(
-                "Title.TooLong",
-                $"Title cannot exceed {MaxLength} characters."
-            ),
+            TextRules.Checked.Empty => new DomainValidationError.TitleRequired(),
+            TextRules.Checked.TooLong => new DomainValidationError.TitleTooLong(MaxLength),
             TextRules.Checked.Valid v => new Title(v.Value),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };
@@ -32,16 +28,13 @@ public readonly record struct Subtitle
 
     private Subtitle(string value) => Value = value;
 
-    // Blank maps cleanly to a successful null ErrorOr container
-    public static ErrorOr<Subtitle?> Create(string? raw) =>
+    // Blank maps to a successful null — faithful to the optional value object.
+    public static Result<Subtitle?, DomainValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
             TextRules.Checked.Empty => (Subtitle?)null,
-            TextRules.Checked.TooLong => Error.Validation(
-                "Subtitle.TooLong",
-                $"Subtitle cannot exceed {MaxLength} characters."
-            ),
-            TextRules.Checked.Valid v => new Subtitle(v.Value),
+            TextRules.Checked.TooLong => new DomainValidationError.SubtitleTooLong(MaxLength),
+            TextRules.Checked.Valid v => (Subtitle?)new Subtitle(v.Value),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };
 }
@@ -54,15 +47,12 @@ public readonly record struct Summary
 
     private Summary(string value) => Value = value;
 
-    public static ErrorOr<Summary?> Create(string? raw) =>
+    public static Result<Summary?, DomainValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
             TextRules.Checked.Empty => (Summary?)null,
-            TextRules.Checked.TooLong => Error.Validation(
-                "Summary.TooLong",
-                $"Summary cannot exceed {MaxLength} characters."
-            ),
-            TextRules.Checked.Valid v => new Summary(v.Value),
+            TextRules.Checked.TooLong => new DomainValidationError.SummaryTooLong(MaxLength),
+            TextRules.Checked.Valid v => (Summary?)new Summary(v.Value),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };
 }
@@ -75,14 +65,11 @@ public readonly record struct PersonName
 
     private PersonName(string value) => Value = value;
 
-    public static ErrorOr<PersonName> Create(string? raw) =>
+    public static Result<PersonName, DomainValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
-            TextRules.Checked.Empty => Error.Validation("PersonName.Required", "Name is required."),
-            TextRules.Checked.TooLong => Error.Validation(
-                "PersonName.TooLong",
-                $"Name cannot exceed {MaxLength} characters."
-            ),
+            TextRules.Checked.Empty => new DomainValidationError.NameRequired(),
+            TextRules.Checked.TooLong => new DomainValidationError.NameTooLong(MaxLength),
             TextRules.Checked.Valid v => new PersonName(v.Value),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };
@@ -96,17 +83,11 @@ public readonly record struct LibraryName
 
     private LibraryName(string value) => Value = value;
 
-    public static ErrorOr<LibraryName> Create(string? raw) =>
+    public static Result<LibraryName, DomainValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
-            TextRules.Checked.Empty => Error.Validation(
-                "LibraryName.Required",
-                "Library name is required."
-            ),
-            TextRules.Checked.TooLong => Error.Validation(
-                "LibraryName.TooLong",
-                $"Library name cannot exceed {MaxLength} characters."
-            ),
+            TextRules.Checked.Empty => new DomainValidationError.LibraryNameRequired(),
+            TextRules.Checked.TooLong => new DomainValidationError.LibraryNameTooLong(MaxLength),
             TextRules.Checked.Valid v => new LibraryName(v.Value),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };
