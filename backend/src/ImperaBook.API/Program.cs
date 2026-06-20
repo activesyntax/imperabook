@@ -22,6 +22,7 @@ if (app.Environment.IsDevelopment())
     await using var scope = app.Services.CreateAsyncScope();
     var db = scope.ServiceProvider.GetRequiredService<ImperaBookDbContext>();
     await db.Database.MigrateAsync();
+    await DevelopmentDataSeeder.SeedAsync(db, CancellationToken.None);
 }
 
 // GET all books
