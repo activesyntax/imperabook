@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using ImperaBook.Application;
 using ImperaBook.Domain.Catalog;
 using ImperaBook.Infrastructure.Data.Entities;
@@ -16,7 +17,7 @@ public class BookWriteRepository : IBookWriteRepository
         {
             Id = book.Id.Value,
             Title = book.Title.Value,
-            Subtitle = book.Subtitle.GetValueOrDefault().ToString(),
+            Subtitle = book.Subtitle.Map(s => s.Value).GetValueOrDefault(string.Empty),
             Summary = book.Summary?.Value,
             LibraryId = book.Location switch
             {
