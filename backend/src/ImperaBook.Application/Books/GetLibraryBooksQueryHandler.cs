@@ -1,3 +1,5 @@
+using ImperaBook.Application.Books.ReadModel;
+
 namespace ImperaBook.Application.Books;
 
 public sealed class GetLibraryBooksQueryHandler(IBookReadRepository books)

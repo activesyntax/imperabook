@@ -1,5 +1,4 @@
-using System.Threading;
-using System.Threading.Tasks;
+using ImperaBook.Application.Books.ReadModel;
 
 namespace ImperaBook.Application.Books;
 
