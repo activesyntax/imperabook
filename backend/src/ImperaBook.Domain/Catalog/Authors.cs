@@ -1,12 +1,5 @@
-using System.Collections.Generic;
-using System.Linq;
+namespace ImperaBook.Domain.Catalog;
 
-namespace ImperaBook.Domain;
-
-/// <summary>
-/// At least one author, always. Primary is non-optional; the only way to obtain an Authors
-/// is <see cref="Create"/>, which returns null for an empty input — "zero authors" cannot exist.
-/// </summary>
 public sealed record Authors
 {
     public Id<Author> Primary { get; }

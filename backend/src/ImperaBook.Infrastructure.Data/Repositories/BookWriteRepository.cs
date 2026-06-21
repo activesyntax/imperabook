@@ -1,5 +1,5 @@
 using ImperaBook.Application;
-using ImperaBook.Domain;
+using ImperaBook.Domain.Catalog;
 using ImperaBook.Infrastructure.Data.Entities;
 
 namespace ImperaBook.Infrastructure.Data.Repositories;
@@ -20,7 +20,7 @@ public class BookWriteRepository : IBookWriteRepository
             Summary = book.Summary?.Value,
             LibraryId = book.Location switch
             {
-                Location.Library lib => lib.LibraryId.Value,
+                Location.AtLibrary lib => lib.LibraryId.Value,
                 Location.Unknown => null,
                 _ => throw new InvalidOperationException("Unhandled Location case."),
             },

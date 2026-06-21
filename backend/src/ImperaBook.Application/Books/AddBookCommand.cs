@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
 using ImperaBook.Domain;
+using ImperaBook.Domain.Catalog;
 
 namespace ImperaBook.Application.Books;
 
@@ -71,6 +72,7 @@ public sealed class AddBookCommandHandler(IBookWriteRepository books, ILibraryRe
         if (!await libraries.Exists(id, ct))
             return new ApplicationError.LibraryNotFound(id);
 
-        return new Location.Library(Id<Library>.From(id));
+        Id<Library> guid = Id<Library>.From(id);
+        return new Location.AtLibrary(guid);
     }
 }

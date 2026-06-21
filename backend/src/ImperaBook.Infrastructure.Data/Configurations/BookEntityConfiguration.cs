@@ -1,4 +1,4 @@
-using ImperaBook.Domain;
+using ImperaBook.Domain.Catalog;
 using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -22,4 +22,3 @@ public class BookEntityConfiguration : IEntityTypeConfiguration<BookEntity>
         // because the libraries table doesn't exist. That comes later.
     }
 }
-

@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using ImperaBook.Domain.Catalog;
 using Xunit.Sdk;
 
 namespace ImperaBook.Domain.Tests;

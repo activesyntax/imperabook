@@ -1,3 +1,5 @@
+using ImperaBook.Domain.Catalog;
+
 namespace ImperaBook.Domain;
 
 public sealed record User

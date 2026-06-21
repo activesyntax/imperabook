@@ -1,4 +1,4 @@
-namespace ImperaBook.Domain;
+namespace ImperaBook.Domain.Catalog;
 
 public sealed record Library
 {

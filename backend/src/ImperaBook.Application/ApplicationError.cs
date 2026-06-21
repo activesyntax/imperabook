@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using ImperaBook.Domain;
+using ImperaBook.Domain.Catalog;
 
 namespace ImperaBook.Application;
 
@@ -14,5 +12,6 @@ public abstract record ApplicationError
     private ApplicationError() { }
 
     public sealed record Validation(IReadOnlyList<DomainValidationError> Errors) : ApplicationError;
+
     public sealed record LibraryNotFound(Guid LibraryId) : ApplicationError;
 }

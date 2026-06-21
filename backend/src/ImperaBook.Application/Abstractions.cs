@@ -1,4 +1,4 @@
-using ImperaBook.Domain;
+using ImperaBook.Domain.Catalog;
 
 namespace ImperaBook.Application;
 

@@ -1,5 +1,4 @@
-using Xunit;
-using ImperaBook.Domain;
+using ImperaBook.Domain.Catalog;
 
 namespace ImperaBook.Domain.Tests;
 
@@ -13,13 +12,17 @@ public class TitleTests
     [InlineData("")]
     [InlineData("   ")]
     public void Create_blank_is_TitleRequired(string? raw) =>
-        Assert.Equal(new DomainValidationError.TitleRequired(), ResultAssert.ExpectError(Title.Create(raw)));
+        Assert.Equal(
+            new DomainValidationError.TitleRequired(),
+            ResultAssert.ExpectError(Title.Create(raw))
+        );
 
     [Fact]
     public void Create_over_max_length_is_TitleTooLong() =>
         Assert.Equal(
             new DomainValidationError.TitleTooLong(Title.MaxLength),
-            ResultAssert.ExpectError(Title.Create(new string('a', Title.MaxLength + 1))));
+            ResultAssert.ExpectError(Title.Create(new string('a', Title.MaxLength + 1)))
+        );
 
     [Fact]
     public void Create_at_max_length_succeeds()
@@ -41,13 +44,17 @@ public class PersonNameTests
     [InlineData("")]
     [InlineData("   ")]
     public void Create_blank_is_NameRequired(string? raw) =>
-        Assert.Equal(new DomainValidationError.NameRequired(), ResultAssert.ExpectError(PersonName.Create(raw)));
+        Assert.Equal(
+            new DomainValidationError.NameRequired(),
+            ResultAssert.ExpectError(PersonName.Create(raw))
+        );
 
     [Fact]
     public void Create_over_max_length_is_NameTooLong() =>
         Assert.Equal(
             new DomainValidationError.NameTooLong(PersonName.MaxLength),
-            ResultAssert.ExpectError(PersonName.Create(new string('a', PersonName.MaxLength + 1))));
+            ResultAssert.ExpectError(PersonName.Create(new string('a', PersonName.MaxLength + 1)))
+        );
 
     [Fact]
     public void Create_valid_succeeds() =>
@@ -64,17 +71,22 @@ public class LibraryNameTests
     public void Create_blank_is_LibraryNameRequired(string? raw) =>
         Assert.Equal(
             new DomainValidationError.LibraryNameRequired(),
-            ResultAssert.ExpectError(LibraryName.Create(raw)));
+            ResultAssert.ExpectError(LibraryName.Create(raw))
+        );
 
     [Fact]
     public void Create_over_max_length_is_LibraryNameTooLong() =>
         Assert.Equal(
             new DomainValidationError.LibraryNameTooLong(LibraryName.MaxLength),
-            ResultAssert.ExpectError(LibraryName.Create(new string('a', LibraryName.MaxLength + 1))));
+            ResultAssert.ExpectError(LibraryName.Create(new string('a', LibraryName.MaxLength + 1)))
+        );
 
     [Fact]
     public void Create_valid_succeeds() =>
-        Assert.Equal("Home Library", ResultAssert.ExpectOk(LibraryName.Create("Home Library")).Value);
+        Assert.Equal(
+            "Home Library",
+            ResultAssert.ExpectOk(LibraryName.Create("Home Library")).Value
+        );
 }
 
 // ---- Optional text: blank is None (Ok null), not an error -----------------
@@ -92,7 +104,9 @@ public class SubtitleTests
     [Fact]
     public void Create_valid_is_Ok_Some_and_trims()
     {
-        var subtitle = OptionAssert.ExpectSome(ResultAssert.ExpectOk(Subtitle.Create("  A Tale  ")));
+        var subtitle = OptionAssert.ExpectSome(
+            ResultAssert.ExpectOk(Subtitle.Create("  A Tale  "))
+        );
         Assert.Equal("A Tale", subtitle.Value);
     }
 
@@ -100,7 +114,8 @@ public class SubtitleTests
     public void Create_over_max_length_is_SubtitleTooLong() =>
         Assert.Equal(
             new DomainValidationError.SubtitleTooLong(Subtitle.MaxLength),
-            ResultAssert.ExpectError(Subtitle.Create(new string('a', Subtitle.MaxLength + 1))));
+            ResultAssert.ExpectError(Subtitle.Create(new string('a', Subtitle.MaxLength + 1)))
+        );
 }
 
 [Trait("Category", "Unit")]
@@ -116,7 +131,9 @@ public class SummaryTests
     [Fact]
     public void Create_valid_is_Ok_Some()
     {
-        var summary = OptionAssert.ExpectSome(ResultAssert.ExpectOk(Summary.Create("A short summary.")));
+        var summary = OptionAssert.ExpectSome(
+            ResultAssert.ExpectOk(Summary.Create("A short summary."))
+        );
         Assert.Equal("A short summary.", summary.Value);
     }
 
@@ -124,5 +141,6 @@ public class SummaryTests
     public void Create_over_max_length_is_SummaryTooLong() =>
         Assert.Equal(
             new DomainValidationError.SummaryTooLong(Summary.MaxLength),
-            ResultAssert.ExpectError(Summary.Create(new string('a', Summary.MaxLength + 1))));
+            ResultAssert.ExpectError(Summary.Create(new string('a', Summary.MaxLength + 1)))
+        );
 }

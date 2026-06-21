@@ -1,4 +1,4 @@
-namespace ImperaBook.Domain;
+namespace ImperaBook.Domain.Catalog;
 
 public sealed record Book
 {
@@ -15,7 +15,8 @@ public sealed record Book
         Subtitle? subtitle,
         Summary? summary,
         Attribution attribution,
-        Location location)
+        Location location
+    )
     {
         Id = id;
         Title = title;
@@ -31,6 +32,6 @@ public sealed record Book
         Subtitle? subtitle,
         Summary? summary,
         Attribution attribution,
-        Location location) =>
-        new(id, title, subtitle, summary, attribution, location);
+        Location location
+    ) => new(id, title, subtitle, summary, attribution, location);
 }

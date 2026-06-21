@@ -1,6 +1,6 @@
 using CSharpFunctionalExtensions;
 
-namespace ImperaBook.Domain;
+namespace ImperaBook.Domain.Catalog;
 
 public readonly record struct Title
 {
@@ -52,24 +52,6 @@ public readonly record struct Summary
             TextRules.Checked.Empty => (Summary?)null,
             TextRules.Checked.TooLong => new DomainValidationError.SummaryTooLong(MaxLength),
             TextRules.Checked.Valid v => (Summary?)new Summary(v.Value),
-            _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
-        };
-}
-
-public readonly record struct PersonName
-{
-    public const int MaxLength = 300;
-
-    public string Value { get; }
-
-    private PersonName(string value) => Value = value;
-
-    public static Result<PersonName, DomainValidationError> Create(string? raw) =>
-        TextRules.Check(MaxLength, raw) switch
-        {
-            TextRules.Checked.Empty => new DomainValidationError.NameRequired(),
-            TextRules.Checked.TooLong => new DomainValidationError.NameTooLong(MaxLength),
-            TextRules.Checked.Valid v => new PersonName(v.Value),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };
 }

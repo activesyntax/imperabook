@@ -1,5 +1,4 @@
-using ImperaBook.Domain;
-using Xunit;
+using ImperaBook.Domain.Catalog;
 
 namespace ImperaBook.Domain.Tests;
 

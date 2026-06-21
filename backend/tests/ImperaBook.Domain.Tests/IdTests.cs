@@ -1,6 +1,4 @@
-using System;
-using Xunit;
-using ImperaBook.Domain;
+using ImperaBook.Domain.Catalog;
 
 namespace ImperaBook.Domain.Tests;
 
@@ -15,8 +13,7 @@ public class IdTests
     }
 
     [Fact]
-    public void New_produces_distinct_ids() =>
-        Assert.NotEqual(Id<Book>.New(), Id<Book>.New());
+    public void New_produces_distinct_ids() => Assert.NotEqual(Id<Book>.New(), Id<Book>.New());
 
     [Fact]
     public void Equality_is_by_wrapped_value()
@@ -24,8 +21,4 @@ public class IdTests
         var g = Guid.NewGuid();
         Assert.Equal(Id<Book>.From(g), Id<Book>.From(g));
     }
-
-    // Note: Id<Book> and Id<Author> are distinct closed generic types, so comparing them
-    // is a compile error, not a runtime failure — that's the phantom-type guarantee, and it
-    // can't be expressed as a runtime assertion here.
 }
