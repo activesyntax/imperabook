@@ -1,10 +1,12 @@
+using CSharpFunctionalExtensions;
+
 namespace ImperaBook.Domain.Catalog;
 
 public sealed record Book
 {
     public Id<Book> Id { get; }
     public Title Title { get; }
-    public Subtitle? Subtitle { get; }
+    public Maybe<Subtitle> Subtitle { get; }
     public Summary? Summary { get; }
     public Attribution Attribution { get; }
     public Location Location { get; }
@@ -12,7 +14,7 @@ public sealed record Book
     private Book(
         Id<Book> id,
         Title title,
-        Subtitle? subtitle,
+        Maybe<Subtitle> subtitle,
         Summary? summary,
         Attribution attribution,
         Location location
@@ -29,7 +31,7 @@ public sealed record Book
     public static Book Create(
         Id<Book> id,
         Title title,
-        Subtitle? subtitle,
+        Maybe<Subtitle> subtitle,
         Summary? summary,
         Attribution attribution,
         Location location

@@ -28,12 +28,12 @@ public readonly record struct Subtitle
 
     private Subtitle(string value) => Value = value;
 
-    public static Result<Subtitle?, DomainValidationError> Create(string? raw) =>
+    public static Result<Maybe<Subtitle>, DomainValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
-            TextRules.Checked.Empty => (Subtitle?)null,
+            TextRules.Checked.Empty => Maybe<Subtitle>.None,
             TextRules.Checked.TooLong => new DomainValidationError.SubtitleTooLong(MaxLength),
-            TextRules.Checked.Valid v => (Subtitle?)new Subtitle(v.Value),
+            TextRules.Checked.Valid v => Maybe<Subtitle>.From(new Subtitle(v.Value)),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };
 }

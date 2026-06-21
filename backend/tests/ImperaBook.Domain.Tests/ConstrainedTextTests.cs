@@ -99,14 +99,12 @@ public class SubtitleTests
     [InlineData("")]
     [InlineData("   ")]
     public void Create_blank_is_Ok_None(string? raw) =>
-        OptionAssert.ExpectNone(ResultAssert.ExpectOk(Subtitle.Create(raw)));
+        Assert.True(Subtitle.Create(raw).GetValueOrDefault().HasNoValue);
 
     [Fact]
     public void Create_valid_is_Ok_Some_and_trims()
     {
-        var subtitle = OptionAssert.ExpectSome(
-            ResultAssert.ExpectOk(Subtitle.Create("  A Tale  "))
-        );
+        var subtitle = Subtitle.Create("  A Tale  ").GetValueOrDefault().Value;
         Assert.Equal("A Tale", subtitle.Value);
     }
 
@@ -114,7 +112,7 @@ public class SubtitleTests
     public void Create_over_max_length_is_SubtitleTooLong() =>
         Assert.Equal(
             new DomainValidationError.SubtitleTooLong(Subtitle.MaxLength),
-            ResultAssert.ExpectError(Subtitle.Create(new string('a', Subtitle.MaxLength + 1)))
+            Subtitle.Create(new string('a', Subtitle.MaxLength + 1)).Error
         );
 }
 

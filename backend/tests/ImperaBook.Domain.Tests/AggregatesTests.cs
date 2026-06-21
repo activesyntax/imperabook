@@ -10,9 +10,7 @@ public class AggregatesTests
     {
         var id = Id<Book>.New();
         var title = Builders.ValidTitle("Dune");
-        var subtitle = OptionAssert.ExpectSome(
-            ResultAssert.ExpectOk(Subtitle.Create("The Spice Must Flow"))
-        );
+        var subtitle = Subtitle.Create("The Spice Must Flow").GetValueOrDefault();
         var attribution = Attribution.OfAuthorIds(new[] { Id<Author>.New() });
         var book = Book.Create(
             id,
@@ -24,7 +22,7 @@ public class AggregatesTests
         );
         Assert.Equal(id, book.Id);
         Assert.Equal(title, book.Title);
-        Assert.Equal(subtitle, OptionAssert.ExpectSome(book.Subtitle));
+        Assert.Equal(subtitle, book.Subtitle.Value);
         Assert.Null(book.Summary);
         Assert.Equal(attribution, book.Attribution);
         Assert.IsType<Location.Unknown>(book.Location);
