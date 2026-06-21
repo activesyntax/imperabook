@@ -46,12 +46,12 @@ public readonly record struct Summary
 
     private Summary(string value) => Value = value;
 
-    public static Result<Summary?, DomainValidationError> Create(string? raw) =>
+    public static Result<Maybe<Summary>, DomainValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
-            TextRules.Checked.Empty => (Summary?)null,
+            TextRules.Checked.Empty => Maybe<Summary>.None,
             TextRules.Checked.TooLong => new DomainValidationError.SummaryTooLong(MaxLength),
-            TextRules.Checked.Valid v => (Summary?)new Summary(v.Value),
+            TextRules.Checked.Valid v => Maybe<Summary>.From(new Summary(v.Value)),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };
 }

@@ -38,10 +38,9 @@ public sealed class AddBookCommandHandler(IBookWriteRepository books, ILibraryRe
         return bookId.Value;
     }
 
-    private static Result<
-        (Title Title, Subtitle? Subtitle, Summary? Summary),
-        ApplicationError
-    > ValidateFields(AddBookCommand command)
+    private record struct BookFields(Title Title, Maybe<Subtitle> Subtitle, Maybe<Summary> Summary);
+
+    private static Result<BookFields, ApplicationError> ValidateFields(AddBookCommand command)
     {
         var title = Title.Create(command.Title);
         var subtitle = Subtitle.Create(command.Subtitle);
@@ -58,7 +57,9 @@ public sealed class AddBookCommandHandler(IBookWriteRepository books, ILibraryRe
         if (failures.Count > 0)
             return new ApplicationError.Validation(failures);
 
-        return (title.Value, subtitle.Value, summary.Value);
+        return Result.Success<BookFields, ApplicationError>(
+            new BookFields(title.Value, subtitle.Value, summary.Value)
+        );
     }
 
     private async Task<Result<Location, ApplicationError>> ResolveLocation(
