@@ -11,11 +11,11 @@ public readonly record struct PersonName
 
     private PersonName(string value) => Value = value;
 
-    public static Result<PersonName, DomainValidationError> Create(string? raw) =>
+    public static Result<PersonName, CatalogValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
-            TextRules.Checked.Empty => new DomainValidationError.NameRequired(),
-            TextRules.Checked.TooLong => new DomainValidationError.NameTooLong(MaxLength),
+            TextRules.Checked.Empty => new CatalogValidationError.NameRequired(),
+            TextRules.Checked.TooLong => new CatalogValidationError.NameTooLong(MaxLength),
             TextRules.Checked.Valid v => new PersonName(v.Value),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };

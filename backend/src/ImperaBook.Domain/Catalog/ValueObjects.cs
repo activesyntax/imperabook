@@ -10,11 +10,11 @@ public readonly record struct Title
 
     private Title(string value) => Value = value;
 
-    public static Result<Title, DomainValidationError> Create(string? raw) =>
+    public static Result<Title, CatalogValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
-            TextRules.Checked.Empty => new DomainValidationError.TitleRequired(),
-            TextRules.Checked.TooLong => new DomainValidationError.TitleTooLong(MaxLength),
+            TextRules.Checked.Empty => new CatalogValidationError.TitleRequired(),
+            TextRules.Checked.TooLong => new CatalogValidationError.TitleTooLong(MaxLength),
             TextRules.Checked.Valid v => new Title(v.Value),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };
@@ -28,11 +28,11 @@ public readonly record struct Subtitle
 
     private Subtitle(string value) => Value = value;
 
-    public static Result<Maybe<Subtitle>, DomainValidationError> Create(string? raw) =>
+    public static Result<Maybe<Subtitle>, CatalogValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
             TextRules.Checked.Empty => Maybe<Subtitle>.None,
-            TextRules.Checked.TooLong => new DomainValidationError.SubtitleTooLong(MaxLength),
+            TextRules.Checked.TooLong => new CatalogValidationError.SubtitleTooLong(MaxLength),
             TextRules.Checked.Valid v => Maybe<Subtitle>.From(new Subtitle(v.Value)),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };
@@ -46,11 +46,11 @@ public readonly record struct Summary
 
     private Summary(string value) => Value = value;
 
-    public static Result<Maybe<Summary>, DomainValidationError> Create(string? raw) =>
+    public static Result<Maybe<Summary>, CatalogValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
             TextRules.Checked.Empty => Maybe<Summary>.None,
-            TextRules.Checked.TooLong => new DomainValidationError.SummaryTooLong(MaxLength),
+            TextRules.Checked.TooLong => new CatalogValidationError.SummaryTooLong(MaxLength),
             TextRules.Checked.Valid v => Maybe<Summary>.From(new Summary(v.Value)),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };
@@ -64,11 +64,11 @@ public readonly record struct LibraryName
 
     private LibraryName(string value) => Value = value;
 
-    public static Result<LibraryName, DomainValidationError> Create(string? raw) =>
+    public static Result<LibraryName, CatalogValidationError> Create(string? raw) =>
         TextRules.Check(MaxLength, raw) switch
         {
-            TextRules.Checked.Empty => new DomainValidationError.LibraryNameRequired(),
-            TextRules.Checked.TooLong => new DomainValidationError.LibraryNameTooLong(MaxLength),
+            TextRules.Checked.Empty => new CatalogValidationError.LibraryNameRequired(),
+            TextRules.Checked.TooLong => new CatalogValidationError.LibraryNameTooLong(MaxLength),
             TextRules.Checked.Valid v => new LibraryName(v.Value),
             _ => throw new InvalidOperationException("Unhandled TextRules.Checked case."),
         };

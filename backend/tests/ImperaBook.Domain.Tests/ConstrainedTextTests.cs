@@ -13,12 +13,12 @@ public class TitleTests
     [InlineData("")]
     [InlineData("   ")]
     public void Create_blank_is_TitleRequired(string? raw) =>
-        Assert.Equal(new DomainValidationError.TitleRequired(), Title.Create(raw).Error);
+        Assert.Equal(new CatalogValidationError.TitleRequired(), Title.Create(raw).Error);
 
     [Fact]
     public void Create_over_max_length_is_TitleTooLong() =>
         Assert.Equal(
-            new DomainValidationError.TitleTooLong(Title.MaxLength),
+            new CatalogValidationError.TitleTooLong(Title.MaxLength),
             Title.Create(new string('a', Title.MaxLength + 1)).Error
         );
 
@@ -42,12 +42,12 @@ public class PersonNameTests
     [InlineData("")]
     [InlineData("   ")]
     public void Create_blank_is_NameRequired(string? raw) =>
-        Assert.Equal(new DomainValidationError.NameRequired(), PersonName.Create(raw).Error);
+        Assert.Equal(new CatalogValidationError.NameRequired(), PersonName.Create(raw).Error);
 
     [Fact]
     public void Create_over_max_length_is_NameTooLong() =>
         Assert.Equal(
-            new DomainValidationError.NameTooLong(PersonName.MaxLength),
+            new CatalogValidationError.NameTooLong(PersonName.MaxLength),
             PersonName.Create(new string('a', PersonName.MaxLength + 1)).Error
         );
 
@@ -65,14 +65,14 @@ public class LibraryNameTests
     [InlineData("   ")]
     public void Create_blank_is_LibraryNameRequired(string? raw) =>
         Assert.Equal(
-            new DomainValidationError.LibraryNameRequired(),
+            new CatalogValidationError.LibraryNameRequired(),
             LibraryName.Create(raw).Error
         );
 
     [Fact]
     public void Create_over_max_length_is_LibraryNameTooLong() =>
         Assert.Equal(
-            new DomainValidationError.LibraryNameTooLong(LibraryName.MaxLength),
+            new CatalogValidationError.LibraryNameTooLong(LibraryName.MaxLength),
             LibraryName.Create(new string('a', LibraryName.MaxLength + 1)).Error
         );
 
@@ -103,7 +103,7 @@ public class SubtitleTests
     [Fact]
     public void Create_over_max_length_is_SubtitleTooLong() =>
         Assert.Equal(
-            new DomainValidationError.SubtitleTooLong(Subtitle.MaxLength),
+            new CatalogValidationError.SubtitleTooLong(Subtitle.MaxLength),
             Subtitle.Create(new string('a', Subtitle.MaxLength + 1)).Error
         );
 }
@@ -128,7 +128,7 @@ public class SummaryTests
     [Fact]
     public void Create_over_max_length_is_SummaryTooLong() =>
         Assert.Equal(
-            new DomainValidationError.SummaryTooLong(Summary.MaxLength),
+            new CatalogValidationError.SummaryTooLong(Summary.MaxLength),
             Summary.Create(new string('a', Summary.MaxLength + 1)).Error
         );
 }

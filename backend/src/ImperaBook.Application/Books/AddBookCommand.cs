@@ -46,14 +46,14 @@ public sealed class AddBookCommandHandler(IBookWriteRepository books, ILibraryRe
         var subtitle = Subtitle.Create(command.Subtitle);
         var summary = Summary.Create(command.Summary);
 
-        DomainValidationError?[] errors =
+        CatalogValidationError?[] errors =
         [
             title.IsFailure ? title.Error : null,
             subtitle.IsFailure ? subtitle.Error : null,
             summary.IsFailure ? summary.Error : null,
         ];
 
-        var failures = errors.OfType<DomainValidationError>().ToList();
+        var failures = errors.OfType<CatalogValidationError>().ToList();
         if (failures.Count > 0)
             return new ApplicationError.Validation(failures);
 

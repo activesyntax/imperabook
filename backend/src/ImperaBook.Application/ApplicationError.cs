@@ -11,7 +11,8 @@ public abstract record ApplicationError
 {
     private ApplicationError() { }
 
-    public sealed record Validation(IReadOnlyList<DomainValidationError> Errors) : ApplicationError;
+    public sealed record Validation(IReadOnlyList<CatalogValidationError> Errors)
+        : ApplicationError;
 
     public sealed record LibraryNotFound(Guid LibraryId) : ApplicationError;
 }
