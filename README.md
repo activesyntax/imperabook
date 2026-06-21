@@ -43,8 +43,8 @@ ImperaBook is built as a monorepo demonstrating modern **Clean Architecture**, *
 ### MVP1: Keyboard-Driven Core Management & Dashboard
 
 - **Command Execution**: Core CRUD operations driven by a deliberately minimal plain-text command engine. Commands are bare verbs (e.g., typing `add book`); the interactive shell then prompts for each parameter in turn—no flags, no special characters, nothing to memorize.
-- **Relational Dashboard**: Real-time analytical widgets showing category distributions, language breakdowns, and total collection metrics.
-- **Advanced Query Engine**: Multi-token full-text search combined with strict dynamic filtering (language, publication year, custom metadata tags). Invoked explicitly via the `search` command, or implicitly whenever input doesn't match a known command.
+- **Relational Dashboard**: Real-time analytical widgets showing language breakdowns, publication-year distribution, and total collection metrics.
+- **Advanced Query Engine**: Multi-token full-text search combined with strict dynamic filtering (language and publication year). Invoked explicitly via the `search` command, or implicitly whenever input doesn't match a known command.
 
 ### MVP2: Power-User Syntax, Automation & AI Enrichment (Pro Tiers)
 
