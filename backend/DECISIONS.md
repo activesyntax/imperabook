@@ -12,19 +12,21 @@ Format is lightweight ADR: each entry gives the context, the decision, and the t
 
 ---
 
-## 1. Pure C# backend (migrated from a polyglot F#/C# stack)
+## 1. Single-language C# backend
 
-**Context.** The project began with F# for the Domain and Application layers and C# for
-Infrastructure. The original goal — showcasing functional domain modeling — was genuine, but
-it worked against the primary goal of being hireable as a mainstream .NET developer.
+**Context.** An earlier iteration split the backend across two languages — one for the Domain and
+Application layers, C# for Infrastructure. A polyglot boundary inside a single deployable adds real
+friction: a second toolchain and build target, cross-language interop at the layer seam, and value
+types that have to round-trip cleanly across that seam.
 
-**Decision.** Migrate to a pure C# backend. Functional domain modeling is showcased separately
-in a dedicated F# project, so the technique is demonstrated without making the flagship project
-read as niche.
+**Decision.** One language across all layers: C#. The type-driven domain modeling the project is
+built on is expressed in C# directly (see 2), so nothing in the design depends on a second language
+being present.
 
-**Trade-off.** Lose F#'s native sum types and total-by-default ergonomics; gain a codebase any
-.NET team can read and hire against. The differentiator is reframed as *type-driven domain
-modeling in mainstream C#* — harder to do well, and more relevant to the market.
+**Trade-off.** Give up the native sum types and total-by-default ergonomics the other language
+offered; gain a single toolchain, no interop seam, and a uniform codebase. The modeling techniques
+that motivated the split are reproduced in C# at the cost of more ceremony — which is exactly the
+trade Decision 2 takes on deliberately.
 
 ---
 
@@ -34,7 +36,7 @@ modeling in mainstream C#* — harder to do well, and more relevant to the marke
 title, zero authors, a book "in" a library that does not exist.
 
 **Decision.** Constrained values are `record struct` value objects with private constructors and
-smart constructors returning `Result<T, DomainValidationError>` (e.g. `Title.Create`). Identities
+smart constructors returning `Result<T, CatalogValidationError>` (e.g. `Title.Create`). Identities
 are phantom-typed (`Id<TEntity>`), so `Id<Book>` and `Id<Author>` cannot be confused at compile
 time. Sum types (`Attribution`, `Location`) are closed sealed-record hierarchies. "At least one
 author" is encoded structurally in `Authors` — a non-optional primary plus the rest — so zero
@@ -54,11 +56,11 @@ is permissively licensed (Apache 2.0), so this was a design decision, not a lice
 required + max length; `Title.MaxLength` is the single source of truth, reused directly in the
 EF Core configuration (`HasMaxLength(Title.MaxLength)`). No FluentValidation.
 
-**Trade-off.** Lose a library interviewers recognize on sight. Gain a single source of truth — no
-rule duplicated between a validator and a value object — and a coherent story: there is exactly
-one place a title can be wrong, and it is the title type. A parallel FluentValidation layer would
-duplicate the max-length rule and invite the question "why validate twice?". FluentValidation is
-reserved for cross-field request shape if the API layer ever needs it.
+**Trade-off.** Give up a widely-used, conventional validation layer. Gain a single source of truth —
+no rule duplicated between a validator and a value object: there is exactly one place a title can be
+wrong, and it is the title type. A parallel FluentValidation layer would duplicate the max-length
+rule and split the definition of validity across two locations. FluentValidation is reserved for
+cross-field request shape if the API layer ever needs it.
 
 ---
 
@@ -82,9 +84,9 @@ multiply.
 
 ## 5. CQRS naming and structure, distinctive domain kept
 
-**Context.** The recognizable Clean Architecture vocabulary (`...Command`, `...Query`,
-vertical-slice folders) makes a codebase legible to any .NET reviewer. The risk is looking like a
-generic template clone.
+**Context.** The conventional Clean Architecture vocabulary (`...Command`, `...Query`,
+vertical-slice folders) makes the codebase's structure predictable and navigable. The risk is
+that adopting the layout also pulls in the libraries the template usually ships with by default.
 
 **Decision.** Adopt the vocabulary and folders (`Books/Commands`, `Books/Queries`,
 `...Command` / `...Query` types, `...CommandHandler` / `...QueryHandler` handlers) while keeping
@@ -92,10 +94,10 @@ the type-driven domain underneath. Parameterless or single-primitive queries do 
 request record — with no mediator, boxing nothing into a request object is pure ceremony, and the
 handler suffix carries the convention.
 
-**Trade-off.** The structure itself is free legibility. The judgment is in *not* also importing the
-heavyweight libraries the template usually ships with (see 3 and 4) — the layout is borrowed, the
-frameworks are not. The one dependency deliberately taken on, CSharpFunctionalExtensions, is a small
-Result/Maybe library rather than a framework (see 6).
+**Trade-off.** The structure itself is low-cost and conventional. The judgment is in *not* also
+importing the heavyweight libraries the template usually ships with (see 3 and 4) — the layout is
+adopted, the frameworks are not. The one dependency deliberately taken on, CSharpFunctionalExtensions,
+is a small Result/Maybe library rather than a framework (see 6).
 
 ---
 
@@ -104,16 +106,16 @@ Result/Maybe library rather than a framework (see 6).
 **Context.** An earlier iteration hand-rolled `Result<T>` and removed its raw `.Value` / `.Error`
 getters outright. The operating principle was blunt — whatever is not enforced eventually gets
 forgotten, and a result whose value can be read without checking `IsOk` is exactly the check
-someone skips. That bespoke type did its job, but it was a type every reader and every future
-teammate would have to learn, and maintaining a result/option algebra by hand is off-thesis for a
-project whose selling point is judgment, not plumbing.
+someone skips. That bespoke type did its job, but it was a non-standard type every reader had to
+learn, and a hand-maintained result/option algebra is ongoing surface to test and carry for no
+behavioural gain over an established implementation.
 
 **Decision.** Adopt CSharpFunctionalExtensions (Khorikov) for `Result<T, E>` and `Maybe<T>` across
-the Domain and Application layers. It is small, permissively licensed, idiomatic, and recognized —
-scoped to exactly Result/Maybe rather than importing a whole FP runtime. (LanguageExt was rejected
-on that basis: a heavier surface and major-version churn that conflict with the mainstream-C#
-positioning.) The two-tier error model rides on top: `Result<T, DomainValidationError>` in the
-domain, `Result<T, ApplicationError>` in the application layer.
+the Domain and Application layers. It is small, permissively licensed, and scoped to exactly
+Result/Maybe rather than a whole FP runtime. (LanguageExt was rejected on that basis: a much larger
+surface area and major-version churn, for capabilities this project does not use.) The two-tier
+error model rides on top: `Result<T, CatalogValidationError>` in the domain,
+`Result<T, ApplicationError>` in the application layer.
 
 **Trade-off — stated plainly because it reverses the prior stance.** CFE's `Result<T, E>` exposes
 `.Value` and `.Error`, so the "raw getter removed" compile-time guarantee is gone. What replaces it
@@ -123,9 +125,8 @@ hand-rolled type enforced is still available and still preferred — `Match`, `M
 `TryGetValue` / `TryGetError` — and the convention is to use those for control flow and treat
 `.Value` as the loud, deliberate escape hatch (the role `Expect("validated above")` played before),
 used only where success is already established, e.g. in tests after an explicit failure assertion.
-The net: a compile-time guarantee I had built and could defend, traded for a maintained, mainstream
-library a hiring team already reads. That is the right call for this project's goal, and the cost is
-named, not hidden — see *Known limitations*.
+The net: a compile-time guarantee is traded for a maintained, conventional library and the removal
+of a hand-rolled type from the codebase. The cost is named, not hidden — see *Known limitations*.
 
 ---
 
@@ -221,7 +222,7 @@ honest states.
 
 ## 12. One error shape at the boundary: RFC 9457 ProblemDetails
 
-**Context.** Domain validation errors are a rich closed DU (`DomainValidationError`:
+**Context.** Domain validation errors are a rich closed DU (`CatalogValidationError`:
 `TitleRequired`, `TitleTooLong(max)`, …). Serialized raw to the wire, that richness is *lost* — the
 default serializer writes against the declared type with no discriminator, so distinct cases collapse
 to indistinguishable `{}` objects and the client cannot tell what failed. Separately, three different
@@ -259,7 +260,7 @@ must always mean "no matching rows" and *never* a swallowed exception — read r
 `catch` and return `[]`; unexpected failures propagate to the global handler.
 
 **Trade-off.** A hand-written DU→wire mapper is one more thing to maintain, and it must be kept in step
-with the `DomainValidationError` cases (the loud `_ => throw` arm is what flags drift). In exchange,
+with the `CatalogValidationError` cases (the loud `_ => throw` arm is what flags drift). In exchange,
 the client sees exactly one error format everywhere, the domain DU's full information survives the
 boundary as a stable `code`, and the domain never leaks its internal shape onto the wire. (CFE's
 companion `CSharpFunctionalExtensions.HttpResults` would generate much of this `Result → ProblemDetails`
