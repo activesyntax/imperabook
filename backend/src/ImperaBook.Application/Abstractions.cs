@@ -2,8 +2,6 @@ using ImperaBook.Domain.Catalog;
 
 namespace ImperaBook.Application;
 
-// Read model: a flat projection for the query (CQRS read) side, queried straight from the store.
-// This is NOT a boundary adapter — it exists so read paths don't hydrate full aggregates just to flatten them.
 public sealed record BookListItem
 {
     public required Guid Id { get; init; }
@@ -13,8 +11,6 @@ public sealed record BookListItem
     public Guid? LibraryId { get; init; }
 }
 
-// The write repository speaks in domain terms. Flattening Book -> persistence shape (BookEntity)
-// is an Infrastructure concern; Application only hands over the aggregate.
 public interface IBookWriteRepository
 {
     Task Add(Book book, CancellationToken ct);

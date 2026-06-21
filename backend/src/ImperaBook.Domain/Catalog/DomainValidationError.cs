@@ -8,6 +8,8 @@ public abstract record DomainValidationError
 
     public sealed record TitleTooLong(int MaxLength) : DomainValidationError;
 
+    public sealed record SubtitleRequired : DomainValidationError;
+
     public sealed record SubtitleTooLong(int MaxLength) : DomainValidationError;
 
     public sealed record SummaryTooLong(int MaxLength) : DomainValidationError;

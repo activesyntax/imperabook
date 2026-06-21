@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using ImperaBook.Api.Errors;
 using ImperaBook.Application;
 using ImperaBook.Application.Books;
 using ImperaBook.Infrastructure.Data;
@@ -15,7 +16,12 @@ var connectionString =
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString);
 
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
@@ -60,16 +66,7 @@ app.MapPost(
     async (AddBookCommandHandler handler, AddBookCommand command, CancellationToken ct) =>
     {
         var result = await handler.Handle(command, ct);
-        return result.Match(
-            id => Results.Created($"/books/{id}", id),
-            error =>
-                error switch
-                {
-                    ApplicationError.Validation validation => Results.BadRequest(validation),
-                    ApplicationError.LibraryNotFound notFound => Results.NotFound(notFound),
-                    _ => Results.Problem("Unhandled application error."),
-                }
-        );
+        return result.Match(id => Results.Created($"/books/{id}", id), error => error.ToProblem());
     }
 );
 

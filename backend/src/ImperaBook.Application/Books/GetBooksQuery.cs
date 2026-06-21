@@ -1,7 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace ImperaBook.Application.Books;
 
 public sealed record GetBooksQuery
