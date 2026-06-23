@@ -10,7 +10,7 @@ ImperaBook is a minimalist, high-performance home library management and catalog
 
 Unlike traditional click-heavy library apps, ImperaBook treats your catalog like an efficient command center:
 
-- **Command-Based Fluid Control**: A built-in command bar lets you query, catalog, and batch-edit your library by typing plain-text commands—no shortcuts, no special syntax. Any input that isn't a recognized command falls through to instant full-text search, so finding a book and running an operation share the same line.
+- **Command-Based Fluid Control**: A powerful, built-in command palette (accessible via shortcuts like `:` or `Ctrl+K`) lets you query and catalog your library entirely from the keyboard. Autocomplete suggests commands from a closed command grammar as you type—typing `book` surfaces `add book`, `list books`, and `show book`, while typing `add` surfaces every `add` command. Anything unrecognized falls through to full-text search. Inspired by modern terminal tools like Vim and Helix.
 - **Typography-Driven Aesthetic**: A dark, modern, minimalist user interface designed to maximize text legibility, screen real estate, and scannability.
 - **Type-Driven Domain Modeling**: A pure, immutable C# core using closed sealed-record hierarchies, smart-constructor value objects, and phantom-typed identifiers to make invalid library states literally unrepresentable.
 
@@ -42,13 +42,12 @@ ImperaBook is built as a monorepo demonstrating modern **Clean Architecture**, *
 
 ### MVP1: Keyboard-Driven Core Management & Dashboard
 
-- **Command Execution**: Core CRUD operations driven by a deliberately minimal plain-text command engine. Commands are bare verbs (e.g., typing `add book`); the interactive shell then prompts for each parameter in turn—no flags, no special characters, nothing to memorize.
-- **Relational Dashboard**: Real-time analytical widgets showing language breakdowns, publication-year distribution, and total collection metrics.
-- **Advanced Query Engine**: Multi-token full-text search combined with strict dynamic filtering (language and publication year). Invoked explicitly via the `search` command, or implicitly whenever input doesn't match a known command.
+- **Command Palette Execution**: Core CRUD operations driven by bare-verb commands with interactive prompting (e.g., typing `add book`, then entering each field at the prompt). Autocomplete guides you to the canonical command as you type; inline parameters (`add book "The Hobbit" --author "Tolkien"`) arrive in MVP2.
+- **Relational Dashboard**: Real-time analytical widgets showing reading status breakdowns, category distributions, and total collection metrics.
+- **Advanced Query Engine**: Multi-token full-text search combined with strict dynamic filtering (Language, publication year, custom metadata tags).
 
-### MVP2: Power-User Syntax, Automation & AI Enrichment (Pro Tiers)
+### MVP2: Automation, AI & Metadata Enrichment (Pro Tiers)
 
-- **Parameterized Commands**: Advanced users can pass arguments inline (e.g., `add book "The Hobbit" --author "Tolkien"`), skipping the interactive prompts for faster, scriptable entry—while the simple bare commands remain the default for everyone else.
 - **ISBN Smart Scan**: Camera-based mobile barcode scanning coupled with instant metadata population from external APIs (Google Books, Open Library).
 - **AI-Powered Cover/Page Inference**: Image ingestion through OpenAI API to extract title, publishing data, or cataloging records from a photo of a book cover.
 - **Advanced Export Utilities**: High-fidelity, print-ready document rendering alongside strict e-book configuration outputs (EPUB, PDF layouts).
