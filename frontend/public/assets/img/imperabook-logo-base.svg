@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 2000 1800"
+   width="2000"
+   height="1800"
+   version="1.1"
+   id="svg9"
+   sodipodi:docname="imperabook-logo.svg"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs9" />
+  <sodipodi:namedview
+     id="namedview9"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.19973695"
+     inkscape:cx="-1489.459"
+     inkscape:cy="2365.6114"
+     inkscape:window-width="2560"
+     inkscape:window-height="1366"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg9" />
+  <!-- Three-book stack icon -->
+  <g
+     stroke="#3d1f12"
+     stroke-width="14"
+     stroke-linejoin="round"
+     id="g9"
+     transform="translate(563.56194,315.54147)">
+    <!-- Book 1: left, orange, upright (baseline y=768) -->
+    <rect
+       x="245"
+       y="258"
+       width="160"
+       height="510"
+       rx="30"
+       fill="#f2901c"
+       id="rect1" />
+    <rect
+       x="270"
+       y="293"
+       width="112"
+       height="22"
+       rx="11"
+       fill="#faf3e1"
+       stroke="none"
+       id="rect2" />
+    <rect
+       x="270"
+       y="331"
+       width="50"
+       height="16"
+       rx="8"
+       fill="#dcd4c7"
+       stroke="none"
+       id="rect3" />
+    <!-- Book 2: middle, cream, upright (baseline y=768) -->
+    <rect
+       x="407"
+       y="322"
+       width="146"
+       height="446"
+       rx="30"
+       fill="#f1ebdc"
+       id="rect4" />
+    <rect
+       x="440"
+       y="353"
+       width="100"
+       height="22"
+       rx="11"
+       fill="#fcf9f0"
+       stroke="none"
+       id="rect5" />
+    <!-- Book 3: right, orange, leaning left, resting on baseline,
+         top corner just touching the middle book -->
+    <g
+       transform="rotate(-15,672,783.1915)"
+       id="g8">
+      <rect
+         x="670.13635"
+         y="346.96472"
+         width="150"
+         height="420"
+         rx="30"
+         fill="#ee821e"
+         id="rect6" />
+      <rect
+         x="700"
+         y="384"
+         width="90"
+         height="16"
+         rx="8"
+         fill="#f8a648"
+         stroke="none"
+         id="rect7" />
+      <rect
+         x="690"
+         y="410"
+         width="90"
+         height="16"
+         rx="8"
+         fill="#f8a648"
+         stroke="none"
+         id="rect8" />
+    </g>
+  </g>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:192px;font-family:Serif;-inkscape-font-specification:'Serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:2px;writing-mode:lr-tb;direction:ltr;fill:#000000"
+     x="532.26489"
+     y="1309.6293"
+     id="text9"><tspan
+       sodipodi:role="line"
+       id="tspan9"
+       x="532.26489"
+       y="1309.6293"
+       style="letter-spacing:2px">I<tspan
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:146.667px;font-family:Serif;-inkscape-font-specification:'Serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:2px"
+   id="tspan12">MPERA</tspan><tspan
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:192px;font-family:Serif;-inkscape-font-specification:'Serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:2px;fill:#d45500"
+   id="tspan10">B<tspan
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:146.667px;font-family:Serif;-inkscape-font-specification:'Serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:2px"
+   id="tspan1">OOK</tspan></tspan></tspan></text>
+</svg>
