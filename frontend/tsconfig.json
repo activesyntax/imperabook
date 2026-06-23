@@ -11,8 +11,22 @@
     "isolatedModules": true,
     "experimentalDecorators": true,
     "importHelpers": true,
-    "target": "ES2022",
-    "module": "preserve"
+    "target": "ES2023",
+    "module": "preserve",
+    "paths": {
+      "@core/*": [
+        "./src/core/*"
+      ],
+      "@app/*": [
+        "./src/app/*"
+      ],
+      "@config/*": [
+        "./src/config/*"
+      ],
+      "@utils/*": [
+        "./src/utils/*"
+      ]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
