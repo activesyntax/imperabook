@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TableView } from './table-view';
+import { ImageView } from './image-view';
 
-describe('TableView', () => {
-  let component: TableView;
-  let fixture: ComponentFixture<TableView>;
+describe('ImageView', () => {
+  let component: ImageView;
+  let fixture: ComponentFixture<ImageView>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TableView],
+      imports: [ImageView],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(TableView);
+    fixture = TestBed.createComponent(ImageView);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
