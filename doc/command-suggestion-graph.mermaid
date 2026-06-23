@@ -1,0 +1,57 @@
+%% ImperaBook — Command suggestion graph (MVP1)
+%% Verb-first suggestion tree. The leading token narrows the candidate set;
+%% token-match means ANY token in a command name also surfaces it
+%% (full index in COMMANDS.md → "Command suggestion model").
+%% Ranking: exact full-command match > leading-verb match > contained-token match.
+%% Navigation (purple) is context-sensitive: offered only when a table/detail view is on screen.
+%% Out of MVP1: library management and tags — no such nodes here.
+graph LR
+  ROOT([command bar]):::root
+
+  ROOT --> ADD([add]):::verb
+  ROOT --> UPD([update]):::verb
+  ROOT --> RM([remove]):::verb
+  ROOT --> SHOW([show]):::verb
+  ROOT --> LIST([list]):::verb
+  ROOT --> SRCH([search]):::verb
+  ROOT --> FLT([filter]):::verb
+  ROOT --> DASH[dashboard]:::nav
+  ROOT --> NAV([navigation]):::nav
+  ROOT --> SHELL([shell]):::shell
+
+  ADD --> ab[add book]
+  ADD --> aa[add author]
+
+  UPD --> ub[update book]
+  UPD --> ua[update author]
+
+  RM --> rb[remove book]
+  RM --> ra[remove author]
+
+  SHOW --> sb[show book]
+
+  LIST --> lb[list books]
+  LIST --> la[list authors]
+
+  SRCH --> sr[search]
+  FLT --> fl[filter]
+
+  NAV --> bk[back]:::nav
+  NAV --> op[open]:::nav
+  NAV --> nx[next]:::nav
+  NAV --> pv[prev]:::nav
+  NAV --> tp[top]:::nav
+  NAV --> bt[bottom]:::nav
+
+  SHELL --> hp[help]
+  SHELL --> cl[clear]
+  SHELL --> cn[cancel]
+  SHELL --> qt[quit / exit]
+
+  UNREC[/unrecognized input/]:::fallback -.->|no command match, on submit| sr
+
+  classDef root fill:#1f2430,stroke:#7aa2f7,color:#c0caf5;
+  classDef verb fill:#24283b,stroke:#9aa5ce,color:#c0caf5;
+  classDef nav fill:#2a2440,stroke:#bb9af7,color:#e0d8ff;
+  classDef shell fill:#1f2a24,stroke:#9ece6a,color:#cfe8c0;
+  classDef fallback fill:#2a2025,stroke:#f7768e,color:#f7c0cb;
