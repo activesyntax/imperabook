@@ -1,5 +1,5 @@
 import { Component, forwardRef, input } from '@angular/core';
-import * as V from '../view-node';
+import * as ViewNode from '../view-node';
 import { ImageView } from '../image-view/image-view';
 import { CardView } from '../card-view/card-view';
 import { CardCollection } from '../card-collection/card-collection';
@@ -41,10 +41,10 @@ import { UnknownView } from '../unknown-view/unknown-view';
   `,
 })
 export class View {
-  node = input.required<V.ViewNode>();
+  node = input.required<ViewNode.ViewNode>();
 
-  asImage = (n: V.ViewNode) => n as V.ImageView;
-  asCard = (n: V.ViewNode) => n as V.CardView;
-  asCollection = (n: V.ViewNode) => n as V.CardCollectionView;
-  asMessage = (n: V.ViewNode) => n as V.MessageView;
+  asImage = (n: ViewNode.ViewNode) => n as ViewNode.ImageView;
+  asCard = (n: ViewNode.ViewNode) => n as ViewNode.CardView;
+  asCollection = (n: ViewNode.ViewNode) => n as ViewNode.CardCollectionView;
+  asMessage = (n: ViewNode.ViewNode) => n as ViewNode.MessageView;
 }

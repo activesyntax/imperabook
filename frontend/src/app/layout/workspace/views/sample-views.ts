@@ -1,4 +1,4 @@
-import { CommandResult } from '../view-node';
+import { CommandResult } from './view-node';
 
 /** Stand-in for a backend `dashboard` response while the API doesn't exist yet. */
 export const SAMPLE_DASHBOARD: CommandResult = {
