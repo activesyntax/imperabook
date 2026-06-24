@@ -10,7 +10,7 @@ ImperaBook is a minimalist, high-performance home library management and catalog
 
 Unlike traditional click-heavy library apps, ImperaBook treats your catalog like an efficient command center:
 
-- **Command-Based Fluid Control**: A powerful, built-in command palette (accessible via shortcuts like `:` or `Ctrl+K`) lets you query and catalog your library entirely from the keyboard. Autocomplete suggests commands from a closed command grammar as you type—typing `book` surfaces `add book`, `list books`, and `show book`, while typing `add` surfaces every `add` command. Anything unrecognized falls through to full-text search. Inspired by modern terminal tools like Vim and Helix.
+- **Command-Based Fluid Control**: A powerful, built-in command palette lets you query and catalog your library entirely from the keyboard. Autocomplete suggests commands from a closed command grammar as you type—typing `book` surfaces `add book`, `list books`, and `show book`, while typing `add` surfaces every `add` command. Anything unrecognized falls through to full-text search. Inspired by modern terminal tools like Vim and Helix.
 - **Typography-Driven Aesthetic**: A dark, modern, minimalist user interface designed to maximize text legibility, screen real estate, and scannability.
 - **Type-Driven Domain Modeling**: A pure, immutable C# core using closed sealed-record hierarchies, smart-constructor value objects, and phantom-typed identifiers to make invalid library states literally unrepresentable.
 
