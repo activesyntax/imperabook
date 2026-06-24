@@ -1,14 +1,15 @@
+:host {
+  display: block;
+  width: fit-content;
+  max-width: 600px;
+  margin-inline: auto;   /* centers the host in the workspace column */
+}
+
 .message {
-  margin: 0;
   padding: 14px 18px;
   border-radius: 6px;
   border-left: 3px solid var(--ib-accent, #c8763f);
-  border-right: 3px solid var(--ib-accent, #c8763f);
   background: var(--ib-surface, #161616);
   color: var(--ib-text-muted, #b9aa99);
   font-size: 1.1rem;
-  display: inline-block;
 }
-.message--success { border-left-color: #6fae6f; }
-.message--warning { border-left-color: #d6a13d; }
-.message--error   { border-left-color: #c4564b; }
