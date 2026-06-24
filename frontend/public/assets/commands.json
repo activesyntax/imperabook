@@ -1,0 +1,30 @@
+[
+  { "command": "add book", "description": "Catalog a new book", "group": "book" },
+  { "command": "update book", "description": "Edit an existing book", "group": "book" },
+  { "command": "remove book", "description": "Delete a book", "group": "book" },
+  { "command": "show book", "description": "Show full detail for one book", "group": "book" },
+  { "command": "list books", "description": "List all books", "group": "book" },
+
+  { "command": "add author", "description": "Create an author record", "group": "author" },
+  { "command": "update author", "description": "Rename an author", "group": "author" },
+  { "command": "remove author", "description": "Delete an author", "group": "author" },
+  { "command": "list authors", "description": "List all authors", "group": "author" },
+
+  { "command": "search", "description": "Multi-token full-text search", "group": "query" },
+  { "command": "filter", "description": "Structured filtering by metadata", "group": "query" },
+
+  { "command": "dashboard", "description": "Render analytical widgets", "group": "view" },
+
+  { "command": "next", "description": "Move selection to the next row", "group": "nav" },
+  { "command": "prev", "description": "Move selection to the previous row", "group": "nav" },
+  { "command": "open", "description": "Open the selected row", "group": "nav" },
+  { "command": "back", "description": "Return to the previous view", "group": "nav" },
+  { "command": "top", "description": "Jump to the first row", "group": "nav" },
+  { "command": "bottom", "description": "Jump to the last row", "group": "nav" },
+
+  { "command": "help", "description": "Show available commands", "group": "shell" },
+  { "command": "clear", "description": "Clear the screen", "group": "shell" },
+  { "command": "cancel", "description": "Abort the current prompt", "group": "shell" },
+  { "command": "quit", "description": "Exit ImperaBook", "group": "shell" },
+  { "command": "exit", "description": "Exit ImperaBook", "group": "shell" }
+]

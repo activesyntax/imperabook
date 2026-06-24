@@ -1,0 +1,176 @@
+:host {
+  --ib-page: #0f0d0a;
+  --ib-surface: #1f1a14;        // lighter than the page so the panel lifts off it
+  --ib-border: rgba(255, 255, 255, 0.10);
+  --ib-text: #ece6db;
+  --ib-muted: #9b9384;
+  --ib-dim: #7a7264;
+  --ib-accent: #d98a3d;
+  --ib-accent-bright: #e89a4a;
+  --ib-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+
+  --ib-shell-max: 680px;        // narrower than the workspace — tune to taste
+  --ib-shell-lift: 56px;        // how far it rides up over the workspace
+
+  display: block;
+  position: relative;
+  z-index: 1;
+  margin-top: calc(var(--ib-shell-lift) * -1); // the shell is the boss: it sits on top
+  padding: 0 16px 28px;                         // float off the bottom + side gutter
+}
+
+.shell {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--ib-shell-max);
+  height: 138px;                 // fixed: the workspace never reflows under it
+  margin: 0 auto;                // centered, less than workspace width
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;     // input pinned to the bottom
+  gap: 10px;
+  padding: 16px 20px;
+  background: var(--ib-surface);
+  border: 0.5px solid var(--ib-border);
+  border-radius: 14px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55); // elevation
+  font-family: var(--ib-mono);
+  color: var(--ib-text);
+}
+
+.suggestions {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.chip {
+  flex: none;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  padding: 6px 13px;
+  border-radius: 15px;
+  white-space: nowrap;
+  cursor: pointer;
+  color: #c4bcad;
+  background: #2a241d;
+  border: 0.5px solid var(--ib-border);
+  transition: background 80ms ease, color 80ms ease;
+
+  &:hover {
+    color: var(--ib-text);
+  }
+
+  &.active {
+    color: #1a140d;
+    background: var(--ib-accent);
+    border-color: var(--ib-accent);
+  }
+}
+
+.fall {
+  font-size: 13px;
+  color: var(--ib-dim);
+}
+
+.desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ib-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmd {
+  color: var(--ib-accent);
+}
+
+.key {
+  color: #d6cfc1;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.entry {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-size: 16px;
+}
+
+.user {
+  color: var(--ib-dim);
+}
+
+.tilde {
+  color: #6a6358;
+}
+
+.bar {
+  flex: 1;
+  min-width: 40px;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ib-text);
+  caret-color: var(--ib-accent-bright);
+
+  &::placeholder {
+    color: #57514799;
+  }
+}
+
+.legend {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-left: 16px;
+  border-left: 0.5px solid var(--ib-border);
+  white-space: nowrap;
+}
+
+.legend-row {
+  font-size: 12px;
+  color: var(--ib-muted);
+}
+
+.tag {
+  display: inline-block;
+  width: 28px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ib-dim);
+}
+
+.word {
+  margin-right: 9px;
+}
+
+@media (max-width: 640px) {
+  .legend {
+    display: none; // the words live in `help` on narrow screens
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip {
+    transition: none;
+  }
+}
