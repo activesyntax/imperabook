@@ -2,7 +2,7 @@
 import { Component, signal } from '@angular/core';
 import { View } from './views/view/view';
 import { CommandResult } from './views/view-node';
-import { SAMPLE_DASHBOARD } from './views/sample-views/sample-views';
+import { SAMPLE_DASHBOARD } from './views/sample-views';
 
 @Component({
   selector: 'app-workspace',
