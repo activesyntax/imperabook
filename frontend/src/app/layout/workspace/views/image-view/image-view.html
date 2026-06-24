@@ -1,3 +1,6 @@
-<div class="image-container">
-  <img [src]="src()" [alt]="alt()" [width]="width()" [height]="height()" class="native-img" />
-</div>
+<figure class="image-view" [class]="variantClass()">
+  <img [src]="view().src" [alt]="view().alt" />
+  @if (view().caption; as caption) {
+  <figcaption>{{ caption }}</figcaption>
+  }
+</figure>

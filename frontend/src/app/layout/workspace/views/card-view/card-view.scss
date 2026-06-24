@@ -1,0 +1,26 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 20px;
+  background: var(--ib-surface, #161616);
+  border: 1px solid var(--ib-border, #2a2a2a);
+  border-radius: 8px;
+}
+.card__heading {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.8rem;
+  color: var(--ib-accent, #c8763f);
+}
+.card__value {
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ib-text, #f5f0e8);
+}
+.card__caption {
+  font-size: 0.85rem;
+  color: var(--ib-text-muted, #8a7a6a);
+}

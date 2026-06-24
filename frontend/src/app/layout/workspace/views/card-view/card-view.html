@@ -1,1 +1,7 @@
-<p>card-view works!</p>
+<article class="card">
+  <header class="card__heading">{{ view().heading }}</header>
+  <div class="card__value">{{ view().value }}</div>
+  @if (view().caption; as caption) {
+  <footer class="card__caption">{{ caption }}</footer>
+  }
+</article>
