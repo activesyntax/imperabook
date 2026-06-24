@@ -1,10 +1,6 @@
-<div>
-  <app-image-view src="./assets/img/imperabook-logo-dark.svg" alt="ImperaBook" width="300" height="300" />
-  <app-grid-view>
-    <app-card-view />
-    <app-card-view />
-    <app-card-view />
-  </app-grid-view>
-
-  <app-message-view />
+// TODO: use view index
+<div class="workspace">
+  @for (view of result().views; track $index) {
+  <app-view [node]="view" />
+  }
 </div>

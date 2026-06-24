@@ -1,14 +1,16 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from "@angular/router";
-import { ImageView } from "./views/image-view/image-view";
-import { GridView } from "./views/grid-view/grid-view";
-import { CardView } from "./views/card-view/card-view";
-import { MessageView } from "./views/message-view/message-view";
+// src/app/layout/workspace/workspace.ts
+import { Component, signal } from '@angular/core';
+import { View } from './views/view/view';
+import { CommandResult } from './views/view-node';
+import { SAMPLE_DASHBOARD } from './views/sample-views/sample-views';
 
 @Component({
   selector: 'app-workspace',
-  imports: [ImageView, GridView, CardView, MessageView],
+  imports: [View],
   templateUrl: './workspace.html',
   styleUrl: './workspace.scss',
 })
-export class Workspace { }
+export class Workspace {
+  // Hardcoded for now; later this signal is fed by the command pipeline.
+  result = signal<CommandResult>(SAMPLE_DASHBOARD);
+}

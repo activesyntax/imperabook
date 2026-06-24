@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   viewBox="0 0 2000 1800"
-   width="2000"
-   height="1800"
+   viewBox="0 0 1100.9889 744.5545"
+   width="1100.9889"
+   height="744.5545"
    version="1.1"
    id="svg9"
    xmlns="http://www.w3.org/2000/svg"
@@ -15,7 +15,7 @@
      stroke-width="14"
      stroke-linejoin="round"
      id="g9"
-     transform="translate(563.56194,315.54147)">
+     transform="translate(25.921075,-250.99997)">
     <!-- Book 1: left, orange, upright (baseline y=768) -->
     <rect
        x="245"
@@ -97,7 +97,8 @@
   <g
      id="text9"
      style="font-weight:bold;font-size:192px;font-family:Serif;-inkscape-font-specification:'Serif, Bold';letter-spacing:2px;fill:#ee821e"
-     aria-label="IMPERABOOK">
+     aria-label="IMPERABOOK"
+     transform="translate(-537.64087,-566.54144)">
     <path
        style="fill:#cccccc"
        d="m 537.64089,1309.6293 v -10.176 h 6.912 q 4.224,0 7.488,-2.304 3.456,-2.496 3.456,-8.832 v -93.888 q 0,-6.912 -3.456,-9.216 -3.264,-2.496 -7.488,-2.496 h -6.912 v -10.176 h 66.432 v 10.176 h -7.296 q -4.608,0 -7.68,2.496 -3.072,2.496 -3.072,9.408 v 93.504 q 0,6.336 3.072,8.832 3.264,2.496 7.68,2.496 h 7.296 v 10.176 z"
