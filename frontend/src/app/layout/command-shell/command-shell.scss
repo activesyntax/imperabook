@@ -6,36 +6,69 @@
   --ib-muted: #9b9384;
   --ib-dim: #7a7264;
   --ib-accent: #d98a3d;
+  --ib-accent-dim: #b8803f;     // box titles, echoing the dashboard card labels
   --ib-accent-bright: #e89a4a;
   --ib-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
 
-  --ib-shell-max: 680px;        // narrower than the workspace — tune to taste
-  --ib-shell-lift: 56px;        // how far it rides up over the workspace
+  --ib-shell-max: 1300px;        // narrower than the workspace — tune to taste
+  --ib-shell-lift: 150px;        // how far it rides up over the workspace
 
   display: block;
   position: relative;
   z-index: 1;
   margin-top: calc(var(--ib-shell-lift) * -1); // the shell is the boss: it sits on top
   padding: 0 16px 28px;                         // float off the bottom + side gutter
+
+  font-size: 16pt;               // base size for the shell
 }
 
 .shell {
   box-sizing: border-box;
   width: 100%;
   max-width: var(--ib-shell-max);
-  height: 138px;                 // fixed: the workspace never reflows under it
   margin: 0 auto;                // centered, less than workspace width
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;     // input pinned to the bottom
-  gap: 10px;
-  padding: 16px 20px;
+  align-items: stretch;          // both columns share the taller column's height
+  gap: 18px;
+  padding: 16px 18px;
   background: var(--ib-surface);
   border: 0.5px solid var(--ib-border);
   border-radius: 14px;
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55); // elevation
   font-family: var(--ib-mono);
   color: var(--ib-text);
+}
+
+// ── shared card styling ─────────────────────────────────────────────────────
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 11px 13px;
+  border: 0.5px solid var(--ib-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.box-title {
+  font-size: smaller;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ib-accent-dim);
+}
+
+// ── left column: suggested-commands card (top) + prompt (bottom) ────────────
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; // card at top, prompt anchored at the bottom
+  gap: 14px;
+}
+
+.suggested {
+  min-width: 0;
 }
 
 .suggestions {
@@ -52,10 +85,9 @@
 .chip {
   flex: none;
   font: inherit;
-  font-size: 13px;
   line-height: 1;
-  padding: 6px 13px;
-  border-radius: 15px;
+  padding: 7px 14px;
+  border-radius: 16px;
   white-space: nowrap;
   cursor: pointer;
   color: #c4bcad;
@@ -75,13 +107,11 @@
 }
 
 .fall {
-  font-size: 13px;
   color: var(--ib-dim);
 }
 
 .desc {
   margin: 0;
-  font-size: 13px;
   color: var(--ib-dim);
   white-space: nowrap;
   overflow: hidden;
@@ -96,18 +126,10 @@
   color: #d6cfc1;
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-
 .entry {
-  flex: 1;
   display: flex;
   align-items: center;
   min-width: 0;
-  font-size: 16px;
 }
 
 .user {
@@ -126,7 +148,6 @@
   outline: none;
   background: transparent;
   font: inherit;
-  font-size: 16px;
   color: var(--ib-text);
   caret-color: var(--ib-accent-bright);
 
@@ -135,37 +156,31 @@
   }
 }
 
-.legend {
+// ── right column: two reference cards, sized to their content ───────────────
+.panels {
   flex: none;
+  width: 256px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding-left: 16px;
-  border-left: 0.5px solid var(--ib-border);
-  white-space: nowrap;
+  gap: 10px;
 }
 
-.legend-row {
-  font-size: 12px;
+.box-cmds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 13px;
+  line-height: 1.2;
   color: var(--ib-muted);
 }
 
-.tag {
-  display: inline-block;
-  width: 28px;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ib-dim);
-}
+// On narrow screens the side cards fold away; the commands are still typeable.
+@media (max-width: 700px) {
+  .panels {
+    display: none;
+  }
 
-.word {
-  margin-right: 9px;
-}
-
-@media (max-width: 640px) {
-  .legend {
-    display: none; // the words live in `help` on narrow screens
+  .shell {
+    gap: 0;
   }
 }
 

@@ -1,47 +1,65 @@
 <section class="shell" role="region" aria-label="Command shell">
-  <div class="suggestions" role="listbox" aria-label="Suggestions">
-    @for (cmd of suggestions(); track cmd.command; let i = $index) {
-    <button type="button" class="chip" role="option" [class.active]="i === selectedIndex()"
-      [attr.aria-selected]="i === selectedIndex()" (mousedown)="$event.preventDefault()" (click)="runAt(i)">
-      {{ cmd.command }}
-    </button>
-    } @empty {
-    <span class="fall">no command · <span class="key">↵</span> runs as search</span>
-    }
-  </div>
-
-  <p class="desc">
-    @if (selected(); as sel) {
-    <span class="cmd">{{ sel.command }}</span> · {{ sel.description }}
-    · <span class="key">↵ / Tab</span> to run
-    } @else {
-    Type a command, or just type to search your library
-    }
-  </p>
-
-  <div class="row">
-    <div class="entry">
-      <span class="user">user&#64;imperabook</span><span class="tilde"> ~ </span>
-      <input #bar class="bar" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
-        placeholder="type a command…" aria-label="Command input" [value]="query()" (input)="onInput($event)"
-        (keydown)="onKeydown($event)" />
+  <div class="main">
+    <div class="box suggested">
+      <div class="suggestions" role="listbox" aria-label="Suggestions">
+        @for (cmd of suggestions(); track cmd.command; let i = $index) {
+        <button
+          type="button"
+          class="chip"
+          role="option"
+          [class.active]="i === selectedIndex()"
+          [attr.aria-selected]="i === selectedIndex()"
+          (mousedown)="$event.preventDefault()"
+          (click)="runAt(i)">
+          {{ cmd.command }}
+        </button>
+        } @empty {
+        <span class="fall">no command · <span class="key">↵</span> runs as search</span>
+        }
+      </div>
+      <p class="desc">
+        @if (selected(); as sel) {
+        <span class="cmd">{{ sel.command }}</span> · {{ sel.description }}
+        · <span class="key">↵ / Tab</span> to run
+        } @else {
+        Type a command, or just type to search your library
+        }
+      </p>
     </div>
 
-    <div class="legend" aria-hidden="true">
-      @if (viewActive()) {
-      <div class="legend-row">
-        <span class="tag">nav</span>
+    <div class="entry">
+      <span class="user">user&#64;imperabook</span><span class="tilde"> ~ </span>
+      <input
+        #bar
+        class="bar"
+        type="text"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder="type a command…"
+        aria-label="Command input"
+        [value]="query()"
+        (input)="onInput($event)"
+        (keydown)="onKeydown($event)" />
+    </div>
+  </div>
+
+  <aside class="panels" aria-label="Command reference">
+    <div class="box">
+      <div class="box-title">Navigation</div>
+      <div class="box-cmds">
         @for (c of navHint(); track c.command) {
         <span class="word">{{ c.command }}</span>
         }
       </div>
-      }
-      <div class="legend-row">
-        <span class="tag">gen</span>
+    </div>
+    <div class="box">
+      <div class="box-title">General</div>
+      <div class="box-cmds">
         @for (c of genHint(); track c.command) {
         <span class="word">{{ c.command }}</span>
         }
       </div>
     </div>
-  </div>
+  </aside>
 </section>

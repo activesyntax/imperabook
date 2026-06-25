@@ -35,6 +35,10 @@ export type ShellSubmit =
 // Swap for the real endpoint (e.g. '/commands') once the backend serves it.
 const COMMANDS_URL = '/assets/commands.json';
 
+// Shown before the user types anything — the most important entry points, in order.
+// (Backend can own this ordering later; static curation is fine for now.)
+const FEATURED: readonly string[] = ['add book', 'list books', 'search', 'dashboard'];
+
 // Power-user row navigation. One place for the direction (COMMANDS.md: j = next, k = prev).
 const NAV_KEYS: Readonly<Record<string, string>> = { j: 'next', k: 'prev' };
 
@@ -59,20 +63,21 @@ export class CommandShell {
   protected readonly query = signal('');
   protected readonly selectedIndex = signal(0);
 
-  protected readonly suggestions = computed(() =>
-    rank(this.commands(), this.query(), this.viewActive()),
-  );
+  // Empty input -> the featured shortlist; otherwise the ranked matches.
+  protected readonly suggestions = computed(() => {
+    const all = this.commands();
+    const q = this.query().trim();
+    return q ? rank(all, q, this.viewActive()) : pickFeatured(all);
+  });
   protected readonly selected = computed<CommandSpec | null>(() => {
     const list = this.suggestions();
     return list[Math.min(this.selectedIndex(), Math.max(0, list.length - 1))] ?? null;
   });
 
-  // Always-visible legend: the nav and general verbs, straight from the registry.
-  protected readonly navHint = computed(() =>
-    this.commands().filter(c => ['next', 'prev', 'open', 'back'].includes(c.command)),
-  );
+  // The two reference cards: full nav set, and the general shell verbs.
+  protected readonly navHint = computed(() => this.commands().filter(c => c.group === 'nav'));
   protected readonly genHint = computed(() =>
-    this.commands().filter(c => c.group === 'shell' && c.command !== 'cancel' && c.command !== 'quit'),
+    this.commands().filter(c => c.group === 'shell' && c.command !== 'quit'),
   );
 
   private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
@@ -139,6 +144,13 @@ export class CommandShell {
     this.query.set('');
     this.selectedIndex.set(0);
   }
+}
+
+/** The featured shortlist, in FEATURED order, skipping any the registry doesn't carry. */
+function pickFeatured(commands: readonly CommandSpec[]): CommandSpec[] {
+  return FEATURED
+    .map(id => commands.find(c => c.command === id))
+    .filter((c): c is CommandSpec => c !== undefined);
 }
 
 /**
