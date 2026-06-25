@@ -131,15 +131,45 @@
 .entry {
   display: flex;
   align-items: center;
+  gap: 12px;
   min-width: 0;
+  font-size:26pt;
+}
+
+.avatar {
+  flex: none;
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  border: 0.5px solid var(--ib-border);
+  display: block;
+}
+
+.prompt {
+  flex: 1;
+  min-width: 0;
+  height: 80px;                  // matches the avatar
+  display: flex;
+  align-items: center;           // input text on the vertical centre line
+  gap: 10px;
+  padding: 0 7px 0 14px;
+  border: 0.5px solid var(--ib-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.022);
+  transition: border-color 90ms ease;
+  border-color: rgba(217, 138, 61, 0.55);
+
+  &:focus-within {
+
+    border-color: rgba(217, 138, 61, 1);
+  }
 }
 
 .user {
+  flex: none;
+  font-size: 16px;
   color: var(--ib-dim);
-}
-
-.tilde {
-  color: #6a6358;
+  white-space: nowrap;
 }
 
 .bar {
@@ -150,6 +180,8 @@
   outline: none;
   background: transparent;
   font: inherit;
+  font-size: 24pt;               // larger than the rest of the shell
+  line-height: 1;
   color: var(--ib-text);
   caret-color: var(--ib-accent-bright);
 
@@ -158,12 +190,33 @@
   }
 }
 
+.send {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--ib-accent);
+  background: transparent;
+  transition: background 90ms ease, color 90ms ease;
+
+  &:hover { color: #1a140d; background: var(--ib-accent); }
+  &:active { background: var(--ib-accent-bright); }
+
+  svg { width: 20px; height: 20px; display: block; }
+}
 // ── right column: two reference cards, sized to their content ───────────────
 .panels {
   flex: none;
   width: 256px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 10px;
 }
 
@@ -187,7 +240,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chip {
+  .chip,
+  .prompt,
+  .send {
     transition: none;
   }
 }

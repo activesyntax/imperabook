@@ -20,7 +20,7 @@
       <p class="desc">
         @if (selected(); as sel) {
         <span class="cmd">{{ sel.command }}</span> · {{ sel.description }}
-        · <span class="key">↵ / Tab</span> to run
+        <!-- · <span class="key">↵ / Tab</span> to run -->
         } @else {
         Type a command, or just type to search your library
         }
@@ -28,19 +28,34 @@
     </div>
 
     <div class="entry">
-      <span class="user">user&#64;imperabook</span><span class="tilde"> ~ </span>
-      <input
-        #bar
-        class="bar"
-        type="text"
-        autocomplete="off"
-        autocapitalize="off"
-        spellcheck="false"
-        placeholder="type a command…"
-        aria-label="Command input"
-        [value]="query()"
-        (input)="onInput($event)"
-        (keydown)="onKeydown($event)" />
+      <img class="avatar" src="assets/img/imperabook-profile.svg" alt="" aria-hidden="true" />
+      <div class="prompt">
+        <!-- <span class="user">user&#64;imperabook ~</span> -->
+        <input
+          #bar
+          class="bar"
+          type="text"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="type a command…"
+          aria-label="Command input"
+          [value]="query()"
+          (input)="onInput($event)"
+          (keydown)="onKeydown($event)" />
+        <button
+          type="button"
+          class="send"
+          aria-label="Run command"
+          (mousedown)="$event.preventDefault()"
+          (click)="submit()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h14" />
+            <path d="m13 6 6 6-6 6" />
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 

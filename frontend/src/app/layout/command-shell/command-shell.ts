@@ -124,6 +124,10 @@ export class CommandShell {
     this.run(this.suggestions()[index] ?? null);
   }
 
+  protected submit(): void {
+    this.run(this.selected());
+  }
+
   private move(delta: number): void {
     const max = this.suggestions().length - 1;
     if (max < 0) return;
