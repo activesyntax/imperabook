@@ -1,4 +1,5 @@
 export type Command = string;
+export type CommandQuery = string;
 export type CommandGroup = 'nav' | 'shell';
 
 export type CommandSpec = {

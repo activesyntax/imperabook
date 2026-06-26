@@ -1,7 +1,6 @@
 
 import { inject, Injectable } from '@angular/core';
-import { httpResource } from '@angular/common/http';
-import { CommandSpec } from "@core/model";
+import { Command, CommandQuery, CommandSpec } from "@core/model";
 import { CommandRegistry } from './command-registry';
 
 @Injectable({ providedIn: 'root' })
@@ -10,8 +9,21 @@ export class CommandProvider {
   private readonly registry = inject(CommandRegistry);
 
   all = this.registry.commands;
+
+  suggestionsFor(query: CommandQuery) {
+    const all = this.all();
+    const q = query.trim();
+    return pickFeatured(all);
+  }
 }
 
+const FEATURED: readonly Command[] = ['add book', 'list books', 'help', 'exit'];
+
+function pickFeatured(commands: readonly CommandSpec[]): CommandSpec[] {
+  return FEATURED
+    .map(id => commands.find(c => c.command === id))
+    .filter((c): c is CommandSpec => c !== undefined);
+}
 
 // function rank(commands: readonly CommandSpec[], query: string, viewActive: boolean): CommandSpec[] {
 //   const q = query.trim().toLowerCase();

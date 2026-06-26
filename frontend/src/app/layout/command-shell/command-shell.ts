@@ -11,10 +11,8 @@ import {
 
 import { CommandSpec } from "@core/model";
 import { CommandRunner } from '../../commands/command-runner';
-import { WorkspaceStore } from '../workspace/workspace-store';             // adjust path
 import { CommandProvider } from '@app/commands/command-provider';
 
-const FEATURED: readonly string[] = ['add book', 'list books', 'help', 'exit'];
 
 @Component({
   selector: 'app-command-shell',
@@ -25,18 +23,12 @@ const FEATURED: readonly string[] = ['add book', 'list books', 'help', 'exit'];
 export class CommandShell {
   private readonly commands = inject(CommandProvider);
   private readonly runner = inject(CommandRunner);
-  private readonly store = inject(WorkspaceStore);
-
 
   protected readonly query = signal('');
   protected readonly selectedIndex = signal(0);
 
-
-  // Empty input -> the featured shortlist; otherwise the ranked matches.
   protected readonly suggestions = computed(() => {
-    const all = this.commands.all();
-    const q = this.query().trim();
-    return pickFeatured(all);
+    return this.commands.suggestionsFor(this.query());
   });
 
   protected readonly selected = computed<CommandSpec | null>(() => {
@@ -107,9 +99,4 @@ export class CommandShell {
   }
 }
 
-function pickFeatured(commands: readonly CommandSpec[]): CommandSpec[] {
-  return FEATURED
-    .map(id => commands.find(c => c.command === id))
-    .filter((c): c is CommandSpec => c !== undefined);
-}
 
