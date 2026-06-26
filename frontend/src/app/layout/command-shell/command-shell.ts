@@ -14,7 +14,6 @@ import { CommandRegistry } from '../../commands//command-registry';
 import { CommandRunner } from '../../commands/command-runner';
 import { WorkspaceStore } from '../workspace/workspace-store';             // adjust path
 
-// Shown before the user types anything — the most important entry points, in order.
 const FEATURED: readonly string[] = ['add book', 'list books', 'help', 'exit'];
 
 @Component({
