@@ -1,9 +1,9 @@
 // command-shell.ts
 //
-// Layout chrome (lives in layout/). Command mode only for now: type -> rank suggestions
-// -> Enter runs the highlighted command (or falls through to search). It raises one event
-// upward; the parent (main-layout) executes it and renders the response in the workspace.
-// No draft, no prompting yet.
+// Layout chrome (lives in layout/). The view-model: owns the bar's input state, derives
+// ranked suggestions, handles the keyboard. It no longer talks to the parent — it reads
+// `viewActive` from the store and hands submissions straight to the runner. No @Input,
+// no @Output; main-layout becomes <app-workspace/> + <app-command-shell/> with no bindings.
 
 import {
   afterNextRender,
@@ -12,31 +12,14 @@ import {
   computed,
   ElementRef,
   inject,
-  input,
-  output,
   signal,
   viewChild,
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { toSignal } from '@angular/core/rxjs-interop';
-
-/** Shape served by the backend command registry (a static JSON for now). */
-export interface CommandSpec {
-  readonly command: string;
-  readonly description: string;
-  readonly group: 'book' | 'author' | 'query' | 'view' | 'nav' | 'shell';
-}
-
-/** What the shell hands to the parent: a chosen command, or a raw search fall-through. */
-export type ShellSubmit =
-  | { readonly kind: 'command'; readonly command: string }
-  | { readonly kind: 'search'; readonly term: string };
-
-// Swap for the real endpoint (e.g. '/commands') once the backend serves it.
-const COMMANDS_URL = '/assets/commands.json';
+import { CommandRegistry, type CommandSpec } from '../../commands//command-registry';
+import { CommandRunner } from '../../commands/command-runner';
+import { WorkspaceStore } from '../workspace/workspace-store';             // adjust path
 
 // Shown before the user types anything — the most important entry points, in order.
-// (Backend can own this ordering later; static curation is fine for now.)
 const FEATURED: readonly string[] = ['add book', 'list books', 'search', 'dashboard'];
 
 // Power-user row navigation. One place for the direction (COMMANDS.md: j = next, k = prev).
@@ -49,26 +32,25 @@ const NAV_KEYS: Readonly<Record<string, string>> = { j: 'next', k: 'prev' };
   styleUrl: './command-shell.scss',
 })
 export class CommandShell {
-  /** Whether a navigable view is on screen — gates navigation suggestions + shortcuts. */
-  readonly viewActive = input(false);
+  private readonly registry = inject(CommandRegistry);
+  private readonly runner = inject(CommandRunner);
+  private readonly store = inject(WorkspaceStore);
 
-  /** One channel out. The parent switches on `kind`, runs it, and renders the response. */
-  readonly submitted = output<ShellSubmit>();
-
-  private readonly http = inject(HttpClient);
-  private readonly commands = toSignal(this.http.get<CommandSpec[]>(COMMANDS_URL), {
-    initialValue: [] as CommandSpec[],
-  });
+  private readonly commands = this.registry.commands;
 
   protected readonly query = signal('');
   protected readonly selectedIndex = signal(0);
+
+  /** Exposed for the template; gates the nav reference + Ctrl+J/K, owned by the store. */
+  // protected readonly viewActive = this.store.viewActive;
 
   // Empty input -> the featured shortlist; otherwise the ranked matches.
   protected readonly suggestions = computed(() => {
     const all = this.commands();
     const q = this.query().trim();
-    return q ? rank(all, q, this.viewActive()) : pickFeatured(all);
+    return pickFeatured(all);
   });
+
   protected readonly selected = computed<CommandSpec | null>(() => {
     const list = this.suggestions();
     return list[Math.min(this.selectedIndex(), Math.max(0, list.length - 1))] ?? null;
@@ -92,12 +74,12 @@ export class CommandShell {
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    // Power-user navigation — only with a view up; emitted as a plain command.
-    if (event.ctrlKey && NAV_KEYS[event.key] && this.viewActive()) {
-      event.preventDefault();
-      this.submitted.emit({ kind: 'command', command: NAV_KEYS[event.key] });
-      return;
-    }
+    // Power-user navigation — only with a view up; handed straight to the runner.
+    // if (event.ctrlKey && NAV_KEYS[event.key] && this.store.viewActive()) {
+    //   event.preventDefault();
+    //   void this.runner.run({ kind: 'command', command: NAV_KEYS[event.key] });
+    //   return;
+    // }
 
     switch (event.key) {
       case 'ArrowDown':
@@ -111,7 +93,7 @@ export class CommandShell {
       case 'Tab':
       case 'Enter':
         event.preventDefault();
-        this.run(this.selected());
+        this.dispatch(this.selected());
         break;
       case 'Escape':
         event.preventDefault();
@@ -121,11 +103,12 @@ export class CommandShell {
   }
 
   protected runAt(index: number): void {
-    this.run(this.suggestions()[index] ?? null);
+    this.dispatch(this.suggestions()[index] ?? null);
   }
 
+  /** Send button (mouse) — run whatever is currently highlighted. */
   protected submit(): void {
-    this.run(this.selected());
+    this.dispatch(this.selected());
   }
 
   private move(delta: number): void {
@@ -134,12 +117,12 @@ export class CommandShell {
     this.selectedIndex.set(Math.min(max, Math.max(0, this.selectedIndex() + delta)));
   }
 
-  private run(cmd: CommandSpec | null): void {
+  private dispatch(cmd: CommandSpec | null): void {
     if (cmd) {
-      this.submitted.emit({ kind: 'command', command: cmd.command });
+      void this.runner.run({ kind: 'command', command: cmd.command });
     } else {
       const term = this.query().trim();
-      if (term) this.submitted.emit({ kind: 'search', term }); // fall-through (ADR 13)
+      if (term) void this.runner.run({ kind: 'search', term }); // fall-through (ADR 13)
     }
     this.reset();
   }
@@ -164,9 +147,6 @@ function pickFeatured(commands: readonly CommandSpec[]): CommandSpec[] {
  *  3. alphabetical tiebreak (stable — never reorders under the cursor)
  *  4. navigation gated by `viewActive`
  *  5. no match -> empty list (caller runs the raw input as search)
- *
- * Token-match, not whole-string prefix: each typed token must prefix *some* command
- * token, so `book` still hits `add book`.
  */
 function rank(commands: readonly CommandSpec[], query: string, viewActive: boolean): CommandSpec[] {
   const q = query.trim().toLowerCase();
