@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import type { ViewNode } from '../layout/workspace/views/view-node';
 import { httpResource } from '@angular/common/http';
-import { CommandSpec } from './command-registry';
+import { CommandSpec } from "@core/model";
 
 @Injectable({ providedIn: 'root' })
 export class CommandRunner {

@@ -1,11 +1,6 @@
 import { Injectable } from '@angular/core';
 import { httpResource } from '@angular/common/http';
-
-export interface CommandSpec {
-  readonly command: string;
-  readonly description: string;
-  readonly group: 'book' | 'author' | 'query' | 'view' | 'nav' | 'shell';
-}
+import { CommandSpec } from "@core/model";
 
 // Swap for the real endpoint (e.g. '/commands') once the backend serves it.
 const COMMANDS_URL = '/assets/commands.json';

@@ -8,12 +8,14 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { CommandRegistry, type CommandSpec } from '../../commands//command-registry';
+
+import { CommandSpec } from "@core/model";
+import { CommandRegistry } from '../../commands//command-registry';
 import { CommandRunner } from '../../commands/command-runner';
 import { WorkspaceStore } from '../workspace/workspace-store';             // adjust path
 
 // Shown before the user types anything — the most important entry points, in order.
-const FEATURED: readonly string[] = ['add book', 'list books', 'search', 'dashboard'];
+const FEATURED: readonly string[] = ['add book', 'list books', 'help', 'exit'];
 
 @Component({
   selector: 'app-command-shell',
