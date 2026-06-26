@@ -321,6 +321,65 @@ verbs, duplicated client-side in MVP1 for a zero round-trip on every keystroke; 
 endpoint to serve it from one place is a reversible move available if that duplication ever costs
 more than it saves.
 
+## 14. The shell talks to services, not the parent — the view-model stays in the component
+
+**Context.** The command shell had accreted three responsibilities that are not a component's:
+fetching the command registry over HTTP, deciding *what executing a command does*, and reaching
+the workspace to show a result. Because the shell and the workspace are siblings under
+`main-layout`, that last one ran shell → `@Output` → `main-layout` → `@Input` → workspace —
+mediation that only thickens as the flow grows (navigation acting on the active view, errors,
+later drafts and prompting). The tempting framing was "extract a command service and make the
+component dumb glue."
+
+**Decision.** Three services, each owning something the component should not:
+
+- **`CommandRegistry`** — data access. Loads the list once, exposes it as a signal, nothing more.
+  It is shared (the shell ranks against it; a future `help` view renders it) and HTTP is not a
+  component's job.
+- **`WorkspaceStore`** — the shared signal state both siblings read: the rendered view, the
+  selectable row refs, the current selection, a `pending` flag, and a `back` history. `viewActive`
+  is a `computed` here, so the shell reads it rather than receiving it.
+- **`CommandRunner`** — application logic. A `ShellSubmit` becomes either a store mutation
+  (`back` / `next` / `prev` / `top` / `bottom` act with no network) or a backend round-trip that
+  owns the pending/error lifecycle and writes the result into the store. This is where the
+  execution logic that was a `main-layout` TODO now lives.
+
+The shell injects all three and calls `runner.run` directly, dropping its `@Output` and its
+`viewActive` `@Input`. `main-layout` collapses to `<app-workspace/>` + `<app-command-shell/>` with
+no bindings.
+
+The load-bearing rule, stated because it is the actual judgment: **a component is legitimately
+thin glue only when the thing it glues to is a real model.** Extracting the shell's own view-state
+into a service to shrink the component file would produce both an anemic component *and* a service
+with no reason to exist — two files where one was coherent. So the test for each extraction was:
+does this have a reason to exist besides making the component shorter? Registry (shared
+data-access), store (deletes the sibling relay), and runner (the execution logic) each pass.
+
+**What deliberately did not move.** The shell's input state, suggestion derivation, and keyboard
+handling stayed in the component — that *is* the view-model, and a component-with-signals is
+exactly the place for it; relocating it would be the anemic-component trap the rule warns against.
+The ranking (`rank` / `score` / `pickFeatured`) stayed pure module functions: already the most
+testable form there is, and wrapping them in an injectable would add indirection for zero
+capability. They become a service only when they first need an injected dependency, which is a
+known point — the MVP2 per-user suggestion weighting blends the static graph with a transition
+model that has to be sourced from somewhere. Until then, pure functions.
+
+**Trade-off — direct injection over a retained `@Output` (the reversible call).** Chosen: the shell
+calls the runner. The cost is that the shell now depends on `CommandRunner` and `WorkspaceStore`
+rather than being an island that emits a value, so its unit tests stub those two — assert `run` was
+called with the right `ShellSubmit`, flip `viewActive` to test nav gating — instead of asserting an
+emission. Gained: no `main-layout` wiring, and the sibling-communication relay is gone. The
+`@Output` form was the alternative — trivially isolable in a test — but it pushes the mediation back
+into the layout, which is precisely the weight this change removes.
+
+**Trade-off — the costs, named.** `WorkspaceStore` is app-global singleton state
+(`providedIn: 'root'`), so its lifetime is the app's, not a route's — fine for a single-workspace
+MVP1, to revisit if independent workspaces ever coexist. And the runner touches the `ViewNode`
+union in a couple of places (the error-view shape; the store's `viewActive` kind check), so a
+change to the union's kind strings ripples to those spots. Accepted as the price of the runner
+owning the response → view mapping — which is a frontend rendering decision by design: the backend
+returns logical shape, the frontend decides how it renders (see the SDUI rejection).
+
 ---
 
 # Known limitations
