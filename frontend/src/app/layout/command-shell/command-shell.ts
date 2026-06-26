@@ -1,10 +1,3 @@
-// command-shell.ts
-//
-// Layout chrome (lives in layout/). The view-model: owns the bar's input state, derives
-// ranked suggestions, handles the keyboard. It no longer talks to the parent — it reads
-// `viewActive` from the store and hands submissions straight to the runner. No @Input,
-// no @Output; main-layout becomes <app-workspace/> + <app-command-shell/> with no bindings.
-
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -22,9 +15,6 @@ import { WorkspaceStore } from '../workspace/workspace-store';             // ad
 // Shown before the user types anything — the most important entry points, in order.
 const FEATURED: readonly string[] = ['add book', 'list books', 'search', 'dashboard'];
 
-// Power-user row navigation. One place for the direction (COMMANDS.md: j = next, k = prev).
-const NAV_KEYS: Readonly<Record<string, string>> = { j: 'next', k: 'prev' };
-
 @Component({
   selector: 'app-command-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,8 +31,6 @@ export class CommandShell {
   protected readonly query = signal('');
   protected readonly selectedIndex = signal(0);
 
-  /** Exposed for the template; gates the nav reference + Ctrl+J/K, owned by the store. */
-  // protected readonly viewActive = this.store.viewActive;
 
   // Empty input -> the featured shortlist; otherwise the ranked matches.
   protected readonly suggestions = computed(() => {
@@ -74,13 +62,6 @@ export class CommandShell {
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    // Power-user navigation — only with a view up; handed straight to the runner.
-    // if (event.ctrlKey && NAV_KEYS[event.key] && this.store.viewActive()) {
-    //   event.preventDefault();
-    //   void this.runner.run({ kind: 'command', command: NAV_KEYS[event.key] });
-    //   return;
-    // }
-
     switch (event.key) {
       case 'ArrowDown':
         event.preventDefault();
@@ -93,7 +74,7 @@ export class CommandShell {
       case 'Tab':
       case 'Enter':
         event.preventDefault();
-        this.dispatch(this.selected());
+        this.runCommand(this.selected());
         break;
       case 'Escape':
         event.preventDefault();
@@ -102,13 +83,9 @@ export class CommandShell {
     }
   }
 
-  protected runAt(index: number): void {
-    this.dispatch(this.suggestions()[index] ?? null);
-  }
 
-  /** Send button (mouse) — run whatever is currently highlighted. */
   protected submit(): void {
-    this.dispatch(this.selected());
+    // this.runCommand(this.selected());
   }
 
   private move(delta: number): void {
@@ -117,12 +94,9 @@ export class CommandShell {
     this.selectedIndex.set(Math.min(max, Math.max(0, this.selectedIndex() + delta)));
   }
 
-  private dispatch(cmd: CommandSpec | null): void {
+  private runCommand(cmd: CommandSpec | null): void {
     if (cmd) {
-      void this.runner.run({ kind: 'command', command: cmd.command });
-    } else {
-      const term = this.query().trim();
-      if (term) void this.runner.run({ kind: 'search', term }); // fall-through (ADR 13)
+      void this.runner.run(cmd.command);
     }
     this.reset();
   }
@@ -133,21 +107,12 @@ export class CommandShell {
   }
 }
 
-/** The featured shortlist, in FEATURED order, skipping any the registry doesn't carry. */
 function pickFeatured(commands: readonly CommandSpec[]): CommandSpec[] {
   return FEATURED
     .map(id => commands.find(c => c.command === id))
     .filter((c): c is CommandSpec => c !== undefined);
 }
 
-/**
- * Rank commands for a typed query (COMMANDS.md model):
- *  1. exact full-command match first
- *  2. leading-verb match outranks contained-token match
- *  3. alphabetical tiebreak (stable — never reorders under the cursor)
- *  4. navigation gated by `viewActive`
- *  5. no match -> empty list (caller runs the raw input as search)
- */
 function rank(commands: readonly CommandSpec[], query: string, viewActive: boolean): CommandSpec[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];

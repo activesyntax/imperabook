@@ -9,8 +9,7 @@
           role="option"
           [class.active]="i === selectedIndex()"
           [attr.aria-selected]="i === selectedIndex()"
-          (mousedown)="$event.preventDefault()"
-          (click)="runAt(i)">
+          (mousedown)="$event.preventDefault()" >
           {{ cmd.command }}
         </button>
         } @empty {

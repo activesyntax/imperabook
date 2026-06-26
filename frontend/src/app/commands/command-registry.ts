@@ -18,7 +18,6 @@ export class CommandRegistry {
 
   readonly commands = this.resource.value;
 
-  // Available for free if the UI ever wants a "registry failed to load" affordance:
   //   readonly loading = this.resource.isLoading;   // Signal<boolean>
   //   readonly error   = this.resource.error;       // Signal<unknown>
   //   reload(): void { this.resource.reload(); }
