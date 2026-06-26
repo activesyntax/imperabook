@@ -7,12 +7,27 @@ import {
   inject,
   signal,
   viewChild,
+  WritableSignal,
 } from '@angular/core';
 
 import { CommandSpec } from "@core/model";
 import { CommandRunner } from '../../commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
 
+type IndexRange = { min: number, max: number };
+type Index = number | undefined;
+
+function nextCyclicIndex(range: IndexRange, index: Index): Index {
+  return index !== undefined ? (index + 1) % (range.max + 1) : range.min;
+}
+
+function prevCyclicIndex(range: IndexRange, index: Index): Index {
+  if (index === undefined)
+    return range.max;
+
+  const prevIndex = index - 1;
+  return prevIndex >= range.min ? prevIndex : prevIndex + range.max + 1;
+}
 
 @Component({
   selector: 'app-command-shell',
@@ -25,15 +40,17 @@ export class CommandShell {
   private readonly runner = inject(CommandRunner);
 
   protected readonly query = signal('');
-  protected readonly selectedIndex = signal(0);
+  protected readonly selectedIndex: WritableSignal<Index> = signal(undefined);
 
   protected readonly suggestions = computed(() => {
     return this.commands.suggestionsFor(this.query());
   });
 
-  protected readonly selected = computed<CommandSpec | null>(() => {
+  protected readonly selected = computed<CommandSpec | undefined>(() => {
     const list = this.suggestions();
-    return list[Math.min(this.selectedIndex(), Math.max(0, list.length - 1))] ?? null;
+    const index = this.selectedIndex();
+
+    return index ? list[index] : undefined;
   });
 
   // The two reference cards: full nav set, and the general shell verbs.
@@ -54,19 +71,32 @@ export class CommandShell {
   }
 
   protected onKeydown(event: KeyboardEvent): void {
+    console.log(event);
     switch (event.key) {
       case 'ArrowDown':
         event.preventDefault();
-        this.move(1);
+        this.moveNext();
         break;
       case 'ArrowUp':
         event.preventDefault();
-        this.move(-1);
+        this.movePrev();
         break;
       case 'Tab':
+        event.preventDefault();
+        if (event.shiftKey) {
+          this.movePrev();
+        }
+        else {
+          this.moveNext();
+        }
+        break;
       case 'Enter':
         event.preventDefault();
-        this.runCommand(this.selected());
+
+        const selected = this.selected();
+        if (selected) {
+          this.runCommand(selected);
+        }
         break;
       case 'Escape':
         event.preventDefault();
@@ -80,10 +110,17 @@ export class CommandShell {
     // this.runCommand(this.selected());
   }
 
-  private move(delta: number): void {
-    const max = this.suggestions().length - 1;
-    if (max < 0) return;
-    this.selectedIndex.set(Math.min(max, Math.max(0, this.selectedIndex() + delta)));
+
+  private moveNext(): void {
+    const range = { min: 0, max: this.suggestions().length - 1 };
+    const index = nextCyclicIndex(range, this.selectedIndex());
+    this.selectedIndex.set(index);
+  }
+
+  private movePrev(): void {
+    const range = { min: 0, max: this.suggestions().length - 1 };
+    const index = prevCyclicIndex(range, this.selectedIndex());
+    this.selectedIndex.set(index);
   }
 
   private runCommand(cmd: CommandSpec | null): void {
@@ -95,7 +132,7 @@ export class CommandShell {
 
   private reset(): void {
     this.query.set('');
-    this.selectedIndex.set(0);
+    this.selectedIndex.set(undefined);
   }
 }
 
