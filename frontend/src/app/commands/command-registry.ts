@@ -1,6 +1,5 @@
-import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Injectable } from '@angular/core';
+import { httpResource } from '@angular/common/http';
 
 export interface CommandSpec {
   readonly command: string;
@@ -13,9 +12,14 @@ const COMMANDS_URL = '/assets/commands.json';
 
 @Injectable({ providedIn: 'root' })
 export class CommandRegistry {
-  private readonly http = inject(HttpClient);
-
-  readonly commands = toSignal(this.http.get<CommandSpec[]>(COMMANDS_URL), {
-    initialValue: [] as CommandSpec[],
+  private readonly resource = httpResource<CommandSpec[]>(() => COMMANDS_URL, {
+    defaultValue: [],
   });
+
+  readonly commands = this.resource.value;
+
+  // Available for free if the UI ever wants a "registry failed to load" affordance:
+  //   readonly loading = this.resource.isLoading;   // Signal<boolean>
+  //   readonly error   = this.resource.error;       // Signal<unknown>
+  //   reload(): void { this.resource.reload(); }
 }

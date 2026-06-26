@@ -1,12 +1,3 @@
-// command-runner.ts  (suggested home: layout/command-shell/ or a commands/ folder)
-//
-// Application logic for "what running a command does". Navigation commands act on the
-// store with no backend; everything else (and `open`, which reads the current selection)
-// round-trips, mapping the response — or an RFC 9457 ProblemDetails error — into the store.
-//
-// The control flow here (pending / error / history) is real; `execute` is the app-specific
-// seam where your REST routes and read-model -> ViewNode mapping live, and is stubbed.
-
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type { ViewNode } from '../layout/workspace/views/view-node'; // <-- adjust to your actual path
