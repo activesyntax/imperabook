@@ -13,21 +13,8 @@ import {
 import { CommandSpec } from "@core/model";
 import { CommandRunner } from '../../commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
+import { Index, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 
-type IndexRange = { min: number, max: number };
-type Index = number | undefined;
-
-function nextCyclicIndex(range: IndexRange, index: Index): Index {
-  return index !== undefined ? (index + 1) % (range.max + 1) : range.min;
-}
-
-function prevCyclicIndex(range: IndexRange, index: Index): Index {
-  if (index === undefined)
-    return range.max;
-
-  const prevIndex = index - 1;
-  return prevIndex >= range.min ? prevIndex : prevIndex + range.max + 1;
-}
 
 @Component({
   selector: 'app-command-shell',
@@ -110,15 +97,14 @@ export class CommandShell {
     // this.runCommand(this.selected());
   }
 
-
   private moveNext(): void {
-    const range = { min: 0, max: this.suggestions().length - 1 };
+    const range = indexRange(this.suggestions().length);
     const index = nextCyclicIndex(range, this.selectedIndex());
     this.selectedIndex.set(index);
   }
 
   private movePrev(): void {
-    const range = { min: 0, max: this.suggestions().length - 1 };
+    const range = indexRange(this.suggestions().length);
     const index = prevCyclicIndex(range, this.selectedIndex());
     this.selectedIndex.set(index);
   }
