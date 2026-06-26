@@ -1,12 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import type { ViewNode } from '../layout/workspace/views/view-node';
 import { httpResource } from '@angular/common/http';
-import { CommandSpec } from "@core/model";
+import { Command } from "@core/model";
 
 @Injectable({ providedIn: 'root' })
 export class CommandRunner {
 
-  async run(command: string): Promise<void> {
+  async run(command: Command): Promise<void> {
   }
 
   //   readonly loading = this.resource.isLoading;   // Signal<boolean>

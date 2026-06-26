@@ -10,9 +10,9 @@ import {
 } from '@angular/core';
 
 import { CommandSpec } from "@core/model";
-import { CommandRegistry } from '../../commands//command-registry';
 import { CommandRunner } from '../../commands/command-runner';
 import { WorkspaceStore } from '../workspace/workspace-store';             // adjust path
+import { CommandProvider } from '@app/commands/command-provider';
 
 const FEATURED: readonly string[] = ['add book', 'list books', 'help', 'exit'];
 
@@ -23,11 +23,10 @@ const FEATURED: readonly string[] = ['add book', 'list books', 'help', 'exit'];
   styleUrl: './command-shell.scss',
 })
 export class CommandShell {
-  private readonly registry = inject(CommandRegistry);
+  private readonly commands = inject(CommandProvider);
   private readonly runner = inject(CommandRunner);
   private readonly store = inject(WorkspaceStore);
 
-  private readonly commands = this.registry.commands;
 
   protected readonly query = signal('');
   protected readonly selectedIndex = signal(0);
@@ -35,7 +34,7 @@ export class CommandShell {
 
   // Empty input -> the featured shortlist; otherwise the ranked matches.
   protected readonly suggestions = computed(() => {
-    const all = this.commands();
+    const all = this.commands.all();
     const q = this.query().trim();
     return pickFeatured(all);
   });
@@ -46,9 +45,9 @@ export class CommandShell {
   });
 
   // The two reference cards: full nav set, and the general shell verbs.
-  protected readonly navHint = computed(() => this.commands().filter(c => c.group === 'nav'));
+  protected readonly navHint = computed(() => this.commands.all().filter(c => c.group === 'nav'));
   protected readonly genHint = computed(() =>
-    this.commands().filter(c => c.group === 'shell' && c.command !== 'quit'),
+    this.commands.all().filter(c => c.group === 'shell' && c.command !== 'quit'),
   );
 
   private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
@@ -114,24 +113,3 @@ function pickFeatured(commands: readonly CommandSpec[]): CommandSpec[] {
     .filter((c): c is CommandSpec => c !== undefined);
 }
 
-function rank(commands: readonly CommandSpec[], query: string, viewActive: boolean): CommandSpec[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
-  const qTokens = q.split(/\s+/);
-
-  return commands
-    .filter(c => c.group !== 'nav' || viewActive)
-    .map(spec => ({ spec, score: score(spec, qTokens) }))
-    .filter(x => x.score >= 0)
-    .sort((a, b) => a.score - b.score || a.spec.command.localeCompare(b.spec.command))
-    .map(x => x.spec);
-}
-
-function score(spec: CommandSpec, qTokens: readonly string[]): number {
-  const cTokens = spec.command.split(' ');
-  const all = qTokens.every(q => cTokens.some(c => c.startsWith(q)));
-  if (!all) return -1;
-  if (spec.command === qTokens.join(' ')) return 0;     // exact full command
-  if (cTokens[0].startsWith(qTokens[0])) return 1;      // leading verb
-  return 2;                                             // contained token
-}
