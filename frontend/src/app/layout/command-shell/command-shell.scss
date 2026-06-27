@@ -1,13 +1,23 @@
 :host {
   --ib-page: #0f0d0a;
-  --ib-surface: #1f1a14;        // lighter than the page so the panel lifts off it
-  --ib-border: rgba(255, 255, 255, 0.10);
+  --ib-surface: #2b251e;        // lighter than the page so the panel lifts off it
+/* --- Borders & Separation --- */
+  /* Fixed: Crisp, warm-tinted alpha edge that blends naturally with the brown surface */
+  --ib-border: rgba(236, 230, 219, 0.35);
+
+  /* --- Typography --- */
   --ib-text: #ece6db;
-  --ib-muted: #9b9384;
-  --ib-dim: #7a7264;
-  --ib-accent: #d98a3d;
-  --ib-accent-dim: #b8803f;     // box titles, echoing the dashboard card labels
-  --ib-accent-bright: #e89a4a;
+
+  /* Lifted slightly from #9b9384 to maintain contrast against the lighter surface */
+  --ib-muted: #a69e8f;
+
+  /* Brought up slightly to remain readable for secondary/shortcut hints */
+  --ib-dim: #857d6e;
+
+  /* --- Accents & Highlights --- */
+  --ib-accent: #e59347;
+  --ib-accent-dim: #b27a43;     // Box titles ("NAVIGATION", "GENERAL")
+  --ib-accent-bright: #f0a558;
   --ib-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
 
   --ib-shell-max: 1300px;        // narrower than the workspace — tune to taste
@@ -138,10 +148,11 @@
 
 .avatar {
   flex: none;
-  width: 80px;
-  height: 80px;
-  border-radius: 12px;
-  border: 0.5px solid var(--ib-border);
+  width: 50px;
+  height: 50px;
+  margin-right: 20px;
+  // border-radius: 12px;
+  // border: 0.5px solid var(--ib-border);
   display: block;
 }
 
@@ -195,8 +206,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 50px;
+  height: 50px;
   padding: 0;
   border: none;
   border-radius: 9px;
@@ -208,7 +219,7 @@
   &:hover { color: #1a140d; background: var(--ib-accent); }
   &:active { background: var(--ib-accent-bright); }
 
-  svg { width: 20px; height: 20px; display: block; }
+  svg { width: 80px; height: 80px; display: block; }
 }
 // ── right column: two reference cards, sized to their content ───────────────
 .panels {
@@ -218,6 +229,8 @@
   flex-direction: column;
   justify-content: space-between;
   gap: 10px;
+  // border-left: 2px solid var(--ib-border);
+  padding-left: 25px;
 }
 
 .box-cmds {

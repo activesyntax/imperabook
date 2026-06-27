@@ -27,8 +27,8 @@
     </div>
 
     <div class="entry">
-      <img class="avatar" src="assets/img/imperabook-profile.svg" alt="" aria-hidden="true" />
       <div class="prompt">
+        <img class="avatar" src="assets/img/imperabook-icon.svg" alt="" aria-hidden="true" />
         <!-- <span class="user">user&#64;imperabook ~</span> -->
         <input
           #bar
@@ -59,7 +59,7 @@
   </div>
 
   <aside class="panels" aria-label="Command reference">
-    <div class="box">
+    <div class="">
       <div class="box-title">Navigation</div>
       <div class="box-cmds">
         @for (c of navHint(); track c.command) {
@@ -67,7 +67,7 @@
         }
       </div>
     </div>
-    <div class="box">
+    <div class="">
       <div class="box-title">General</div>
       <div class="box-cmds">
         @for (c of genHint(); track c.command) {

@@ -34,7 +34,6 @@ export class CommandShell {
   protected readonly selectedIndex: WritableSignal<Index> = signal(undefined);
   protected readonly selectedCommand = computed(() => {
 
-    console.log("suggestions:" + this.suggestions());
     const index = this.selectedIndex();
     if (index === undefined)
       return undefined;
@@ -67,7 +66,6 @@ export class CommandShell {
 
     const matchIndex = this.suggestions().findIndex(c => c.command.includes(query));
 
-    console.log("MATCH INDEX: " + matchIndex);
     this.selectedIndex.set(matchIndex);
   }
 
