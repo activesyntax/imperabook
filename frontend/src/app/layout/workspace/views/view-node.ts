@@ -35,6 +35,7 @@ export interface GuidanceHint {
 
 export interface GuidanceView {
   readonly type: 'guidance';
+  readonly title: string;
   readonly intro?: string;
   readonly hints: readonly GuidanceHint[];
 }

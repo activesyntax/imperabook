@@ -7,8 +7,9 @@ const message: MessageView = {
   text: 'Type `list books` to view all books, or `add book` to catalog a new one.',
 };
 
-const welcomeGuidance: GuidanceView = {
+export const welcomeGuidance: GuidanceView = {
   type: 'guidance',
+  title: 'Getting started',
   intro: 'Type a command, or just type to search your library.',
   hints: [
     { keys: ['Enter'], label: 'run the typed command' },
