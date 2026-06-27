@@ -15,6 +15,8 @@ import { CommandRunner } from '../../commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
 import { Index, IndexMove as IndexChange, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 
+type CommandKey = 'Tab' | 'Enter' | 'Escape';
+type KeyboardActions = Record<CommandKey, (e: KeyboardEvent) => void>;
 
 @Component({
   selector: 'app-command-shell',
@@ -69,38 +71,45 @@ export class CommandShell {
     this.selectedIndex.set(matchIndex);
   }
 
+  private readonly keyboardActions: KeyboardActions = {
+    Tab: (e) => this.handleTab(e),
+    Enter: (e) => this.handleEnter(e),
+    Escape: (e) => this.handleEscape(e),
+  };
+
   protected onKeydown(event: KeyboardEvent): void {
-    switch (event.key) {
-      case 'Tab':
-        event.preventDefault();
-        if (event.shiftKey) {
-          this.setSelectedIndexTo(prevCyclicIndex)
-        }
-        else {
-          this.setSelectedIndexTo(nextCyclicIndex)
-        }
-        break;
-      case 'Enter':
-        event.preventDefault();
-
-        const cmd = this.selectedCommand();
-        if (cmd !== undefined && cmd.command !== this.query()) {
-          this.queryDraft.set(cmd.command);
-          this.selectedIndex.set(0);
-        }
-        else {
-          console.log("EXECUTING: " + this.query());
-          this.reset();
-        }
-
-        break;
-      case 'Escape':
-        event.preventDefault();
-        this.reset();
-        break;
+    if (event.key in this.keyboardActions) {
+      event.preventDefault();
+      this.keyboardActions[event.key as CommandKey](event);
     }
   }
 
+  private handleTab(event: KeyboardEvent): void {
+
+    if (event.shiftKey) {
+      this.setSelectedIndexTo(prevCyclicIndex)
+    }
+    else {
+      this.setSelectedIndexTo(nextCyclicIndex)
+    }
+  }
+
+  private handleEnter(event: KeyboardEvent): void {
+    const cmd = this.selectedCommand();
+    if (cmd !== undefined && cmd.command !== this.query()) {
+      this.queryDraft.set(cmd.command);
+      this.selectedIndex.set(0);
+    }
+    else {
+      console.log("EXECUTING: " + this.query());
+      this.reset();
+    }
+  }
+
+  private handleEscape(event: KeyboardEvent): void {
+
+    this.reset();
+  }
 
   protected submit(): void {
     // this.runCommand(this.selected());
