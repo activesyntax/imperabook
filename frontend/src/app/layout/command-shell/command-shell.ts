@@ -13,7 +13,7 @@ import {
 import { CommandSpec } from "@core/model";
 import { CommandRunner } from '../../commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
-import { Index, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
+import { Index, IndexMove as IndexChange, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 
 
 @Component({
@@ -26,21 +26,22 @@ export class CommandShell {
   private readonly commands = inject(CommandProvider);
   private readonly runner = inject(CommandRunner);
 
-  protected readonly query = signal('');
+  protected readonly queryDraft = signal('');
+  protected readonly query = computed(() => this.queryDraft().trim());
+
   protected readonly selectedIndex: WritableSignal<Index> = signal(undefined);
+  protected readonly selectedCommand = computed(() => {
 
-  protected readonly suggestions = computed(() => {
-    return this.commands.suggestionsFor(this.query());
-  });
-
-  protected readonly selected = computed<CommandSpec | undefined>(() => {
-    const list = this.suggestions();
+    console.log("suggestions:" + this.suggestions());
     const index = this.selectedIndex();
+    if (index === undefined)
+      return undefined;
 
-    return index ? list[index] : undefined;
+    return this.suggestions()[index];
   });
 
-  // The two reference cards: full nav set, and the general shell verbs.
+  protected readonly suggestions = computed(() => this.commands.suggestionsFor(this.query()));
+
   protected readonly navHint = computed(() => this.commands.all().filter(c => c.group === 'nav'));
   protected readonly genHint = computed(() =>
     this.commands.all().filter(c => c.group === 'shell' && c.command !== 'quit'),
@@ -53,37 +54,45 @@ export class CommandShell {
   }
 
   protected onInput(event: Event): void {
-    this.query.set((event.target as HTMLInputElement).value);
-    this.selectedIndex.set(0);
+    this.queryDraft.set((event.target as HTMLInputElement).value);
+
+    const query = this.query()
+
+    if (query.length <= 0) {
+      this.selectedIndex.set(undefined);
+      return;
+    }
+
+    const matchIndex = this.suggestions().findIndex(c => c.command.includes(query));
+
+    console.log("MATCH INDEX: " + matchIndex);
+    this.selectedIndex.set(matchIndex);
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    console.log(event);
     switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        this.moveNext();
-        break;
-      case 'ArrowUp':
-        event.preventDefault();
-        this.movePrev();
-        break;
       case 'Tab':
         event.preventDefault();
         if (event.shiftKey) {
-          this.movePrev();
+          this.setSelectedIndexTo(prevCyclicIndex)
         }
         else {
-          this.moveNext();
+          this.setSelectedIndexTo(nextCyclicIndex)
         }
         break;
       case 'Enter':
         event.preventDefault();
 
-        const selected = this.selected();
-        if (selected) {
-          this.runCommand(selected);
+        const cmd = this.selectedCommand();
+        if (cmd !== undefined && cmd.command !== this.query()) {
+          this.queryDraft.set(cmd.command);
+          this.selectedIndex.set(0);
         }
+        else {
+          console.log("EXECUTING: " + this.query());
+          this.reset();
+        }
+
         break;
       case 'Escape':
         event.preventDefault();
@@ -97,15 +106,9 @@ export class CommandShell {
     // this.runCommand(this.selected());
   }
 
-  private moveNext(): void {
+  private setSelectedIndexTo(indexChange: IndexChange): void {
     const range = indexRange(this.suggestions().length);
-    const index = nextCyclicIndex(range, this.selectedIndex());
-    this.selectedIndex.set(index);
-  }
-
-  private movePrev(): void {
-    const range = indexRange(this.suggestions().length);
-    const index = prevCyclicIndex(range, this.selectedIndex());
+    const index = indexChange(range, this.selectedIndex());
     this.selectedIndex.set(index);
   }
 
@@ -117,7 +120,7 @@ export class CommandShell {
   }
 
   private reset(): void {
-    this.query.set('');
+    this.queryDraft.set('');
     this.selectedIndex.set(undefined);
   }
 }

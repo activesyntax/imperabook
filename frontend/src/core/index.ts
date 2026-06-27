@@ -2,9 +2,11 @@ export type IndexRange = { length: number };
 export type Index = number | undefined;
 
 
-export function indexRange(length: number): IndexRange {
+export function indexRange(length: number) {
   return { length };
 }
+
+export type IndexMove = (range: IndexRange, index: Index) => Index;
 
 export function nextCyclicIndex(range: IndexRange, index: Index): Index {
   return index !== undefined ? (index + 1) % (range.length) : 0;

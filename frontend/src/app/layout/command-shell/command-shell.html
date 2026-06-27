@@ -17,7 +17,7 @@
         }
       </div>
       <p class="desc">
-        @if (selected(); as sel) {
+        @if (selectedCommand(); as sel) {
         <span class="cmd">{{ sel.command }}</span> · {{ sel.description }}
         <!-- · <span class="key">↵ / Tab</span> to run -->
         } @else {
