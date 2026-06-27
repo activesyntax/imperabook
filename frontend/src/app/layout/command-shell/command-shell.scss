@@ -1,6 +1,8 @@
 :host {
   --ib-page: #0f0d0a;
-  --ib-surface: #2b251e;        // lighter than the page so the panel lifts off it
+  --ib-surface: #1a1610;        // lighter than the page so the panel lifts off it
+  // --ib-surface: #161616;        // lighter than the page so the panel lifts off it
+
   --ib-border: rgba(236, 230, 219, 0.35);
   --ib-text: #ece6db;
   --ib-muted: #a69e8f;
@@ -203,14 +205,14 @@
   border: none;
   border-radius: 9px;
   cursor: pointer;
-  color: var(--ib-accent);
-  background: transparent;
+  color: #1a140d;                 /* dark glyph on the fill */
+  background: var(--ib-accent);   /* filled by default */
   transition: background 90ms ease, color 90ms ease;
 
-  &:hover { color: #1a140d; background: var(--ib-accent); }
-  &:active { background: var(--ib-accent-bright); }
+  &:hover  { background: var(--ib-accent-bright); }
+  &:active { background: var(--ib-accent-dim); }
 
-  svg { width: 80px; height: 80px; display: block; }
+  svg { width: 26px; height: 26px; display: block; }  /* was 80px */
 }
 // ── right column: two reference cards, sized to their content ───────────────
 .panels {
