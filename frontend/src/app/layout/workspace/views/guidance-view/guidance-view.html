@@ -1,0 +1,16 @@
+@if (view().intro; as intro) {
+<p class="intro">{{ intro }}</p>
+}
+
+<ul class="hints">
+  @for (hint of view().hints; track hint.label) {
+  <li class="hint">
+    <span class="keys">
+      @for (key of hint.keys; track key) {
+      <kbd class="key">{{ key }}</kbd>
+      }
+    </span>
+    <span class="label">{{ hint.label }}</span>
+  </li>
+  }
+</ul>

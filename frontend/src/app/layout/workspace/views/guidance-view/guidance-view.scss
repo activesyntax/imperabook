@@ -1,0 +1,49 @@
+:host {
+  display: block;
+  max-width: 650px;
+  margin-inline: auto;
+  padding: 20px 22px;
+  background: var(--ib-surface, #161413);
+  border: 1px solid var(--ib-border, #2a2521);
+  border-radius: 12px;
+}
+
+.intro {
+  margin: 0 0 2rem;
+  font-size: 1.6rem;
+  color: var(--ib-text, #d9cdbf);
+
+}
+
+.hints {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  font-size: 1.25rem;
+  color: var(--ib-text-muted, #a99c8c);
+}
+
+.keys {
+  display: inline-flex;
+  gap: 5px;
+  flex: 0 0 118px;          /* aligns labels into one column */
+}
+
+.key {
+  font: inherit;
+  font-size: 1rem;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: var(--ib-surface-raised, #221e1a);
+  border: 1px solid var(--ib-border-strong, #3a332c);
+  color: var(--ib-text, #e7dccd);
+}

@@ -1,1 +1,25 @@
-<p>view works!</p>
+@switch (node().type) {
+@case ('image') {
+<app-image-view [view]="asImage(node())" />
+}
+@case ('card') {
+<app-card-view [view]="asCard(node())" />
+}
+@case ('cardCollection') {
+<app-card-collection>
+  @for (item of asCollection(node()).items; track $index) {
+  <app-view [node]="item" />
+  }
+</app-card-collection>
+}
+@case ('message') {
+<app-message-view [view]="asMessage(node())" />
+}
+
+@case ('guidance') {
+<app-guidance-view [view]="asGuidance(node())" />
+}
+@default {
+<app-unknown-view [nodeType]="node().type" />
+}
+}

@@ -1,4 +1,21 @@
-import { CommandResult } from './view-node';
+import { CommandResult, GuidanceView, MessageView } from './view-node';
+
+
+const message: MessageView = {
+  type: 'message',
+  kind: 'info',
+  text: 'Type `list books` to view all books, or `add book` to catalog a new one.',
+};
+
+const welcomeGuidance: GuidanceView = {
+  type: 'guidance',
+  intro: 'Type a command, or just type to search your library.',
+  hints: [
+    { keys: ['Enter'], label: 'run the typed command' },
+    { keys: ['Tab', 'Enter'], label: 'pick a suggestion, then accept' },
+    { keys: ['Ctrl K', '/'], label: 'focus the command bar' },
+  ],
+};
 
 /** Stand-in for a backend `dashboard` response while the API doesn't exist yet. */
 export const SAMPLE_DASHBOARD: CommandResult = {
@@ -18,10 +35,8 @@ export const SAMPLE_DASHBOARD: CommandResult = {
         { type: 'card', heading: 'Languages', value: '7', caption: 'languages represented' },
       ],
     },
-    {
-      type: 'message',
-      kind: 'info',
-      text: 'Type `list books` to view all books, or `add book` to catalog a new one.',
-    },
+    welcomeGuidance,
+
   ],
 };
+

@@ -28,7 +28,18 @@ export type MessageView = {
   kind: MessageKind;
 };
 
-export type ViewNode = ImageView | CardView | CardCollectionView | MessageView;
+export interface GuidanceHint {
+  readonly keys: readonly string[];   // 'Enter', 'Tab', 'Ctrl K', '/'
+  readonly label: string;
+}
+
+export interface GuidanceView {
+  readonly type: 'guidance';
+  readonly intro?: string;
+  readonly hints: readonly GuidanceHint[];
+}
+
+export type ViewNode = ImageView | CardView | CardCollectionView | MessageView | GuidanceView;
 
 export type CommandResult = {
   views: ViewNode[];

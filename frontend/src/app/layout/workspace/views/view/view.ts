@@ -4,6 +4,7 @@ import { ImageView } from '../image-view/image-view';
 import { CardView } from '../card-view/card-view';
 import { CardCollection } from '../card-collection/card-collection';
 import { MessageView } from '../message-view/message-view';
+import { GuidanceView } from '../guidance-view/guidance-view';
 import { UnknownView } from '../unknown-view/unknown-view';
 
 @Component({
@@ -13,32 +14,12 @@ import { UnknownView } from '../unknown-view/unknown-view';
     CardView,
     CardCollection,
     MessageView,
+    GuidanceView,
     UnknownView,
     forwardRef(() => View),
   ],
-  template: `
-    @switch (node().type) {
-      @case ('image') {
-        <app-image-view [view]="asImage(node())" />
-      }
-      @case ('card') {
-        <app-card-view [view]="asCard(node())" />
-      }
-      @case ('cardCollection') {
-        <app-card-collection>
-          @for (item of asCollection(node()).items; track $index) {
-            <app-view [node]="item" />
-          }
-        </app-card-collection>
-      }
-      @case ('message') {
-        <app-message-view [view]="asMessage(node())" />
-      }
-      @default {
-        <app-unknown-view [nodeType]="node().type" />
-      }
-    }
-  `,
+  templateUrl: './view.html',
+  styleUrl: './view.scss',
 })
 export class View {
   node = input.required<ViewNode.ViewNode>();
@@ -47,4 +28,5 @@ export class View {
   asCard = (n: ViewNode.ViewNode) => n as ViewNode.CardView;
   asCollection = (n: ViewNode.ViewNode) => n as ViewNode.CardCollectionView;
   asMessage = (n: ViewNode.ViewNode) => n as ViewNode.MessageView;
+  asGuidance = (n: ViewNode.ViewNode) => n as ViewNode.GuidanceView;
 }
