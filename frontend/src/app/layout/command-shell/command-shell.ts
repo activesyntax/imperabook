@@ -8,6 +8,7 @@ import {
   signal,
   viewChild,
   WritableSignal,
+  HostListener,
 } from '@angular/core';
 
 import { CommandSpec } from "@core/model";
@@ -51,9 +52,34 @@ export class CommandShell {
   private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
 
   constructor() {
-    afterNextRender(() => this.bar()?.nativeElement.focus());
+    afterNextRender(() => this.focusBar());
   }
 
+  @HostListener('document:keydown', ['$event'])
+  protected onGlobalKeydown(event: KeyboardEvent): void {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.focusBar();
+      return;
+    }
+
+    if (event.key === '/' && !this.isTypingTarget(event.target)) {
+      event.preventDefault();
+      this.focusBar();
+    }
+  }
+
+  private isTypingTarget(target: EventTarget | null): boolean {
+    const el = target as HTMLElement | null;
+    if (el === null) return false;
+    return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable;
+  }
+
+  private focusBar(): void {
+    const input = this.bar()?.nativeElement;
+    input?.focus();
+    input?.select();
+  }
   protected onInput(event: Event): void {
     this.queryDraft.set((event.target as HTMLInputElement).value);
 
