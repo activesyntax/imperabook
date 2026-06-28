@@ -1,10 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ImageView } from './image-view';
+import * as ViewNode from '@workspace/views/view-node';
 
 describe('ImageView', () => {
   let component: ImageView;
   let fixture: ComponentFixture<ImageView>;
+
+
+
+  const imageView: ViewNode.ImageView = {
+    type: 'image',
+    src: 'assets/img/imperabook-logo-dark.svg', // swap for your asset
+    alt: 'ImperaBook',
+    caption: 'Your library, at your fingertips.',
+    variant: 'logo'
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -12,6 +23,7 @@ describe('ImageView', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(ImageView);
+    fixture.componentRef.setInput('view', imageView);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
