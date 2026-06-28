@@ -10,7 +10,8 @@ const message: MessageView = {
 export const welcomeGuidance: GuidanceView = {
   type: 'guidance',
   title: 'Getting started',
-  intro: 'Type a command, or just type to search your library.',
+  intro: `ImperaBook is a keyboard-driven catalog for your personal library. ` +
+    `Type a command to add, find, and organize your books — anything that isn't a command runs as a search.`,
   hints: [
     { keys: ['Enter'], label: 'run the typed command' },
     { keys: ['Tab', 'Enter'], label: 'pick a suggestion, then accept' },
