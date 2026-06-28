@@ -23,9 +23,12 @@
       "@config/*": [
         "./src/config/*"
       ],
-      "@utils/*": [
-        "./src/utils/*"
-      ]
+      "@workspace/*": [
+        "./src/app/layout/workspace/*"
+      ],
+      "@command-shell/*": [
+        "./src/app/layout/command-shell/*"
+      ],
     }
   },
   "angularCompilerOptions": {

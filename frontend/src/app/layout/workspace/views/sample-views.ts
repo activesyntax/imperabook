@@ -1,4 +1,4 @@
-import { CommandResult, GuidanceView, MessageView } from './view-node';
+import { CommandResult, GuidanceView, MessageView } from '@workspace/views/view-node';
 
 
 const message: MessageView = {

@@ -1,5 +1,4 @@
 import { inject, Injectable } from '@angular/core';
-import type { ViewNode } from '../layout/workspace/views/view-node';
 import { httpResource } from '@angular/common/http';
 import { Command } from "@core/model";
 

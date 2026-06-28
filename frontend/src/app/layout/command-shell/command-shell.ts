@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 
 import { CommandSpec } from "@core/model";
-import { CommandRunner } from '../../commands/command-runner';
+import { CommandRunner } from '@app/commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
 import { Index, IndexMove as IndexChange, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 

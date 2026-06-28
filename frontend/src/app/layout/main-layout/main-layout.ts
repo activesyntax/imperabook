@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { Workspace } from "../workspace/workspace";
-import { CommandShell } from "../command-shell/command-shell";
+import { Workspace } from "@workspace/workspace";
+import { CommandShell } from "@command-shell/command-shell";
 
 @Component({
   selector: 'app-main-layout',

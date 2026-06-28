@@ -1,5 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
-import type { ViewNode } from './views/view-node'; // <-- adjust to your actual path
+import type { ViewNode } from '@workspace/views/view-node';
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceStore {

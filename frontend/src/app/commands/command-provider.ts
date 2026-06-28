@@ -1,7 +1,7 @@
 
 import { inject, Injectable } from '@angular/core';
 import { Command, CommandQuery, CommandSpec } from "@core/model";
-import { CommandRegistry } from './command-registry';
+import { CommandRegistry } from '@app/commands/command-registry';
 
 @Injectable({ providedIn: 'root' })
 export class CommandProvider {

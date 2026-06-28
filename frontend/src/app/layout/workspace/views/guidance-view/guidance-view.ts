@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import * as ViewNode from '../view-node';
+import * as ViewNode from '@workspace/views/view-node';
 
 @Component({
   selector: 'app-guidance-view',
