@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpTesting } from '@testing/http';
+import { flushCommandRegistry, provideHttpTesting } from '@testing/http';
 
 import { MainLayout } from './main-layout';
 
@@ -15,6 +15,8 @@ describe('MainLayout', () => {
 
     fixture = TestBed.createComponent(MainLayout);
     component = fixture.componentInstance;
+    fixture.detectChanges();      // dispatches the resource request
+    flushCommandRegistry();       // answers it → resource resolves
     await fixture.whenStable();
   });
 

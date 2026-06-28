@@ -1,6 +1,6 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { App } from './app';
-import { provideHttpTesting } from '@testing/http';
+import { flushCommandRegistry, provideHttpTesting } from '@testing/http';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -12,14 +12,14 @@ describe('App', () => {
 
   it('should create the app', () => {
     const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render title', async () => {
+  it('should render the brand', () => {
     const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
+    fixture.detectChanges();   // renders brand + dispatches the registry request
+    flushCommandRegistry();    // answer it so nothing is left outstanding
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, frontend');
+    expect(compiled.textContent).toContain('ImperaBook'); // ← your real brand text
   });
 });
