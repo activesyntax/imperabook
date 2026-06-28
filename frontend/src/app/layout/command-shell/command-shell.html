@@ -18,10 +18,10 @@
       </div>
       <p class="desc">
         @if (selectedCommand(); as sel) {
-        <span class="cmd">{{ sel.command }}</span> · {{ sel.description }}
+          <span class="cmd">{{ sel.command }}</span> · {{ sel.description }}
         <!-- · <span class="key">↵ / Tab</span> to run -->
         } @else {
-        Type a command, or just type to search your library
+          Welcome to ImperaBook!
         }
       </p>
     </div>
@@ -37,7 +37,7 @@
           autocomplete="off"
           autocapitalize="off"
           spellcheck="false"
-          placeholder="type a command…"
+          placeholder="type a command or search your library"
           aria-label="Command input"
           [value]="query()"
           (input)="onInput($event)"

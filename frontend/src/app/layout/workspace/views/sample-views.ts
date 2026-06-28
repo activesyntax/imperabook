@@ -14,7 +14,7 @@ export const welcomeGuidance: GuidanceView = {
   hints: [
     { keys: ['Enter'], label: 'run the typed command' },
     { keys: ['Tab', 'Enter'], label: 'pick a suggestion, then accept' },
-    { keys: ['Ctrl K', '/'], label: 'focus the command bar' },
+    { keys: ['Ctrl + K'], label: 'focus the command bar' },
   ],
 };
 

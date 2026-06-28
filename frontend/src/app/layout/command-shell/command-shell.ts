@@ -120,7 +120,7 @@ export class CommandShell {
 
   private handleEnter(event: KeyboardEvent): void {
     const cmd = this.selectedCommand();
-    if (cmd !== undefined && cmd.command !== this.query()) {
+    if (cmd !== undefined && cmd.command !== this.query().toLowerCase()) {
       this.queryDraft.set(cmd.command);
       this.selectedIndex.set(0);
     }
