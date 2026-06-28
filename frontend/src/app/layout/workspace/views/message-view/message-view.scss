@@ -1,15 +1,53 @@
 :host {
+  --ib-msg: #7e93b8;            /* default (info) — per-kind classes override below */
+
+  position: relative;
   display: block;
   width: fit-content;
-  max-width: 600px;
-  margin-inline: auto;   /* centers the host in the workspace column */
+  min-width: 340px;            /* short messages don't collapse under the chrome */
+  max-width: 560px;
+  margin-inline: auto;
+  background: var(--ib-surface, #161413);
+  border: 1px solid color-mix(in srgb, var(--ib-msg) 55%, transparent);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+:host([data-kind='info'])    { --ib-msg: #7e93b8; }   /* slate */
+:host([data-kind='success']) { --ib-msg: #7faa72; }   /* green */
+:host([data-kind='error'])   { --ib-msg: #d2806e; }   /* terracotta */
+:host([data-kind='warning']) { --ib-msg: #d4b24a; }   /* gold */
+
+.icon {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  color: var(--ib-msg);
+  pointer-events: none;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  padding: 11px 70px 11px 18px;   /* right padding clears the corner icon */
+  border-bottom: 1px solid var(--ib-divider, #221e1a);
+  color: var(--ib-msg);
+}
+
+.bar-title {
+  font-size: 1.2rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.body {
+  padding: 16px 18px;
 }
 
 .message {
-  padding: 14px 18px;
-  border-radius: 6px;
-  border-left: 3px solid var(--ib-accent, #c8763f);
-  background: var(--ib-surface, #161616);
-  color: var(--ib-text-muted, #b9aa99);
-  font-size: 1.1rem;
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--ib-text, #d9cdbf);
 }

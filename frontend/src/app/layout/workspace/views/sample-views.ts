@@ -3,11 +3,11 @@ import { CommandResult, GuidanceView, MessageView } from '@workspace/views/view-
 
 const message: MessageView = {
   type: 'message',
-  kind: 'info',
-  text: 'Type `list books` to view all books, or `add book` to catalog a new one.',
+  kind: 'warning',
+  text: 'Interpretation of your command will appear here.',
 };
 
-export const welcomeGuidance: GuidanceView = {
+const welcomeGuidance: GuidanceView = {
   type: 'guidance',
   title: 'Getting started',
   intro: `ImperaBook is a keyboard-driven catalog for your personal library. ` +
@@ -37,6 +37,7 @@ export const SAMPLE_DASHBOARD: CommandResult = {
         { type: 'card', heading: 'Languages', value: '7', caption: 'languages represented' },
       ],
     },
+    message,
     welcomeGuidance,
 
   ],
