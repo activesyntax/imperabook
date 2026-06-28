@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel a superseded run on the same ref (e.g. a force-push to an open PR).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Backend: Domain + Application unit tests. Deliberately excludes the
+  # Testcontainers / integration suite, so this job needs no Docker.
+  # ---------------------------------------------------------------------------
+  backend:
+    name: Backend unit tests (.NET 10)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+          # Or, to pin exactly: global-json-file: backend/global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('backend/**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      # Unit tests only: the integration tests are tagged [Trait("Category","Integration")]
+      # so they (and their Testcontainers fixtures) are never instantiated here.
+      - name: Unit tests
+        run: >
+          dotnet test --no-build --configuration Release
+          --filter "Category!=Integration"
+          --logger "trx;LogFileName=unit-tests.trx"
+          --results-directory ${{ github.workspace }}/TestResults
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: TestResults/*.trx
+
+  # ---------------------------------------------------------------------------
+  # Frontend: Angular 22 unit tests on the Vitest runner (jsdom, no browser).
+  # GitHub Actions sets CI=true, so ng test runs once and exits; --no-watch
+  # makes that explicit rather than relying on the env var.
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: Frontend unit tests (Angular 22)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Unit tests
+        run: npm test -- --no-watch
+        # If still on Karma instead of Vitest, swap the line above for:
+        #   run: npm test -- --no-watch --no-progress --browsers=ChromeHeadless
+        # (Chrome is preinstalled on ubuntu-latest, so no extra setup step is needed.)
