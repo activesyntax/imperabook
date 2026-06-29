@@ -8,7 +8,7 @@ public static class DashboardEndpoints
     public static IEndpointRouteBuilder MapDashboardEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet(
-                "/api/dashboard",
+                "/dashboard",
                 async (IDashboardQueries queries, CancellationToken ct) =>
                 {
                     var summary = await queries.GetSummaryAsync(ct);
