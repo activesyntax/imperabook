@@ -3,7 +3,7 @@
 # from read-side counts; the card *values* are seed-dependent, so this file
 # asserts the node SHAPE and the static chrome, and only checks that counts are
 # well-formed (stringified integers) rather than pinning brittle exact totals.
-GET {{host}}/dashboard
+GET {{host}}/api/dashboard
 HTTP 200
 [Asserts]
 header "Content-Type" contains "application/json"
