@@ -378,7 +378,64 @@ MVP1, to revisit if independent workspaces ever coexist. And the runner touches 
 union in a couple of places (the error-view shape; the store's `viewActive` kind check), so a
 change to the union's kind strings ripples to those spots. Accepted as the price of the runner
 owning the response → view mapping — which is a frontend rendering decision by design: the backend
-returns logical shape, the frontend decides how it renders (see the SDUI rejection).
+returns logical shape, the frontend decides how it renders (see 15).
+
+---
+
+## 15. The wire contract is a closed semantic view union, not server-driven UI
+
+**Context.** A command's result has to cross the boundary as JSON and then become something on
+screen. Two shapes for that payload were on the table, and they look similar enough to be confused —
+the distinction is the whole decision. The first is server-driven UI (SDUI): the server sends
+*presentation primitives* — rows, columns, spacing, a generic component with style props — drawn
+from an open, extensible vocabulary, and the frontend is a dumb layout engine that paints whatever
+it is handed. The second is a *closed semantic union*: the server sends *meaning* drawn from a fixed
+set the frontend owns — `card`, `cardCollection`, `message`, `guidance`, `image` — and the frontend
+holds one renderer per case and styles it. SDUI was rejected earlier (and 14 already leans on that
+rejection); this entry records the positive shape that replaced it, because "we don't do SDUI" is
+only half a decision until the alternative is written down.
+
+**Decision.** The wire contract *is* the `CommandResult` / `ViewNode` closed semantic union. The
+backend composes the union — which nodes, in what order, carrying what content — and emits it as
+JSON via System.Text.Json polymorphism (a `type` discriminator per case). The frontend owns one
+renderer per node type and 100% of the styling; the recursive `View` maps `node.type` to its
+renderer and nothing on the wire touches how a node looks. Every command therefore flows through one
+pipe: `CommandRunner` dispatches, receives a `CommandResult`, sets the workspace signal — there is
+no per-command view-assembly code on the frontend. Adding a command's *output* is a backend change;
+the frontend grows code only when a genuinely new *node type* enters the vocabulary, which is rare
+and deliberate.
+
+This layers cleanly onto the existing read decisions rather than competing with them. The Application
+layer still returns flat data (8) — the dashboard read is three counts, not views. Composing those
+counts into a `ViewNode` union is an **API-layer** concern, the same layer and the same seam that maps
+domain DUs to the ProblemDetails wire shape (12). Data in from Application, semantic views out to the
+client; the view vocabulary never leaks inward past the API.
+
+**The line that separates this from SDUI, stated because the two are a step apart.** The vocabulary
+is *closed* and *semantic*. A node declares **what it is** (`card`, `guidance`), never **how it
+looks** — no pixels, no colors, no flex, no layout props. The moment a node carries a styling
+attribute, it has stopped being a semantic union and become the SDUI that was rejected. That is the
+single test applied to every future node: does this field say *what*, or *how*? If *how*, it does
+not belong on the wire.
+
+**Trade-off — content and composition move server-side, and two fields currently fail the test.**
+The cost accepted on purpose: the tagline, the guidance copy, and the card captions now live in the
+API, not the frontend — the server owns *what is shown*, the client owns *how it is shown*, and that
+split puts presentation-adjacent text on the backend. The cost *not* yet paid down: two fields on the
+current contract leak a frontend fact onto the wire and are exactly where the boundary decays toward
+SDUI —
+
+- **`image.src`** is an asset path, which is a frontend fact (the server should not know the asset
+  folder layout). The semantic form is already present beside it as `variant` (`logo`); `src` should
+  resolve from `variant` on the frontend.
+- **`guidance.keys`** is a literal keybinding (`Ctrl + K`), also a frontend fact — rebind on the
+  client and the server's copy goes stale silently. The semantic form references an *action*
+  (`focusCommandBar`) and lets the frontend map action → current binding.
+
+Both are named, not hidden, and both are deferred: the contract works today with the literal forms,
+and resolving them is a frontend-only change that does not move the boundary. Until then they are the
+known soft spots of this decision — the precise places "semantic union" is one careless field away
+from the SDUI it claims not to be.
 
 ---
 

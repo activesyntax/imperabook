@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ImperaBook.Application\ImperaBook.Application.csproj" />
     <ProjectReference Include="..\ImperaBook.Infrastructure.Data\ImperaBook.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\ImperaBook.Contracts\ImperaBook.Contracts.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
