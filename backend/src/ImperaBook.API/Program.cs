@@ -1,8 +1,5 @@
-using CSharpFunctionalExtensions;
 using ImperaBook.API.Endpoints;
-using ImperaBook.Api.Errors;
 using ImperaBook.Application;
-using ImperaBook.Application.Books;
 using ImperaBook.Application.Dashboard;
 using ImperaBook.Infrastructure.Data;
 using ImperaBook.Infrastructure.Data.Dashboard;
@@ -45,44 +42,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapDashboardEndpoints();
-
-// GET all books
-app.MapGet(
-    "/books",
-    async (GetAllBooksQueryHandler handler, CancellationToken ct) =>
-        Results.Ok(await handler.Handle(ct))
-);
-
-// GET books filtered by library and/or title
-app.MapGet(
-    "/books/search",
-    async (
-        GetBooksQueryHandler handler,
-        Guid? libraryId,
-        string? titleContains,
-        CancellationToken ct
-    ) =>
-    {
-        var query = new GetBooksQuery { LibraryId = libraryId, TitleContains = titleContains };
-        return Results.Ok(await handler.Handle(query, ct));
-    }
-);
-
-// GET books in a specific library
-app.MapGet(
-    "/libraries/{libraryId:guid}/books",
-    async (GetLibraryBooksQueryHandler handler, Guid libraryId, CancellationToken ct) =>
-        Results.Ok(await handler.Handle(libraryId, ct))
-);
-
-// POST a new book
-app.MapPost(
-    "/books",
-    async (AddBookCommandHandler handler, AddBookCommand command, CancellationToken ct) =>
-    {
-        var result = await handler.Handle(command, ct);
-        return result.Match(id => Results.Created($"/books/{id}", id), error => error.ToProblem());
-    }
-);
+app.MapCatalogEndpoints();
 
 app.Run();
