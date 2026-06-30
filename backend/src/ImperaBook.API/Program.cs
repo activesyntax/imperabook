@@ -1,8 +1,6 @@
 using ImperaBook.API.Endpoints;
 using ImperaBook.Application;
-using ImperaBook.Application.Dashboard;
 using ImperaBook.Infrastructure.Data;
-using ImperaBook.Infrastructure.Data.Queries;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,12 +16,6 @@ builder.Services.AddInfrastructure(connectionString);
 
 builder.Services.AddProblemDetails();
 
-// --- service registration (before builder.Build()) --------------------------
-
-builder.Services.AddScoped<IDashboardQueries, DashboardQueries>();
-
-// Optional but recommended (DECISIONS-adjacent): built-in OpenAPI for TS codegen.
-// Requires the Microsoft.AspNetCore.OpenApi package (10.0.x).
 builder.Services.AddOpenApi();
 
 var app = builder.Build();

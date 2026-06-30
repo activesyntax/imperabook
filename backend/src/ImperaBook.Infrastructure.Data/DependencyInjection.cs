@@ -1,4 +1,7 @@
 using ImperaBook.Application;
+using ImperaBook.Application.Books;
+using ImperaBook.Application.Dashboard;
+using ImperaBook.Infrastructure.Data.Queries;
 using ImperaBook.Infrastructure.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,9 +16,11 @@ public static class InfrastructureServiceCollectionExtensions
     )
     {
         services.AddDbContext<ImperaBookDbContext>(options => options.UseNpgsql(connectionString));
-
         services.AddScoped<IBookWriteRepository, BookWriteRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
+
+        services.AddScoped<IDashboardQueries, DashboardQueries>();
+        services.AddScoped<IBookQueries, BookQueries>();
 
         return services;
     }
