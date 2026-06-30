@@ -1,7 +1,7 @@
 using ImperaBook.Application.Dashboard;
 using Microsoft.EntityFrameworkCore;
 
-namespace ImperaBook.Infrastructure.Data.Dashboard;
+namespace ImperaBook.Infrastructure.Data.Queries;
 
 public sealed class DashboardQueries(ImperaBookDbContext db) : IDashboardQueries
 {

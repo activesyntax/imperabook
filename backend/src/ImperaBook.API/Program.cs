@@ -2,7 +2,7 @@ using ImperaBook.API.Endpoints;
 using ImperaBook.Application;
 using ImperaBook.Application.Dashboard;
 using ImperaBook.Infrastructure.Data;
-using ImperaBook.Infrastructure.Data.Dashboard;
+using ImperaBook.Infrastructure.Data.Queries;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

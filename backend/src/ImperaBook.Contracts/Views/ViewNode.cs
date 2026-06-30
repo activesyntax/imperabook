@@ -2,11 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace ImperaBook.Contracts.Views;
 
-/// <summary>
-/// Closed semantic view vocabulary (DECISIONS 15). Serialized polymorphically with a
-/// `type` discriminator. Each case says WHAT a node is, never HOW it looks — no pixels,
-/// colors, or layout. The frontend's `ViewNode` TS union mirrors these discriminators.
-/// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(ImageView), "image")]
 [JsonDerivedType(typeof(CardCollectionView), "cardCollection")]
