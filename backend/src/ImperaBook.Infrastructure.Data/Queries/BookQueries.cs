@@ -24,7 +24,10 @@ public sealed class BookQueries(ImperaBookDbContext db) : IBookQueries
                 Id = b.Id,
                 Title = b.Title,
                 Subtitle = b.Subtitle,
-                AuthorIds = Array.Empty<Guid>(),
+                // TODO(author-feature): project real author names once the Book↔Author
+                // relationship lands. Empty until then — the read path carries no author
+                // data rather than a wrong one. See COMMANDS.md open question (find-or-create).
+                AuthorNames = Array.Empty<string>(),
                 LibraryId = b.LibraryId,
             })
             .ToArrayAsync(ct);

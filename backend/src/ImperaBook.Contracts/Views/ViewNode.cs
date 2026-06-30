@@ -7,6 +7,7 @@ namespace ImperaBook.Contracts.Views;
 [JsonDerivedType(typeof(CardCollectionView), "cardCollection")]
 [JsonDerivedType(typeof(MessageView), "message")]
 [JsonDerivedType(typeof(GuidanceView), "guidance")]
+[JsonDerivedType(typeof(ItemCollectionView), "itemCollection")]
 public abstract record ViewNode;
 
 // NOTE: `Src` and `Variant` — `src` is the known soft spot from DECISIONS 15
@@ -16,11 +17,6 @@ public sealed record ImageView(string Src, string Alt, string? Caption, string? 
 
 public sealed record CardCollectionView(IReadOnlyList<CardView> Items) : ViewNode;
 
-/// <summary>
-/// A card is a sub-vocabulary item inside a CardCollectionView, not a top-level
-/// ViewNode — so it is not in the polymorphic hierarchy and carries its own literal
-/// `type` to match the frontend's card shape.
-/// </summary>
 public sealed record CardView(string Heading, string Value, string? Caption)
 {
     [JsonPropertyName("type")]
@@ -35,3 +31,16 @@ public sealed record GuidanceView(string Title, string Intro, IReadOnlyList<Guid
 // NOTE: `Keys` is the second soft spot from DECISIONS 15 (a literal keybinding is a
 // frontend fact). Left literal for now; move to an action reference later.
 public sealed record GuidanceHint(IReadOnlyList<string> Keys, string Label);
+
+public sealed record ItemCollectionView(IReadOnlyList<ItemView> Items) : ViewNode;
+
+public sealed record ItemView(string Ref, IReadOnlyList<ItemProperty> Properties);
+
+public sealed record ItemProperty(string Label, string Value, PropertyRole Role);
+
+public enum PropertyRole
+{
+    Primary,
+    Secondary,
+    Meta,
+}

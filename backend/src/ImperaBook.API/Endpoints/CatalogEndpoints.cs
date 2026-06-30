@@ -1,5 +1,6 @@
+using ImperaBook.API.Views;
 using ImperaBook.Application.Books;
-using ImperaBook.Application.Books.ReadModel;
+using ImperaBook.Contracts.Views;
 
 namespace ImperaBook.API.Endpoints;
 
@@ -10,10 +11,10 @@ public static class CatalogEndpoints
         app.MapGet(
                 "api/books",
                 async (IBookQueries books, CancellationToken ct) =>
-                    TypedResults.Ok(await books.List(null, null, ct))
+                    TypedResults.Ok((await books.List(null, null, ct)).ToCommandResult())
             )
             .WithName("ListBooks")
-            .Produces<BookListItem[]>(StatusCodes.Status200OK);
+            .Produces<CommandResult>(StatusCodes.Status200OK);
 
         app.MapGet(
                 "api/books/search",
@@ -22,18 +23,21 @@ public static class CatalogEndpoints
                     Guid? libraryId,
                     string? titleContains,
                     CancellationToken ct
-                ) => TypedResults.Ok(await books.List(libraryId, titleContains, ct))
+                ) =>
+                    TypedResults.Ok(
+                        (await books.List(libraryId, titleContains, ct)).ToCommandResult()
+                    )
             )
             .WithName("SearchBooks")
-            .Produces<BookListItem[]>(StatusCodes.Status200OK);
+            .Produces<CommandResult>(StatusCodes.Status200OK);
 
         app.MapGet(
                 "api/libraries/{libraryId:guid}/books",
                 async (IBookQueries books, Guid libraryId, CancellationToken ct) =>
-                    TypedResults.Ok(await books.List(libraryId, null, ct))
+                    TypedResults.Ok((await books.List(libraryId, null, ct)).ToCommandResult())
             )
             .WithName("ListLibraryBooks")
-            .Produces<BookListItem[]>(StatusCodes.Status200OK);
+            .Produces<CommandResult>(StatusCodes.Status200OK);
 
         return app;
     }
