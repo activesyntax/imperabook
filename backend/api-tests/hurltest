@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ -z "${1:-}" ]; then
+  echo "usage: $0 <file.hurl>" >&2
+  exit 1
+fi
+
+hurl --variables-file vars.env --verbose "$1"
