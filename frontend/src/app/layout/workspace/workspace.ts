@@ -1,7 +1,8 @@
-import { Component, effect, inject, signal, untracked } from '@angular/core';
-import { CommandRegistry } from '../../commands/command-registry'; // adjust to actual path
-import { CommandRunner } from '../../commands/command-runner'; // adjust to actual path
+import { Component, computed, effect, inject, untracked } from '@angular/core';
+import { CommandRegistry } from '@app/commands/command-registry';
+import { CommandRunner } from '@app/commands/command-runner';
 import { CommandSpec } from '@core/model';
+import { WorkspaceStore } from '@workspace/workspace-store';
 import { View } from './views/view/view';
 import { CommandResult } from './views/view-node';
 
@@ -16,15 +17,13 @@ const DASHBOARD_COMMAND = 'dashboard';
 export class Workspace {
   private readonly registry = inject(CommandRegistry);
   private readonly runner = inject(CommandRunner);
+  private readonly store = inject(WorkspaceStore);
 
-  private readonly _result = signal<CommandResult>(loading());
-  readonly result = this._result.asReadonly();
+  readonly result = computed<CommandResult>(() => ({ views: [...this.store.views()] }));
 
   constructor() {
-    // Fires once the registry has a non-empty command list — this IS
-    // "ask for the dashboard at startup," just routed through the same
-    // recipe-execution path every other command uses (DECISIONS 16),
-    // instead of a route hardcoded here.
+    this.store.setResult(loading());
+
     effect(() => {
       if (this.registry.loading()) {
         return;
@@ -32,14 +31,14 @@ export class Workspace {
 
       const registryError = this.registry.error();
       if (registryError) {
-        untracked(() => this._result.set(registryLoadFailed()));
+        untracked(() => this.store.setResult(registryLoadFailed()));
         return;
       }
 
       const dashboard = this.registry.commands().find((c) => c.command === DASHBOARD_COMMAND);
 
       if (!dashboard) {
-        untracked(() => this._result.set(commandNotFound()));
+        untracked(() => this.store.setResult(commandNotFound()));
         return;
       }
 
@@ -48,8 +47,8 @@ export class Workspace {
   }
 
   private async dispatch(command: CommandSpec): Promise<void> {
-    this._result.set(loading());
-    this._result.set(await this.runner.run(command));
+    this.store.setResult(loading());
+    this.store.setResult(await this.runner.run(command));
   }
 }
 

@@ -1,13 +1,13 @@
 import { computed, Injectable, signal } from '@angular/core';
-import type { ViewNode } from '@workspace/views/view-node';
+import type { CommandResult, ViewNode } from '@workspace/views/view-node';
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceStore {
-  private readonly _current = signal<ViewNode | null>(null);
+  private readonly _views = signal<readonly ViewNode[]>([]);
 
-  readonly view = computed(() => this._current() ?? null);
+  readonly views = computed(() => this._views());
 
-  setResult(result: ViewNode): void {
-    this._current.set(result);
+  setResult(result: CommandResult): void {
+    this._views.set(result.views);
   }
 }

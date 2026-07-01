@@ -12,8 +12,9 @@ import {
 } from '@angular/core';
 
 import { CommandSpec } from "@core/model";
-import { CommandRunner } from '@app/commands/command-runner';
+import { CommandRunner, CommandAnswers } from '@app/commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
+import { WorkspaceStore } from '@workspace/workspace-store';
 import { Index, IndexMove as IndexChange, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 
 type CommandKey = 'Tab' | 'Enter' | 'Escape';
@@ -28,6 +29,7 @@ type KeyboardActions = Record<CommandKey, (e: KeyboardEvent) => void>;
 export class CommandShell {
   private readonly commands = inject(CommandProvider);
   private readonly runner = inject(CommandRunner);
+  private readonly store = inject(WorkspaceStore);
 
   protected readonly queryDraft = signal('');
   protected readonly query = computed(() => this.queryDraft().trim());
@@ -123,11 +125,10 @@ export class CommandShell {
     if (cmd !== undefined && cmd.command !== this.query().toLowerCase()) {
       this.queryDraft.set(cmd.command);
       this.selectedIndex.set(0);
+      return;
     }
-    else {
-      console.log("EXECUTING: " + this.query());
-      this.reset();
-    }
+
+    this.runOrSearch(cmd);
   }
 
   private handleEscape(event: KeyboardEvent): void {
@@ -136,7 +137,7 @@ export class CommandShell {
   }
 
   protected submit(): void {
-    // this.runCommand(this.selected());
+    this.runOrSearch(this.selectedCommand());
   }
 
   private setSelectedIndexTo(indexChange: IndexChange): void {
@@ -145,11 +146,30 @@ export class CommandShell {
     this.selectedIndex.set(index);
   }
 
-  private runCommand(cmd: CommandSpec | null): void {
-    if (cmd) {
-      void this.runner.run(cmd);
-    }
+  private runOrSearch(cmd: CommandSpec | undefined): void {
+    const term = this.query();
     this.reset();
+
+    if (cmd !== undefined) {
+      void this.dispatch(cmd);
+      return;
+    }
+
+    const search = this.commands.all().find((c) => c.command === 'search');
+
+    if (search === undefined) {
+      this.store.setResult({
+        views: [{ type: 'message', kind: 'error', text: 'Search is not available right now.' }],
+      });
+      return;
+    }
+
+    void this.dispatch(search, { query: term });
+  }
+
+  private async dispatch(cmd: CommandSpec, answers: CommandAnswers = {}): Promise<void> {
+    const result = await this.runner.run(cmd, answers);
+    this.store.setResult(result);
   }
 
   private reset(): void {
@@ -157,5 +177,3 @@ export class CommandShell {
     this.selectedIndex.set(undefined);
   }
 }
-
-
