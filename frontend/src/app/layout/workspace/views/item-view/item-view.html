@@ -1,0 +1,10 @@
+<article class="item-view" [attr.data-ref]="item().ref">
+  @if (primary(); as p) {
+  <h3 class="item-view__primary">{{ p.value }}</h3>
+  }
+  @for (p of secondary(); track p.name) {
+  <span class="item-view__secondary">{{ p.value }}</span>
+  @for (p of meta(); track p.name) {
+  <span class="item-view__meta">{{ p.value }}</span>
+  } }
+</article>

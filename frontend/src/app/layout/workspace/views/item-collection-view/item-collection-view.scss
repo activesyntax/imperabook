@@ -1,0 +1,15 @@
+.item-collection {
+  display: flex;
+  flex-direction: column;
+  background: #1a1610;
+  border-radius: 0.5rem;
+  overflow: hidden;
+
+  &__empty {
+    padding: 1.5rem 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: color-mix(in srgb, #f5efe6 50%, transparent);
+    text-align: center;
+  }
+}

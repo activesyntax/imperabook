@@ -1,0 +1,30 @@
+.item-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, #f5efe6 10%, transparent);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &__primary {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #f5efe6;
+  }
+
+  &__secondary {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: color-mix(in srgb, #f5efe6 60%, transparent);
+
+    &:not(:last-child)::after {
+      content: ' · ';
+      opacity: 0.5;
+    }
+  }
+}

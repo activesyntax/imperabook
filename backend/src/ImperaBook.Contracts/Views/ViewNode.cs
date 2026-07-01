@@ -36,7 +36,7 @@ public sealed record ItemCollectionView(IReadOnlyList<ItemView> Items) : ViewNod
 
 public sealed record ItemView(string Ref, IReadOnlyList<ItemProperty> Properties);
 
-public sealed record ItemProperty(string Label, string Value, PropertyRole Role);
+public sealed record ItemProperty(string Name, string Value, PropertyRole Role);
 
 public enum PropertyRole
 {

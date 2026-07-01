@@ -40,7 +40,25 @@ export interface GuidanceView {
   readonly hints: readonly GuidanceHint[];
 }
 
-export type ViewNode = ImageView | CardView | CardCollectionView | MessageView | GuidanceView;
+export type ItemPropertyRole = 'primary' | 'secondary' | 'meta';
+
+export interface ItemProperty {
+  readonly name: string;
+  readonly value: string;
+  readonly role: ItemPropertyRole;
+}
+
+export interface ItemView {
+  readonly ref: string;
+  readonly properties: readonly ItemProperty[];
+}
+
+export interface ItemCollectionView {
+  readonly type: 'itemCollection';
+  readonly items: readonly ItemView[];
+}
+
+export type ViewNode = ImageView | CardView | CardCollectionView | MessageView | GuidanceView | ItemCollectionView;
 
 export type CommandResult = {
   views: ViewNode[];

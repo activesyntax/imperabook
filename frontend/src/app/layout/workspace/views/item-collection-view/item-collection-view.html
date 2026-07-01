@@ -1,0 +1,7 @@
+<div class="item-collection">
+  @for (item of view().items; track item.ref) {
+  <app-item-view [item]="item" />
+  } @empty {
+  <p class="item-collection__empty">No items.</p>
+  }
+</div>

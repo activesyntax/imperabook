@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Workspace } from "@workspace/workspace";
+import { Workspace } from "@app/layout/workspace/workspace";
 import { CommandShell } from "@command-shell/command-shell";
 
 @Component({

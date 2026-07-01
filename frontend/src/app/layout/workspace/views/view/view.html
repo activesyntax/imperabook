@@ -19,6 +19,11 @@
   @case ('guidance') {
     <app-guidance-view [view]="asGuidance(node())" />
   }
+
+  @case ('itemCollection') {
+    <app-item-collection-view [view]="asItemCollection(node())" />
+  }
+
   @default {
     <app-unknown-view [nodeType]="node().type" />
   }
