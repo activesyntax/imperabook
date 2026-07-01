@@ -96,15 +96,6 @@ work itself — a calmer, more focused way of interacting with software, not mer
 
 ---
 
-## Free and Open
-
-The complete application is **free** to run locally or self-host — the whole product, not a
-trial-shaped subset. Your catalog is your data, stored in open, exportable form; nothing is held
-hostage and there is no account required to use it. ImperaBook is released under the **AGPLv3**, so
-the source is open and stays open.
-
----
-
 ## Mobile Companion
 
 The desktop app is the home for deep work — cataloging, querying, batch editing. But a phone is the
@@ -138,6 +129,9 @@ domain modeling** in C#.
   types, phantom-typed identities — invalid states unrepresentable, the core free of side effects.
 - **ImperaBook.Application** — Use-case orchestration, with write operations (**Commands**) cleanly
   separated from read operations (**Queries**) and flat read models projected for the query side.
+- **ImperaBook.Contracts** — The closed `ViewNode` / `CommandResult` wire-contract types shared
+  between Application and API: a fixed semantic union the backend composes and the frontend renders,
+  declaring *what* a view is, never *how* it looks — not a Server-Driven UI layer.
 - **ImperaBook.Infrastructure.Data** — Persistence behind repository interfaces via **EF Core**,
   keeping its mutable, change-tracking model out of the domain.
 - **ImperaBook.API** — ASP.NET Core **Minimal APIs**, with all errors mapped to a single RFC 9457

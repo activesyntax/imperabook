@@ -439,6 +439,70 @@ from the SDUI it claims not to be.
 
 ---
 
+## 16. Backend-served command registry with a per-command execution recipe; per-resource endpoints kept
+
+**Context.** Two questions were open together, and answering them separately produced contradictory
+designs. First: should command dispatch collapse onto a single generic endpoint (`POST
+/api/commands`), or should the per-resource REST endpoints already in place (`CatalogEndpoints`,
+`DashboardEndpoints`) be kept? Second: whatever the endpoint shape, how does the frontend know *which*
+endpoint a command maps to and how to place each prompted field on the request — without the frontend
+making any judgment call of its own? A single endpoint trivially satisfies "frontend decides nothing,"
+but gives up the separately-scalable, separately-cacheable per-resource endpoints already built. A
+naive `command → url` mapping keeps the endpoints but silently reintroduces frontend judgment: given
+only a URL, the `CommandRunner` still has to *infer* HTTP method and where each field goes (route,
+query, body) — exactly the kind of implicit interpretation the project has been trying to keep off
+the frontend.
+
+**Decision.** Keep the per-resource REST endpoints (`CatalogEndpoints`, `DashboardEndpoints`, …) as
+they scale independently and follow normal ASP.NET Core routing and binding conventions (see the
+binding-resolution order discussed alongside this decision — DI service, route token, query string,
+or body, by parameter type and name). Retire the static `/assets/commands.json` frontend asset;
+the registry is now served by the backend at `GET /api/commands`, generated from a small, hand-written
+`CommandCatalog` in the API layer — not reflected from endpoint metadata, to avoid a code-generation
+step for MVP1's small, slow-changing grammar.
+
+Each entry is an exhaustive **execution recipe**, not a bare pointer:
+
+​```json
+{
+  "command": "add book",
+  "description": "Catalog a new book",
+  "method": "POST",
+  "url": "/api/books",
+  "parameters": [
+    { "name": "title", "in": "body", "prompt": "Title", "required": true },
+    { "name": "subtitle", "in": "body", "prompt": "Subtitle", "required": false },
+    { "name": "authorId", "in": "body", "prompt": "Author", "required": true }
+  ]
+}
+​```
+
+`method`, `url`, and every parameter's `in` (`route` | `query` | `body`) are explicit. The
+`CommandRunner` becomes a pure template executor: look up the command, prompt for each listed
+field in order, place each answer per its `in` value, send. It performs zero inference — no
+"GET implies query," no "this looks like an id so it's a route token." Every placement decision was
+made once, by the backend, at catalog-authoring time.
+
+**Trade-off.** The recipe is authoritative but now a second description of each endpoint's shape,
+kept in sync by hand against the actual Minimal API signature — `parameters[].name` must match the
+lambda parameter name exactly (route token or query key) or binding silently fails at the C# layer
+with no compile-time link between the two. This is a real, named coupling cost, accepted for MVP1's
+small command set; a later reflection-based generator (deriving the catalog from `.WithName()` plus
+parameter metadata) is a reversible move if the hand-maintained version drifts. Serving the registry
+over the network rather than a bundled static asset also trades away aggressive browser caching for a
+runtime dependency on the backend at every session start — acceptable given the dev-convenience script
+already starts the full stack together, and revisitable with standard HTTP caching headers
+(`Cache-Control`, `ETag`) if load ever warrants it. Two scope notes fall out of this decision rather
+than being separate: the `search` command's recipe must be checked against what `SearchBooks`
+(`titleContains`) actually does, since "multi-token full-text search" and a substring `Contains`
+filter are not obviously the same operation; and `ListLibraryBooks`
+(`/api/libraries/{libraryId:guid}/books`) has no corresponding MVP1 command — per COMMANDS.md, MVP1 is
+one-library-per-user with library switching explicitly out of scope — so this endpoint should either
+be dropped for now or explicitly labeled MVP2, rather than left as a route with nothing in the catalog
+pointing to it.
+
+---
+
 # Known limitations
 
 **`record struct` zero-value.** A `readonly record struct` always permits `default(T)`, which runs no
