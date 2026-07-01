@@ -1,4 +1,13 @@
-import { Component, computed, effect, inject, untracked } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  HostListener,
+  inject,
+  untracked,
+  viewChild,
+} from '@angular/core';
 import { CommandRegistry } from '@app/commands/command-registry';
 import { CommandRunner } from '@app/commands/command-runner';
 import { CommandSpec } from '@core/model';
@@ -7,6 +16,7 @@ import { View } from './views/view/view';
 import { CommandResult } from './views/view-node';
 
 const DASHBOARD_COMMAND = 'dashboard';
+const SCROLL_STEP_PX = 120; // roughly one mouse-wheel "line" — adjust if it feels off
 
 @Component({
   selector: 'app-workspace',
@@ -21,9 +31,44 @@ export class Workspace {
 
   readonly result = computed<CommandResult>(() => ({ views: [...this.store.views()] }));
 
+  private readonly scrollContainer = viewChild<ElementRef<HTMLElement>>('scrollContainer');
+
+  @HostListener('document:keydown', ['$event'])
+  protected onScrollKeydown(event: KeyboardEvent): void {
+    if (event.key === 'PageDown') {
+      event.preventDefault();
+      this.scrollByPage(1);
+    } else if (event.key === 'PageUp') {
+      event.preventDefault();
+      this.scrollByPage(-1);
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.scrollByStep(1);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.scrollByStep(-1);
+    }
+  }
+
+  private scrollByPage(direction: 1 | -1): void {
+    const el = this.scrollContainer()?.nativeElement;
+    if (!el) return;
+    el.scrollBy({ top: direction * el.clientHeight * 0.9, behavior: 'smooth' });
+  }
+
+  private scrollByStep(direction: 1 | -1): void {
+    const el = this.scrollContainer()?.nativeElement;
+    if (!el) return;
+    el.scrollBy({ top: direction * SCROLL_STEP_PX, behavior: 'smooth' });
+  }
+
   constructor() {
     this.store.setResult(loading());
 
+    // Fires once the registry has a non-empty command list — this IS
+    // "ask for the dashboard at startup," just routed through the same
+    // recipe-execution path every other command uses (DECISIONS 16),
+    // instead of a route hardcoded here.
     effect(() => {
       if (this.registry.loading()) {
         return;
