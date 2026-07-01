@@ -25,6 +25,9 @@ echo "Postgres ready."
 dotnet run --project backend/src/ImperaBook.API &
 pids+=($!)
 
+# TODO: health check for backend API
+sleep 5
+
 (cd frontend && npm start) &
 pids+=($!)
 
