@@ -1,7 +1,11 @@
-import { Component, computed } from '@angular/core';
-import { httpResource, HttpErrorResponse } from '@angular/common/http';
+import { Component, effect, inject, signal, untracked } from '@angular/core';
+import { CommandRegistry } from '../../commands/command-registry'; // adjust to actual path
+import { CommandRunner } from '../../commands/command-runner'; // adjust to actual path
+import { CommandSpec } from '@core/model';
 import { View } from './views/view/view';
 import { CommandResult } from './views/view-node';
+
+const DASHBOARD_COMMAND = 'dashboard';
 
 @Component({
   selector: 'app-workspace',
@@ -10,32 +14,63 @@ import { CommandResult } from './views/view-node';
   styleUrl: './workspace.scss',
 })
 export class Workspace {
-  // Fires on creation — this IS "ask for the dashboard at startup".
-  // The resource value is the CommandResult itself; no client-side composition (DECISIONS 15).
-  // Later, CommandRunner re-triggers this same path via `dashboard.reload()`.
-  private readonly dashboard = httpResource<CommandResult>(() => '/api/dashboard');
+  private readonly registry = inject(CommandRegistry);
+  private readonly runner = inject(CommandRunner);
 
-  readonly result = computed<CommandResult>(() => {
-    if (this.dashboard.isLoading()) return loading();
+  private readonly _result = signal<CommandResult>(loading());
+  readonly result = this._result.asReadonly();
 
-    const err = this.dashboard.error();
-    if (err) return problem(err);
+  constructor() {
+    // Fires once the registry has a non-empty command list — this IS
+    // "ask for the dashboard at startup," just routed through the same
+    // recipe-execution path every other command uses (DECISIONS 16),
+    // instead of a route hardcoded here.
+    effect(() => {
+      if (this.registry.loading()) {
+        return;
+      }
 
-    return this.dashboard.value() ?? loading();
-  });
+      const registryError = this.registry.error();
+      if (registryError) {
+        untracked(() => this._result.set(registryLoadFailed()));
+        return;
+      }
+
+      const dashboard = this.registry.commands().find((c) => c.command === DASHBOARD_COMMAND);
+
+      if (!dashboard) {
+        untracked(() => this._result.set(commandNotFound()));
+        return;
+      }
+
+      untracked(() => void this.dispatch(dashboard));
+    });
+  }
+
+  private async dispatch(command: CommandSpec): Promise<void> {
+    this._result.set(loading());
+    this._result.set(await this.runner.run(command));
+  }
 }
 
-// NOTE: 'info' / 'error' must be members of your MessageView `kind` union in view-node.ts.
-// The sample only used 'warning' — adjust these two if your union differs.
 function loading(): CommandResult {
   return { views: [{ type: 'message', kind: 'info', text: 'Loading your library…' }] };
 }
 
-function problem(err: unknown): CommandResult {
-  // RFC 9457 ProblemDetails arrives in the error body (DECISIONS 12).
-  const detail =
-    err instanceof HttpErrorResponse && err.error?.detail
-      ? err.error.detail
-      : 'Could not load the dashboard.';
-  return { views: [{ type: 'message', kind: 'error', text: detail }] };
+function registryLoadFailed(): CommandResult {
+  return {
+    views: [{ type: 'message', kind: 'error', text: 'Could not load the command registry.' }],
+  };
+}
+
+function commandNotFound(): CommandResult {
+  return {
+    views: [
+      {
+        type: 'message',
+        kind: 'error',
+        text: `"${DASHBOARD_COMMAND}" is not in the command registry.`,
+      },
+    ],
+  };
 }

@@ -147,7 +147,7 @@ export class CommandShell {
 
   private runCommand(cmd: CommandSpec | null): void {
     if (cmd) {
-      void this.runner.run(cmd.command);
+      void this.runner.run(cmd);
     }
     this.reset();
   }

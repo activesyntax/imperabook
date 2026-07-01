@@ -13,7 +13,7 @@ export class CommandRegistry {
 
   readonly commands = this.resource.value;
 
-  //   readonly loading = this.resource.isLoading;   // Signal<boolean>
-  //   readonly error   = this.resource.error;       // Signal<unknown>
-  //   reload(): void { this.resource.reload(); }
+  readonly loading = this.resource.isLoading;   // Signal<boolean>
+  readonly error = this.resource.error;       // Signal<unknown>
+  reload(): void { this.resource.reload(); }
 }

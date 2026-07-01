@@ -41,5 +41,6 @@ if (app.Environment.IsDevelopment())
 
 app.MapDashboardEndpoints();
 app.MapCatalogEndpoints();
+app.MapCommandEndpoints();
 
 app.Run();

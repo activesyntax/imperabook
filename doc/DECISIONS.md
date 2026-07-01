@@ -321,125 +321,14 @@ verbs, duplicated client-side in MVP1 for a zero round-trip on every keystroke; 
 endpoint to serve it from one place is a reversible move available if that duplication ever costs
 more than it saves.
 
-## 14. The shell talks to services, not the parent — the view-model stays in the component
-
-**Context.** The command shell had accreted three responsibilities that are not a component's:
-fetching the command registry over HTTP, deciding *what executing a command does*, and reaching
-the workspace to show a result. Because the shell and the workspace are siblings under
-`main-layout`, that last one ran shell → `@Output` → `main-layout` → `@Input` → workspace —
-mediation that only thickens as the flow grows (navigation acting on the active view, errors,
-later drafts and prompting). The tempting framing was "extract a command service and make the
-component dumb glue."
-
-**Decision.** Three services, each owning something the component should not:
-
-- **`CommandRegistry`** — data access. Loads the list once, exposes it as a signal, nothing more.
-  It is shared (the shell ranks against it; a future `help` view renders it) and HTTP is not a
-  component's job.
-- **`WorkspaceStore`** — the shared signal state both siblings read: the rendered view, the
-  selectable row refs, the current selection, a `pending` flag, and a `back` history. `viewActive`
-  is a `computed` here, so the shell reads it rather than receiving it.
-- **`CommandRunner`** — application logic. A `ShellSubmit` becomes either a store mutation
-  (`back` / `next` / `prev` / `top` / `bottom` act with no network) or a backend round-trip that
-  owns the pending/error lifecycle and writes the result into the store. This is where the
-  execution logic that was a `main-layout` TODO now lives.
-
-The shell injects all three and calls `runner.run` directly, dropping its `@Output` and its
-`viewActive` `@Input`. `main-layout` collapses to `<app-workspace/>` + `<app-command-shell/>` with
-no bindings.
-
-The load-bearing rule, stated because it is the actual judgment: **a component is legitimately
-thin glue only when the thing it glues to is a real model.** Extracting the shell's own view-state
-into a service to shrink the component file would produce both an anemic component *and* a service
-with no reason to exist — two files where one was coherent. So the test for each extraction was:
-does this have a reason to exist besides making the component shorter? Registry (shared
-data-access), store (deletes the sibling relay), and runner (the execution logic) each pass.
-
-**What deliberately did not move.** The shell's input state, suggestion derivation, and keyboard
-handling stayed in the component — that *is* the view-model, and a component-with-signals is
-exactly the place for it; relocating it would be the anemic-component trap the rule warns against.
-The ranking (`rank` / `score` / `pickFeatured`) stayed pure module functions: already the most
-testable form there is, and wrapping them in an injectable would add indirection for zero
-capability. They become a service only when they first need an injected dependency, which is a
-known point — the MVP2 per-user suggestion weighting blends the static graph with a transition
-model that has to be sourced from somewhere. Until then, pure functions.
-
-**Trade-off — direct injection over a retained `@Output` (the reversible call).** Chosen: the shell
-calls the runner. The cost is that the shell now depends on `CommandRunner` and `WorkspaceStore`
-rather than being an island that emits a value, so its unit tests stub those two — assert `run` was
-called with the right `ShellSubmit`, flip `viewActive` to test nav gating — instead of asserting an
-emission. Gained: no `main-layout` wiring, and the sibling-communication relay is gone. The
-`@Output` form was the alternative — trivially isolable in a test — but it pushes the mediation back
-into the layout, which is precisely the weight this change removes.
-
-**Trade-off — the costs, named.** `WorkspaceStore` is app-global singleton state
-(`providedIn: 'root'`), so its lifetime is the app's, not a route's — fine for a single-workspace
-MVP1, to revisit if independent workspaces ever coexist. And the runner touches the `ViewNode`
-union in a couple of places (the error-view shape; the store's `viewActive` kind check), so a
-change to the union's kind strings ripples to those spots. Accepted as the price of the runner
-owning the response → view mapping — which is a frontend rendering decision by design: the backend
-returns logical shape, the frontend decides how it renders (see 15).
-
----
-
-## 15. The wire contract is a closed semantic view union, not server-driven UI
-
-**Context.** A command's result has to cross the boundary as JSON and then become something on
-screen. Two shapes for that payload were on the table, and they look similar enough to be confused —
-the distinction is the whole decision. The first is server-driven UI (SDUI): the server sends
-*presentation primitives* — rows, columns, spacing, a generic component with style props — drawn
-from an open, extensible vocabulary, and the frontend is a dumb layout engine that paints whatever
-it is handed. The second is a *closed semantic union*: the server sends *meaning* drawn from a fixed
-set the frontend owns — `card`, `cardCollection`, `message`, `guidance`, `image` — and the frontend
-holds one renderer per case and styles it. SDUI was rejected earlier (and 14 already leans on that
-rejection); this entry records the positive shape that replaced it, because "we don't do SDUI" is
-only half a decision until the alternative is written down.
-
-**Decision.** The wire contract *is* the `CommandResult` / `ViewNode` closed semantic union. The
-backend composes the union — which nodes, in what order, carrying what content — and emits it as
-JSON via System.Text.Json polymorphism (a `type` discriminator per case). The frontend owns one
-renderer per node type and 100% of the styling; the recursive `View` maps `node.type` to its
-renderer and nothing on the wire touches how a node looks. Every command therefore flows through one
-pipe: `CommandRunner` dispatches, receives a `CommandResult`, sets the workspace signal — there is
-no per-command view-assembly code on the frontend. Adding a command's *output* is a backend change;
-the frontend grows code only when a genuinely new *node type* enters the vocabulary, which is rare
-and deliberate.
-
-This layers cleanly onto the existing read decisions rather than competing with them. The Application
-layer still returns flat data (8) — the dashboard read is three counts, not views. Composing those
-counts into a `ViewNode` union is an **API-layer** concern, the same layer and the same seam that maps
-domain DUs to the ProblemDetails wire shape (12). Data in from Application, semantic views out to the
-client; the view vocabulary never leaks inward past the API.
-
-**The line that separates this from SDUI, stated because the two are a step apart.** The vocabulary
-is *closed* and *semantic*. A node declares **what it is** (`card`, `guidance`), never **how it
-looks** — no pixels, no colors, no flex, no layout props. The moment a node carries a styling
-attribute, it has stopped being a semantic union and become the SDUI that was rejected. That is the
-single test applied to every future node: does this field say *what*, or *how*? If *how*, it does
-not belong on the wire.
-
-**Trade-off — content and composition move server-side, and two fields currently fail the test.**
-The cost accepted on purpose: the tagline, the guidance copy, and the card captions now live in the
-API, not the frontend — the server owns *what is shown*, the client owns *how it is shown*, and that
-split puts presentation-adjacent text on the backend. The cost *not* yet paid down: two fields on the
-current contract leak a frontend fact onto the wire and are exactly where the boundary decays toward
-SDUI —
-
-- **`image.src`** is an asset path, which is a frontend fact (the server should not know the asset
-  folder layout). The semantic form is already present beside it as `variant` (`logo`); `src` should
-  resolve from `variant` on the frontend.
-- **`guidance.keys`** is a literal keybinding (`Ctrl + K`), also a frontend fact — rebind on the
-  client and the server's copy goes stale silently. The semantic form references an *action*
-  (`focusCommandBar`) and lets the frontend map action → current binding.
-
-Both are named, not hidden, and both are deferred: the contract works today with the literal forms,
-and resolving them is a frontend-only change that does not move the boundary. Until then they are the
-known soft spots of this decision — the precise places "semantic union" is one careless field away
-from the SDUI it claims not to be.
-
 ---
 
 ## 16. Backend-served command registry with a per-command execution recipe; per-resource endpoints kept
+
+> **Superseded by ADR 18.** Once the backend owns full command interpretation (ADR 17's connective
+> parsing), per-resource HTTP dispatch stops carrying meaning the backend doesn't already have from
+> the `command` field itself — see ADR 18. Kept here, unedited, as the record of why per-resource
+> endpoints looked right at the time and what changed.
 
 **Context.** Two questions were open together, and answering them separately produced contradictory
 designs. First: should command dispatch collapse onto a single generic endpoint (`POST
@@ -463,7 +352,7 @@ step for MVP1's small, slow-changing grammar.
 
 Each entry is an exhaustive **execution recipe**, not a bare pointer:
 
-​```json
+```json
 {
   "command": "add book",
   "description": "Catalog a new book",
@@ -475,7 +364,7 @@ Each entry is an exhaustive **execution recipe**, not a bare pointer:
     { "name": "authorId", "in": "body", "prompt": "Author", "required": true }
   ]
 }
-​```
+```
 
 `method`, `url`, and every parameter's `in` (`route` | `query` | `body`) are explicit. The
 `CommandRunner` becomes a pure template executor: look up the command, prompt for each listed
@@ -500,6 +389,127 @@ filter are not obviously the same operation; and `ListLibraryBooks`
 one-library-per-user with library switching explicitly out of scope — so this endpoint should either
 be dropped for now or explicitly labeled MVP2, rather than left as a route with nothing in the catalog
 pointing to it.
+
+---
+
+## 17. Multi-field mutating commands compose one canonical, connective-tagged string; parsed once, on the backend
+
+> **Amended by ADR 18.** The connective/order/quoting reasoning below stands unchanged. What no
+> longer applies is the `route | query | body | text` location split — ADR 18 collapses everything
+> to a single endpoint, so every parameter is now composed the same way and `CommandParameter.in`
+> is removed rather than extended. Read "the `'text'` location" below as simply "how every parameter
+> is now placed."
+
+**Context.** ADR 16's execution recipe (`in: route | query | body`) places a single already-known
+value at a single location — it has no answer for a command like `add book`, where interactive
+prompting collects several fields (Title, Subtitle, Author, …) that together form one write. Two
+placements were on the table: send the collected fields as a structured JSON object (`{ title,
+subtitle, authorId }`, one key per field), or compose them into a single natural-language-flavoured
+string (`with title "1984" by author "Jókai Mór"`) and let the backend parse it. The second option
+looked, at first pass, like it reopened ADR 13 — which explicitly rejected word-order reinterpretation
+outright rather than deferring it. It does not, and the distinction is the crux of this decision: ADR
+13's rejected case was reordering the **verb phrase itself** (`book add` vs `add book`), which is
+ambiguous because nothing marks where one token's meaning ends and the next begins. A composed
+parameter string is different — each value is preceded by a **connective**, a reserved phrase
+(`with title`, `by author`) declared per-parameter in the command's catalog entry, that names which
+field follows. This is structurally identical to keyword/named arguments in any CLI (`--author X
+--date Y`), which are conventionally order-independent precisely because the flag names the value.
+
+**Decision.** For commands whose parameters are collected via interactive prompting, `CommandRunner`
+composes the answers into a single canonical string — each answer's connective followed by its value,
+always double-quoted (`with title "1984"`), regardless of whether the value actually needs quoting.
+Quoting is unconditional so the frontend never makes a content-dependent judgment call about whether
+*this particular* value needs escaping — that would be interpretation. The composed string is sent as
+one `text` field in the request body, alongside the recipe's other placements, if any.
+
+**MVP1 scope: fixed order, backend parses positionally.** Interactive prompting always asks in the
+order declared in the command's catalog entry, so the composed string is always in that same order.
+The backend parser for MVP1 matches connectives against that declared order — a `required` connective
+missing, an out-of-order connective, or trailing text matching no known connective all fail loud as a
+structured parse error through the existing ProblemDetails path (ADR 12), not a silent best-effort
+guess. This is deliberately less general than the parser needs to be: a connective-scanning parser
+(find each known connective wherever it occurs, rather than expect it at a fixed position) is not
+meaningfully more code, and was considered for MVP1. It is deferred to MVP2 anyway, on schedule
+grounds — MVP1 has exactly one composed-string command in scope (`add book`, per UX.md's draft-preview
+section), so building generality with a single caller to validate it against is premature; the
+positional parser is the smaller, sufficient thing today, with the token-scan version a known,
+low-cost upgrade path once a second caller and the direct-typing power-user feature (noted in
+COMMANDS.md as deferred) make the generality worth its keep.
+
+**Model change.** `CommandParameter.in` gains a fourth location, `'text'`, alongside `route | query |
+body`; a `'text'` parameter additionally carries `connective: string`. This keeps one parameter type
+and one array shape for both mechanisms rather than introducing a second `CommandParameter` shape —
+`search`'s single free-text query param keeps using `in: 'query'` unchanged (it has no connective; the
+entire typed remainder *is* the value, which is what `search` has always meant), while multi-field
+mutations use `in: 'text'` parameters. `CommandRunner` remains a mechanical executor either way: for
+`route | query | body` it places a value; for `text` it appends `connective + quoted value` to the
+composed string before sending. No parameter-specific branching enters `CommandRunner` beyond that.
+
+**Trade-off.** MVP1's "no special characters" posture (COMMANDS.md) is narrowed: every prompted answer
+is now wrapped in literal quote characters on the wire, even though the interactive flow never exposes
+that syntax to the user directly — it only becomes visible once direct typing (power-user shortcut) is
+built, at which point the same quoting rule becomes a user-facing syntax requirement, not just a wire
+format. Stated because it is easy to forget the quoting exists at all while only the prompted path is
+built. The other named cost: the positional MVP1 parser is throwaway work in the sense that MVP2's
+token-scan parser supersedes it rather than extends it — accepted because the throwaway part is small
+(a fixed-order match loop) and the single MVP1 caller doesn't justify building the general form first.
+
+---
+
+## 18. Single `POST /api/command` endpoint; ADR 16's per-resource dispatch superseded
+
+**Context.** ADR 16 kept `CatalogEndpoints` / `DashboardEndpoints` as separate HTTP routes because,
+at the time, the frontend placed each answer itself — route token, query key, or body field — so the
+URL was load-bearing: it was part of how a value found its way to the right place. ADR 17 changed
+what the frontend sends: every prompted answer now becomes one connective-tagged, quoted segment of a
+single composed string, and the backend parses that string to recover the fields. Once the backend
+already has to know, from `text` alone, which command's grammar to parse against, the URL a request
+arrived on adds nothing the `command` field doesn't already say. Keeping per-resource routes at that
+point is two ways of saying "this is an `add book`" — the route and the field — with no benefit from
+the redundancy.
+
+**Decision.** One endpoint, `POST /api/command`, handles every command. Request shape:
+
+```json
+{ "command": "add book", "text": "with title \"1984\" by author \"Jókai Mór\"" }
+```
+
+`text` is omitted (or empty) for zero-parameter commands (`list books`, `dashboard`). For a command
+with exactly one parameter and no connective — `search` is the only MVP1 case — `text` is the raw
+value as typed, unprefixed; the absence of a connective is itself the signal that the whole string is
+the value, not a field within a larger composed one. The response is always a `CommandResult`, on the
+same 200-or-ProblemDetails shape as every other endpoint (ADR 12) — success and failure look the same
+regardless of which command ran, which was already true of `ViewNode` (ADR 8/15) and is now true of
+the transport as well.
+
+Internally, the single endpoint dispatches to per-command handlers exactly as before — `AddBookCommand`
+→ its handler, `IBookQueries.List` for `list books`, and so on. What collapses is the *HTTP* surface,
+not the Application-layer separation; `CatalogEndpoints.cs` and `DashboardEndpoints.cs` stop being
+route registrations and become, at most, organizational groupings of handler registrations behind the
+one route. The scalability ADR 16 was protecting is preserved at the service-composition layer, just
+no longer expressed as distinct URLs.
+
+**Model change.** `CommandSpec` drops `method` and `url` — there is nothing per-command left to know
+at that granularity. `CommandParameter` drops `in`; every parameter is now placed the same way (ADR
+17's composition), so the field that used to select a placement strategy no longer has more than one
+value to select between. The "fictive endpoint, 404 flows through the existing error path" trick from
+the interim (`commands.json` had `/api/todo/{command}` placeholders) is retired along with it: a
+not-yet-implemented command is now a **backend-internal** condition — the single endpoint recognizes
+the `command` name (it's in the catalog) but has no handler wired to it. That must fail loud with its
+own explicit case, the same way ADR 12 already treats an unmapped `CatalogValidationError` case: a
+named `_ => throw` arm, not a route that happens not to exist. This is a small new obligation on the
+dispatcher, not a gap — worth flagging so "not implemented yet" doesn't silently regress to a generic
+500 with no indication of which command was meant.
+
+**Trade-off.** A single route means `GET`-vs-`POST` HTTP semantics (caching, idempotency, browser
+back-button behaviour) no longer distinguish reads from writes at the transport level — everything is
+a `POST`. For a command-bar-driven app with no browser navigation and no HTTP caching layer in front
+of it, this costs little; it would matter more if ImperaBook ever grew a conventional REST surface
+alongside the command endpoint, which is not currently planned. The other cost is the one already
+named at ADR 16's introduction and not resolved by reverting to it now: `search`'s recipe still needs
+checking against what "multi-token full-text search" is meant to do, and `ListLibraryBooks` still has
+no MVP1 command — both scope notes carry forward unchanged, just detached from the endpoint file they
+were originally raised against.
 
 ---
 
