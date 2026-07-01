@@ -8,9 +8,9 @@ import * as ViewNode from '../view-node';
   styleUrl: './item-view.scss',
 })
 export class ItemView {
-  item = input.required<ViewNode.ItemView>();
+  view = input.required<ViewNode.ItemView>();
 
-  primary = computed(() => this.item().properties.find((p) => p.role === 'primary'));
-  secondary = computed(() => this.item().properties.filter((p) => p.role === 'secondary'));
-  meta = computed(() => this.item().properties.filter((p) => p.role === 'meta'));
+  primary = computed(() => this.view().properties.find((p) => p.role === 'primary'));
+  secondary = computed(() => this.view().properties.filter((p) => p.role === 'secondary'));
+  meta = computed(() => this.view().properties.filter((p) => p.role === 'meta'));
 }
