@@ -112,6 +112,11 @@ export class CommandShell {
 
   private handleTab(event: KeyboardEvent): void {
 
+    if (this.suggestions().length === 1 && this.selectedCommand() !== undefined) {
+      const cmd = this.selectedCommand();
+      if (this.isCommandAccepted(cmd)) return;
+    }
+
     if (event.shiftKey) {
       this.setSelectedIndexTo(prevCyclicIndex)
     }
@@ -120,14 +125,20 @@ export class CommandShell {
     }
   }
 
-  private handleEnter(event: KeyboardEvent): void {
-    const cmd = this.selectedCommand();
+  private isCommandAccepted(cmd: CommandSpec | undefined): boolean {
+
     if (cmd !== undefined && cmd.command !== this.query().toLowerCase()) {
       this.queryDraft.set(cmd.command);
       this.selectedIndex.set(0);
-      return;
+      return true;
     }
+    return false;
+  }
 
+  private handleEnter(event: KeyboardEvent): void {
+
+    const cmd = this.selectedCommand();
+    if (this.isCommandAccepted(cmd)) return;
     this.runOrSearch(cmd);
   }
 
