@@ -16,7 +16,7 @@ export class CommandProvider {
   }
 }
 
-const FEATURED: readonly Command[] = ['add book', 'list books', 'help', 'exit'];
+const FEATURED: readonly Command[] = ['add book', 'list books', 'list authors'];
 
 // TODO: command suggestion graph should be used instead of this approach
 function pickFeatured(commands: readonly CommandSpec[]): CommandSpec[] {
@@ -31,7 +31,6 @@ function rank(commands: readonly CommandSpec[], query: CommandQuery): CommandSpe
   const qTokens = q.split(/\s+/);
 
   return commands
-    .filter(c => c.group !== 'nav')
     .map(spec => ({ spec, score: score(spec, qTokens) }))
     .filter(x => x.score >= 0)
     .sort((a, b) => a.score - b.score || a.spec.command.localeCompare(b.spec.command))

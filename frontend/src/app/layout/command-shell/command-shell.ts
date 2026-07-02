@@ -45,11 +45,9 @@ export class CommandShell {
   });
 
   protected readonly suggestions = computed(() => this.commands.suggestionsFor(this.query()));
+  protected readonly fixed = computed(() => this.commands.all().filter(c => c.group === 'fixed').sort((a, b) => a && b ? a.order - b.order : 0));
 
-  protected readonly navHint = computed(() => this.commands.all().filter(c => c.group === 'nav'));
-  protected readonly genHint = computed(() =>
-    this.commands.all().filter(c => c.group === 'shell' && c.command !== 'quit'),
-  );
+  protected readonly commandList = computed(() => [...this.suggestions(), ...this.fixed(),]);
 
   private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
 

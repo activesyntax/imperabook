@@ -2,7 +2,7 @@
   {
     "command": "add book",
     "description": "Catalog a new book",
-    "group": "general",
+    "group": "dynamic",
     "parameters": [
       {
         "name": "title",
@@ -51,13 +51,13 @@
   {
     "command": "update book",
     "description": "Edit an existing book",
-    "group": "general",
+    "group": "dynamic",
     "parameters": []
   },
   {
     "command": "remove book",
     "description": "Delete a book",
-    "group": "general",
+    "group": "dynamic",
     "parameters": []
   },
   {
@@ -109,79 +109,22 @@
     ]
   },
   {
-    "command": "filter",
-    "description": "Structured filtering by metadata",
-    "parameters": []
-  },
-  {
     "command": "dashboard",
     "description": "Render analytical widgets",
     "parameters": []
   },
   {
-    "command": "next",
-    "description": "Move selection to the next row",
-    "group": "nav",
-    "parameters": []
-  },
-  {
-    "command": "prev",
-    "description": "Move selection to the previous row",
-    "group": "nav",
-    "parameters": []
-  },
-  {
-    "command": "open",
-    "description": "Open the selected row",
-    "group": "nav",
-    "parameters": []
-  },
-  {
-    "command": "back",
-    "description": "Return to the previous view",
-    "group": "nav",
-    "parameters": []
-  },
-  {
-    "command": "top",
-    "description": "Jump to the first row",
-    "group": "nav",
-    "parameters": []
-  },
-  {
-    "command": "bottom",
-    "description": "Jump to the last row",
-    "group": "nav",
+    "command": "settings",
+    "description": "Show and edit user settings",
+    "group": "fixed",
+    "order": 1,
     "parameters": []
   },
   {
     "command": "help",
     "description": "Show available commands",
-    "group": "shell",
-    "parameters": []
-  },
-  {
-    "command": "clear",
-    "description": "Clear the screen",
-    "group": "shell",
-    "parameters": []
-  },
-  {
-    "command": "cancel",
-    "description": "Abort the current prompt",
-    "group": "shell",
-    "parameters": []
-  },
-  {
-    "command": "quit",
-    "description": "Exit ImperaBook",
-    "group": "shell",
-    "parameters": []
-  },
-  {
-    "command": "exit",
-    "description": "Exit ImperaBook",
-    "group": "shell",
+    "group": "fixed",
+    "order": 2,
     "parameters": []
   }
 ]

@@ -1,6 +1,6 @@
 export type Command = string;
 export type CommandQuery = string;
-export type CommandGroup = 'general' | 'nav' | 'shell';
+export type CommandGroup = 'dynamic' | 'fixed';
 
 export type CommandParameter = {
   readonly name: string;
@@ -13,5 +13,6 @@ export type CommandSpec = {
   readonly command: Command;
   readonly description: string;
   readonly group?: CommandGroup;
+  readonly order?: number;
   readonly parameters: readonly CommandParameter[];
 };
