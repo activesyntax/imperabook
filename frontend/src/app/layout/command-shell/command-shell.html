@@ -17,11 +17,18 @@
         }
       </div>
       <p class="desc">
+
         @if (selectedCommand(); as sel) {
           <span class="cmd">{{ sel.command }}</span> · {{ sel.description }}
         <!-- · <span class="key">↵ / Tab</span> to run -->
         } @else {
-          Welcome to ImperaBook!
+
+          @if (query().length > 0) {
+              <span class="cmd">search</span> · "{{ query() }}"
+          } @else {
+              Welcome to ImperaBook!
+          }
+
         }
       </p>
     </div>
