@@ -15,6 +15,8 @@
         } @empty {
         <span class="fall">no command · <span class="key">↵</span> runs as search</span>
         }
+
+        <
       </div>
       <p class="desc">
 
@@ -65,22 +67,23 @@
     </div>
   </div>
 
-  <aside class="panels" aria-label="Command reference">
-    <div class="">
-      <div class="box-title">Navigation</div>
-      <div class="box-cmds">
-        @for (c of navHint(); track c.command) {
-        <span class="word">{{ c.command }}</span>
-        }
-      </div>
-    </div>
-    <div class="">
-      <div class="box-title">General</div>
-      <div class="box-cmds">
-        @for (c of genHint(); track c.command) {
-        <span class="word">{{ c.command }}</span>
-        }
-      </div>
-    </div>
-  </aside>
 </section>
+
+  <!-- <aside class="panels" aria-label="Command reference"> -->
+  <!--   <div class=""> -->
+  <!--     <div class="box-title">Navigation</div> -->
+  <!--     <div class="box-cmds"> -->
+  <!--       @for (c of navHint(); track c.command) { -->
+  <!--       <span class="word">{{ c.command }}</span> -->
+  <!--       } -->
+  <!--     </div> -->
+  <!--   </div> -->
+  <!--   <div class=""> -->
+  <!--     <div class="box-title">General</div> -->
+  <!--     <div class="box-cmds"> -->
+  <!--       @for (c of genHint(); track c.command) { -->
+  <!--       <span class="word">{{ c.command }}</span> -->
+  <!--       } -->
+  <!--     </div> -->
+  <!--   </div> -->
+  <!-- </aside> -->
