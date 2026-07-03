@@ -98,17 +98,6 @@
     "parameters": []
   },
   {
-    "command": "search",
-    "description": "Multi-token full-text search",
-    "parameters": [
-      {
-        "name": "query",
-        "prompt": "Search term(s)",
-        "required": true
-      }
-    ]
-  },
-  {
     "command": "dashboard",
     "description": "Render analytical widgets",
     "parameters": []

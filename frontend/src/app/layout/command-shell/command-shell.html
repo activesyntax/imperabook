@@ -1,23 +1,38 @@
 <section class="shell" role="region" aria-label="Command shell">
   <div class="main">
-    <div class="suggested">
-      <div class="suggestions" role="listbox" aria-label="Suggestions">
-        @for (cmd of commandList(); track cmd.command; let i = $index) {
-        <button
-          type="button"
-          class="chip"
-          role="option"
-          [class.active]="i === selectedIndex()"
-          [attr.aria-selected]="i === selectedIndex()"
-          (mousedown)="$event.preventDefault()" >
-          {{ cmd.command }}
-        </button>
+    <div class="suggestions" role="listbox" aria-label="Suggestions">
+        @for (cmd of suggestions(); track cmd.command; let i = $index) {
+          <button
+            type="button"
+            class="chip"
+            role="option"
+            [class.active]="i === selectedIndex()"
+            [attr.aria-selected]="i === selectedIndex()"
+            (mousedown)="$event.preventDefault()">
+            {{ cmd.command }}
+          </button>
         } @empty {
-        <span class="fall">no command · <span class="key">↵</span> runs as search</span>
+          <span class="fall">no command</span>
         }
 
+        <span class="spacer" aria-hidden="true"></span>
 
-      </div>
+@for (cmd of fixed(); track cmd.command; let i = $index) {
+  <button
+    type="button"
+    class="chip chip-fixed"
+    role="option"
+    (mousedown)="$event.preventDefault()">
+    @if (COMMAND_ICONS[cmd.command]; as icon) {
+            {{ icon}}
+    }
+    {{ cmd.command }}
+  </button>
+}
+
+
+    </div>
+
       <p class="desc">
 
         @if (selectedCommand(); as sel) {
@@ -33,8 +48,6 @@
 
         }
       </p>
-    </div>
-
     <div class="entry">
       <div class="prompt">
         <img class="avatar" src="assets/img/imperabook-icon.svg" alt="" aria-hidden="true" />

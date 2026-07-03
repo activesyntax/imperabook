@@ -3,6 +3,9 @@ import { inject, Injectable } from '@angular/core';
 import { Command, CommandQuery, CommandSpec } from "@core/model";
 import { CommandRegistry } from '@app/commands/command-registry';
 
+
+export type CommandFilter = (command: CommandSpec) => boolean;
+
 @Injectable({ providedIn: 'root' })
 export class CommandProvider {
 
@@ -10,9 +13,13 @@ export class CommandProvider {
 
   all = this.registry.commands;
 
-  suggestionsFor(query: CommandQuery) {
-    const suggestedCommands = rank(this.all(), query.trim());
-    return suggestedCommands.length > 0 ? suggestedCommands : pickFeatured(this.all());
+  suggestionsFor(query: CommandQuery, commandFilter?: CommandFilter): CommandSpec[] {
+    {
+      commandFilter ??= () => true;
+
+      const suggestedCommands = rank(this.all().filter(commandFilter), query.trim());
+      return suggestedCommands.length > 0 ? suggestedCommands : pickFeatured(this.all());
+    }
   }
 }
 

@@ -11,14 +11,16 @@ import {
   HostListener,
 } from '@angular/core';
 
-import { CommandSpec } from "@core/model";
+import { Command, CommandSpec } from "@core/model";
 import { CommandRunner, CommandAnswers } from '@app/commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
 import { WorkspaceStore } from '@workspace/workspace-store';
 import { Index, IndexMove as IndexChange, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 type CommandKey = 'Tab' | 'Enter' | 'Escape';
 type KeyboardActions = Record<CommandKey, (e: KeyboardEvent) => void>;
+type CommandIcon = Record<Command, SafeHtml>;
 
 @Component({
   selector: 'app-command-shell',
@@ -30,11 +32,18 @@ export class CommandShell {
   private readonly commands = inject(CommandProvider);
   private readonly runner = inject(CommandRunner);
   private readonly store = inject(WorkspaceStore);
+  private readonly sanitizer = inject(DomSanitizer);
 
+  protected COMMAND_ICONS: CommandIcon = {
+    'settings': '\u2699',
+    'help': '\u24d8',
+  }
   protected readonly queryDraft = signal('');
   protected readonly query = computed(() => this.queryDraft().trim());
 
   protected readonly selectedIndex: WritableSignal<Index> = signal(undefined);
+  protected readonly selectedFixedIndex: WritableSignal<Index> = signal(undefined);
+
   protected readonly selectedCommand = computed(() => {
 
     const index = this.selectedIndex();
@@ -44,10 +53,13 @@ export class CommandShell {
     return this.suggestions()[index];
   });
 
-  protected readonly suggestions = computed(() => this.commands.suggestionsFor(this.query()));
-  protected readonly fixed = computed(() => this.commands.all().filter(c => c.group === 'fixed').sort((a, b) => a && b ? a.order - b.order : 0));
+  protected readonly suggestions = computed(() => this.commands.suggestionsFor(this.query(), undefined));
+  protected readonly fixed = computed(() =>
+    this.commands.all()
+      .filter(c => c.group === 'fixed')
+      .toSorted((a, b) => (a.order ?? 0) - (b.order ?? 0)));
 
-  protected readonly commandList = computed(() => [...this.suggestions(), ...this.fixed(),]);
+  // protected readonly commandList = computed(() => [...this.suggestions(), ...this.fixed(),]);
 
   private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
 
@@ -91,8 +103,10 @@ export class CommandShell {
     }
 
     const matchIndex = this.suggestions().findIndex(c => c.command.includes(query));
+    // const matchFixedIndex = this.fixed().findIndex(c => c.command.includes(query));
 
     this.selectedIndex.set(matchIndex);
+    // this.selectedFixedIndex.set(matchFixedIndex);
   }
 
   private readonly keyboardActions: KeyboardActions = {
