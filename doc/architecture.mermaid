@@ -1,0 +1,108 @@
+%% ImperaBook — System architecture (MVP1)
+%% A keyboard-first Angular SPA over a Clean-Architecture .NET minimal API on PostgreSQL.
+%% The command bar is the single control surface: it fetches a command catalog, composes
+%% a command string, POSTs it, and renders whatever ViewNodes come back. The ViewNode /
+%% CommandResult shape (defined in ImperaBook.Contracts) is the shared contract that lets
+%% the backend decide *what* to show and the frontend decide *how* to render it.
+graph TB
+  User([User — keyboard-first]):::actor
+
+  %% ─────────────────────────── FRONTEND ───────────────────────────
+  subgraph FE["Frontend — Angular SPA (signals, standalone components)"]
+    direction TB
+
+    subgraph Shell["Command surface"]
+      CS["CommandShell<br/><i>input · suggestion list · Tab/Enter/Esc</i>"]:::comp
+      CProv["CommandProvider<br/><i>token-match ranking</i>"]:::comp
+      CReg["CommandRegistry<br/><i>httpResource GET /api/commands</i>"]:::comp
+      CRun["CommandRunner<br/><i>compose text · POST /api/command</i>"]:::comp
+    end
+
+    subgraph WS["Workspace (render surface)"]
+      Store["WorkspaceStore<br/><i>signal&lt;ViewNode[]&gt;</i>"]:::comp
+      Views["View components<br/><i>card · item · message · guidance · image · detail</i>"]:::comp
+    end
+
+    CS --> CProv
+    CProv --> CReg
+    CS --> CRun
+    CRun -- CommandResult --> Store
+    Store --> Views
+  end
+
+  User -->|types command| CS
+  Views -->|renders| User
+
+  %% ─────────────────────────── BACKEND ───────────────────────────
+  subgraph BE["Backend — ASP.NET Core Minimal API (Clean Architecture)"]
+    direction TB
+
+    subgraph APIL["API layer — ImperaBook.API"]
+      Prog["Program.cs<br/><i>DI · migrate+seed (dev) · OpenAPI</i>"]:::api
+      CmdEnd["CommandEndpoints<br/><i>GET /api/commands · POST /api/command dispatch</i>"]:::api
+      CatEnd["CatalogEndpoints<br/><i>/api/books · /search · /libraries/{id}/books</i>"]:::api
+      DashEnd["DashboardEndpoints<br/><i>/api/dashboard</i>"]:::api
+      Catalog["CommandCatalog<br/><i>command grammar + parameters</i>"]:::api
+      Mappers["View mappers<br/><i>ToCommandResult() · error mapping</i>"]:::api
+    end
+
+    subgraph APPL["Application layer — ImperaBook.Application"]
+      Handlers["AddBookCommandHandler"]:::app
+      Ports["Ports (interfaces)<br/><i>IBookQueries · IDashboardQueries<br/>IBookWriteRepository · ILibraryRepository</i>"]:::app
+    end
+
+    subgraph DOM["Domain layer — ImperaBook.Domain (pure, no deps)"]
+      Cat["Catalog<br/><i>Book · Author · Library · Attribution</i>"]:::dom
+      VO["Value objects · Id&lt;T&gt; · PersonName · TextRules"]:::dom
+    end
+
+    subgraph INFRA["Infrastructure — ImperaBook.Infrastructure.Data (EF Core)"]
+      DbCtx["ImperaBookDbContext<br/><i>entities · configs · migrations</i>"]:::inf
+      Repos["Repositories<br/><i>BookWriteRepository · LibraryRepository</i>"]:::inf
+      Queries["Read queries<br/><i>BookQueries · DashboardQueries</i>"]:::inf
+      Seeder["DevelopmentDataSeeder"]:::inf
+    end
+  end
+
+  subgraph Contracts["ImperaBook.Contracts (shared wire shape)"]
+    CR["CommandResult · ViewNode hierarchy"]:::contract
+  end
+
+  DB[("PostgreSQL 17<br/><i>docker-compose</i>")]:::db
+
+  %% ── request flow ──
+  CReg -.HTTP GET.-> CmdEnd
+  CRun  -.HTTP POST.-> CmdEnd
+  CmdEnd --> Catalog
+  CmdEnd --> Ports
+  CatEnd --> Ports
+  DashEnd --> Ports
+  CmdEnd --> Mappers
+  CatEnd --> Mappers
+  DashEnd --> Mappers
+
+  Ports -. implemented by .- Queries
+  Ports -. implemented by .- Repos
+  Handlers --> Ports
+  Handlers --> Cat
+
+  Queries --> DbCtx
+  Repos --> DbCtx
+  Cat --> VO
+  DbCtx --> DB
+  Seeder --> DbCtx
+
+  Mappers -->|produces| CR
+  CR -.deserialized as.-> Store
+
+  %% dev-only proxy note
+  CRun -. "vite proxy /api → :5280" .-> CmdEnd
+
+  classDef actor fill:#1f2933,stroke:#9aa5b1,color:#fff,stroke-width:1px;
+  classDef comp fill:#0b3d5c,stroke:#4aa3df,color:#eaf6ff;
+  classDef api fill:#3d2c0b,stroke:#e0a94a,color:#fff4e0;
+  classDef app fill:#1c3d0b,stroke:#7bc043,color:#eefbe0;
+  classDef dom fill:#3d0b2c,stroke:#df4a9a,color:#ffeaf6;
+  classDef inf fill:#0b3d3d,stroke:#4adfd0,color:#eafffb;
+  classDef contract fill:#2c2c3d,stroke:#9a9adf,color:#eaeaff;
+  classDef db fill:#111,stroke:#888,color:#fff;
