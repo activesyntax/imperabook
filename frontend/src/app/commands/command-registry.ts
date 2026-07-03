@@ -2,9 +2,7 @@ import { Injectable } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { CommandSpec } from "@core/model";
 
-// Swap for the real endpoint (e.g. '/commands') once the backend serves it.
-const COMMANDS_URL = '/assets/commands.json';
-// const COMMANDS_URL = '/api/commands';
+const COMMANDS_URL = '/api/commands';
 
 @Injectable({ providedIn: 'root' })
 export class CommandRegistry {

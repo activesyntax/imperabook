@@ -10,6 +10,10 @@ public static class CommandEndpoints
 {
     public static IEndpointRouteBuilder MapCommandEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapGet("/api/commands", () => TypedResults.Ok(CommandCatalog.All))
+            .WithName("GetCommands")
+            .Produces<IReadOnlyList<CommandDescriptor>>(StatusCodes.Status200OK);
+
         app.MapPost(
                 "/api/command",
                 (

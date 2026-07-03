@@ -167,7 +167,8 @@
   margin: 1rem 1rem;
   color: var(--ib-dim);
   white-space: nowrap;
-  overflow: hidden;
+  overflow: auto;
+  height: 1.5rem;
   text-overflow: ellipsis;
 }
 
