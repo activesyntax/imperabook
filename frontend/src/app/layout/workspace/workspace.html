@@ -1,6 +1,7 @@
-<!--  TODO: use view index -->
-<section class="workspace" #scrollContainer>
-  @for (view of result().views; track $index) {
-  <app-view [node]="view" />
-  }
-</section>
+<div class="workspace-frame">
+  <section class="workspace" #scrollContainer>
+    @for (view of result().views; track $index) {
+      <app-view [node]="view" />
+    }
+  </section>
+</div>
