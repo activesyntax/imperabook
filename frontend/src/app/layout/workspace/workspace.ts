@@ -39,6 +39,8 @@ export class Workspace {
     PageUp: (e) => this.scrollByPage(-1),
     ArrowDown: (e) => this.scrollByStep(1),
     ArrowUp: (e) => this.scrollByStep(-1),
+    Home: (e) => this.scrollToTop(),
+    End: (e) => this.scrollToBottom(),
   };
 
 
@@ -57,6 +59,18 @@ export class Workspace {
     const el = this.scrollContainer()?.nativeElement;
     if (!el) return;
     el.scrollBy({ top: direction * SCROLL_STEP_PX, behavior: 'smooth' });
+  }
+
+  private scrollToTop(): void {
+    const el = this.scrollContainer()?.nativeElement;
+    if (!el) return;
+    el.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  private scrollToBottom(): void {
+    const el = this.scrollContainer()?.nativeElement;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }
 
   constructor() {
