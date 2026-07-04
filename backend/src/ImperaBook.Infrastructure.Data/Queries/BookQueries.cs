@@ -1,5 +1,4 @@
 using ImperaBook.Application.Books;
-using ImperaBook.Application.Books.ReadModel;
 using Microsoft.EntityFrameworkCore;
 
 namespace ImperaBook.Infrastructure.Data.Queries;

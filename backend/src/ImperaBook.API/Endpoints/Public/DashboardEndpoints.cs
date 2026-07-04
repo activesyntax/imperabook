@@ -2,7 +2,7 @@ using ImperaBook.API.Views;
 using ImperaBook.Application.Dashboard;
 using ImperaBook.Contracts.Views;
 
-namespace ImperaBook.API.Endpoints;
+namespace ImperaBook.API.Endpoints.Public;
 
 public static class DashboardEndpoints
 {

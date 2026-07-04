@@ -1,4 +1,4 @@
-using ImperaBook.Application.Books.ReadModel;
+using ImperaBook.Application.Books;
 using ImperaBook.Contracts.Views;
 
 namespace ImperaBook.API.Views;

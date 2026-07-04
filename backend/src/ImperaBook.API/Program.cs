@@ -39,8 +39,8 @@ if (app.Environment.IsDevelopment())
     await DevelopmentDataSeeder.SeedAsync(db, CancellationToken.None);
 }
 
-app.MapDashboardEndpoints();
-app.MapCatalogEndpoints();
+// app.MapDashboardEndpoints();
+// app.MapCatalogEndpoints();
 app.MapCommandEndpoints();
 
 app.Run();

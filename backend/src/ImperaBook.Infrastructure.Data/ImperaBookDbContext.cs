@@ -9,9 +9,10 @@ public class ImperaBookDbContext(DbContextOptions<ImperaBookDbContext> options) 
     public DbSet<UserEntity> Users => Set<UserEntity>();
     public DbSet<LibraryEntity> Libraries => Set<LibraryEntity>();
 
+    public object Authors { get; internal set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ImperaBookDbContext).Assembly);
     }
 }
-

@@ -1,4 +1,5 @@
 using ImperaBook.Application;
+using ImperaBook.Application.Authors;
 using ImperaBook.Application.Books;
 using ImperaBook.Application.Dashboard;
 using ImperaBook.Infrastructure.Data.Queries;
@@ -17,10 +18,12 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.AddDbContext<ImperaBookDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IBookWriteRepository, BookWriteRepository>();
+        // services.AddScoped<IAuthorWriteRepository, AuthorWriteRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
 
         services.AddScoped<IDashboardQueries, DashboardQueries>();
         services.AddScoped<IBookQueries, BookQueries>();
+        services.AddScoped<IAuthorQueries, AuthorQueries>();
 
         return services;
     }
