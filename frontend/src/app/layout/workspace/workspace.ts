@@ -15,9 +15,10 @@ import { WorkspaceStore } from '@workspace/workspace-store';
 import { View } from './views/view/view';
 import { CommandResult } from './views/view-node';
 import { handleKeyboardEvent, KeyboardActions } from '@core/keyboard';
+import { scrollByPage, scrollByStep, scrollToTop, scrollToBottom } from '@core/scroll';
 
 const DASHBOARD_COMMAND = 'dashboard';
-const SCROLL_STEP_PX = 120; // roughly one mouse-wheel "line" — adjust if it feels off
+
 
 @Component({
   selector: 'app-workspace',
@@ -33,53 +34,28 @@ export class Workspace {
   readonly result = computed<CommandResult>(() => ({ views: [...this.store.views()] }));
 
   private readonly scrollContainer = viewChild<ElementRef<HTMLElement>>('scrollContainer');
+  private readonly scrollElement = computed(() => this.scrollContainer()?.nativeElement);
 
   private readonly scrollActions: KeyboardActions = {
-    PageDown: (e) => this.scrollByPage(1),
-    PageUp: (e) => this.scrollByPage(-1),
-    ArrowDown: (e) => this.scrollByStep(1),
-    ArrowUp: (e) => this.scrollByStep(-1),
-    Home: (e) => this.scrollToTop(),
-    End: (e) => this.scrollToBottom(),
+
+    PageDown: (e) => scrollByPage(this.scrollElement(), 1),
+    PageUp: (e) => scrollByPage(this.scrollElement(), -1),
+    ArrowDown: (e) => scrollByStep(this.scrollElement(), 1),
+    ArrowUp: (e) => scrollByStep(this.scrollElement(), -1),
+    Home: (e) => scrollToTop(this.scrollElement()),
+    End: (e) => scrollToBottom(this.scrollElement()),
   };
 
 
   @HostListener('document:keydown', ['$event'])
   protected onScrollKeydown(event: KeyboardEvent): void {
+    console.log('Workspace: onScrollKeydown', event.key);
     handleKeyboardEvent(event, this.scrollActions);
-  }
-
-  private scrollByPage(direction: 1 | -1): void {
-    const el = this.scrollContainer()?.nativeElement;
-    if (!el) return;
-    el.scrollBy({ top: direction * el.clientHeight * 0.9, behavior: 'smooth' });
-  }
-
-  private scrollByStep(direction: 1 | -1): void {
-    const el = this.scrollContainer()?.nativeElement;
-    if (!el) return;
-    el.scrollBy({ top: direction * SCROLL_STEP_PX, behavior: 'smooth' });
-  }
-
-  private scrollToTop(): void {
-    const el = this.scrollContainer()?.nativeElement;
-    if (!el) return;
-    el.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  private scrollToBottom(): void {
-    const el = this.scrollContainer()?.nativeElement;
-    if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }
 
   constructor() {
     this.store.setResult(loading());
 
-    // Fires once the registry has a non-empty command list — this IS
-    // "ask for the dashboard at startup," just routed through the same
-    // recipe-execution path every other command uses (DECISIONS 16),
-    // instead of a route hardcoded here.
     effect(() => {
       if (this.registry.loading()) {
         return;
