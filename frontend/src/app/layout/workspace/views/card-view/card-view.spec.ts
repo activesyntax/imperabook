@@ -6,7 +6,7 @@ describe('CardView', () => {
   let component: CardView;
   let fixture: ComponentFixture<CardView>;
 
-  const cardView = { type: 'card', heading: 'All Books', value: '248', caption: 'books in your sanctuary' };
+  const cardView = { type: 'card', heading: 'All Books', value: '248', caption: 'books in your library' };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({

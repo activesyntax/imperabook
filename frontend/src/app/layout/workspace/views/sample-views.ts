@@ -32,7 +32,7 @@ export const SAMPLE_DASHBOARD: CommandResult = {
     {
       type: 'cardCollection',
       items: [
-        { type: 'card', heading: 'All Books', value: '248', caption: 'books in your sanctuary' },
+        { type: 'card', heading: 'All Books', value: '248', caption: 'books in your library' },
         { type: 'card', heading: 'Authors', value: '63', caption: 'across your collection' },
         { type: 'card', heading: 'Languages', value: '7', caption: 'languages represented' },
       ],
