@@ -11,7 +11,7 @@ import {
 import { CommandRegistry } from '@app/commands/command-registry';
 import { CommandRunner } from '@app/commands/command-runner';
 import { CommandSpec } from '@core/model';
-import { WorkspaceStore } from '@workspace/workspace-store';
+import { WorkspaceStore } from '@app/state/workspace-store';
 import { View } from './views/view/view';
 import { CommandResult } from './views/view-node';
 import { handleKeyboardEvent, KeyboardActions } from '@core/keyboard';

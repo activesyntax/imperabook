@@ -14,7 +14,7 @@ import {
 import { Command, CommandSpec } from "@core/model";
 import { CommandRunner, CommandAnswers } from '@app/commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
-import { WorkspaceStore } from '@workspace/workspace-store';
+import { WorkspaceStore } from '@app/state/workspace-store';
 import { Index, IndexMove as IndexChange, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { handleKeyboardEvent, KeyboardActions } from '@core/keyboard';
