@@ -1,0 +1,12 @@
+<div class="badge">
+  @if (avatarUrl(); as url) {
+  <img class="badge__avatar" [src]="url" [alt]="name()" />
+  } @else {
+  <span class="badge__avatar badge__avatar--mono" aria-hidden="true">{{ initials() }}</span>
+  }
+
+  <span class="badge__text">
+    <span class="badge__name">{{ name() }}</span>
+    <span class="badge__library"><span class="badge__sigil"></span>{{ library() }}</span>
+  </span>
+</div>
