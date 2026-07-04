@@ -12,12 +12,10 @@
   // --ib-accent: #cb9364;
 --ib-accent: #d89356;
 
-  --ib-accent-dim: #b27a43;     // Box titles ("NAVIGATION", "GENERAL")
+  --ib-accent-dim: #b27a43;
   --ib-accent-bright: #f0a558;
   --ib-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
 
-  --ib-shell-max: 1300px;        // narrower than the workspace — tune to taste
-  --ib-shell-lift: 0px;        // how far it rides up over the workspace
 
   display: block;
   position: relative;

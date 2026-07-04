@@ -8,13 +8,13 @@
 }
 
 .workspace {
-  flex: 1 1 auto;   /* felszívja a maradék helyet */
-  min-height: 0;    /* hogy a belső overflow tudjon scrollozni */
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
   margin-bottom: 5px;
 }
 
 .shell {
-  flex: 0 0 auto;   /* csak a tartalma magassága — a shell tudja magáról */
+  flex: 0 0 auto;
   width: 100%;
 }

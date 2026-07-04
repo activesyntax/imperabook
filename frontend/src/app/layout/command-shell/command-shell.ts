@@ -17,9 +17,8 @@ import { CommandProvider } from '@app/commands/command-provider';
 import { WorkspaceStore } from '@workspace/workspace-store';
 import { Index, IndexMove as IndexChange, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { handleKeyboardEvent, KeyboardActions } from '@core/keyboard';
 
-type CommandKey = 'Tab' | 'Enter' | 'Escape';
-type KeyboardActions = Record<CommandKey, (e: KeyboardEvent) => void>;
 type CommandIcon = Record<Command, SafeHtml>;
 
 @Component({
@@ -116,10 +115,7 @@ export class CommandShell {
   };
 
   protected onKeydown(event: KeyboardEvent): void {
-    if (event.key in this.keyboardActions) {
-      event.preventDefault();
-      this.keyboardActions[event.key as CommandKey](event);
-    }
+    handleKeyboardEvent(event, this.keyboardActions);
   }
 
   private handleTab(event: KeyboardEvent): void {

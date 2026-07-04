@@ -14,6 +14,7 @@ import { CommandSpec } from '@core/model';
 import { WorkspaceStore } from '@workspace/workspace-store';
 import { View } from './views/view/view';
 import { CommandResult } from './views/view-node';
+import { handleKeyboardEvent, KeyboardActions } from '@core/keyboard';
 
 const DASHBOARD_COMMAND = 'dashboard';
 const SCROLL_STEP_PX = 120; // roughly one mouse-wheel "line" — adjust if it feels off
@@ -33,21 +34,17 @@ export class Workspace {
 
   private readonly scrollContainer = viewChild<ElementRef<HTMLElement>>('scrollContainer');
 
+  private readonly scrollActions: KeyboardActions = {
+    PageDown: (e) => this.scrollByPage(1),
+    PageUp: (e) => this.scrollByPage(-1),
+    ArrowDown: (e) => this.scrollByStep(1),
+    ArrowUp: (e) => this.scrollByStep(-1),
+  };
+
+
   @HostListener('document:keydown', ['$event'])
   protected onScrollKeydown(event: KeyboardEvent): void {
-    if (event.key === 'PageDown') {
-      event.preventDefault();
-      this.scrollByPage(1);
-    } else if (event.key === 'PageUp') {
-      event.preventDefault();
-      this.scrollByPage(-1);
-    } else if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      this.scrollByStep(1);
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      this.scrollByStep(-1);
-    }
+    handleKeyboardEvent(event, this.scrollActions);
   }
 
   private scrollByPage(direction: 1 | -1): void {
