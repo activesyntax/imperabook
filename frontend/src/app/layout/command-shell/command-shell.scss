@@ -16,7 +16,7 @@
   --ib-accent-bright: #f0a558;
   --ib-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
 
-  --ib-shell-max: 1200px;        // narrower than the workspace — tune to taste
+  --ib-shell-max: 1300px;        // narrower than the workspace — tune to taste
   --ib-shell-lift: 0px;        // how far it rides up over the workspace
 
   display: block;
@@ -30,9 +30,7 @@
 
 .shell {
   box-sizing: border-box;
-  width: 100%;
-  max-width: var(--ib-shell-max);
-  margin: 0 auto;                // centered, less than workspace width
+
   display: flex;
   align-items: stretch;          // both columns share the taller column's height
   // gap: 10px;

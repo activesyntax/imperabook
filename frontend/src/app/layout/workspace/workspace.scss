@@ -1,20 +1,28 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
 .workspace-frame {
-  max-width: 1600px;
-  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   background-color: #000;
-  border: 1px solid #5a5a5a;   /* was #444 — too dark against pure black */
+  border: 1px solid #5a5a5a;
   border-top: none;
   border-radius: 14px;
+  overflow: hidden;
 }
 
 .workspace {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 32px;
-  height: 60vh;
   padding: 48px 24px;
   overflow-y: auto;
 
-  -webkit-mask-image: linear-gradient(to bottom, #000 85%, transparent 100%);
-          mask-image: linear-gradient(to bottom, #000 85%, transparent 100%);
+-webkit-mask-image: linear-gradient(to bottom, #000 max(85%, 100% - 80px), transparent);
+        mask-image: linear-gradient(to bottom, #000 max(85%, 100% - 80px), transparent);
 }
