@@ -12,6 +12,11 @@ describe('UserBadge', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(UserBadge);
+
+    fixture.componentRef.setInput('name', 'John Doe');
+    fixture.componentRef.setInput('library', 'Personal library');
+    fixture.componentRef.setInput('avatarUrl', "/assets/img/avatar.png");
+
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
