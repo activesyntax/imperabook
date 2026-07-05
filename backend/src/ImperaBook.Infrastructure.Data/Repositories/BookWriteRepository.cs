@@ -17,8 +17,8 @@ public class BookWriteRepository : IBookWriteRepository
         {
             Id = book.Id.Value,
             Title = book.Title.Value,
-            Subtitle = book.Subtitle.Map(s => s.Value).GetValueOrDefault(string.Empty),
-            Summary = book.Summary.Map(s => s.Value).GetValueOrDefault(string.Empty),
+            Subtitle = book.Subtitle.Map(s => s.Value).GetValueOrDefault(),
+            Summary = book.Summary.Map(s => s.Value).GetValueOrDefault(),
             LibraryId = book.Location switch
             {
                 Location.AtLibrary lib => lib.LibraryId.Value,

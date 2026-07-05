@@ -9,3 +9,4 @@ public class BookEntity
 
     public Guid? LibraryId { get; set; }
 }
+

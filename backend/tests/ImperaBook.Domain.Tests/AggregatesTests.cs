@@ -32,10 +32,10 @@ public class AggregatesTests
         var id = Id<Author>.New();
         var last = PersonName.Create("Tolkien").Value;
 
-        var author = Author.Create(id, firstName: null, last);
+        var author = Author.Create(id, firstName: Maybe<PersonName>.None, last);
 
         Assert.Equal(id, author.Id);
-        Assert.Null(author.FirstName);
+        Assert.Equal(Maybe<PersonName>.None, author.FirstName);
         Assert.Equal(last, author.LastName);
     }
 
