@@ -56,20 +56,21 @@ dotnet ef database update \
   --startup-project src/ImperaBook.Infrastructure.Data
 
 ============================
-DOCKER COMPOSE
-============================
-docker compose up -d
-# wait for healthy (a few seconds); check with:
-docker compose ps
-
-============================
 VERIFY
 ============================
 docker compose exec db psql -U imperabook -d imperabook -c "\dt"
-
 
 ============================
 PSQL
 ============================
 
 docker compose exec db psql -U imperabook -d imperabook
+
+============================
+DOCKER COMPOSE
+============================
+docker compose up -d
+# wait for healthy (a few seconds); check with:
+docker compose ps
+
+
