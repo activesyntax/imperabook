@@ -18,7 +18,7 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.AddDbContext<ImperaBookDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IBookWriteRepository, BookWriteRepository>();
-        // services.AddScoped<IAuthorWriteRepository, AuthorWriteRepository>();
+        services.AddScoped<IAuthorWriteRepository, AuthorWriteRepository>();
         services.AddScoped<ILibraryRepository, LibraryRepository>();
 
         services.AddScoped<IDashboardQueries, DashboardQueries>();

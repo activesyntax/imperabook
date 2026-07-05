@@ -49,20 +49,18 @@ dotnet ef migrations add InitialCreate \
   --startup-project src/ImperaBook.Infrastructure.Data
 
 ============================
-DOCKER COMPOSE
-============================
-docker compose up -d
-# wait for healthy (a few seconds); check with:
-docker compose ps
-
-
-============================
 UPDATE
 ============================
 dotnet ef database update \
   --project src/ImperaBook.Infrastructure.Data \
   --startup-project src/ImperaBook.Infrastructure.Data
 
+============================
+DOCKER COMPOSE
+============================
+docker compose up -d
+# wait for healthy (a few seconds); check with:
+docker compose ps
 
 ============================
 VERIFY

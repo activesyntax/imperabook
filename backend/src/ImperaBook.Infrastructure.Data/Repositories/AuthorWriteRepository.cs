@@ -16,7 +16,7 @@ public class AuthorWriteRepository : IAuthorWriteRepository
         var entity = new AuthorEntity
         {
             Id = author.Id.Value,
-            FisrtName = author.FirstName.Map(fn => fn.Value).GetValueOrDefault(),
+            FirstName = author.FirstName.Map(fn => fn.Value).GetValueOrDefault(),
             LastName = author.LastName.Value,
         };
 

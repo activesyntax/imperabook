@@ -5,18 +5,28 @@ namespace ImperaBook.Infrastructure.Data.Queries;
 
 public sealed class AuthorQueries(ImperaBookDbContext db) : IAuthorQueries
 {
-    public Task<AuthorListItem[]> List(Guid? libraryId, string? titleContains, CancellationToken ct)
+    // todo: use maybe for query param, or use a default value for the parameter
+    public Task<AuthorListItem[]> List(Guid? libraryId, string? query, CancellationToken ct)
     {
-        return Task.FromResult(Array.Empty<AuthorListItem>());
-        // var q = db.Authors.AsNoTracking();
+        var nameQuery = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
+
+        var q = db.Authors.AsNoTracking();
+
+        // not supported yet, but we will need it once we have the Book↔Author
+        // relationship in place
+        // if (libraryId is { } lib)
+        //     q = q.Where(b => b.LibraryId == lib);
         //
+        // if (nameQuery is not null)
+        //     q = q.Where(b => EF.Functions.ILike(b.FirstName, $"%{query}%"));
         //
-        // return q.OrderBy(b => b.)
-        //     .Select(b => new AuthorListItem
-        //     {
-        //         Id = b.Id,
-        //         FirstName = b.AuthorFirstName,
-        //     })
-        //     .ToArrayAsync(ct);
+        return q.OrderBy(a => a.LastName)
+            .Select(b => new AuthorListItem
+            {
+                Id = b.Id,
+                FirstName = b.FirstName,
+                LastName = b.LastName,
+            })
+            .ToArrayAsync(ct);
     }
 }
