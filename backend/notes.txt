@@ -60,6 +60,13 @@ VERIFY
 ============================
 docker compose exec db psql -U imperabook -d imperabook -c "\dt"
 
+
+============================
+RESET DATABASE
+============================
+ResetDatabaseOnStartup=true dotnet run --project src/ImperaBook.API
+dotnet run --project backend/ImperaBook.API --launch-profile reset-seed
+
 ============================
 PSQL
 ============================
