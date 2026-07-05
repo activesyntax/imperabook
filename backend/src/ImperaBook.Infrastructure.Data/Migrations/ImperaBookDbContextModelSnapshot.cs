@@ -28,16 +28,18 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("FisrtName")
-                        .HasColumnType("text");
+                    b.Property<string>("FirstName")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Authors");
+                    b.ToTable("authors", (string)null);
                 });
 
             modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.BookEntity", b =>
