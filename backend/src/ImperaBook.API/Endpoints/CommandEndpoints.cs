@@ -1,4 +1,5 @@
 using ImperaBook.API.Views;
+using ImperaBook.Application.Authors;
 using ImperaBook.Application.Books;
 using ImperaBook.Application.Dashboard;
 using ImperaBook.Contracts.Views;
@@ -18,10 +19,11 @@ public static class CommandEndpoints
                 "/api/command",
                 (
                     CommandRequest request,
-                    IBookQueries books,
                     IDashboardQueries dashboard,
+                    IBookQueries books,
+                    IAuthorQueries authors,
                     CancellationToken ct
-                ) => Dispatch(request, books, dashboard, ct)
+                ) => Dispatch(request, dashboard, books, authors, ct)
             )
             .WithName("RunCommand")
             .Produces<CommandResult>(StatusCodes.Status200OK)
@@ -32,8 +34,9 @@ public static class CommandEndpoints
 
     private static async Task<Results<Ok<CommandResult>, ProblemHttpResult>> Dispatch(
         CommandRequest request,
-        IBookQueries books,
         IDashboardQueries dashboard,
+        IBookQueries books,
+        IAuthorQueries authors,
         CancellationToken ct
     )
     {
@@ -45,6 +48,10 @@ public static class CommandEndpoints
             ),
 
             "dashboard" => TypedResults.Ok((await dashboard.GetSummaryAsync(ct)).ToCommandResult()),
+
+            "list authors" => TypedResults.Ok(
+                (await authors.List(null, null, ct)).ToCommandResult()
+            ),
             "add book"
             or "update book"
             or "remove book"
@@ -52,7 +59,6 @@ public static class CommandEndpoints
             or "add author"
             or "update author"
             or "remove author"
-            or "list authors"
             or "filter"
             or "next"
             or "prev"
