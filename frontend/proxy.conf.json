@@ -3,5 +3,10 @@
     "target": "https://localhost:7224",
     "secure": false,
     "changeOrigin": true
+  },
+  "/static": {
+    "target": "https://localhost:7224",
+    "secure": false,
+    "changeOrigin": true
   }
 }

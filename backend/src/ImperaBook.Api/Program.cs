@@ -38,6 +38,7 @@ app.UseStatusCodePages();
 app.UseStaticFiles(
     new StaticFileOptions
     {
+        RequestPath = "/static",
         OnPrepareResponse = ctx =>
             ctx.Context.Response.Headers.CacheControl = "public, max-age=3600",
     }
