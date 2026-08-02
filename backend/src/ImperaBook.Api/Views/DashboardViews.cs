@@ -3,9 +3,6 @@ using ImperaBook.Contracts.Views;
 
 namespace ImperaBook.API.Views;
 
-// View composition is an API-layer concern (DECISIONS 15) — the same seam that maps
-// domain DUs to ProblemDetails (DECISIONS 12). One composer per composed read model;
-// book views follow the same shape once their ViewNodes land.
 public static class DashboardViews
 {
     public static CommandResult ToCommandResult(this DashboardSummary s) =>
@@ -13,7 +10,7 @@ public static class DashboardViews
             new ViewNode[]
             {
                 new ImageView(
-                    Src: "assets/img/imperabook-logo-dark.svg",
+                    Source: new ImageSource.AssetImage("imperabook-logo-dark"),
                     Alt: "ImperaBook",
                     Caption: "Your library, at your fingertips.",
                     Variant: "logo"

@@ -10,10 +10,20 @@ namespace ImperaBook.Contracts.Views;
 [JsonDerivedType(typeof(ItemCollectionView), "itemCollection")]
 public abstract record ViewNode;
 
-// NOTE: `Src` and `Variant` — `src` is the known soft spot from DECISIONS 15
-// (an asset path is a frontend fact). Left as-is for now; resolve from `variant`
-// on the frontend later.
-public sealed record ImageView(string Src, string Alt, string? Caption, string? Variant) : ViewNode;
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(AssetImage), "asset")]
+[JsonDerivedType(typeof(CoverImage), "cover")]
+public abstract record ImageSource
+{
+    private ImageSource() { }
+
+    public sealed record AssetImage(string Name) : ImageSource;
+
+    public sealed record CoverImage(string Hash, string Blurhash) : ImageSource;
+}
+
+public sealed record ImageView(ImageSource Source, string Alt, string? Caption, string? Variant)
+    : ViewNode;
 
 public sealed record CardCollectionView(IReadOnlyList<CardView> Items) : ViewNode;
 
@@ -28,13 +38,15 @@ public sealed record MessageView(string Kind, string Text) : ViewNode;
 public sealed record GuidanceView(string Title, string Intro, IReadOnlyList<GuidanceHint> Hints)
     : ViewNode;
 
-// NOTE: `Keys` is the second soft spot from DECISIONS 15 (a literal keybinding is a
-// frontend fact). Left literal for now; move to an action reference later.
 public sealed record GuidanceHint(IReadOnlyList<string> Keys, string Label);
 
 public sealed record ItemCollectionView(IReadOnlyList<ItemView> Items) : ViewNode;
 
-public sealed record ItemView(string Ref, IReadOnlyList<ItemProperty> Properties);
+public sealed record ItemView(
+    string Ref,
+    IReadOnlyList<ItemProperty> Properties,
+    ImageSource? Image = null
+);
 
 public sealed record ItemProperty(string Name, string Value, PropertyRole Role);
 

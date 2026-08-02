@@ -12,16 +12,17 @@ public static class BookViews
     {
         var properties = new List<ItemProperty> { new("Title", b.Title, PropertyRole.Primary) };
 
-        // Author join formatting lives here, not in the query (DECISIONS 8 / 15): the read
-        // model carries names as data, the wire shape decides how they read. Empty until the
-        // author feature lands — AuthorNames is [] from BookQueries today, so the property is
-        // absent rather than blank.
         if (b.AuthorNames.Count > 0)
             properties.Add(new("Author", string.Join(", ", b.AuthorNames), PropertyRole.Secondary));
 
         if (!string.IsNullOrWhiteSpace(b.Subtitle))
             properties.Add(new("Subtitle", b.Subtitle, PropertyRole.Secondary));
 
-        return new ItemView(Ref: b.Id.ToString(), Properties: properties);
+        return new ItemView(Ref: b.Id.ToString(), Properties: properties, Image: ImageOf(b));
     }
+
+    private static ImageSource? ImageOf(BookListItem b) =>
+        b is { CoverHash: { } hash, CoverBlurhash: { } blurhash }
+            ? new ImageSource.CoverImage(hash, blurhash)
+            : null;
 }

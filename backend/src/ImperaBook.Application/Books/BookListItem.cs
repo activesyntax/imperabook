@@ -9,4 +9,6 @@ public sealed record BookListItem
     // public required IReadOnlyList<Guid> AuthorIds { get; init; }
     public required IReadOnlyList<string> AuthorNames { get; init; }
     public Guid? LibraryId { get; init; }
+    public string? CoverHash { get; init; }
+    public string? CoverBlurhash { get; init; }
 }
