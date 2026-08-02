@@ -17,7 +17,7 @@ namespace ImperaBook.Infrastructure.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -48,6 +48,15 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CoverBlurhash")
+                        .HasMaxLength(166)
+                        .HasColumnType("character varying(166)");
+
+                    b.Property<string>("CoverHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
                     b.Property<Guid?>("LibraryId")
                         .HasColumnType("uuid");
 
@@ -66,7 +75,41 @@ namespace ImperaBook.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("books", (string)null);
+                    b.ToTable("books", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_books_cover_complete", "(\"CoverHash\" IS NULL) = (\"CoverBlurhash\" IS NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.CoverEntity", b =>
+                {
+                    b.Property<string>("Hash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("Blurhash")
+                        .IsRequired()
+                        .HasMaxLength(166)
+                        .HasColumnType("character varying(166)");
+
+                    b.Property<byte[]>("Bytes")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("MediaType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Hash");
+
+                    b.ToTable("covers", (string)null);
                 });
 
             modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.LibraryEntity", b =>
