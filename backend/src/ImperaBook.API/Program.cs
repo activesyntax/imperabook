@@ -38,6 +38,12 @@ app.UseStatusCodePages();
 if (app.Environment.IsDevelopment())
 {
     await app.AddDevelopmentData();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ImperaBook v1");
+        c.RoutePrefix = string.Empty;
+    });
 }
 
 app.MapCommandEndpoints();
