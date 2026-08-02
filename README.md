@@ -134,7 +134,7 @@ domain modeling** in C#.
   declaring *what* a view is, never *how* it looks — not a Server-Driven UI layer.
 - **ImperaBook.Infrastructure.Data** — Persistence behind repository interfaces via **EF Core**,
   keeping its mutable, change-tracking model out of the domain.
-- **ImperaBook.API** — ASP.NET Core **Minimal APIs**, with all errors mapped to a single RFC 9457
+- **ImperaBook.Ai** — ASP.NET Core **Minimal APIs**, with all errors mapped to a single RFC 9457
   ProblemDetails shape at the boundary.
 
 ### Database

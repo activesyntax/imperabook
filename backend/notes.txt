@@ -20,7 +20,7 @@ dotnet sln add ImperaBook.Domain
 |   MINIMAL WEB API
 =======================================
 
-dotnet new web -o ImperaBook.API
+dotnet new web -o ImperaBook.Api
 
 =======================================
 |   ADD REFERENCE 
@@ -64,8 +64,8 @@ docker compose exec db psql -U imperabook -d imperabook -c "\dt"
 ============================
 RESET DATABASE
 ============================
-ResetDatabaseOnStartup=true dotnet run --project src/ImperaBook.API
-dotnet run --project backend/ImperaBook.API --launch-profile reset-seed
+ResetDatabaseOnStartup=true dotnet run --project src/ImperaBook.Api
+dotnet run --project backend/ImperaBook.Api --launch-profile reset-seed
 
 ============================
 PSQL

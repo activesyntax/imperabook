@@ -458,6 +458,11 @@ token-scan parser supersedes it rather than extends it — accepted because the 
 
 ## 18. Single `POST /api/command` endpoint; ADR 16's per-resource dispatch superseded
 
+> **Amended by ADR 19.** The dispatch reasoning below stands unchanged. What is restated is the
+> *status* of "one endpoint": ADR 19 shows it is a consequence of uniform command dispatch, not an
+> invariant in its own right, and that the claim as titled here never covered the non-command routes
+> that already existed. Read "one endpoint" below as "one endpoint **for commands**."
+
 **Context.** ADR 16 kept `CatalogEndpoints` / `DashboardEndpoints` as separate HTTP routes because,
 at the time, the frontend placed each answer itself — route token, query key, or body field — so the
 URL was load-bearing: it was part of how a value found its way to the right place. ADR 17 changed
@@ -510,6 +515,214 @@ named at ADR 16's introduction and not resolved by reverting to it now: `search`
 checking against what "multi-token full-text search" is meant to do, and `ListLibraryBooks` still has
 no MVP1 command — both scope notes carry forward unchanged, just detached from the endpoint file they
 were originally raised against.
+
+---
+
+## 19. Two channels: a control channel for commands, a content channel for bytes
+
+**Context.** ADR 18 is titled as a count — *one* endpoint — and a count is a claim about HTTP surface
+area rather than about anything the design actually depends on. Book cover images forced the question:
+a cover is bytes, not a command, and serving it needs a route the command endpoint cannot provide.
+Under the count framing that route reads as a violation to be defended, which is the wrong shape of
+argument, because the count was never what earned ADR 18. What earned it is that **the command grammar
+is closed and dispatch over it is uniform** — one place where a command name resolves to a handler, one
+response contract, one error shape. One endpoint is what falls out of that for commands. It is a
+consequence, not a rule.
+
+The count framing was also already inaccurate. `GET /api/commands` (ADR 16) and the static asset routes
+have coexisted with the command endpoint since before ADR 18 was written; the title simply did not
+account for them. A decision log that overstates its own scope forces later entries to argue for
+exceptions that were never exceptions.
+
+**Decision.** Name the two channels explicitly and let them separate.
+
+- **Control channel** — `POST /api/command`. The closed grammar, uniform dispatch, `CommandResult`
+  on success and ProblemDetails on failure (ADR 12/18). Every mutation and every view-producing read
+  goes through it. Unchanged from ADR 18.
+- **Content channel** — routes that move bytes: cover images now; MVP2's export utilities, bulk
+  import, and the already-existing command registry and static assets alongside them. Not commands,
+  not in the `CommandCatalog`, never returning a `ViewNode`.
+
+The line between them is one test: **does the request name a command from the closed grammar?** If so,
+control channel. If it moves opaque bytes whose identity a command response already established,
+content channel. The binding constraint is that a content route **never introduces meaning** — it tells
+the client nothing a `CommandResult` did not already say; it delivers bytes for a reference the client
+was already given. That is what stops the content channel from quietly regrowing into the REST surface
+ADR 18 collapsed. A content route that starts answering questions ("which books have covers?") has
+crossed back into the control channel and belongs in the command grammar.
+
+**Shape for MVP1: concrete per-type routes, not a generic blob endpoint.** A generic
+`/api/content/{kind}/{ref}` was considered and rejected for now. Cache and auth semantics differ
+genuinely per content type — a content-addressed cover is immutable and cacheable for a year, a
+generated export is single-use and short-lived — so a generic pipeline would branch on `kind`
+internally and the uniformity would be nominal. With exactly one content type in MVP1 there is nothing
+to generalize *from*. The trigger to revisit is a third content type, not a second.
+
+The same reasoning governs the addressing type, with a *different* trigger. `ContentHash` (Domain) is
+a plain content address, not a phantom-typed `ContentHash<T>`, because with one content type there is
+nothing to confuse it with. The moment a second arrives, an export hash and a cover hash become
+mutually assignable — precisely the confusion `Id<TEntity>` exists to prevent (ADR 2) — so
+phantom-typing lands on the *second* content type while the generic route waits for the third. Naming
+the two triggers separately, rather than treating "more content types" as one event, keeps the cheap
+change from being held hostage by the expensive one.
+
+Covers concretely: `GET /api/covers/{hash}`, where the hash is over the bytes themselves.
+Content-addressing buys `Cache-Control: immutable` with a long max-age and no invalidation problem —
+different bytes are a different URL, so a replaced cover cannot be served stale. Upload is a multipart
+`POST /api/covers` returning the hash; the subsequent `add book` / `update book` command carries only
+that reference in its composed string (ADR 17). This is the one point where the client touches the
+backend outside the command channel *before* a command runs, and it is deliberate: a JSON command body
+cannot carry a file, and inlining one would put megabytes through the `text` parser (see 20).
+
+**Trade-off.** Four costs, named.
+
+*ADR 18's headline gets weaker.* "One endpoint" is a sharper thing to say than "one endpoint for
+commands, plus a content channel." It was also overclaimed, and accuracy is the document's job — the
+architectural property being protected is uniform dispatch, and that property is fully intact.
+
+*Auth is enforced in two places.* With cookie-based sessions this is nearly free. With bearer tokens it
+is not: the content channel is precisely what an `<img src>` will hit, and an image tag carries no
+`Authorization` header. The realistic failure is covers returning 401 in production while every command
+works — named because it is invisible in dev and obvious only in the wrong environment. Signed
+short-lived URLs or a cookie fallback are the answers; the choice is deferred until an auth scheme is
+actually picked.
+
+*Orphan bytes.* Upload-then-command means a cover can be uploaded and the command then cancelled or
+rejected. Content-addressing makes this cheap to tolerate — a re-upload of the same file deduplicates to
+the same hash — but nothing in MVP1 reclaims unreferenced blobs. Accepted; a sweep job is the MVP2
+answer. Recorded because "nothing ever deletes these" is otherwise invisible until a disk is full.
+
+*Storage is the filesystem, not the database.* Bytes live on a mounted volume under a hash-fanned path.
+Postgres `bytea` was the alternative and has one real self-hosting advantage — a single backup artifact
+instead of a volume plus a dump — but it routes large values through TOAST, inflates every dump, and
+streams awkwardly. The decision is reversible at low cost precisely because ADR 20 hides it: the client
+holds a reference, never a storage location, so swapping the backing store is an Infrastructure change
+with no wire-contract consequence.
+
+---
+
+## 20. Image sources are a closed union of references, not URL strings — and not inline base64
+
+**Context.** The `ViewNode` union's image node carries its source as a bare `src` string, currently a
+frontend asset path. That was already a soft spot: a *frontend path* travelling on a contract whose
+entire premise is that the backend declares what a node **is** and the frontend decides how it looks
+(ADR 15). Covers would put a second meaning into the same field — asset path *and* content-channel URL
+— resolved at the frontend by inspecting the string's shape. That is interpretation on the frontend,
+which is the thing the contract exists to prevent, and it would widen the soft spot rather than leave
+it where it was.
+
+The competing option was inlining the image as base64 in the `CommandResult`, which keeps everything on
+one channel and needs no ADR 19 at all.
+
+**Decision.** The image source becomes a closed union, discriminated like every other `ViewNode` member,
+with the mapping co-located with the type rather than in global serializer config (per the existing
+convention — per-type data belongs with the type; only universal rules like enum casing belong in
+`Program.cs`):
+
+```csharp
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(AssetImage), "asset")]
+[JsonDerivedType(typeof(CoverImage), "cover")]
+public abstract record ImageSource;
+
+public sealed record AssetImage(string Name) : ImageSource;
+public sealed record CoverImage(string Hash, string Blurhash) : ImageSource;
+```
+
+The backend states which *kind* of image this is and its identity. The frontend resolves each case to a
+concrete URL, because a URL is a rendering detail. The soft spot closes rather than widening: no path
+crosses the wire at all any more, including the asset case that predates covers. Adding a third kind
+later — a remote cover fetched from Google Books metadata in MVP2, say — becomes a new case the
+frontend must handle explicitly, surfaced by an exhaustive switch, instead of a string that renders
+broken and says nothing about why.
+
+**The union is a wire type; the domain does not have one.** `ImageSource` lives in the API/Views layer
+only. The Domain holds `Maybe<Cover>` on `Book`, where `Cover` is a composite value object of
+`ContentHash` + `Blurhash`. The domain's entire statement is *whether this book has cover artwork*; that
+a missing cover renders as a placeholder asset is a rendering decision, and it is made in `BookViews`,
+which maps `Some(cover)` to `CoverImage` and `None` to `AssetImage("placeholder-cover")`. Pushing
+`ImageSource` down into the domain would have the domain declaring how something looks, which is the
+same boundary violation the entry opens with, only from the other direction.
+
+The optionality follows ADR 11's rule rather than the union: a cover is pure presence/absence, the case
+set is binary and will stay binary, so `Maybe<Cover>` — not a DU with an explicit `NoCover` case.
+`Location`'s DU is not the precedent here for the same reason it was not the precedent for `Subtitle`.
+
+**Both parts of a cover are required together.** `Cover` cannot exist with a hash but no blurhash. One
+upload produces both, and content-addressing makes them immutable as a pair — different bytes are a
+different hash *and* a different blurhash, so there is no state where one is fresh and the other stale.
+Modelling the blurhash as optional would admit a cover that skipped half its own creation, and would
+push a "what do we render if it's missing?" branch into every consumer for a case the upload path never
+produces. If blurhash generation fails at upload, the upload fails — loud, on the content channel,
+before any command references it.
+
+**Blurhash inline — the one thing that does travel on the control channel.** `CoverImage` carries a
+~30-character blurhash, which decodes client-side to a blurred preview with no round trip. This is not
+image data on the control channel; it is *metadata about an image*, and it is the size of a title. It
+delivers UX.md's "soft, skeletal cover frame" for free during the load. It is derived from the bytes at
+upload time and returned alongside the hash, then persisted **on the referencing row** — MVP1 has no
+blob-metadata table, so the `books` row carries both halves of its own cover reference and rendering a
+list needs no second lookup. The duplication that implies (two books with the same cover repeat the
+blurhash) is a few dozen bytes and is not worth a join.
+
+**Validation is structural, not just well-formedness.** `ContentHash` requires a 64-character lowercase
+hex digest, canonicalizing case on the way in — hex is case-insensitive by definition, so lowercasing is
+canonicalization rather than leniency, and the canonical form is load-bearing because it *is* the cache
+key in the cover URL. `Blurhash` checks the base83 alphabet and then decodes the leading size flag to
+derive the exact expected length, so a structurally undecodable string cannot be constructed. Both are
+machine-supplied values the user never types, which is why their error cases are deliberately coarser
+than `Title`'s: `BlurhashMalformed` does not distinguish a length failure from a charset failure from a
+structural one, because no client would act differently on the distinction. That is a departure from the
+`TitleTooLong(max)` precedent, made on purpose — richness in an error case earns its keep only when
+someone can use it.
+
+**Base64 in the `ViewNode`, rejected.** Its advantages are real and worth stating: one round trip, no
+second loading phase, no flash of empty covers, auth solved by the command channel's own auth, and an
+export that is genuinely self-contained — one JSON file *is* the whole catalog. It nonetheless fails on
+the primary surface. Base64 inflates by roughly a third, but the decisive costs are that it defeats HTTP
+caching entirely (the same cover re-transmits on every `list books`) and admits no lazy loading (the
+whole payload parses synchronously before anything renders). A fifty-row `list books` at typical cover
+sizes is a 3.5–10 MB response parsed in one blocking step, of which perhaps eight rows are on screen. It
+also forecloses `srcset` and format negotiation. A technique that is worst exactly where the application
+is used most is not a trade-off, it is a defect.
+
+**Trade-off.** *A load failure is outside ADR 12's unified error shape.* A broken cover is an `onerror`
+event, not a ProblemDetails — the one client-visible failure mode that does not arrive through the
+single error channel. The frontend needs an explicit fallback render for it; the blurhash makes that
+fallback pleasant rather than empty, which is a second reason to carry it.
+
+*The frontend now knows `/api/covers/{hash}`.* The route shape lives in two places, which is a real
+coupling. Accepted because the alternative is the backend sending a path, which is the exact soft spot
+this entry closes; and the blast radius is one frontend constant.
+
+*Export self-containment is genuinely harder.* This is the strongest thing base64 had, and giving it up
+has a cost that lands in MVP2: exporting a catalog now means bundling blobs alongside the JSON rather
+than shipping one file. Named rather than waved off — the export utilities in the README will have to
+solve it, and the answer is an archive, not a document.
+
+*The domain trusts a reference it cannot verify; the Application layer verifies it instead.*
+`Cover.Create` takes two already-validated components and returns a `Cover`, not a `Result` — every
+constraint is carried by the component types, so a `Result` that can only ever be `Ok` would be
+ceremony forced on every caller. That leaves the domain able to hold a `ContentHash` for bytes that are
+not on disk: it validates the *shape* of an address, never the existence of what it addresses, and it
+should not, because cross-checking storage from the pure core would put I/O in the domain. The check
+belongs one layer out, and that is where it lives: write commands carry only the hash, and
+`ICoverStore.Find` resolves it to a `Cover` — existence and BlurHash in one question — before the
+domain object is constructed. An unresolvable address is `ApplicationError.CoverNotFound`, alongside
+`LibraryNotFound`, on the same reasoning: a malformed reference is validation, an unknown one is
+lookup. Two consequences are left open and named. First, resolution proves the blob existed *at write
+time*; nothing prevents later loss, so a stale reference still surfaces as a broken image at render
+time. Second, the write path short-circuits on the first lookup failure rather than accumulating, so a
+bad library id masks a bad cover hash — inconsistent with field validation, accepted because lookups
+are sequential I/O and the accumulating alternative costs a round trip to report a second error the
+caller will hit anyway.
+
+The corollary is that the caller never supplies a BlurHash. An earlier shape had the client echo back
+the pair returned by the upload, which needed no port but let the two halves disagree — hash of one
+image, BlurHash of another. Cosmetic rather than corrupting, but avoidable for the price of one
+interface, and the same interface buys the existence check above. Rehydration follows ADR 10 on both
+sides: a `ContentHash.Create` or `Blurhash.Create` failure when reading a stored row is data
+corruption, not user input, so it throws rather than returning a `Result` upward.
 
 ---
 

@@ -22,7 +22,7 @@ until [ "$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q 
 done
 echo "Postgres ready."
 
-dotnet run --project backend/src/ImperaBook.API &
+dotnet run --project backend/src/ImperaBook.Api &
 pids+=($!)
 
 # TODO: health check for backend API

@@ -10,6 +10,7 @@ public sealed record Book
     public Maybe<Summary> Summary { get; }
     public Attribution Attribution { get; }
     public Location Location { get; }
+    public Maybe<Cover> Cover { get; }
 
     private Book(
         Id<Book> id,
@@ -17,7 +18,8 @@ public sealed record Book
         Maybe<Subtitle> subtitle,
         Maybe<Summary> summary,
         Attribution attribution,
-        Location location
+        Location location,
+        Maybe<Cover> cover
     )
     {
         Id = id;
@@ -26,6 +28,7 @@ public sealed record Book
         Summary = summary;
         Attribution = attribution;
         Location = location;
+        Cover = cover;
     }
 
     public static Book Create(
@@ -34,6 +37,7 @@ public sealed record Book
         Maybe<Subtitle> subtitle,
         Maybe<Summary> summary,
         Attribution attribution,
-        Location location
-    ) => new(id, title, subtitle, summary, attribution, location);
+        Location location,
+        Maybe<Cover> cover
+    ) => new(id, title, subtitle, summary, attribution, location, cover);
 }

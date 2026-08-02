@@ -1,12 +1,12 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/ImperaBook.API/ImperaBook.API.csproj" />
+    <Project Path="src/ImperaBook.Api/ImperaBook.Api.csproj" />
     <Project Path="src/ImperaBook.Application/ImperaBook.Application.csproj" />
     <Project Path="src/ImperaBook.Domain/ImperaBook.Domain.csproj" />
     <Project Path="src/ImperaBook.Infrastructure.Data/ImperaBook.Infrastructure.Data.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/ImperaBook.API.IntegrationTests/ImperaBook.API.IntegrationTests.csproj" />
+    <Project Path="tests/ImperaBook.Api.IntegrationTests/ImperaBook.Api.IntegrationTests.csproj" />
     <Project Path="tests/ImperaBook.Domain.Tests/ImperaBook.Domain.Tests.csproj" />
   </Folder>
 </Solution>

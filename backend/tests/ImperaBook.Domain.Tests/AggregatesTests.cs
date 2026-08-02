@@ -6,6 +6,12 @@ namespace ImperaBook.Domain.Tests;
 [Trait("Category", "Unit")]
 public class AggregatesTests
 {
+    private const string SampleHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    private const string SampleBlurhash = "LEHV6nWB2yk8pyo0adR*.7kCMdnj";
+
+    private static Cover SampleCover() =>
+        Cover.Create(ContentHash.Create(SampleHash).Value, Blurhash.Create(SampleBlurhash).Value);
+
     [Fact]
     public void Book_Create_exposes_all_components()
     {
@@ -14,16 +20,41 @@ public class AggregatesTests
         var subtitle = Subtitle.Create("The Spice Must Flow").Value;
         var attribution = Attribution.OfAuthorIds(new[] { Id<Author>.New() });
         var summary = Summary.Create("A book about Dune.").Value;
-        ;
+        var cover = SampleCover();
 
-        var book = Book.Create(id, title, subtitle, summary, attribution, new Location.Unknown());
+        var book = Book.Create(
+            id,
+            title,
+            subtitle,
+            summary,
+            attribution,
+            new Location.Unknown(),
+            cover
+        );
 
         Assert.Equal(id, book.Id);
         Assert.Equal(title, book.Title);
         Assert.Equal(subtitle, book.Subtitle.Value);
-        Assert.Equal(summary, book.Summary.Value); // TODO(book.Summary);
+        Assert.Equal(summary, book.Summary.Value);
         Assert.Equal(attribution, book.Attribution);
         Assert.IsType<Location.Unknown>(book.Location);
+        Assert.Equal(cover, book.Cover.Value);
+    }
+
+    [Fact]
+    public void Book_Create_allows_absent_cover()
+    {
+        var book = Book.Create(
+            Id<Book>.New(),
+            Title.Create("Dune").Value,
+            Maybe<Subtitle>.None,
+            Maybe<Summary>.None,
+            Attribution.OfAuthorIds(new[] { Id<Author>.New() }),
+            new Location.Unknown(),
+            Maybe<Cover>.None
+        );
+
+        Assert.Equal(Maybe<Cover>.None, book.Cover);
     }
 
     [Fact]
