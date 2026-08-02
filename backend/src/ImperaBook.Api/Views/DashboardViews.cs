@@ -10,7 +10,7 @@ public static class DashboardViews
             new ViewNode[]
             {
                 new ImageView(
-                    Source: new ImageSource.AssetImage("imperabook-logo-dark"),
+                    Src: "/assets/imperabook-logo-dark.svg",
                     Alt: "ImperaBook",
                     Caption: "Your library, at your fingertips.",
                     Variant: "logo"

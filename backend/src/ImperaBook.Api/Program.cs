@@ -35,6 +35,14 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
+app.UseStaticFiles(
+    new StaticFileOptions
+    {
+        OnPrepareResponse = ctx =>
+            ctx.Context.Response.Headers.CacheControl = "public, max-age=3600",
+    }
+);
+
 if (app.Environment.IsDevelopment())
 {
     await app.AddDevelopmentData();

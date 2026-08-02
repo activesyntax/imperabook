@@ -21,8 +21,8 @@ public static class BookViews
         return new ItemView(Ref: b.Id.ToString(), Properties: properties, Image: ImageOf(b));
     }
 
-    private static ImageSource? ImageOf(BookListItem b) =>
+    private static ItemImage? ImageOf(BookListItem b) =>
         b is { CoverHash: { } hash, CoverBlurhash: { } blurhash }
-            ? new ImageSource.CoverImage(hash, blurhash)
+            ? new ItemImage($"/api/covers/{hash}", blurhash)
             : null;
 }
