@@ -72,6 +72,7 @@ PSQL
 ============================
 
 docker compose exec db psql -U imperabook -d imperabook
+docker compose exec db psql -U alertme -d alertme
 
 ============================
 DOCKER COMPOSE
@@ -79,6 +80,13 @@ DOCKER COMPOSE
 docker compose up -d
 # wait for healthy (a few seconds); check with:
 docker compose ps
+
+
+==============================
+DOCKER MANAGEMENT
+==============================
+docker stop alertme-db
+docker stats
 
 ============================
 OpenApi
