@@ -17,7 +17,6 @@ var connectionString =
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(
@@ -25,15 +24,22 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     );
 });
 
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+}
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-await DevelopmentData.Fill(app);
+if (app.Environment.IsDevelopment())
+{
+    await app.AddDevelopmentData();
+}
 
-// app.MapDashboardEndpoints();
-// app.MapCatalogEndpoints();
 app.MapCommandEndpoints();
 
 app.Run();
