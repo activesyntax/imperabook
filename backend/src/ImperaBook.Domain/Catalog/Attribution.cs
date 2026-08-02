@@ -1,3 +1,5 @@
+using CSharpFunctionalExtensions;
+
 namespace ImperaBook.Domain.Catalog;
 
 public abstract record Attribution
@@ -8,11 +10,8 @@ public abstract record Attribution
 
     public sealed record ByAuthors(Authors Authors) : Attribution;
 
-    public static Attribution OfAuthorIds(IEnumerable<Id<Author>> ids)
-    {
-        var authors = Authors.Create(ids);
-        return authors is null ? new Unknown() : new ByAuthors(authors);
-    }
+    public static Attribution Of(Maybe<Authors> authors) =>
+        authors.TryGetValue(out var a) ? new ByAuthors(a) : new Unknown();
 
     public IReadOnlyList<Id<Author>> AuthorIds() =>
         this switch

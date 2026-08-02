@@ -18,7 +18,7 @@ public class AggregatesTests
         var id = Id<Book>.New();
         var title = Title.Create("Dune").Value;
         var subtitle = Subtitle.Create("The Spice Must Flow").Value;
-        var attribution = Attribution.OfAuthorIds(new[] { Id<Author>.New() });
+        var attribution = Attribution.Of(Authors.Create(new[] { Id<Author>.New() }));
         var summary = Summary.Create("A book about Dune.").Value;
         var cover = SampleCover();
 
@@ -49,7 +49,7 @@ public class AggregatesTests
             Title.Create("Dune").Value,
             Maybe<Subtitle>.None,
             Maybe<Summary>.None,
-            Attribution.OfAuthorIds(new[] { Id<Author>.New() }),
+            Attribution.Of(Authors.Create(new[] { Id<Author>.New() })),
             new Location.Unknown(),
             Maybe<Cover>.None
         );

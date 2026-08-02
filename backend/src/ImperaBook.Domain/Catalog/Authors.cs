@@ -1,3 +1,5 @@
+using CSharpFunctionalExtensions;
+
 namespace ImperaBook.Domain.Catalog;
 
 public sealed record Authors
@@ -11,13 +13,12 @@ public sealed record Authors
         Rest = rest;
     }
 
-    public static Authors? Create(IEnumerable<Id<Author>> ids)
+    public static Maybe<Authors> Create(IEnumerable<Id<Author>> ids)
     {
         var distinct = ids.Distinct().ToList();
-        if (distinct.Count == 0)
-            return null;
-
-        return new Authors(distinct[0], distinct.Skip(1).ToList());
+        return distinct.Count == 0
+            ? Maybe<Authors>.None
+            : new Authors(distinct[0], distinct.Skip(1).ToList());
     }
 
     public IReadOnlyList<Id<Author>> ToList()

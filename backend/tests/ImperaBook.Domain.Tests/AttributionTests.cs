@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using ImperaBook.Domain.Catalog;
 
 namespace ImperaBook.Domain.Tests;
@@ -6,17 +7,20 @@ namespace ImperaBook.Domain.Tests;
 public class AttributionTests
 {
     [Fact]
-    public void OfAuthorIds_empty_is_Unknown() =>
-        Assert.IsType<Attribution.Unknown>(Attribution.OfAuthorIds(Array.Empty<Id<Author>>()));
+    public void Of_none_is_Unknown() =>
+        Assert.IsType<Attribution.Unknown>(Attribution.Of(Maybe<Authors>.None));
 
     [Fact]
-    public void OfAuthorIds_nonempty_is_ByAuthors()
+    public void Of_authors_is_ByAuthors_preserving_the_list()
     {
-        var id = Id<Author>.New();
+        var a = Id<Author>.New();
+        var b = Id<Author>.New();
+        var authors = Authors.Create(new[] { a, b }).Value;
 
-        var byAuthors = Assert.IsType<Attribution.ByAuthors>(Attribution.OfAuthorIds(new[] { id }));
+        var attribution = Attribution.Of(authors);
 
-        Assert.Equal(id, byAuthors.Authors.Primary);
+        var byAuthors = Assert.IsType<Attribution.ByAuthors>(attribution);
+        Assert.Equal(authors, byAuthors.Authors);
     }
 
     [Fact]
@@ -24,23 +28,26 @@ public class AttributionTests
         Assert.Empty(new Attribution.Unknown().AuthorIds());
 
     [Fact]
-    public void AuthorIds_round_trips_through_OfAuthorIds()
+    public void AuthorIds_of_ByAuthors_returns_primary_then_rest()
     {
         var a = Id<Author>.New();
         var b = Id<Author>.New();
-
-        var attribution = Attribution.OfAuthorIds(new[] { a, b });
+        var attribution = Attribution.Of(Authors.Create(new[] { a, b }));
 
         Assert.Equal(new[] { a, b }, attribution.AuthorIds());
     }
 
     [Fact]
-    public void OfAuthorIds_deduplicates()
+    public void Of_is_total_over_the_Maybe()
     {
+        // The point of routing construction through Maybe<Authors> rather than a raw id list:
+        // there is no input for which Of has to decide what a failure means. An empty list is
+        // rejected once, by Authors.Create, and never silently degrades to Unknown here.
         var a = Id<Author>.New();
 
-        var attribution = Attribution.OfAuthorIds(new[] { a, a });
-
-        Assert.Equal(new[] { a }, attribution.AuthorIds());
+        Assert.IsType<Attribution.Unknown>(
+            Attribution.Of(Authors.Create(Array.Empty<Id<Author>>()))
+        );
+        Assert.IsType<Attribution.ByAuthors>(Attribution.Of(Authors.Create(new[] { a })));
     }
 }

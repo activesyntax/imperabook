@@ -2,13 +2,8 @@ using CSharpFunctionalExtensions;
 
 namespace ImperaBook.Domain.Catalog;
 
-/// <summary>
-/// The content address of a stored blob: a lowercase hex SHA-256 digest of the bytes themselves.
-/// Identity is the content, so equal hashes are the same bytes and a changed file is a new hash.
-/// </summary>
 public readonly record struct ContentHash
 {
-    /// <summary>Length of a hex-encoded SHA-256 digest. Reused by the EF Core configuration.</summary>
     public const int Length = 64;
 
     public string Value { get; }
@@ -20,9 +15,6 @@ public readonly record struct ContentHash
         if (string.IsNullOrWhiteSpace(raw))
             return new CatalogValidationError.ContentHashRequired();
 
-        // Hex is case-insensitive by definition, so lowercasing is canonicalization, not leniency.
-        // The canonical form is load-bearing: it is what goes into the cover URL and therefore what
-        // the HTTP cache keys on.
         var normalized = raw.Trim().ToLowerInvariant();
 
         if (normalized.Length != Length || !IsHex(normalized))

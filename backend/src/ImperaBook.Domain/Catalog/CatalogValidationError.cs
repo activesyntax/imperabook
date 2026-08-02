@@ -4,6 +4,8 @@ public abstract record CatalogValidationError
 {
     private CatalogValidationError() { }
 
+    public sealed record AuthorRequired : CatalogValidationError;
+
     public sealed record TitleRequired : CatalogValidationError;
 
     public sealed record TitleTooLong(int MaxLength) : CatalogValidationError;

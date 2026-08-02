@@ -2,11 +2,6 @@ using ImperaBook.Domain.Catalog;
 
 namespace ImperaBook.Application;
 
-/// <summary>
-/// Closed hierarchy — the C# analog of the F# ApplicationError DU.
-/// Validation carries the accumulated list of domain errors (the payload of the
-/// F# `Validation of DomainValidationError list` case).
-/// </summary>
 public abstract record ApplicationError
 {
     private ApplicationError() { }
