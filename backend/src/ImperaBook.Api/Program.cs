@@ -56,5 +56,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapCommandEndpoints();
+app.MapImageEndpoints();
 
 app.Run();
