@@ -7,6 +7,10 @@ public static class DevelopmentDataSeeder
 {
     public static async Task SeedAsync(DbContext ctx, CancellationToken ct)
     {
+        Console.WriteLine(
+            ctx.Model.FindEntityType(typeof(ImageEntity)) is null ? "NOT MAPPED" : "mapped"
+        );
+
         if (await ctx.Set<BookEntity>().AnyAsync(ct))
             return;
 
@@ -171,177 +175,186 @@ public static class DevelopmentDataSeeder
                 }
             );
 
-        ctx.Set<BookEntity>()
-            .AddRange(
-                // Classic literature
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Pride and Prejudice",
-                    LibraryId = libraryId,
-                },
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Crime and Punishment",
-                    LibraryId = libraryId,
-                },
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "War and Peace",
-                    LibraryId = libraryId,
-                },
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "One Hundred Years of Solitude",
-                    LibraryId = libraryId,
-                },
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "To Kill a Mockingbird",
-                    LibraryId = libraryId,
-                },
-                // Dystopian / political fiction
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "1984",
-                    Subtitle = "Nineteen Eighty-Four",
-                    LibraryId = libraryId,
-                },
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Animal Farm",
-                    Subtitle = "A Fairy Story",
-                    LibraryId = libraryId,
-                },
-                // Fantasy
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "The Lord of the Rings",
-                    Subtitle = "The Fellowship of the Ring",
-                    LibraryId = libraryId,
-                },
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "The Hobbit",
-                    Subtitle = "There and Back Again",
-                    LibraryId = libraryId,
-                },
-                // Science fiction
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Dune",
-                    LibraryId = libraryId,
-                },
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Foundation",
-                    LibraryId = libraryId,
-                },
-                // Mystery / crime
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Murder on the Orient Express",
-                    LibraryId = libraryId,
-                },
-                // Horror / gothic
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Frankenstein",
-                    Subtitle = "The Modern Prometheus",
-                    LibraryId = libraryId,
-                },
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Dracula",
-                    LibraryId = libraryId,
-                },
-                // History / non-fiction
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Sapiens",
-                    Subtitle = "A Brief History of Humankind",
-                    LibraryId = libraryId,
-                },
-                // Science / popular science
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Cosmos",
-                    LibraryId = libraryId,
-                },
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "A Brief History of Time",
-                    Subtitle = "From the Big Bang to Black Holes",
-                    LibraryId = libraryId,
-                },
-                // Psychology
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Thinking, Fast and Slow",
-                    LibraryId = libraryId,
-                },
-                // Technology / software
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "The Pragmatic Programmer",
-                    Subtitle = "Your Journey to Mastery",
-                    LibraryId = libraryId,
-                },
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Clean Code",
-                    Subtitle = "A Handbook of Agile Software Craftsmanship",
-                    LibraryId = libraryId,
-                },
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Domain-Driven Design",
-                    Subtitle = "Tackling Complexity in the Heart of Software",
-                    LibraryId = libraryId,
-                },
-                // Biography / memoir
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Becoming",
-                    LibraryId = libraryId,
-                },
-                // Food / travel
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Kitchen Confidential",
-                    Subtitle = "Adventures in the Culinary Underbelly",
-                    LibraryId = libraryId,
-                },
-                // Unshelved book (no library)
-                new BookEntity
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Orphan Book",
-                    LibraryId = null,
-                }
-            );
+        var books = new List<BookEntity>
+        {
+            // Classic literature
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Pride and Prejudice",
+                LibraryId = libraryId,
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Crime and Punishment",
+                LibraryId = libraryId,
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "War and Peace",
+                LibraryId = libraryId,
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "One Hundred Years of Solitude",
+                LibraryId = libraryId,
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "To Kill a Mockingbird",
+                LibraryId = libraryId,
+            },
+            // Dystopian / political fiction
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "1984",
+                Subtitle = "Nineteen Eighty-Four",
+                LibraryId = libraryId,
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Animal Farm",
+                Subtitle = "A Fairy Story",
+                LibraryId = libraryId,
+            },
+            // Fantasy
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "The Lord of the Rings",
+                Subtitle = "The Fellowship of the Ring",
+                LibraryId = libraryId,
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "The Hobbit",
+                Subtitle = "There and Back Again",
+                LibraryId = libraryId,
+            },
+            // Science fiction
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Dune",
+                LibraryId = libraryId,
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Foundation",
+                LibraryId = libraryId,
+            },
+            // Mystery / crime
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Murder on the Orient Express",
+                LibraryId = libraryId,
+            },
+            // Horror / gothic
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Frankenstein",
+                Subtitle = "The Modern Prometheus",
+                LibraryId = libraryId,
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Dracula",
+                LibraryId = libraryId,
+            },
+            // History / non-fiction
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Sapiens",
+                Subtitle = "A Brief History of Humankind",
+                LibraryId = libraryId,
+            },
+            // Science / popular science
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Cosmos",
+                LibraryId = libraryId,
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "A Brief History of Time",
+                Subtitle = "From the Big Bang to Black Holes",
+                LibraryId = libraryId,
+            },
+            // Psychology
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Thinking, Fast and Slow",
+                LibraryId = libraryId,
+            },
+            // Technology / software
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "The Pragmatic Programmer",
+                Subtitle = "Your Journey to Mastery",
+                LibraryId = libraryId,
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Clean Code",
+                Subtitle = "A Handbook of Agile Software Craftsmanship",
+                LibraryId = libraryId,
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Domain-Driven Design",
+                Subtitle = "Tackling Complexity in the Heart of Software",
+                LibraryId = libraryId,
+            },
+            // Biography / memoir
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Becoming",
+                LibraryId = libraryId,
+            },
+            // Food / travel
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Kitchen Confidential",
+                Subtitle = "Adventures in the Culinary Underbelly",
+                LibraryId = libraryId,
+            },
+            // Unshelved book (no library)
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Orphan Book",
+                LibraryId = null,
+            },
+        };
+
+        // Every seeded book gets a cover except the orphan, which stays uncovered on purpose: the
+        // absent-cover render path needs at least one row to exercise it, and this book already
+        // plays the exceptional case for LibraryId.
+        var registered = new Dictionary<string, string>();
+        foreach (var book in books.Where(b => b.Title != "Orphan Book"))
+            book.CoverHash = await SeedCovers.Register(ctx, registered, book.Title, ct);
+
+        ctx.Set<BookEntity>().AddRange(books);
 
         await ctx.SaveChangesAsync(ct);
     }
