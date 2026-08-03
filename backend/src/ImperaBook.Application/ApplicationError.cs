@@ -11,5 +11,5 @@ public abstract record ApplicationError
 
     public sealed record LibraryNotFound(Guid LibraryId) : ApplicationError;
 
-    public sealed record CoverNotFound(ContentHash Hash) : ApplicationError;
+    public sealed record ImageNotFound(ContentHash Hash) : ApplicationError;
 }

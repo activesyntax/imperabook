@@ -5,28 +5,16 @@ using ImperaBook.Domain.Catalog;
 using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Npgsql;
 
 namespace ImperaBook.Infrastructure.Data.Images;
 
-public sealed class ImageStore(
-    ImperaBookDbContext db,
-    IBlurhashEncoder blurhash,
-    IOptions<ImageStoreOptions> options
-) : IImageStore
+public sealed class ImageStore(ImperaBookDbContext db, IOptions<ImageStoreOptions> options)
+    : IImageStore
 {
-    public async Task<Maybe<ImageRef>> Find(ContentHash hash, CancellationToken ct)
-    {
-        var row = await db
-            .Images.AsNoTracking()
-            .Where(i => i.Hash == hash.Value)
-            .Select(i => new { i.Hash, i.Blurhash })
-            .SingleOrDefaultAsync(ct);
+    public Task<bool> Exists(ContentHash hash, CancellationToken ct) =>
+        db.Images.AsNoTracking().AnyAsync(i => i.Hash == hash.Value, ct);
 
-        return row is null ? Maybe<ImageRef>.None : Rehydrate(row.Hash, row.Blurhash);
-    }
-
-    public async Task<Maybe<ImageContent>> OpenRead(ContentHash hash, CancellationToken ct)
+    public async Task<ImageContent?> OpenRead(ContentHash hash, CancellationToken ct)
     {
         var row = await db
             .Images.AsNoTracking()
@@ -35,11 +23,8 @@ public sealed class ImageStore(
             .SingleOrDefaultAsync(ct);
 
         if (row is null)
-            return Maybe<ImageContent>.None;
+            return null;
 
-        // Materializes the whole image in memory. Bounded by MaxBytes on the way in, so this is a
-        // known ceiling rather than an open one — but it is a copy per request. True streaming needs
-        // NpgsqlDataReader.GetStream and raw ADO; deferred until it measurably matters.
         return new ImageContent(
             new MemoryStream(row.Bytes, writable: false),
             row.MediaType,
@@ -47,7 +32,7 @@ public sealed class ImageStore(
         );
     }
 
-    public async Task<Result<ImageRef, ImageStoreError>> Store(
+    public async Task<Result<ContentHash, ImageStoreError>> Store(
         Stream bytes,
         string mediaType,
         CancellationToken ct
@@ -65,18 +50,14 @@ public sealed class ImageStore(
         var data = buffered.Value;
         var hash = ContentHash.Create(Convert.ToHexStringLower(SHA256.HashData(data))).Value;
 
-        var existing = await Find(hash, ct);
-        if (existing.TryGetValue(out var already))
-            return already;
+        // Re-uploading the same file is a no-op by definition: same bytes, same address, same row.
+        if (await Exists(hash, ct))
+            return hash;
 
-        if (!blurhash.Encode(data).TryGetValue(out var derived))
-            return new ImageStoreError.Undecodable();
-
-        db.Images.Add(
+        var entity = db.Images.Add(
             new ImageEntity
             {
                 Hash = hash.Value,
-                Blurhash = derived.Value,
                 Bytes = data,
                 MediaType = mediaType,
                 ByteSize = data.Length,
@@ -87,24 +68,16 @@ public sealed class ImageStore(
         {
             await db.SaveChangesAsync(ct);
         }
-        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        catch (DbUpdateException)
         {
-            foreach (var entry in ex.Entries)
-                entry.State = EntityState.Detached;
+            db.Entry(entity).State = EntityState.Detached;
 
-            // Two concurrent uploads of identical bytes race to the same primary key. The loser
-            // reads the winner's row: both callers wanted the same address, and both got it.
-            if ((await Find(hash, ct)).TryGetValue(out var raced))
-                return raced;
-
-            throw;
+            if (!await Exists(hash, ct))
+                throw;
         }
 
-        return ImageRef.Create(hash, derived);
+        return hash;
     }
-
-    static bool IsUniqueViolation(DbUpdateException ex) =>
-        ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
     private static async Task<Result<byte[], ImageStoreError>> Buffer(
         Stream source,
@@ -128,10 +101,6 @@ public sealed class ImageStore(
 
         return buffered.ToArray();
     }
-
-    // Stored values that fail validation are corruption, not user input (DECISIONS 10).
-    private static ImageRef Rehydrate(string hash, string blurhash) =>
-        ImageRef.Create(ContentHash.Create(hash).Value, Blurhash.Create(blurhash).Value);
 }
 
 public sealed class ImageStoreOptions

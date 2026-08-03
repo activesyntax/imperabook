@@ -10,7 +10,8 @@ public sealed record Book
     public Maybe<Summary> Summary { get; }
     public Attribution Attribution { get; }
     public Location Location { get; }
-    public Maybe<ImageRef> Cover { get; }
+
+    public Maybe<ContentHash> Cover { get; }
 
     private Book(
         Id<Book> id,
@@ -19,7 +20,7 @@ public sealed record Book
         Maybe<Summary> summary,
         Attribution attribution,
         Location location,
-        Maybe<ImageRef> cover
+        Maybe<ContentHash> cover
     )
     {
         Id = id;
@@ -38,6 +39,6 @@ public sealed record Book
         Maybe<Summary> summary,
         Attribution attribution,
         Location location,
-        Maybe<ImageRef> cover
+        Maybe<ContentHash> cover
     ) => new(id, title, subtitle, summary, attribution, location, cover);
 }

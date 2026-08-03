@@ -27,7 +27,6 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IBookQueries, BookQueries>();
         services.AddScoped<IAuthorQueries, AuthorQueries>();
         services.AddScoped<IImageStore, ImageStore>();
-        services.AddSingleton<IBlurhashEncoder, SkiaBlurhashEncoder>();
 
         return services;
     }

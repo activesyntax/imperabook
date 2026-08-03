@@ -5,9 +5,11 @@ namespace ImperaBook.Application.Images;
 
 public interface IImageStore
 {
-    Task<Maybe<ImageRef>> Find(ContentHash hash, CancellationToken ct);
-    Task<Maybe<ImageContent>> OpenRead(ContentHash hash, CancellationToken ct);
-    Task<Result<ImageRef, ImageStoreError>> Store(
+    Task<bool> Exists(ContentHash hash, CancellationToken ct);
+
+    Task<ImageContent?> OpenRead(ContentHash hash, CancellationToken ct);
+
+    Task<Result<ContentHash, ImageStoreError>> Store(
         Stream bytes,
         string mediaType,
         CancellationToken ct
@@ -23,11 +25,4 @@ public abstract record ImageStoreError
     public sealed record UnsupportedMediaType(string MediaType) : ImageStoreError;
 
     public sealed record TooLarge(long LimitBytes) : ImageStoreError;
-
-    public sealed record Undecodable : ImageStoreError;
-}
-
-public interface IBlurhashEncoder
-{
-    Maybe<Blurhash> Encode(byte[] imageBytes);
 }

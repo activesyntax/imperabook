@@ -9,5 +9,4 @@ public class BookEntity
     public Guid? LibraryId { get; set; }
 
     public string? CoverHash { get; set; }
-    public string? CoverBlurhash { get; set; }
 }

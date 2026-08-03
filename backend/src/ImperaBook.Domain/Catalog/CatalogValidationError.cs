@@ -27,8 +27,4 @@ public abstract record CatalogValidationError
     public sealed record ContentHashRequired : CatalogValidationError;
 
     public sealed record ContentHashMalformed(int ExpectedLength) : CatalogValidationError;
-
-    public sealed record BlurhashRequired : CatalogValidationError;
-
-    public sealed record BlurhashMalformed : CatalogValidationError;
 }

@@ -12,6 +12,8 @@ public sealed record AddBookCommand
     public string? Summary { get; init; }
     public required IReadOnlyList<Guid> AuthorIds { get; init; }
     public Guid? LibraryId { get; init; }
+
+    /// <summary>The content address returned by <c>POST /api/images</c>.</summary>
     public string? CoverHash { get; init; }
 }
 
@@ -112,18 +114,17 @@ public sealed class AddBookCommandHandler(
         return new Location.AtLibrary(guid);
     }
 
-    private async Task<Result<Maybe<ImageRef>, ApplicationError>> ResolveCover(
+    private async Task<Result<Maybe<ContentHash>, ApplicationError>> ResolveCover(
         Maybe<ContentHash> hash,
         CancellationToken ct
     )
     {
         if (!hash.TryGetValue(out var contentHash))
-            return Maybe<ImageRef>.None;
+            return Maybe<ContentHash>.None;
 
-        var cover = await images.Find(contentHash, ct);
-        if (cover.HasNoValue)
-            return new ApplicationError.CoverNotFound(contentHash);
+        if (!await images.Exists(contentHash, ct))
+            return new ApplicationError.ImageNotFound(contentHash);
 
-        return cover;
+        return hash;
     }
 }
