@@ -26,18 +26,22 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("FirstName")
                         .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("first_name");
 
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("last_name");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_authors");
 
                     b.ToTable("authors", (string)null);
                 });
@@ -46,30 +50,41 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("CoverHash")
                         .HasMaxLength(64)
                         .HasColumnType("character(64)")
+                        .HasColumnName("cover_hash")
                         .IsFixedLength();
 
                     b.Property<Guid?>("LibraryId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("library_id");
 
                     b.Property<string>("Subtitle")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("subtitle");
 
                     b.Property<string>("Summary")
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("summary");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("title");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_books");
+
+                    b.HasIndex("CoverHash")
+                        .HasDatabaseName("ix_books_cover_hash")
+                        .HasFilter("cover_hash IS NOT NULL");
 
                     b.ToTable("books", (string)null);
                 });
@@ -79,26 +94,32 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                     b.Property<string>("Hash")
                         .HasMaxLength(64)
                         .HasColumnType("character(64)")
+                        .HasColumnName("hash")
                         .IsFixedLength();
 
                     b.Property<int>("ByteSize")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("byte_size");
 
                     b.Property<byte[]>("Bytes")
                         .IsRequired()
-                        .HasColumnType("bytea");
+                        .HasColumnType("bytea")
+                        .HasColumnName("bytes");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
                         .HasDefaultValueSql("now()");
 
                     b.Property<string>("MediaType")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("media_type");
 
-                    b.HasKey("Hash");
+                    b.HasKey("Hash")
+                        .HasName("pk_images");
 
                     b.ToTable("images", (string)null);
                 });
@@ -107,19 +128,24 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
 
                     b.Property<Guid>("OwnerId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_libraries");
 
-                    b.HasIndex("OwnerId");
+                    b.HasIndex("OwnerId")
+                        .HasDatabaseName("ix_libraries_owner_id");
 
                     b.ToTable("libraries", (string)null);
                 });
@@ -128,19 +154,23 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("first_name");
 
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("last_name");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_users");
 
                     b.ToTable("users", (string)null);
                 });
@@ -151,7 +181,8 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_libraries_users_owner_id");
                 });
 #pragma warning restore 612, 618
         }

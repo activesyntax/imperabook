@@ -13,8 +13,10 @@ public class ImperaBookDbContextFactory : IDesignTimeDbContextFactory<ImperaBook
 
         var options = new DbContextOptionsBuilder<ImperaBookDbContext>()
             .UseNpgsql(connectionString)
+            .UseSnakeCaseNamingConvention()
             .Options;
 
         return new ImperaBookDbContext(options);
     }
-} 
+}
+
