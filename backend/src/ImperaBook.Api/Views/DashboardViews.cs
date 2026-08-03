@@ -18,11 +18,7 @@ public static class DashboardViews
                 new CardCollectionView(
                     new[]
                     {
-                        new CardView(
-                            "All Books",
-                            s.TotalBooks.ToString(),
-                            "books in your sanctuary"
-                        ),
+                        new CardView("All Books", s.TotalBooks.ToString(), "books in your library"),
                         new CardView("Authors", s.AuthorCount.ToString(), "across your collection"),
                         new CardView(
                             "Languages",

@@ -1,6 +1,6 @@
 namespace ImperaBook.Infrastructure.Data.Entities;
 
-public class CoverEntity
+public class ImageEntity
 {
     public string Hash { get; set; } = "";
     public string Blurhash { get; set; } = "";

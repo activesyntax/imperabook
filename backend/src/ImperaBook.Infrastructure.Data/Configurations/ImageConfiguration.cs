@@ -3,11 +3,11 @@ using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-public sealed class CoverConfiguration : IEntityTypeConfiguration<CoverEntity>
+public sealed class ImageConfiguration : IEntityTypeConfiguration<ImageEntity>
 {
-    public void Configure(EntityTypeBuilder<CoverEntity> builder)
+    public void Configure(EntityTypeBuilder<ImageEntity> builder)
     {
-        builder.ToTable("covers");
+        builder.ToTable("images");
         builder.HasKey(c => c.Hash);
 
         builder.Property(c => c.Hash).HasMaxLength(ContentHash.Length).IsFixedLength();

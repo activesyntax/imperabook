@@ -5,7 +5,8 @@ namespace ImperaBook.Domain.Tests;
 [Trait("Category", "Unit")]
 public class CoverTests
 {
-    private const string ValidHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    private const string ValidHash =
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
     // A 4x3 component grid: the leading 'L' encodes the grid, which fixes the length at 4 + 2*4*3 = 28.
     private const string ValidBlurhash = "LEHV6nWB2yk8pyo0adR*.7kCMdnj";
@@ -105,7 +106,7 @@ public class CoverTests
         var hash = ContentHash.Create(ValidHash).Value;
         var blurhash = Blurhash.Create(ValidBlurhash).Value;
 
-        var cover = Cover.Create(hash, blurhash);
+        var cover = ImageRef.Create(hash, blurhash);
 
         Assert.Equal(hash, cover.Hash);
         Assert.Equal(blurhash, cover.Blurhash);
@@ -114,8 +115,14 @@ public class CoverTests
     [Fact]
     public void Cover_has_value_equality_over_its_components()
     {
-        var a = Cover.Create(ContentHash.Create(ValidHash).Value, Blurhash.Create(ValidBlurhash).Value);
-        var b = Cover.Create(ContentHash.Create(ValidHash).Value, Blurhash.Create(ValidBlurhash).Value);
+        var a = ImageRef.Create(
+            ContentHash.Create(ValidHash).Value,
+            Blurhash.Create(ValidBlurhash).Value
+        );
+        var b = ImageRef.Create(
+            ContentHash.Create(ValidHash).Value,
+            Blurhash.Create(ValidBlurhash).Value
+        );
 
         Assert.Equal(a, b);
     }

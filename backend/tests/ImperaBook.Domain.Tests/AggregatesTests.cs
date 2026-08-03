@@ -6,11 +6,15 @@ namespace ImperaBook.Domain.Tests;
 [Trait("Category", "Unit")]
 public class AggregatesTests
 {
-    private const string SampleHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    private const string SampleHash =
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
     private const string SampleBlurhash = "LEHV6nWB2yk8pyo0adR*.7kCMdnj";
 
-    private static Cover SampleCover() =>
-        Cover.Create(ContentHash.Create(SampleHash).Value, Blurhash.Create(SampleBlurhash).Value);
+    private static ImageRef SampleCover() =>
+        ImageRef.Create(
+            ContentHash.Create(SampleHash).Value,
+            Blurhash.Create(SampleBlurhash).Value
+        );
 
     [Fact]
     public void Book_Create_exposes_all_components()
@@ -51,10 +55,10 @@ public class AggregatesTests
             Maybe<Summary>.None,
             Attribution.Of(Authors.Create(new[] { Id<Author>.New() })),
             new Location.Unknown(),
-            Maybe<Cover>.None
+            Maybe<ImageRef>.None
         );
 
-        Assert.Equal(Maybe<Cover>.None, book.Cover);
+        Assert.Equal(Maybe<ImageRef>.None, book.Cover);
     }
 
     [Fact]

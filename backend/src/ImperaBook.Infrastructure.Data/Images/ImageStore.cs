@@ -1,15 +1,14 @@
 using CSharpFunctionalExtensions;
-using ImperaBook.Application.Covers;
+using ImperaBook.Application.Images;
 using ImperaBook.Domain.Catalog;
 using Microsoft.EntityFrameworkCore;
 
-namespace ImperaBook.Infrastructure.Data.Covers;
+namespace ImperaBook.Infrastructure.Data.Images;
 
-public sealed class CoverStore(ImperaBookDbContext db) : ICoverStore
+public sealed class ImageStore(ImperaBookDbContext db) : IImageStore
 {
-    public async Task<Maybe<Cover>> Find(ContentHash hash, CancellationToken ct)
+    public async Task<Maybe<ImageRef>> Find(ContentHash hash, CancellationToken ct)
     {
-        // Only the metadata — the bytes stay in the database until the content channel serves them.
         var row = await db
             .Covers.AsNoTracking()
             .Where(c => c.Hash == hash.Value)
@@ -17,10 +16,10 @@ public sealed class CoverStore(ImperaBookDbContext db) : ICoverStore
             .SingleOrDefaultAsync(ct);
 
         if (row is null)
-            return Maybe<Cover>.None;
+            return Maybe<ImageRef>.None;
 
         // Stored values that fail validation are corruption, not user input (DECISIONS 10).
-        return Cover.Create(
+        return ImageRef.Create(
             ContentHash.Create(row.Hash).Value,
             Blurhash.Create(row.Blurhash).Value
         );

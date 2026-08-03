@@ -1,9 +1,9 @@
 using ImperaBook.Application;
 using ImperaBook.Application.Authors;
 using ImperaBook.Application.Books;
-using ImperaBook.Application.Covers;
 using ImperaBook.Application.Dashboard;
-using ImperaBook.Infrastructure.Data.Covers;
+using ImperaBook.Application.Images;
+using ImperaBook.Infrastructure.Data.Images;
 using ImperaBook.Infrastructure.Data.Queries;
 using ImperaBook.Infrastructure.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +26,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IDashboardQueries, DashboardQueries>();
         services.AddScoped<IBookQueries, BookQueries>();
         services.AddScoped<IAuthorQueries, AuthorQueries>();
-        services.AddScoped<ICoverStore, CoverStore>();
+        services.AddScoped<IImageStore, ImageStore>();
 
         return services;
     }

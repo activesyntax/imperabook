@@ -1,5 +1,5 @@
 using CSharpFunctionalExtensions;
-using ImperaBook.Application.Covers;
+using ImperaBook.Application.Images;
 using ImperaBook.Domain;
 using ImperaBook.Domain.Catalog;
 
@@ -18,7 +18,7 @@ public sealed record AddBookCommand
 public sealed class AddBookCommandHandler(
     IBookWriteRepository books,
     ILibraryRepository libraries,
-    ICoverStore covers
+    IImageStore images
 )
 {
     public async Task<Result<Guid, ApplicationError>> Handle(
@@ -112,15 +112,15 @@ public sealed class AddBookCommandHandler(
         return new Location.AtLibrary(guid);
     }
 
-    private async Task<Result<Maybe<Cover>, ApplicationError>> ResolveCover(
+    private async Task<Result<Maybe<ImageRef>, ApplicationError>> ResolveCover(
         Maybe<ContentHash> hash,
         CancellationToken ct
     )
     {
         if (!hash.TryGetValue(out var contentHash))
-            return Maybe<Cover>.None;
+            return Maybe<ImageRef>.None;
 
-        var cover = await covers.Find(contentHash, ct);
+        var cover = await images.Find(contentHash, ct);
         if (cover.HasNoValue)
             return new ApplicationError.CoverNotFound(contentHash);
 
