@@ -9,7 +9,7 @@ public class ImperaBookDbContext(DbContextOptions<ImperaBookDbContext> options) 
     public DbSet<AuthorEntity> Authors => Set<AuthorEntity>();
     public DbSet<UserEntity> Users => Set<UserEntity>();
     public DbSet<LibraryEntity> Libraries => Set<LibraryEntity>();
-    public DbSet<ImageEntity> Covers => Set<ImageEntity>();
+    public DbSet<ImageEntity> Images => Set<ImageEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

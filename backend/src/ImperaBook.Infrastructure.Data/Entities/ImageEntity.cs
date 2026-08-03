@@ -6,5 +6,6 @@ public class ImageEntity
     public string Blurhash { get; set; } = "";
     public byte[] Bytes { get; set; } = [];
     public string MediaType { get; set; } = "";
+    public int ByteSize { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }
