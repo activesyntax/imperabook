@@ -48,10 +48,6 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CoverBlurhash")
-                        .HasMaxLength(166)
-                        .HasColumnType("character varying(166)");
-
                     b.Property<string>("CoverHash")
                         .HasMaxLength(64)
                         .HasColumnType("character(64)")
@@ -75,10 +71,7 @@ namespace ImperaBook.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("books", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_books_cover_complete", "(\"CoverHash\" IS NULL) = (\"CoverBlurhash\" IS NULL)");
-                        });
+                    b.ToTable("books", (string)null);
                 });
 
             modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.ImageEntity", b =>
@@ -87,11 +80,6 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character(64)")
                         .IsFixedLength();
-
-                    b.Property<string>("Blurhash")
-                        .IsRequired()
-                        .HasMaxLength(166)
-                        .HasColumnType("character varying(166)");
 
                     b.Property<int>("ByteSize")
                         .HasColumnType("integer");

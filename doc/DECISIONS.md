@@ -590,8 +590,8 @@ actually picked.
 *Orphan rows.* Upload-then-command means a cover can be uploaded and the command then cancelled or
 rejected. Content-addressing makes this cheap to tolerate — a re-upload of the same file deduplicates to
 the same hash — but nothing in MVP1 reclaims unreferenced covers. Accepted; a sweep job is the MVP2
-answer, and the table form makes it a one-line anti-join rather than a directory walk cross-referenced
-against the database. Recorded because "nothing ever deletes these" is otherwise invisible until a dump
+answer, and the table form makes it a one-line anti-join across every referencing column rather than a
+directory walk cross-referenced against the database. Recorded because "nothing ever deletes these" is otherwise invisible until a dump
 gets slow.
 
 *Storage is the database, not the filesystem.* Bytes live in a `covers` table keyed by the content
@@ -599,24 +599,28 @@ hash, alongside the BlurHash and media type, with `storage external` set on the 
 image formats are already compressed and TOAST compression would only burn CPU on them.
 
 ```sql
-create table covers (
+create table images (
     hash       char(64)    primary key,
-    blurhash   text        not null,
     bytes      bytea       not null,
     media_type text        not null,
+    byte_size  int         not null,
     created_at timestamptz not null default now()
 );
 ```
+
+The table is `images`, not `covers`, and that is not cosmetic. Content-addressed storage is
+type-agnostic — a hash identifies bytes, not a role — so author portraits and condition photos in MVP2
+share this table unchanged, and an identical file referenced from two places is one row. Meaning lives on
+the referencing side: `books.cover_hash` today, `authors.portrait_hash` later.
 
 A mounted volume under a hash-fanned path was the first choice here, on the usual reasoning: `bytea`
 routes large values through TOAST, inflates every dump, and streams awkwardly. That reasoning is
 technically correct and was weighted wrong. It assumed a scale this application does not have — a
 5,000-book library at typical cover sizes is on the order of a gigabyte, which is not where TOAST or
-`sendfile` decide anything — and it ignored that a metadata table was required regardless. `ICoverStore`
-must resolve a hash that *no book references yet*, which is precisely the `add book` case, so the
-`books` row cannot be the source of truth for a BlurHash. Once a `covers` table exists to answer that,
-the `bytes` column is nearly free: one table rather than a table *and* a volume *and* a separate backup
-procedure.
+`sendfile` decide anything — and it ignored that a metadata table was required regardless, since
+`IImageStore` must resolve a hash that *no book references yet*, which is precisely the `add book` case.
+Once that table exists, the `bytes` column is nearly free: one table rather than a table *and* a volume
+*and* a separate backup procedure.
 
 The deciding argument is the shape of the failure, not the performance. With split storage the
 characteristic self-hosting accident is a `pg_dump` taken without the volume, restored: the application
@@ -628,13 +632,13 @@ failure mode is a large file, the large file wins.
 
 *Exit condition, so this does not calcify.* Move to filesystem or object storage when dumps become
 unwieldy — on the order of several gigabytes — or when MVP2's export utilities need real streaming.
-`ICoverStore` exists for exactly this: the swap is an Infrastructure implementation plus a background job
+`IImageStore` exists for exactly this: the swap is an Infrastructure implementation plus a background job
 to move the bytes. The client holds a reference, never a storage location, so the wire contract, the
 domain, and the Application layer are untouched by the change.
 
 ---
 
-## 20. Images travel as URLs the backend serves; covers are stored bytes, not inline base64
+## 20. Images travel as URLs the backend serves; a book holds a content address, not bytes
 
 **Context.** The `ViewNode` image node carries its source as a bare `src` string, which was flagged as a
 soft spot: a path travelling on a contract whose premise is that the backend declares what a node **is**
@@ -643,8 +647,8 @@ second meaning into the same field.
 
 The first answer drafted here was a closed `ImageSource` union — `AssetImage(Name)` for images shipped
 with the frontend, `CoverImage(Hash, Blurhash)` for stored ones — with the frontend resolving each case
-to a URL. **That answer has been withdrawn, and the reason is worth more than the entry it replaces.**
-The diagnosis was wrong. The problem was never that *a path* crossed the wire; it was that a **frontend**
+to a URL. **That answer was withdrawn, and the reason is worth more than the entry it replaced.** The
+diagnosis was wrong. The problem was never that *a path* crossed the wire; it was that a **frontend**
 path did — the backend was describing the directory layout of someone else's build artifact. The union
 did not remove that dependency, it relocated it into a name-to-path lookup table maintained on the
 client, which is the same coupling with an extra indirection and a second place to drift. It also broke
@@ -657,125 +661,132 @@ every image is a URL and the client does not need to know what kind of image it 
 ```csharp
 public sealed record ImageView(string Src, string Alt, string? Caption, string? Variant) : ViewNode;
 
-public sealed record ItemImage(string Src, string? Blurhash);
-
 public sealed record ItemView(
     string Ref,
     IReadOnlyList<ItemProperty> Properties,
-    ItemImage? Image = null
+    string? ImageSrc = null
 );
 ```
 
-A cover is `/api/covers/{hash}` with a BlurHash beside it; the logo is `/api/assets/imperabook-logo-dark`
-without one. The client cannot tell them apart and has no reason to. `Src` stays a string and stops being
-a soft spot in the same move, because the path is now the backend's own fact about its own routes rather
-than a claim about the frontend's filesystem.
+A cover is `/api/images/{hash}`; the logo is `/static/imperabook-logo-dark.svg`. The client cannot tell
+them apart and has no reason to. `Src` stays a string and stops being a soft spot in the same move,
+because the path is now the backend's own fact about its own routes rather than a claim about the
+frontend's filesystem.
 
-**Frontend assets move to the backend** as embedded resources in the API assembly, served from
-`GET /api/assets/{name}`. They are *not* rows in `covers`. The temptation to unify is real — one table,
-one route, one mechanism — and it is a trap: the sweep job that reclaims unreferenced covers (ADR 19)
-would delete the logo, because no book references it. That is not a hypothetical, it is a specific silent
-bug scheduled for the day the sweep gets written. Different lifetimes deserve different homes. This also
-makes ADR 19's "generalize at the third content type" trigger concrete: assets are the second, exports
-will be the third.
+**Frontend assets are served by the backend** from `wwwroot`, mapped to the `/static` prefix rather than
+`/assets`, because the Angular dev server owns `/assets` for its own bundle and a shared prefix would
+force the proxy to choose between them. They are *not* rows in the image table. The temptation to unify
+is real — one store, one route, one mechanism — and it is a trap: the sweep job that reclaims
+unreferenced images (ADR 19) would delete the logo, because no book references it. That is not
+hypothetical, it is a specific silent bug scheduled for the day the sweep gets written. Different
+lifetimes deserve different homes.
 
-**Blurhash is the one piece of image data that rides the control channel.** A ~30-character string that
-decodes client-side into a blurred preview, delivering UX.md's "soft, skeletal cover frame" during the
-load with no round trip. It is metadata about an image, not image data, and it is the size of a title.
-Assets do not carry one — a logo does not need a progressive placeholder — which is why `ItemImage.Blurhash`
-is optional while `Cover.Blurhash` in the domain is not.
+**The store is type-agnostic; meaning lives on the referencing row.** `IImageStore` is addressed by
+content hash and knows nothing about covers. Author portraits and condition photos land in MVP2 and will
+share it unchanged — a hash identifies bytes, not a role, so `books.cover_hash` and a future
+`authors.portrait_hash` are two references into one store rather than two stores. Identical bytes
+uploaded twice deduplicate to one row by definition. The port is three methods, and the split is
+deliberate: `Exists` for write commands that must not accept an unresolvable reference, `OpenRead` for
+the content-channel endpoint that needs the bytes, `Store` for uploads. Collapsing the first two would
+make every reference check drag a multi-megabyte `byte[]` through TOAST to answer a yes/no question.
 
-It is stored twice, deliberately. `covers` is the source of truth, because `ICoverStore` must resolve a
-hash that no book references yet (the `add book` case), and the `books` row carries a copy alongside its
-`cover_hash` so `list books` stays a single query with no join. Denormalization is usually a staleness
-bet; this is the rare case where the bet cannot be lost. Content-addressing means different bytes are a
-different hash and therefore a different row, so a copied BlurHash can never disagree with the blob it
-describes. It can only be *absent*, which the check constraint on `books` forbids.
+**A book holds `Maybe<ContentHash>`, and nothing more.** The domain's entire statement is *whether this
+book has cover artwork and at what address*. There is no `Cover` or `ImageRef` wrapper: a one-field
+record over an already-validated value object adds a name and no guarantee, which is the same ceremony
+the `Result`-that-cannot-fail argument rejects elsewhere. `ContentHash` carries the format — 64
+lowercase hex characters, case canonicalized on the way in because the canonical form *is* the cache key
+in the URL — and the **field name** carries the meaning: `Book.Cover`, later `Author.Portrait`. The type
+does not claim knowledge it cannot check. Phantom-typing (`ContentHash<Image>` in the style of
+`Id<TEntity>`) is the honest way to make the type itself discriminate, and ADR 19 already fixes when that
+becomes worth it: the second content type, not before.
 
-**The domain holds a reference, not a wire shape.** `Book` carries `Maybe<Cover>`, where `Cover` is a
-composite value object of `ContentHash` + `Blurhash`. The domain's entire statement is *whether this book
-has cover artwork*; URL construction is an API-layer concern and lives in `BookViews`. The optionality
-follows ADR 11's rule: a cover is pure presence/absence, the case set is binary and will stay binary, so
-`Maybe<Cover>` rather than a DU with an explicit `NoCover` case. The read path does not touch `Cover` at
-all — `BookQueries` projects the two stored strings straight into `BookListItem`, and `BookViews` composes
-from them (ADR 8/15). Rehydrating value objects per row only to decompose them one layer up would be pure
-loss: `Cover` is a write-side invariant, and reads sit on rows that already satisfied it.
+The optionality follows ADR 11's rule — a cover is pure presence/absence, the case set is binary and
+will stay binary, so `Maybe<ContentHash>` rather than a DU with an explicit `NoCover` case. The read
+path does not construct value objects at all: `BookQueries` projects the stored string straight into
+`BookListItem`, and `BookViews` builds the URL from it (ADR 8/15). Rehydrating a value object per row
+only to decompose it one layer up would be pure loss — the address is a write-side invariant, and reads
+sit on rows that already satisfied it.
 
-**Both parts of a cover are required together.** `Cover` cannot exist with a hash but no BlurHash. One
-upload produces both, and content-addressing makes them immutable as a pair, so there is no state where
-one is fresh and the other stale. Modelling the BlurHash as optional would admit a cover that skipped half
-its own creation and push a "what if it's missing?" branch into every consumer for a case the upload path
-never produces. If BlurHash generation fails at upload, the upload fails — loud, on the content channel,
-before any command references it.
+**BlurHash was designed in and then removed, before it shipped.** The plan was to carry a
+~30-character BlurHash beside every cover so the client could paint a blurred placeholder during load,
+delivering UX.md's "soft, skeletal cover frame" for free. It was built — a value object with structural
+validation, a `Cover` composite pairing it with the hash, a check constraint keeping the pair complete,
+an encoder port, a SkiaSharp implementation of the DCT. Then the value was weighed against the cost and
+it lost.
 
-**An item without artwork sends no image, not a placeholder one.** An earlier sketch had `BookViews` map an
-absent cover to a placeholder asset. That is backwards: a book with no cover is not a book whose cover is a
-placeholder graphic, and what an empty slot should look like is exactly the class of question ADR 15 assigns
-to the frontend. The backend says *this item has no artwork*; the frontend decides whether that reads as a
-skeletal frame, a typographic fallback, or nothing — and can change that decision without a wire change.
-`ImageOf` in `BookViews` returns `null` for the absent case, and also for a half-populated one: a partial
-pair falls through to absent rather than throwing, because the read path should not die over artwork. The
-check constraint on `books` is what makes that branch unreachable in the first place.
+The value is real only when the image arrives *slowly*: mobile networks, distant CDNs, large photographs.
+A cover here is a few dozen kilobytes from the same machine, served `immutable`, which makes the gap the
+BlurHash fills approximately nonexistent. And the placeholder UX.md actually describes belongs to the
+draft preview, where there is no image yet — a CSS treatment, not a decoded bitmap. Against that: an
+imaging dependency whose licence had to be audited against the project's own dual-licensing promise, a
+hand-written DCT, a second column on two tables, a check constraint existing solely to keep a pair
+together, and an `Undecodable` failure mode capable of closing the whole upload path.
 
-**Validation is structural, not just well-formedness.** `ContentHash` requires a 64-character lowercase hex
-digest, canonicalizing case on the way in — hex is case-insensitive by definition, so lowercasing is
-canonicalization rather than leniency, and the canonical form is load-bearing because it *is* the cache key
-in the cover URL. `Blurhash` checks the base83 alphabet and then decodes the leading size flag to derive the
-exact expected length, so a structurally undecodable string cannot be constructed. Both are machine-supplied
-values the user never types, which is why their error cases are deliberately coarser than `Title`'s:
-`BlurhashMalformed` does not distinguish a length failure from a charset failure from a structural one,
-because no client would act differently on the distinction. A departure from the `TitleTooLong(max)`
-precedent, made on purpose — richness in an error case earns its keep only when someone can use it.
+Removing it collapsed more than it removed. The pair became a single value, so the check constraint
+became meaningless; `Cover` became a one-field wrapper, so it disappeared into `ContentHash`; the
+store's `Find` — justified by "existence and BlurHash are one question" — became `Exists`, which is the
+shape `ILibraryRepository` already used. Four simplifications from one deletion is the signal that the
+feature was carrying the complexity, not the domain.
 
-**Base64 in the `ViewNode`, rejected.** Its advantages are real and worth stating: one round trip, no second
-loading phase, no flash of empty covers, auth solved by the command channel's own auth, and an export that
-is genuinely self-contained — one JSON file *is* the whole catalog. It nonetheless fails on the primary
-surface. Base64 inflates by roughly a third, but the decisive costs are that it defeats HTTP caching
-entirely (the same cover re-transmits on every `list books`) and admits no lazy loading (the whole payload
-parses synchronously before anything renders). A fifty-row `list books` at typical cover sizes is a 3.5–10 MB
-response parsed in one blocking step, of which perhaps eight rows are on screen. It also forecloses `srcset`
-and format negotiation. A technique that is worst exactly where the application is used most is not a
-trade-off, it is a defect.
+*The door stays open.* If MVP2's condition photos — genuinely large, genuinely slow — want progressive
+placeholders, a BlurHash returns as one nullable column on the image table plus a backfill job. The
+`books` table is not touched, because a book only ever knew the address.
+
+**Base64 in the `ViewNode`, rejected.** Its advantages are real and worth stating: one round trip, no
+second loading phase, no flash of empty covers, auth solved by the command channel's own auth, and an
+export that is genuinely self-contained — one JSON file *is* the whole catalog. It nonetheless fails on
+the primary surface. Base64 inflates by roughly a third, but the decisive costs are that it defeats HTTP
+caching entirely (the same cover re-transmits on every `list books`) and admits no lazy loading (the
+whole payload parses synchronously before anything renders). A fifty-row `list books` at typical cover
+sizes is a 3.5–10 MB response parsed in one blocking step, of which perhaps eight rows are on screen. It
+also forecloses `srcset` and format negotiation. A technique that is worst exactly where the application
+is used most is not a trade-off, it is a defect.
 
 **Trade-off.** *A load failure is outside ADR 12's unified error shape.* A broken image is an `onerror`
-event, not a ProblemDetails — the one client-visible failure mode that does not arrive through the single
-error channel. The frontend needs an explicit fallback render for it; the BlurHash makes that fallback
-pleasant rather than empty, which is a second reason to carry it.
+event, not a ProblemDetails — the one client-visible failure mode that does not arrive through the
+single error channel. The frontend needs an explicit fallback render for it, and without a BlurHash that
+fallback is a CSS treatment rather than a preview of the actual image.
+
+*An item without artwork sends no image, not a placeholder one.* An earlier sketch had `BookViews` map an
+absent cover to a placeholder asset. That is backwards: a book with no cover is not a book whose cover is
+a placeholder graphic, and what an empty slot should look like is exactly the class of question ADR 15
+assigns to the frontend. `ImageSrc` is `null` for the absent case; the frontend decides whether that
+reads as a skeletal frame, a typographic fallback, or nothing, and can change that decision without a
+wire change.
 
 *Serving SVG as bytes costs stylability.* The logo previously shipped in the frontend bundle, where CSS
-could reach into it — `currentColor`, theme-driven fills. Served from `/api/assets/{name}` it is an opaque
-image, and the `-dark` in its name makes theme selection a backend decision, which is the wrong side of the
-line. It does not hurt today because no light theme exists, and pre-solving an absent requirement is its own
-mistake. But this is the real price of the thin-client rule at this particular point, and it is paid, not
-avoided. If a theme switch lands, either the backend learns about themes or the asset becomes
-theme-neutral. Recorded under *Known limitations*.
+could reach into it — `currentColor`, theme-driven fills. Served from `/static` it is an opaque image,
+and the `-dark` in its name makes theme selection a backend decision, which is the wrong side of the
+line. It does not hurt today because no light theme exists, and pre-solving an absent requirement is its
+own mistake. But this is the real price of the thin-client rule at this point, and it is paid, not
+avoided. Recorded under *Known limitations*.
 
-*Export self-containment is genuinely harder.* This is the strongest thing base64 had, and giving it up has
-a cost that lands in MVP2: exporting a catalog means bundling blobs alongside the JSON rather than shipping
-one file. Named rather than waved off — the export utilities in the README will have to solve it, and the
-answer is an archive, not a document.
+*Export self-containment is genuinely harder.* This is the strongest thing base64 had, and giving it up
+has a cost that lands in MVP2: exporting a catalog means bundling blobs alongside the JSON rather than
+shipping one file. Named rather than waved off — the export utilities in the README will have to solve
+it, and the answer is an archive, not a document.
 
-*The domain trusts a reference it cannot verify; the Application layer verifies it instead.* `Cover.Create`
-takes two already-validated components and returns a `Cover`, not a `Result` — every constraint is carried
-by the component types, so a `Result` that can only ever be `Ok` would be ceremony forced on every caller.
-That leaves the domain able to hold a `ContentHash` for bytes that are not stored: it validates the *shape*
-of an address, never the existence of what it addresses, and it should not, because cross-checking storage
-from the pure core would put I/O in the domain. The check belongs one layer out, and that is where it lives:
-write commands carry only the hash, and `ICoverStore.Find` resolves it to a `Cover` — existence and BlurHash
-in one question — before the domain object is constructed. An unresolvable address is
-`ApplicationError.CoverNotFound`, alongside `LibraryNotFound`, on the same reasoning: a malformed reference
-is validation, an unknown one is lookup. Two consequences stay open. Resolution proves the row existed *at
-write time*; nothing prevents later loss, so a stale reference still surfaces as a broken image. And the
-write path short-circuits on the first lookup failure rather than accumulating, so a bad library id masks a
-bad cover hash — inconsistent with field validation, accepted because lookups are sequential I/O and the
-accumulating alternative costs a round trip to report a second error the caller will hit anyway.
+*The domain trusts a reference it cannot verify; the Application layer verifies it instead.* A
+`ContentHash` validates the *shape* of an address, never the existence of what it addresses, and it
+should not — cross-checking storage from the pure core would put I/O in the domain. The check belongs one
+layer out, and that is where it lives: `AddBookCommandHandler` splits cover handling in two, with
+`ParseCoverHash` accumulating a malformed address alongside a bad title, and `ResolveCover` calling
+`IImageStore.Exists` to turn an unknown address into `ApplicationError.ImageNotFound` — the same
+distinction `ResolveLocation` draws between a malformed and an unknown library id. Two consequences stay
+open. Resolution proves the row existed *at write time*; nothing prevents later loss, so a stale
+reference still surfaces as a broken image. And the write path short-circuits on the first lookup failure
+rather than accumulating, so a bad library id masks a bad cover hash — inconsistent with field
+validation, accepted because lookups are sequential I/O and the accumulating alternative costs a round
+trip to report a second error the caller will hit anyway.
 
-The corollary is that the caller never supplies a BlurHash. An earlier shape had the client echo back the
-pair returned by the upload, which needed no port but let the two halves disagree — hash of one image,
-BlurHash of another. Cosmetic rather than corrupting, but avoidable for the price of one interface, and the
-same interface buys the existence check above. Rehydration follows ADR 10 on both sides: a
-`ContentHash.Create` or `Blurhash.Create` failure when reading a stored row is data corruption, not user
-input, so it throws rather than returning a `Result` upward.
+*Uploads are buffered in memory, twice over.* `Store` copies the upload into a `byte[]` to hash it, and
+`OpenRead` materializes the whole image to serve it. Both are bounded by the configured `MaxBytes`, so
+this is a known ceiling rather than an open one, and the limit is enforced against bytes actually read
+rather than a `Content-Length` the client controls. True streaming needs `NpgsqlDataReader.GetStream` and
+raw ADO on the read side; deferred until it measurably matters. The concurrent-upload race — two callers
+storing identical bytes, one losing on the primary key — is caught and swallowed only when the address
+turns out to exist, and the failed entry is detached, because a scoped `DbContext` would otherwise retry
+the same doomed insert in whatever code ran next.
 
 ---
 
@@ -810,9 +821,18 @@ the semantics; a dedicated node kind (`BrandingView`) would fix the semantics by
 not a general image. Neither earns its keep at one call site, so the honest statement is that this is the
 last frontend fact still travelling on the view contract, and it is known rather than overlooked.
 
-**Asset URLs encode a theme.** `/api/assets/imperabook-logo-dark` has the backend choosing the dark
+**Asset URLs encode a theme.** `/static/imperabook-logo-dark.svg` has the backend choosing the dark
 variant, and theme selection is a frontend concern — the cost of serving assets as opaque bytes rather
 than as bundled SVG that CSS could reach into (see 20). Harmless while no light theme exists, and
 pre-solving an absent requirement is its own mistake. When a theme switch lands, the fix is either a
 theme-neutral asset or a backend that knows which theme is active; the latter puts presentation state on
 the server, so the former is the direction to try first.
+
+**Static asset URLs carry a file extension.** `/static/imperabook-logo-dark.svg` is served by
+`UseStaticFiles`, which brings content type, `ETag`, range requests and compression for free — at the
+price of putting the format in the contract. Switching that asset to WebP or AVIF means editing the call
+site, not just replacing the file. An extensionless route with a startup-built index would survive a
+format change, and costs roughly forty lines plus hand-written caching headers; at two assets the trade
+favours the extension. Note also that assets cannot use `Cache-Control: immutable` the way images can:
+an image's URL is its content, so it can never go stale, while an asset keeps its name across deploys and
+must revalidate.
