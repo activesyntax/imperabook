@@ -81,7 +81,7 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.CoverEntity", b =>
+            modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.ImageEntity", b =>
                 {
                     b.Property<string>("Hash")
                         .HasMaxLength(64)
@@ -92,6 +92,9 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(166)
                         .HasColumnType("character varying(166)");
+
+                    b.Property<int>("ByteSize")
+                        .HasColumnType("integer");
 
                     b.Property<byte[]>("Bytes")
                         .IsRequired()
@@ -109,7 +112,7 @@ namespace ImperaBook.Infrastructure.Data.Migrations
 
                     b.HasKey("Hash");
 
-                    b.ToTable("covers", (string)null);
+                    b.ToTable("images", (string)null);
                 });
 
             modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.LibraryEntity", b =>
