@@ -1,11 +1,14 @@
 .item-collection {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.75rem 1.5rem;
+  padding: 1.5rem;
   background: #1a1610;
   border-radius: 0.5rem;
-  overflow: hidden;
 
   &__empty {
+    // Spans the grid so the message centres on the pane rather than sitting in column one.
+    grid-column: 1 / -1;
     padding: 1.5rem 1rem;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.85rem;
