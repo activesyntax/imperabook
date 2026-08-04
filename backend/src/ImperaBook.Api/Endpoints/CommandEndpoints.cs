@@ -43,12 +43,7 @@ public static class CommandEndpoints
         return request.Command switch
         {
             "dashboard" => TypedResults.Ok((await dashboard.GetSummaryAsync(ct)).ToCommandResult()),
-            "list books" => TypedResults.Ok(
-                (await books.List(null, null, ct)).ToCommandResult(
-                    "All books",
-                    "No books yet. Add one to start your library."
-                )
-            ),
+            "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
             "search" => TypedResults.Ok(
                 (await books.List(null, request.Text, ct)).ToCommandResult(
                     $"Results for \"{request.Text}\"",
@@ -56,12 +51,7 @@ public static class CommandEndpoints
                 )
             ),
 
-            "list authors" => TypedResults.Ok(
-                (await authors.List(null, null, ct)).ToCommandResult(
-                    "All authors",
-                    "No authors yet."
-                )
-            ),
+            "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
 
             "add book"
             or "update book"
