@@ -144,13 +144,6 @@ namespace ImperaBook.Infrastructure.Data.Migrations
             );
 
             migrationBuilder.CreateIndex(
-                name: "ix_books_cover_hash",
-                table: "books",
-                column: "cover_hash",
-                filter: "cover_hash IS NOT NULL"
-            );
-
-            migrationBuilder.CreateIndex(
                 name: "ix_libraries_owner_id",
                 table: "libraries",
                 column: "owner_id"

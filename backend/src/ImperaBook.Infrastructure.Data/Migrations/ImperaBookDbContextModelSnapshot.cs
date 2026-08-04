@@ -82,10 +82,6 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_books");
 
-                    b.HasIndex("CoverHash")
-                        .HasDatabaseName("ix_books_cover_hash")
-                        .HasFilter("cover_hash IS NOT NULL");
-
                     b.ToTable("books", (string)null);
                 });
 

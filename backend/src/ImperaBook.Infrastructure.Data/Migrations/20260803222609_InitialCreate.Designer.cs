@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ImperaBook.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ImperaBookDbContext))]
-    [Migration("20260803221005_InitialCreate")]
+    [Migration("20260803222609_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -84,10 +84,6 @@ namespace ImperaBook.Infrastructure.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_books");
-
-                    b.HasIndex("CoverHash")
-                        .HasDatabaseName("ix_books_cover_hash")
-                        .HasFilter("cover_hash IS NOT NULL");
 
                     b.ToTable("books", (string)null);
                 });

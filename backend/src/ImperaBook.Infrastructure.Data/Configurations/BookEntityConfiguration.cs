@@ -20,7 +20,6 @@ public class BookEntityConfiguration : IEntityTypeConfiguration<BookEntity>
 
         builder.Property(b => b.CoverHash).HasMaxLength(ContentHash.Length).IsFixedLength();
 
-        builder.HasIndex(b => b.CoverHash).HasFilter("cover_hash IS NOT NULL");
         // LibraryId stays a plain nullable Guid for now — no FK yet,
         // because the libraries table doesn't exist. That comes later.
         //
