@@ -27,7 +27,14 @@ public sealed record GuidanceView(string Title, string Intro, IReadOnlyList<Guid
 
 public sealed record GuidanceHint(IReadOnlyList<string> Keys, string Label);
 
-public sealed record ItemCollectionView(IReadOnlyList<ItemView> Items) : ViewNode;
+public sealed record PageInfo(int From, int To, int Total);
+
+public sealed record ItemCollectionView(
+    string Title,
+    string EmptyMessage,
+    IReadOnlyList<ItemView> Items,
+    PageInfo? Page = null
+) : ViewNode;
 
 public sealed record ItemView(
     string Ref,

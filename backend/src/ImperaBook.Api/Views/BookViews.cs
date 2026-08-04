@@ -5,8 +5,18 @@ namespace ImperaBook.API.Views;
 
 public static class BookViews
 {
-    public static CommandResult ToCommandResult(this IReadOnlyList<BookListItem> books) =>
-        new(new ViewNode[] { new ItemCollectionView(books.Select(ToItem).ToArray()) });
+    public static CommandResult ToCommandResult(
+        this IReadOnlyList<BookListItem> books,
+        string title,
+        string emptyMessage,
+        PageInfo? page = null
+    ) =>
+        new(
+            new ViewNode[]
+            {
+                new ItemCollectionView(title, emptyMessage, books.Select(ToItem).ToArray(), page),
+            }
+        );
 
     private static ItemView ToItem(BookListItem b)
     {

@@ -5,8 +5,18 @@ namespace ImperaBook.API.Views;
 
 public static class AuthorViews
 {
-    public static CommandResult ToCommandResult(this IReadOnlyList<AuthorListItem> authors) =>
-        new(new ViewNode[] { new ItemCollectionView(authors.Select(ToItem).ToArray()) });
+    public static CommandResult ToCommandResult(
+        this IReadOnlyList<AuthorListItem> authors,
+        string title,
+        string emptyMessage,
+        PageInfo? page = null
+    ) =>
+        new(
+            new ViewNode[]
+            {
+                new ItemCollectionView(title, emptyMessage, authors.Select(ToItem).ToArray(), page),
+            }
+        );
 
     private static ItemView ToItem(AuthorListItem a)
     {

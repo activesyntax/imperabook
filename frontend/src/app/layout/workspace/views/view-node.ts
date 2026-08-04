@@ -54,9 +54,23 @@ export interface ItemView {
   readonly imageSrc?: string;
 }
 
+
+export interface PageInfo {
+  readonly from: number;
+  readonly to: number;
+  readonly total: number;
+}
+
 export interface ItemCollectionView {
   readonly type: 'itemCollection';
+
+  readonly title: string;
+
+  readonly emptyMessage: string;
+
   readonly items: readonly ItemView[];
+
+  readonly page?: PageInfo;
 }
 
 export type ViewNode = ImageView | CardView | CardCollectionView | MessageView | GuidanceView | ItemCollectionView;

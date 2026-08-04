@@ -1,7 +1,18 @@
 <div class="item-collection">
-  @for (item of view().items; track item.ref) {
-  <app-item-view [view]="item" />
-  } @empty {
-  <p class="item-collection__empty">No items.</p>
-  }
+  <header class="item-collection__header">
+    <h2 class="item-collection__title">{{ view().title }}</h2>
+    @if (view().page; as page) {
+    <span class="item-collection__range">
+      {{ page.from }}–{{ page.to }} of {{ page.total }}
+    </span>
+    }
+  </header>
+
+  <div class="item-collection__grid">
+    @for (item of view().items; track item.ref) {
+    <app-item-view [view]="item" />
+    } @empty {
+    <p class="item-collection__empty">{{ view().emptyMessage }}</p>
+    }
+  </div>
 </div>
