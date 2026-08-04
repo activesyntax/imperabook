@@ -1,9 +1,9 @@
 <section class="main">
-  <app-workspace class="workspace" />
-
-  <div class="dock">
+  <div class="stage">
+    <app-workspace class="workspace" />
     <app-command-shell class="shell" />
-    <app-user-badge class="identity" [name]="session.userName()" [library]="session.libraryName()"
-      [avatarUrl]="session.avatarUrl()" />
   </div>
+
+  <app-side-nav class="side-nav" [name]="session.userName()" [library]="session.libraryName()"
+    [avatarUrl]="session.avatarUrl()" />
 </section>
