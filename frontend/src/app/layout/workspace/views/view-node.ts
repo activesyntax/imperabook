@@ -51,6 +51,7 @@ export interface ItemProperty {
 export interface ItemView {
   readonly ref: string;
   readonly properties: readonly ItemProperty[];
+  readonly imageSrc?: string;
 }
 
 export interface ItemCollectionView {

@@ -29,12 +29,10 @@ public sealed record GuidanceHint(IReadOnlyList<string> Keys, string Label);
 
 public sealed record ItemCollectionView(IReadOnlyList<ItemView> Items) : ViewNode;
 
-public sealed record ItemImage(string Src, string? Blurhash);
-
 public sealed record ItemView(
     string Ref,
     IReadOnlyList<ItemProperty> Properties,
-    ItemImage? Image = null
+    string? ImageSrc = null
 );
 
 public sealed record ItemProperty(string Name, string Value, PropertyRole Role);

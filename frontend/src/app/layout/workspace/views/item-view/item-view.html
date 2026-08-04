@@ -1,10 +1,19 @@
 <article class="item-view" [attr.data-ref]="view().ref">
-  @if (primary(); as p) {
-  <h3 class="item-view__primary">{{ p.value }}</h3>
-  }
-  @for (p of secondary(); track p.name) {
-  <span class="item-view__secondary">{{ p.value }}</span>
-  @for (p of meta(); track p.name) {
-  <span class="item-view__meta">{{ p.value }}</span>
-  } }
+  <div class="item-view__cover">
+    @if (view().imageSrc; as src) {
+    <img class="item-view__cover-image" [src]="src" [alt]="coverAlt()" loading="lazy" />
+    } @else {
+    <span class="item-view__cover-fallback" aria-hidden="true">{{ coverAlt() }}</span>
+    }
+  </div>
+
+  <div class="item-view__body">
+    @if (primary(); as p) {
+    <h3 class="item-view__primary">{{ p.value }}</h3>
+    } @for (p of secondary(); track p.name) {
+    <span class="item-view__secondary">{{ p.value }}</span>
+    } @for (p of meta(); track p.name) {
+    <span class="item-view__meta">{{ p.value }}</span>
+    }
+  </div>
 </article>

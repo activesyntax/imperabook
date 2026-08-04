@@ -28,6 +28,7 @@ public sealed class BookQueries(ImperaBookDbContext db) : IBookQueries
                 // data rather than a wrong one. See COMMANDS.md open question (find-or-create).
                 AuthorNames = Array.Empty<string>(),
                 LibraryId = b.LibraryId,
+                CoverHash = b.CoverHash,
             })
             .ToArrayAsync(ct);
     }

@@ -13,4 +13,6 @@ export class ItemView {
   primary = computed(() => this.view().properties.find((p) => p.role === 'primary'));
   secondary = computed(() => this.view().properties.filter((p) => p.role === 'secondary'));
   meta = computed(() => this.view().properties.filter((p) => p.role === 'meta'));
+
+  coverAlt = computed(() => this.primary()?.value ?? '');
 }

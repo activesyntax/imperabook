@@ -18,11 +18,9 @@ public static class BookViews
         if (!string.IsNullOrWhiteSpace(b.Subtitle))
             properties.Add(new("Subtitle", b.Subtitle, PropertyRole.Secondary));
 
-        return new ItemView(Ref: b.Id.ToString(), Properties: properties, Image: ImageOf(b));
+        return new ItemView(Ref: b.Id.ToString(), Properties: properties, ImageSrc: ImageSrcOf(b));
     }
 
-    private static ItemImage? ImageOf(BookListItem b) =>
-        b is { CoverHash: { } hash, CoverBlurhash: { } blurhash }
-            ? new ItemImage($"/api/covers/{hash}", blurhash)
-            : null;
+    private static string? ImageSrcOf(BookListItem b) =>
+        b.CoverHash is { } hash ? $"/api/images/{hash}" : null;
 }

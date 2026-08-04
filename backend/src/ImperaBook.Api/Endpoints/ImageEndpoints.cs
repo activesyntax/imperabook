@@ -8,7 +8,7 @@ public static class ImageEndpoints
 {
     public static IEndpointRouteBuilder MapImageEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/images", Upload)
+        app.MapPost(ImageRoutes.Collection, Upload)
             .WithName("UploadImage")
             // A JSON command body cannot carry a file, so this is the one point where the client
             // touches the backend outside the command channel before a command runs.
@@ -18,7 +18,7 @@ public static class ImageEndpoints
             .ProducesProblem(StatusCodes.Status413PayloadTooLarge)
             .ProducesProblem(StatusCodes.Status415UnsupportedMediaType);
 
-        app.MapGet("/api/images/{hash}", Download)
+        app.MapGet(ImageRoutes.Collection + "/{hash}", Download)
             .WithName("GetImage")
             .Produces<IResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
