@@ -870,6 +870,84 @@ after all.
 
 ---
 
+## 22. Pinned commands: one visual language for everything runnable
+
+**Context.** The shell had grown chrome around the command bar — a settings button, a help
+button, a user avatar block — each a control that looked like an ordinary web application
+affordance. That is a second interaction language sitting next to the first, and it contradicts
+the premise the whole product rests on: *everything is a command*. A user who learns the command
+bar still has to learn, separately, that the gear icon is a button and does something the grammar
+cannot express. Two languages is one more than the thesis allows.
+
+**Decision.** Anything runnable renders in one form, and that form means "this is a command."
+
+Two placements, differing only in lifetime:
+
+- **Suggestion row**, above the command bar — the ranked output of ADR 13's matcher. Transient:
+  it changes on every keystroke.
+- **Pinned rail**, right-hand column — the same form, persistent. Always available regardless of
+  what is typed or on screen.
+
+The form is a pill carrying the command name in mono. Pinned entries additionally carry an icon;
+that is the only visual difference, and it encodes *permanence*, not a different kind of thing.
+The name is always present, in both places, because the name is what the user has to learn — an
+icon-only rail is a row of mute buttons that teaches nothing, which is the same objection ADR 13
+raises against the reverse-parser.
+
+*Admission rule for the rail.* A command is pinnable when it is **in the closed grammar, takes no
+parameters, and is not context-gated.** That admits `dashboard`, `help`, `settings`, `clear`. It
+excludes `add book` (a prompt sequence — it belongs in the suggestion row), the navigation
+commands (gated on an active view, per COMMANDS.md), and `search` (parameterised). The rule is
+written down because an underfilled rail is exactly the thing that quietly becomes a junk drawer.
+
+*Activation types, it does not execute silently.* Selecting a pinned command writes it into the
+command bar and runs it from there; focus returns to the bar immediately. A silent click would
+accept forever that the user never learns the command's name, which is ADR 13's teaching argument
+applied to a different surface.
+
+*The avatar is not a pinned command.* It is state, not a verb — in MVP1 it renders a name and a
+constant "Personal Library" string, and it does nothing. It sits below a divider, without the pill
+form, as a gate; the popover it opens holds `account` and `logout` as real pills. The distinction
+is load-bearing: pill means runnable, and an element that is merely true must not wear it.
+
+*Logged out is a different view, not a variant.* Without a session most of the rail is meaningless.
+The pinned set collapses and the avatar slot becomes `login` / `register`. Recorded so it is not
+discovered as a styling problem later.
+
+*Icon and pin membership are frontend facts.* The rail holds command *names* and resolves each
+label from the registry (ADR 16); a name that fails to resolve drops out of the rail rather than
+rendering. The `CommandCatalog` stays free of presentation.
+
+**Forward note — the suggestion row is backend-driven and contextual.** The row is not only a
+prefix matcher over what is typed. After a command runs, the backend knows the context the user
+has landed in and returns the commands that make sense next, carried on the `CommandResult`. That
+changes the suggestion row from a frontend ranking of a static registry into backend-supplied
+output, and it has consequences for the wire contract, for ADR 13's client-side registry
+duplication, and for what the row shows on an empty input at session start. Not designed here;
+recorded so the rail decision is not read as implying a purely local suggestion model.
+
+**Trade-off.** *A permanent column costs the workspace roughly 160px.* The carousel (UX.md) gives
+it up for the whole session, in exchange for command affordances that never move. Reclaimable by
+collapsing the rail to icons on narrow viewports — at the cost, on those viewports only, of the
+naming argument above.
+
+*The first-use observation in `TESZTELES-1.md` is spent.* "Does a new user discover `help` on their
+own?" cannot be asked of an interface that displays `help` permanently. The replacement question is
+better but different: after several minutes, does the user reach for the rail or type the command?
+Sustained rail use is the signal that the teaching is failing.
+
+*The client holds a small piece of knowledge.* Which commands are pinned, and which icon each
+carries, live in the frontend — a client that "knows something", which ADR 20 withdrew an entire
+design for. The boundary held here is that this knowledge is about the client's own chrome, not
+about backend facts, which is the frontend half of ADR 15. It is a near-miss rather than a clean
+case, and stated as one.
+
+*The "pinned" label promises configurability that does not exist.* MVP1's set is fixed. The word is
+kept because user-pinnable commands are the obvious extension and the label costs nothing to honour
+later; if that never ships, the label is a small lie and should be dropped rather than explained.
+
+---
+
 # Known limitations
 
 **`record struct` zero-value.** A `readonly record struct` always permits `default(T)`, which runs no
