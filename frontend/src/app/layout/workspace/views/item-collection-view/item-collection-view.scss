@@ -1,4 +1,6 @@
 .item-collection {
+  $header-pad-bottom: 0.9rem;
+
   display: flex;
   flex-direction: column;
   background: #1a1610;
@@ -9,34 +11,52 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.25rem 1.5rem 0.9rem;
+    padding: 1.25rem 1.5rem $header-pad-bottom;
     border-bottom: 1px solid color-mix(in srgb, #f5efe6 8%, transparent);
   }
 
   &__title {
-    margin: 0;
+    margin: 0 0 (-$header-pad-bottom);
+    padding-bottom: $header-pad-bottom;
+    border-bottom: 2px solid #c07a3e;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.95rem;
+    font-size: 1.3rem;
     font-weight: 500;
-    letter-spacing: 0.02em;
+    letter-spacing: -0.01em;
     color: #f5efe6;
   }
 
-  &__range {
-    // Quieter than the title: it reports state, it does not name the view. Tabular figures keep
-    // the digits from shifting as the range advances page to page.
+  &__meta {
     flex: none;
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.75rem;
     font-variant-numeric: tabular-nums;
     color: color-mix(in srgb, #f5efe6 45%, transparent);
   }
 
+  &__page {
+    font-size: 0.9rem;
+    color: color-mix(in srgb, #c07a3e 75%, #f5efe6);
+  }
+
+  &__page-sep {
+    color: color-mix(in srgb, #f5efe6 25%, transparent);
+  }
+
+  &__total {
+    font-size: 0.9rem;
+  }
+
+  &__meta-sep {
+    color: color-mix(in srgb, #f5efe6 25%, transparent);
+  }
+
   &__grid {
-    // auto-fill with a 210px floor lands on 5 columns at full workspace width and steps down to
-    // 4, 3, 2, 1 as the pane narrows — no breakpoints to keep in sync with the layout.
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 1.5rem 1.25rem;
     padding: 1.5rem;
   }

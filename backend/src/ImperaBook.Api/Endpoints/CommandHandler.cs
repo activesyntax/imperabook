@@ -15,7 +15,7 @@ public static class CommandHandler
         return bookList.ToCommandResult(
             "All books",
             "No books yet. Add one to start your library.",
-            new PageInfo(1, 1, bookList.Count())
+            new PageInfo(1, 1, bookList.Count(), "books")
         );
     }
 
@@ -29,7 +29,7 @@ public static class CommandHandler
         return authorList.ToCommandResult(
             "All authors",
             "No authors yet.",
-            new PageInfo(1, 1, authorList.Count())
+            new PageInfo(1, 1, authorList.Count(), "authors")
         );
     }
 }

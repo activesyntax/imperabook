@@ -27,7 +27,7 @@ public sealed record GuidanceView(string Title, string Intro, IReadOnlyList<Guid
 
 public sealed record GuidanceHint(IReadOnlyList<string> Keys, string Label);
 
-public sealed record PageInfo(int From, int To, int Total);
+public sealed record PageInfo(int Current, int Count, int TotalItems, string ItemsPlural);
 
 public sealed record ItemCollectionView(
     string Title,

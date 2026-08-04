@@ -1,11 +1,16 @@
 <div class="item-collection">
   <header class="item-collection__header">
     <h2 class="item-collection__title">{{ view().title }}</h2>
-    @if (view().page; as page) {
-    <span class="item-collection__range">
-      {{ page.from }}–{{ page.to }} of {{ page.total }}
+
+    <span class="item-collection__meta">
+      @if (view().page; as page) {
+      <span class="item-collection__page">
+        page {{ page.current }}<span class="item-collection__page-sep">/</span>{{ page.count }}
+      </span>
+      <span class="item-collection__meta-sep" aria-hidden="true">·</span>
+      <span class="item-collection__total">{{ page.totalItems }} {{page.itemsPlural}}</span>
+      }
     </span>
-    }
   </header>
 
   <div class="item-collection__grid">

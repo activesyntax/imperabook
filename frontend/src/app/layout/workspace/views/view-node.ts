@@ -56,9 +56,10 @@ export interface ItemView {
 
 
 export interface PageInfo {
-  readonly from: number;
-  readonly to: number;
-  readonly total: number;
+  readonly current: number;
+  readonly count: number;
+  readonly totalItems: number;
+  readonly itemsPlural: string;
 }
 
 export interface ItemCollectionView {
