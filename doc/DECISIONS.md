@@ -790,6 +790,86 @@ the same doomed insert in whatever code ran next.
 
 ---
 
+## 21. A collection view describes itself: title, emptiness, and extent are backend facts
+
+**Context.** `ItemCollectionView` carried a list of items and nothing else. That was enough while the
+only producer was `list books`, and it stopped being enough the moment a second one existed: a search
+result and a full listing arrive at the frontend as the same node, and the component rendering them has
+no way to tell which is which. It cannot label the view, it cannot say anything useful when the list is
+empty, and it cannot indicate that more results exist beyond the ones it holds.
+
+Every workaround for that pushes knowledge into the client that the client does not have. Hardcoding
+"All books" in the component is wrong for a search. Inferring "no matches" from an empty array is wrong
+for an untouched library. Guessing at more-results-exist from a full page is a heuristic that breaks on
+a set of exactly thirty. In each case the frontend would be reconstructing the question from the answer
+— and the question is precisely what the backend already knows and the frontend never sees.
+
+**Decision.** The node states three things about itself, alongside its items.
+
+```csharp
+public sealed record PageInfo(int From, int To, int Total);
+
+public sealed record ItemCollectionView(
+    string Title,
+    string EmptyMessage,
+    IReadOnlyList<ItemView> Items,
+    PageInfo? Page = null
+) : ViewNode;
+```
+
+*What this set is.* `Title` — "All books", "Results for \"orwell\"", "Books by George Orwell". Required.
+
+*What it means that it is empty.* `EmptyMessage` — "No books yet. Add one to start your library." for an
+unfilled catalog, "No books match that search." for a query that found nothing. Required, and distinct
+from `Title` because emptiness is not the absence of a fact but a fact of its own: the two situations
+above are unrelated, and a component holding one generic string can only ever report one of them
+correctly.
+
+*How much of the result set is on screen.* `Page` — `1–30 of 248`, 1-based and inclusive because that is
+how a person reads a range, with the arithmetic done server-side so every client shows the same numbers.
+Optional, and this is the one place optionality carries meaning rather than convenience: **absent means
+the entire result set is already visible.** The frontend hides the range and the paging affordance
+outright rather than rendering a disabled control that invites a press going nowhere.
+
+`Title` and `EmptyMessage` are non-optional deliberately. A new dispatch branch cannot compile without
+saying what it shows and what its emptiness means, which is the same enforcement argument that removed
+the raw `.Value` getters from `Result` (ADR 6): an untitled view or a stray "No items" is exactly the
+kind of defect that ships because nobody notices it is missing.
+
+**This is copy, not markup, and the boundary is narrow.** ADR 15 gives the backend the logical shape and
+the frontend the rendering, and these fields sit close to that line. They stay on the right side of it
+because each states a *fact about the result set* — what it is, why it is empty, how much of it there is
+— and none states how to present that fact. The frontend still decides that an empty view is centred and
+muted, that the range is set in tabular figures beside the heading, that a title is an `h2`. The line
+would be crossed by an `EmptyMessage` reading "Type `add book` to get started" with keyboard markup in
+it, or by a `Title` carrying a colour or an icon name. Plain sentences describing the situation are
+fine; instructions about the interface are not.
+
+**Trade-off.** *Copy now lives in the API layer.* Localisation, when it comes, has to reach the
+dispatcher rather than a frontend string table — and the dispatcher is C#, where the i18n story is worse
+than Angular's. The alternative was a message *code* the frontend resolves, which keeps copy client-side
+at the cost of a shared enum that both ends must agree on, drifting silently when one side adds a case.
+Plain strings are the right trade while the product ships in one language; the moment a second is
+required, this entry is where to start, and the answer is likely codes plus a frontend catalogue.
+
+*A generic component now depends on its producers being disciplined.* `ItemCollectionView` renders
+whatever title it is handed, so a careless dispatch branch can label a search "All books" and nothing
+catches it. Requiring the field prevents omission, not error. The check is review and the endpoint
+tests, not the type system — and pretending otherwise would mean modelling titles as a closed set, which
+buys nothing against the one search title that is inherently open.
+
+*Three cross-cutting changes to the union landed together.* `ImageSrc` (ADR 20), the title and empty
+message, and `PageInfo` are one wire break rather than three. `PageInfo` in particular is contract
+without implementation: nothing sends a non-null value yet, because paging itself is not built
+(`COMMANDS.md`, *Three kinds of movement*). Shipping the shape ahead of the behaviour is normally the
+mistake this document argues against — the justification here is narrow and worth stating plainly: the
+paging *model* is already decided and written down, the frontend break is already being paid for, and a
+second break to add three integers would cost more than carrying a nullable field that renders nothing.
+If paging is still unimplemented several milestones from now, that is the signal this was speculation
+after all.
+
+---
+
 # Known limitations
 
 **`record struct` zero-value.** A `readonly record struct` always permits `default(T)`, which runs no
