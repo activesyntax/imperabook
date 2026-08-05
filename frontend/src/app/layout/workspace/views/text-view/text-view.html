@@ -15,9 +15,16 @@
         <p><app-inline-content [content]="block.content" /></p>
       }
       @case ('command') {
+      @if (block.description) {
+        <button type="button" class="command-row">
+          <code class="command-row-name">{{ block.command }}</code>
+          <span class="command-row-text">{{ block.description }}</span>
+        </button>
+      } @else {
         <button type="button" class="command">
           <code class="command-name">{{ block.command }}</code>
         </button>
+      }
       }
       @case ('finding') {
         <button type="button" class="finding" >
@@ -26,6 +33,16 @@
           <code class="finding-command">{{ block.command }}</code>
         </button>
 
+      }
+      @case ('hint') {
+        <div class="hint">
+          <span class="hint-keys">
+            @for (key of block.keys; track $index) {
+              <kbd>{{ key }}</kbd>
+            }
+          </span>
+          <span class="hint-text">{{ block.text }}</span>
+        </div>
       }
     }
   }

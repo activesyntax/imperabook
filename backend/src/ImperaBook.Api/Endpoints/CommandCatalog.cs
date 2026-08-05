@@ -52,7 +52,11 @@ public static class CommandCatalog
         new("update author", "Rename an author", []),
         new("remove author", "Delete an author", []),
         new("list authors", "List all authors", []),
-        new("dashboard", "Show analytical widgets", []) { Group = CommandGroup.Fixed, Order = 1 },
+        new("dashboard", "Your library at a glance, and what needs attention", [])
+        {
+            Group = CommandGroup.Fixed,
+            Order = 1,
+        },
         new("settings", "Show and edit user settings", [])
         {
             Group = CommandGroup.Fixed,

@@ -9,7 +9,6 @@
   flex-direction: column;
   background-color: #000;
   border: 1px solid #5a5a5a;
-  border-top: none;
   border-radius: 14px;
   overflow: hidden;
 }
@@ -20,7 +19,7 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
-  padding: 0px;
+  padding: 20px 0 60px;
   overflow-y: auto;
 
 -webkit-mask-image: linear-gradient(to bottom, #000 max(85%, 100% - 80px), transparent);

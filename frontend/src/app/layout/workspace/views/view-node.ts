@@ -95,7 +95,7 @@ export interface Paragraph { type: 'paragraph'; content: Inline[]; }
 export interface CommandBlock {
   type: 'command';
   command: string;
-  text: string | null;
+  description: string | null;
 }
 
 export interface Finding {
@@ -105,7 +105,12 @@ export interface Finding {
   command: string;
   commandText: string | null;
 }
+export interface Hint {
+  type: 'hint';
+  keys: string[];
+  text: string;
+}
 
-export type TextBlock = Heading | Paragraph | CommandBlock | Finding;
+export type TextBlock = Heading | Paragraph | CommandBlock | Finding | Hint;
 
 export interface TextView { type: 'textView'; title: string; blocks: TextBlock[]; }

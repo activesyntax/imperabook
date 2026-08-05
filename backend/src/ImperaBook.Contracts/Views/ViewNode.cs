@@ -61,6 +61,7 @@ public sealed record TextView(string Title, IReadOnlyList<TextBlock> Blocks) : V
 [JsonDerivedType(typeof(Paragraph), "paragraph")]
 [JsonDerivedType(typeof(CommandBlock), "command")]
 [JsonDerivedType(typeof(Finding), "finding")]
+[JsonDerivedType(typeof(Hint), "hint")]
 public abstract record TextBlock;
 
 public enum HeadingLevel
@@ -74,7 +75,9 @@ public sealed record Heading(HeadingLevel Level, IReadOnlyList<Inline> Content) 
 
 public sealed record Paragraph(IReadOnlyList<Inline> Content) : TextBlock;
 
-public sealed record CommandBlock(string Command, string? Text = null) : TextBlock;
+public sealed record CommandBlock(string Command, string? Description = null) : TextBlock;
+
+public sealed record Hint(IReadOnlyList<string> Keys, string Text) : TextBlock;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(TextRun), "text")]
