@@ -1,48 +1,22 @@
-<nav class="nav" aria-label="Pinned commands">
+<nav class="nav" aria-label="Commands">
+  <app-user-badge class="nav__identity" [name]="name()" [library]="library()" [avatarUrl]="avatarUrl()" />
+
+  @if (account().length > 0) {
+  <ul class="nav__list" aria-label="Account commands">
+    @for (cmd of account(); track cmd.command) {
+    <li>
+      <ng-container *ngTemplateOutlet="pill; context: { $implicit: cmd }" />
+    </li>
+    }
+  </ul>
+  }
+
   <p class="nav__title">Pinned commands</p>
 
   <ul class="nav__list">
     @for (cmd of pinned(); track cmd.command) {
     <li>
-      <button type="button" class="pin" [attr.title]="cmd.description" (mousedown)="$event.preventDefault()">
-        <span class="pin__icon" aria-hidden="true">
-          @switch (cmd.command) {
-          @case ('dashboard') {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1" />
-            <rect x="14" y="3" width="7" height="7" rx="1" />
-            <rect x="14" y="14" width="7" height="7" rx="1" />
-            <rect x="3" y="14" width="7" height="7" rx="1" />
-          </svg>
-          }
-          @case ('help') {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M9.2 9.2a3 3 0 0 1 5.8 1c0 2-2.9 2.5-2.9 4" />
-            <path d="M12 17.5h.01" />
-          </svg>
-          }
-          @case ('settings') {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round">
-            <path d="M4 6h16M4 12h16M4 18h16" />
-            <circle cx="9" cy="6" r="2" />
-            <circle cx="15" cy="12" r="2" />
-            <circle cx="9" cy="18" r="2" />
-          </svg>
-          }
-          @default {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round">
-            <path d="m8 6 6 6-6 6" />
-          </svg>
-          }
-          }
-        </span>
-        <span class="pin__name">{{ cmd.command }}</span>
-      </button>
+      <ng-container *ngTemplateOutlet="pill; context: { $implicit: cmd }" />
     </li>
     } @empty {
     <li class="nav__empty">no pinned commands</li>
@@ -50,6 +24,61 @@
   </ul>
 
   <span class="nav__spacer" aria-hidden="true"></span>
-
-  <app-user-badge [name]="name()" [library]="library()" [avatarUrl]="avatarUrl()" />
 </nav>
+
+<ng-template #pill let-cmd>
+  <button type="button" class="pin" [attr.title]="cmd.description" (mousedown)="$event.preventDefault()">
+    <span class="pin__icon" aria-hidden="true">
+      @switch (cmd.command) {
+      @case ('dashboard') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+      </svg>
+      }
+      @case ('help') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M9.2 9.2a3 3 0 0 1 5.8 1c0 2-2.9 2.5-2.9 4" />
+        <path d="M12 17.5h.01" />
+      </svg>
+      }
+      @case ('settings') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M4 6h16M4 12h16M4 18h16" />
+        <circle cx="9" cy="6" r="2" />
+        <circle cx="15" cy="12" r="2" />
+        <circle cx="9" cy="18" r="2" />
+      </svg>
+      }
+      @case ('account') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M5 20a7 7 0 0 1 14 0" />
+      </svg>
+      }
+      @case ('logout') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M14 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4" />
+        <path d="M9 16l-4-4 4-4" />
+        <path d="M5 12h10" />
+      </svg>
+      }
+      @default {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="m8 6 6 6-6 6" />
+      </svg>
+      }
+      }
+    </span>
+    <span class="pin__name">{{ cmd.command }}</span>
+  </button>
+</ng-template>

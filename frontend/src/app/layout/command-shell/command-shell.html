@@ -15,20 +15,20 @@
           <span class="fall">no commands</span>
         }
 
-        <span class="spacer" aria-hidden="true"></span>
-
-@for (cmd of fixed(); track cmd.command; let i = $index) {
-  <button
-    type="button"
-    class="chip chip-fixed"
-    role="option"
-    (mousedown)="$event.preventDefault()">
-    @if (COMMAND_ICONS[cmd.command]; as icon) {
-            {{ icon}}
-    }
-    {{ cmd.command }}
-  </button>
-}
+<!--         <span class="spacer" aria-hidden="true"></span> -->
+<!---->
+<!-- @for (cmd of fixed(); track cmd.command; let i = $index) { -->
+<!--   <button -->
+<!--     type="button" -->
+<!--     class="chip chip-fixed" -->
+<!--     role="option" -->
+<!--     (mousedown)="$event.preventDefault()"> -->
+<!--     @if (COMMAND_ICONS[cmd.command]; as icon) { -->
+<!--             {{ icon}} -->
+<!--     } -->
+<!--     {{ cmd.command }} -->
+<!--   </button> -->
+<!-- } -->
 
 
     </div>

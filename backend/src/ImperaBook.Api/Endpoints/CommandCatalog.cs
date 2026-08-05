@@ -6,6 +6,7 @@ public enum CommandGroup
 {
     Dynamic,
     Fixed,
+    Account,
 }
 
 public sealed record CommandDescriptor(
@@ -51,12 +52,15 @@ public static class CommandCatalog
         new("update author", "Rename an author", []),
         new("remove author", "Delete an author", []),
         new("list authors", "List all authors", []),
-        new("dashboard", "Render analytical widgets", []),
+        new("dashboard", "Show analytical widgets", []) { Group = CommandGroup.Fixed, Order = 1 },
         new("settings", "Show and edit user settings", [])
         {
             Group = CommandGroup.Fixed,
-            Order = 1,
+            Order = 2,
         },
-        new("help", "Show available commands", []) { Group = CommandGroup.Fixed, Order = 2 },
+        new("help", "Show available commands", []) { Group = CommandGroup.Fixed, Order = 3 },
+        new("account", "Account settings", []) { Group = CommandGroup.Account, Order = 1 },
+        // new("login", "Enter into your library", []) { Group = CommandGroup.Account, Order = 2 },
+        new("logout", "Leave your library", []) { Group = CommandGroup.Account, Order = 2 },
     ];
 }
