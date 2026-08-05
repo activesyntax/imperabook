@@ -948,6 +948,101 @@ later; if that never ships, the label is a small lie and should be dropped rathe
 
 ---
 
+## 23. The dashboard names what is missing; the field is part of the command name
+
+**Context.** The dashboard opened on three counts — books, authors, languages — and nothing else.
+A count is a scoreboard: it is read once, it produces no next step, and the panel below it stayed
+empty because there was nothing else the view knew how to say. The question was not what would fill
+the space but what a cataloguing tool actually knows that its user wants. The answer is the
+inverse of the counts: not what the library holds, but which records are unfinished. That is a
+to-do list derived entirely from columns that already exist, and every line of it is a reason to
+run a command.
+
+Three things had to be decided together, because each one constrains the next: what the panel says,
+how a stated fact becomes a runnable command, and how the command expresses *which* gap it lists.
+
+**Decision.** A `Needs attention` panel, rendered as a `TextView`, whose rows are a new block type,
+and whose commands carry the field in the command *name* rather than as a parameter.
+
+*Findings are a block, not a paragraph followed by a command.* The first attempt paired a
+`Paragraph` with a sibling `CommandBlock` and relied on array order to associate them. It rendered
+as two stacked full-width elements with no visible relationship, and — the deeper problem — the
+association existed only as an ordering convention the type system did not carry. `Finding` makes
+the unit a single node:
+
+```csharp
+public sealed record Finding(string Value, string Text, string Command) : TextBlock;
+public sealed record CommandBlock(string Command) : TextBlock;
+```
+
+`Value` is separate from `Text` rather than embedded in it as a `Strong` run, because a column of
+right-aligned numbers is only possible if the number is its own fact. That is the whole reason the
+row form beat a card grid: four findings compared vertically are scannable, four cards are a second
+grid competing with the metric cards above.
+
+*The field belongs in the command name.* `list incomplete books having no isbn` — not
+`list incomplete books` with a `field` parameter. The variants share a prefix, so ADR 13's
+token-match groups rather than scatters them: `incomplete` surfaces all five, `isbn` surfaces
+exactly one, and typing the bare command puts it first with the narrowings beneath it. That is the
+completion menu ADR 13 prescribes in place of a guess.
+
+What this removes is larger than it looks. The command takes no parameter, so it has no connective,
+no quoted value, no positional parse — **ADR 17 does not reach it at all.** `Finding` and
+`CommandBlock` therefore carry a command name and nothing else; the pre-composed `text` field both
+were first drafted with had no MVP1 caller and was deleted rather than kept for symmetry. Four
+things collapsing out of one choice is the same signal ADR 20 read when BlurHash was removed.
+
+*`CommandBlock` is a one-field record and stays one.* Elsewhere this document rejects single-field
+wrappers as a name without a guarantee. The exception holds because the field is not what the type
+is for: the discriminator *is* the content — this string is runnable — and that is a fact no bare
+string carries.
+
+*The whole row is the button.* One focusable element per finding rather than three, and a target
+large enough to hit. The command name renders in mono at the end of the row and is the row's only
+label; an added "Show these" caption was drafted and cut as pure repetition. Displaying the name is
+not a concession — it is ADR 13's teaching argument, and it is the *only* teaching available here,
+because the button cannot be reached by keyboard at all: `Tab` in the command bar accepts the
+highlighted suggestion (COMMANDS.md), so tab order never leaves the bar. The mouse runs it; the
+keyboard user reads it and types it, with autocomplete closing the distance. The limitation and the
+pedagogy coincide.
+
+**Trade-off.** *The list can never reach zero, and that is a design fault with a partial fix.* A
+book printed in 1932 has no ISBN — the field is not missing, it does not exist. Under the naive
+query those books sit in the list permanently, and a to-do list that cannot be emptied stops being
+read within weeks, taking the working signals down with it. MVP1's mitigation is one clause: the
+ISBN finding excludes publication years before 1970. The real answer is a per-book, per-field
+dismissal (`mark as done` or similar), which is a genuine domain addition — deferred, and named
+here so the mitigation is not mistaken for the solution. This is also the first place ADR 11's
+stated limit bites in practice: `Maybe` cannot distinguish a field deliberately left empty from one
+never supplied, and that distinction is exactly what a dismissal needs.
+
+*The name-as-field form does not generalise, in two directions.* It cannot express conjunction —
+"no ISBN **and** no cover" — and never will, because the combinations multiply while command names
+do not. And it only works over a **closed** set: `isbn`, `cover`, `year` are fixed by the schema,
+whereas `language hungarian` is an open value and must stay a parameter. Both limits are structural
+rather than scale-related, so the trigger to revisit is a requirement for combination, not a
+growing field count. If the field list passes roughly six, the menu becomes the problem instead.
+
+*A longer command name is not a lenient parser.* `having no` is a function word in a grammar that
+was otherwise verb-plus-noun. The backend still exact-matches a closed set and analyses nothing —
+ADR 13 rejected reinterpretation, not multi-word names. Stated because a later reader will
+otherwise see a contradiction.
+
+*Copy continues to accumulate in the API layer.* Every finding's sentence is a backend string, on
+the trajectory ADR 21 already flagged for localisation. This entry roughly doubles the amount of
+prose living in C#.
+
+*`Finding.Value` is a string.* Formatting — thousands separators, eventual localisation — stays
+server-side, consistent with ADR 21 computing `PageInfo` there. The cost is that nothing prevents a
+sentence being put in a field meant for a number.
+
+*A finding does not know it is in a list.* Group boundaries are inferred by CSS adjacency, which is
+the same ordering-convention weakness `Finding` was introduced to fix, displaced one level up. It
+does not matter at four rows. If the panel grows subheadings, a block carrying an array of findings
+is the fix.
+
+---
+
 # Known limitations
 
 **`record struct` zero-value.** A `readonly record struct` always permits `default(T)`, which runs no
@@ -994,3 +1089,12 @@ format change, and costs roughly forty lines plus hand-written caching headers; 
 favours the extension. Note also that assets cannot use `Cache-Control: immutable` the way images can:
 an image's URL is its content, so it can never go stale, while an asset keeps its name across deploys and
 must revalidate.
+
+**Polymorphic union membership is not compile-checked.** `[JsonDerivedType(typeof(X), "x")]` takes a
+`Type` argument, and the compiler does not verify that `X` actually derives from the base the
+attribute sits on. A node can therefore be declared in one union and registered in another, and
+nothing fails until the first serialization of a view that contains it — which is a runtime 500,
+not a build error. This happened once, with `CommandBlock` (23) registered on `Inline` while
+deriving from `TextBlock`. Co-locating the registration with the derived type rather than listing
+every case above the base makes the mismatch visible at the declaration, but the guarantee is a
+convention either way: the closed unions are closed to the compiler and open to the serializer.

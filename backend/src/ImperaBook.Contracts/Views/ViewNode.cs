@@ -59,6 +59,8 @@ public sealed record TextView(string Title, IReadOnlyList<TextBlock> Blocks) : V
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(Heading), "heading")]
 [JsonDerivedType(typeof(Paragraph), "paragraph")]
+[JsonDerivedType(typeof(CommandBlock), "command")]
+[JsonDerivedType(typeof(Finding), "finding")]
 public abstract record TextBlock;
 
 public enum HeadingLevel
@@ -72,6 +74,8 @@ public sealed record Heading(HeadingLevel Level, IReadOnlyList<Inline> Content) 
 
 public sealed record Paragraph(IReadOnlyList<Inline> Content) : TextBlock;
 
+public sealed record CommandBlock(string Command, string? Text = null) : TextBlock;
+
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(TextRun), "text")]
 [JsonDerivedType(typeof(StrongRun), "strong")]
@@ -79,7 +83,6 @@ public sealed record Paragraph(IReadOnlyList<Inline> Content) : TextBlock;
 [JsonDerivedType(typeof(LinkRun), "link")]
 public abstract record Inline
 {
-    /// Sugar so composition reads as prose: Para("Runs on ", Strong("PostgreSQL"), ".")
     public static implicit operator Inline(string text) => new TextRun(text);
 }
 
@@ -90,3 +93,5 @@ public sealed record StrongRun(IReadOnlyList<Inline> Content) : Inline;
 public sealed record EmphasisRun(IReadOnlyList<Inline> Content) : Inline;
 
 public sealed record LinkRun(string Href, IReadOnlyList<Inline> Content) : Inline;
+
+public sealed record Finding(string Value, string Text, string Command) : TextBlock;

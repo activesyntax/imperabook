@@ -1,6 +1,6 @@
 namespace ImperaBook.Application.Dashboard;
 
-public sealed record DashboardSummary(int TotalBooks, int AuthorCount, int LanguageCount);
+public sealed record DashboardSummary(int TotalBooks, int TotalAuthors, int TotalPages);
 
 public interface IDashboardQueries
 {

@@ -1,17 +1,32 @@
 <header class="bar">
   <span class="bar-title">{{ view().title }}</span>
 </header>
-
 <div class="body">
   @for (block of view().blocks; track $index) {
-  @if (block.type === 'heading') {
-  @switch (block.level) {
-  @case ('one') { <h2><app-inline-content [content]="block.content" /></h2> }
-  @case ('two') { <h3><app-inline-content [content]="block.content" /></h3> }
-  @case ('three') { <h4><app-inline-content [content]="block.content" /></h4> }
-  }
-  } @else {
-  <p><app-inline-content [content]="block.content" /></p>
-  }
+    @switch (block.type) {
+      @case ('heading') {
+        @switch (block.level) {
+          @case ('one')   { <h2><app-inline-content [content]="block.content" /></h2> }
+          @case ('two')   { <h3><app-inline-content [content]="block.content" /></h3> }
+          @case ('three') { <h4><app-inline-content [content]="block.content" /></h4> }
+        }
+      }
+      @case ('paragraph') {
+        <p><app-inline-content [content]="block.content" /></p>
+      }
+      @case ('command') {
+        <button type="button" class="command">
+          <code class="command-name">{{ block.command }}</code>
+        </button>
+      }
+      @case ('finding') {
+        <button type="button" class="finding" >
+          <span class="finding-value">{{ block.value }}</span>
+          <span class="finding-text">{{ block.text }}</span>
+          <code class="finding-command">{{ block.command }}</code>
+        </button>
+
+      }
+    }
   }
 </div>

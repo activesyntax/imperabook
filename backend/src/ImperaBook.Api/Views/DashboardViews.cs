@@ -18,32 +18,53 @@ public static class DashboardViews
                 new CardCollectionView(
                     new[]
                     {
-                        new CardView("All Books", s.TotalBooks.ToString(), "books in your library"),
-                        new CardView("Authors", s.AuthorCount.ToString(), "across your collection"),
                         new CardView(
-                            "Languages",
-                            s.LanguageCount.ToString(),
-                            "languages represented"
+                            "All Books",
+                            s.TotalBooks.ToString("N0"),
+                            $"{"book".Plural(s.TotalBooks)} in your library"
+                        ),
+                        new CardView(
+                            "Pages",
+                            s.TotalPages.ToString("N0"),
+                            $"{"page".Plural(s.TotalPages)} across your books"
+                        ),
+                        new CardView(
+                            "Authors",
+                            s.TotalAuthors.ToString("N0"),
+                            $"{"author".Plural(s.TotalAuthors)} in your collection"
                         ),
                     }
                 ),
                 new TextView(
-                    "Help — add book",
+                    "Needs attention",
                     [
-                        TextNode.H1("add book"),
                         TextNode.Para(
-                            "Catalogs a new book. ",
-                            TextNode.Strong("Title"),
-                            " and ",
-                            TextNode.Strong("Author"),
-                            " are required."
+                            TextNode.Strong("17"),
+                            " of your ",
+                            TextNode.Strong("24"),
+                            " books are missing something."
                         ),
-                        TextNode.H2("Notes"),
-                        TextNode.Para(
-                            "Inline parameters arrive in MVP2 — see ",
-                            TextNode.Link("https://…/COMMANDS.md", "the reference"),
-                            "."
+                        TextNode.Finding(
+                            "3",
+                            "books have no page count",
+                            "list incomplete books having no page count"
                         ),
+                        TextNode.Finding(
+                            "12",
+                            "books have no ISBN",
+                            "list incomplete books having no isbn"
+                        ),
+                        TextNode.Finding(
+                            "8",
+                            "books have no cover",
+                            "list incomplete books having no cover"
+                        ),
+                        TextNode.Finding(
+                            "5",
+                            "books have no publication year",
+                            "list incomplete books having no publication year"
+                        ),
+                        TextNode.Finding("3", "authors have no books", "list unattributed authors"),
                     ]
                 ),
             }

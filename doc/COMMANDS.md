@@ -5,6 +5,7 @@
 ImperaBook is driven by plain-text commands typed into a single command bar.
 
 - Commands are **bare verbs** — you type the command, and the interactive shell then prompts for each parameter in turn. There are no flags or special characters in MVP1.
+- A few commands carry a fixed qualifier in the name itself (`list incomplete books having no isbn`). These are whole entries in the registry, not a verb plus an argument: the qualifier is drawn from a closed, schema-fixed set, so it can be completed rather than typed. Open values (a language, a year) stay parameters.
 - Required fields are marked `*`. Optional fields can be skipped at the prompt.
 - As you type, the command bar **autocompletes** from a closed command registry using **token-match**: typing `book` surfaces every book command (`add book`, `show book`, `list books`, …), typing `add` surfaces every `add` command. `Tab` / `Enter` accepts the highlighted suggestion. Suggestions are ranked — see *Command suggestion model* below.
 - Any input that does **not** match a known command is handled as a full-text search (the same as the explicit `search` command).
@@ -24,6 +25,11 @@ MVP1 has **one library per user**; book operations target it implicitly. Inline 
 | `remove book` | Delete a book | Book to remove (select/search), confirmation |
 | `show book` | Show full detail for one book | Book to view (select/search) |
 | `list books` | List all books | — |
+| `list incomplete books` | List books with any missing field | — |
+| `list incomplete books having no isbn` | Narrow to books with no ISBN | — |
+| `list incomplete books having no cover` | Narrow to books with no cover | — |
+| `list incomplete books having no year` | Narrow to books with no publication year | — |
+| `list incomplete books having no language` | Narrow to books with no language set | — |
 
 ## Authors
 
@@ -33,6 +39,7 @@ MVP1 has **one library per user**; book operations target it implicitly. Inline 
 | `update author` | Rename an author | Author to edit, new Name |
 | `remove author` | Delete an author | Author to remove, confirmation |
 | `list authors` | List all authors | — |
+| `list unattributed authors` | List authors with no books attributed to them | — |
 
 ## Query
 
@@ -47,7 +54,16 @@ MVP1 has **one library per user**; book operations target it implicitly. Inline 
 
 | Command | Description | Prompts for |
 | --- | --- | --- |
-| `dashboard` | Render analytical widgets | — (shows language breakdown and total collection metrics) |
+| `dashboard` | Render analytical widgets | — (shows collection metrics and the *Needs attention* panel) |
+
+The **Needs attention** panel lists, one row per gap, how many records are missing a given field,
+with the command that lists them. Every row is runnable, and the command name is shown rather than
+a generic label — reading it is how the command is learned, since the row is reachable by pointer
+only (the command bar holds `Tab`, so tab order never reaches the workspace).
+
+One caveat, deliberately visible: a pre-ISBN book has no ISBN to be missing. The ISBN row excludes
+publication years before 1970 so the list is not permanently non-empty, but the general answer —
+marking a field as intentionally absent for one book — is out of scope for MVP1 (see DECISIONS 23).
 
 ## Navigation
 
@@ -143,8 +159,11 @@ below is the full index.
 | `update` | update book, update author |
 | `remove` | remove book, remove author |
 | `show` | show book |
-| `list` | list books, list authors |
-| `book` | add book, update book, remove book, show book, list books |
+| `list` | list books, list incomplete books, list authors, list unattributed authors |
+| `incomplete` | list incomplete books and all four of its narrowings |
+| `isbn` / `cover` / `year` / `language` | the matching `list incomplete books having no …` |
+| `unattributed` | list unattributed authors |
+| `book` / `books` | add book, update book, remove book, show book, list books, list incomplete books (+ narrowings) |
 | `author` / `authors` | add author, update author, remove author, list authors |
 | `search` | search |
 | `filter` | filter |
@@ -165,8 +184,14 @@ below is the full index.
 
 ## Out of scope for MVP1
 
-Deferred to MVP2 or later: **library creation and management** (one library per user in MVP1), **tags and categories** (including tag-based filtering and category distribution on the dashboard), inline parameters/flags, lending (`lend` / `return`), reading status, per-command library switching, batch edit, ISBN scan, AI cover/page inference, and export utilities. Single-token typo tolerance in suggestions (e.g. `add bok` → `add book`) is also MVP2; word-order reinterpretation (e.g. `book add` → `add book`) is rejected outright, not deferred (see ADR 13).
+Deferred to MVP2 or later: **library creation and management** (one library per user in MVP1), **tags and categories** (including tag-based filtering and category distribution on the dashboard), inline parameters/flags, lending (`lend` / `return`), reading status, per-command library switching, batch edit, **marking a field as intentionally absent** for a single book (which is what would let the *Needs attention* list reach zero), ISBN scan, AI cover/page inference, and export utilities. Single-token typo tolerance in suggestions (e.g. `add bok` → `add book`) is also MVP2; word-order reinterpretation (e.g. `book add` → `add book`) is rejected outright, not deferred (see ADR 13).
 
 ## Open questions
 
 1. **Author find-or-create.** Does `add book` auto-create an unknown author from the name entered at its prompt, or must the author already exist (via `add author`)? The Author FK / `AddAuthor` path is still pending, so pick one before implementing the author prompt in `add book`.
+
+2. **Does `filter` absorb the incomplete listings?** `filter` builds structured filtering
+   interactively, and "has no ISBN" is a filter dimension. They are kept separate because the
+   named commands are completable and reachable from a dashboard row, while `filter` covers open
+   values and combinations — but if `filter` ever gains presence/absence dimensions, the overlap
+   is worth resolving rather than carrying twice.

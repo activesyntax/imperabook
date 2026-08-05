@@ -92,6 +92,20 @@ export type Inline = TextRun | StrongRun | EmphasisRun | LinkRun;
 
 export interface Heading { type: 'heading'; level: HeadingLevel; content: Inline[]; }
 export interface Paragraph { type: 'paragraph'; content: Inline[]; }
-export type TextBlock = Heading | Paragraph;
+export interface CommandBlock {
+  type: 'command';
+  command: string;
+  text: string | null;
+}
+
+export interface Finding {
+  type: 'finding';
+  value: string;
+  text: string;
+  command: string;
+  commandText: string | null;
+}
+
+export type TextBlock = Heading | Paragraph | CommandBlock | Finding;
 
 export interface TextView { type: 'textView'; title: string; blocks: TextBlock[]; }

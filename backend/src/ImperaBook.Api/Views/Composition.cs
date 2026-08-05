@@ -17,4 +17,10 @@ public static class TextNode
     public static Inline Em(params Inline[] content) => new EmphasisRun(content);
 
     public static Inline Link(string href, params Inline[] content) => new LinkRun(href, content);
+
+    public static TextBlock Command(string command, string? text = null) =>
+        new CommandBlock(command, text);
+
+    public static TextBlock Finding(string value, string text, string command) =>
+        new Finding(value, text, command);
 }

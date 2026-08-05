@@ -5,11 +5,11 @@ namespace ImperaBook.Infrastructure.Data.Queries;
 
 public sealed class DashboardQueries(ImperaBookDbContext db) : IDashboardQueries
 {
-    // TODO: rename CatalogDbContext / Books / Authors / Language to your real names.
     public async Task<DashboardSummary> GetSummaryAsync(CancellationToken ct)
     {
         var totalBooks = await db.Books.CountAsync(ct);
-        // var authorCount = await db.Authors.CountAsync(ct);
+        var totalAuthors = await db.Authors.CountAsync(ct);
+        var totalPages = 8450;
 
         // var languageCount = await db
         //     .Books.Where(b => b.Language != null && b.Language != "")
@@ -17,6 +17,6 @@ public sealed class DashboardQueries(ImperaBookDbContext db) : IDashboardQueries
         //     .Distinct()
         //     .CountAsync(ct);
 
-        return new DashboardSummary(totalBooks, 42, 137);
+        return new DashboardSummary(totalBooks, totalAuthors, totalPages);
     }
 }

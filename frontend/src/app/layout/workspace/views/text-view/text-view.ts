@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import * as ViewNode from '@workspace/views/view-node';
 import { InlineContent } from '../inline-content/inline-content';
 
