@@ -24,6 +24,10 @@
     <app-item-collection-view [view]="asItemCollection(node())" />
   }
 
+  @case ('textView') {
+    <app-text-view [view]="asTextView(node())" />
+  }
+
   @default {
     <app-unknown-view [nodeType]="node().type" />
   }

@@ -6,6 +6,7 @@ import { CardCollection } from '../card-collection/card-collection';
 import { MessageView } from '../message-view/message-view';
 import { GuidanceView } from '../guidance-view/guidance-view';
 import { ItemCollectionView } from '../item-collection-view/item-collection-view';
+import { TextView } from '../text-view/text-view';
 import { UnknownView } from '../unknown-view/unknown-view';
 
 @Component({
@@ -17,6 +18,7 @@ import { UnknownView } from '../unknown-view/unknown-view';
     MessageView,
     GuidanceView,
     ItemCollectionView,
+    TextView,
     UnknownView,
     forwardRef(() => View),
   ],
@@ -32,4 +34,5 @@ export class View {
   asMessage = (n: ViewNode.ViewNode) => n as ViewNode.MessageView;
   asGuidance = (n: ViewNode.ViewNode) => n as ViewNode.GuidanceView;
   asItemCollection = (n: ViewNode.ViewNode) => n as ViewNode.ItemCollectionView;
+  asTextView = (n: ViewNode.ViewNode) => n as ViewNode.TextView;
 }

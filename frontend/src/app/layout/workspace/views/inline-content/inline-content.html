@@ -1,0 +1,12 @@
+@for (run of content(); track $index) {
+@switch (run.type) {
+@case ('text') { {{ run.text }} }
+@case ('strong') { <strong><app-inline-content [content]="run.content" /></strong> }
+@case ('emphasis') { <em><app-inline-content [content]="run.content" /></em> }
+@case ('link') {
+<a class="link" [href]="run.href" target="_blank" rel="noopener noreferrer">
+  <app-inline-content [content]="run.content" />
+</a>
+}
+}
+}

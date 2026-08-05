@@ -1,0 +1,17 @@
+<header class="bar">
+  <span class="bar-title">{{ view().title }}</span>
+</header>
+
+<div class="body">
+  @for (block of view().blocks; track $index) {
+  @if (block.type === 'heading') {
+  @switch (block.level) {
+  @case ('one') { <h2><app-inline-content [content]="block.content" /></h2> }
+  @case ('two') { <h3><app-inline-content [content]="block.content" /></h3> }
+  @case ('three') { <h4><app-inline-content [content]="block.content" /></h4> }
+  }
+  } @else {
+  <p><app-inline-content [content]="block.content" /></p>
+  }
+  }
+</div>

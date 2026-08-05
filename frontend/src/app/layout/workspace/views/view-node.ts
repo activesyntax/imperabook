@@ -74,8 +74,24 @@ export interface ItemCollectionView {
   readonly page?: PageInfo;
 }
 
-export type ViewNode = ImageView | CardView | CardCollectionView | MessageView | GuidanceView | ItemCollectionView;
+export type ViewNode = ImageView | CardView | CardCollectionView | MessageView | GuidanceView | ItemCollectionView | TextView;
 
 export type CommandResult = {
   views: ViewNode[];
 };
+
+// TEXT VIEW
+
+export type HeadingLevel = 'one' | 'two' | 'three';
+
+export interface TextRun { type: 'text'; text: string; }
+export interface StrongRun { type: 'strong'; content: Inline[]; }
+export interface EmphasisRun { type: 'emphasis'; content: Inline[]; }
+export interface LinkRun { type: 'link'; href: string; content: Inline[]; }
+export type Inline = TextRun | StrongRun | EmphasisRun | LinkRun;
+
+export interface Heading { type: 'heading'; level: HeadingLevel; content: Inline[]; }
+export interface Paragraph { type: 'paragraph'; content: Inline[]; }
+export type TextBlock = Heading | Paragraph;
+
+export interface TextView { type: 'textView'; title: string; blocks: TextBlock[]; }

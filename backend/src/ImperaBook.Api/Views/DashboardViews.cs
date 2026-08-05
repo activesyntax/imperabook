@@ -27,6 +27,25 @@ public static class DashboardViews
                         ),
                     }
                 ),
+                new TextView(
+                    "Help — add book",
+                    [
+                        TextNode.H1("add book"),
+                        TextNode.Para(
+                            "Catalogs a new book. ",
+                            TextNode.Strong("Title"),
+                            " and ",
+                            TextNode.Strong("Author"),
+                            " are required."
+                        ),
+                        TextNode.H2("Notes"),
+                        TextNode.Para(
+                            "Inline parameters arrive in MVP2 — see ",
+                            TextNode.Link("https://…/COMMANDS.md", "the reference"),
+                            "."
+                        ),
+                    ]
+                ),
                 new GuidanceView(
                     Title: "Getting started",
                     Intro: "ImperaBook is a keyboard-driven catalog for your personal library. "

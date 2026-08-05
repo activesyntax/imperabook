@@ -1,0 +1,77 @@
+:host {
+  --ib-rule: var(--ib-accent, #b9743f);
+
+  display: block;
+  width: fit-content;
+  min-width: 360px;
+  max-width: 68ch;              /* prose measure, not a pixel guess */
+  margin-inline: auto;
+  background: var(--ib-surface, #161413);
+  border: 1px solid color-mix(in srgb, var(--ib-rule) 45%, transparent);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--ib-divider, #221e1a);
+  color: var(--ib-rule);
+}
+
+.bar-title {
+  font-size: 1.2rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.body {
+  padding: 16px 18px 20px;
+  color: var(--ib-text, #d9cdbf);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+/* Depth → size is a frontend decision. The backend said "one", not "1.3rem". */
+.body h2,
+.body h3,
+.body h4 {
+  margin: 1.4em 0 0.5em;
+  color: var(--ib-heading, #efe4d6);
+  font-weight: 500;
+
+  &:first-child { margin-top: 0; }
+}
+
+.body h2 { font-size: 1.3rem; letter-spacing: 0.02em; }
+.body h3 { font-size: 1.12rem; }
+.body h4 {
+  font-size: 0.95rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ib-muted, #a8968a);
+}
+
+.body p {
+  margin: 0 0 0.85em;
+  &:last-child { margin-bottom: 0; }
+}
+
+.body strong { color: var(--ib-heading, #efe4d6); font-weight: 600; }
+.body em     { font-style: italic; }
+
+.link {
+  color: var(--ib-rule);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  border-radius: 2px;
+
+  &:hover { text-decoration-thickness: 2px; }
+
+  &:focus-visible {
+    outline: 2px solid var(--ib-rule);
+    outline-offset: 2px;
+  }
+}
