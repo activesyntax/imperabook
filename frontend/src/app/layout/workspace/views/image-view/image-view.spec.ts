@@ -13,8 +13,8 @@ describe('ImageView', () => {
     type: 'image',
     src: 'assets/img/imperabook-logo-dark.svg', // swap for your asset
     alt: 'ImperaBook',
+    role: 'branding',
     caption: 'Your library, at your fingertips.',
-    variant: 'logo'
   };
 
   beforeEach(async () => {
