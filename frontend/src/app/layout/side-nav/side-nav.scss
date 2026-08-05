@@ -15,14 +15,13 @@
   padding: 18px 0 0;
 }
 
-// Identity is context, not an action — it heads the rail and is ruled off from it.
 .nav__identity {
   padding-bottom: 12px;
   border-bottom: 0.5px solid rgba(236, 230, 219, 0.12);
 }
 
 .nav__title {
-  margin: 6px 0 -2px 8px;
+  margin: 16px 0 0px 8px;
   font-size: 0.9rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -45,7 +44,6 @@
   color: var(--ib-dim, #857d6e);
 }
 
-// Same pill geometry as the shell's suggestion chips: form means "runnable".
 .pin {
   display: flex;
   align-items: center;
@@ -56,9 +54,10 @@
   border-radius: 16px;
   background: #2a241d;
   font: inherit;
+  // min-height: 50px;
 
   font-size: 1rem;
-  line-height: 1;
+  line-height: 1.1;
   text-align: left;
   white-space: nowrap;
   cursor: pointer;
@@ -99,7 +98,7 @@
 
 .nav__spacer {
   flex: 1;
-  min-height: 24px;
+  min-height: 28px;
 }
 
 @media (prefers-reduced-motion: reduce) {
