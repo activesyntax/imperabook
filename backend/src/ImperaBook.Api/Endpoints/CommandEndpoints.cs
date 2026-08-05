@@ -53,6 +53,8 @@ public static class CommandEndpoints
 
             "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
 
+            "help" => TypedResults.Ok(new GeneralHelp().ToCommandResult()),
+
             "add book"
             or "update book"
             or "remove book"
@@ -67,7 +69,6 @@ public static class CommandEndpoints
             or "back"
             or "top"
             or "bottom"
-            or "help"
             or "clear"
             or "cancel"
             or "quit"
