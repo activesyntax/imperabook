@@ -14,7 +14,5 @@
   color: var(--ib-text-muted, #b98a63);
 }
 
-.image-view--logo img      { max-width: 400px;  }
-.image-view--hero img      { max-width: 100%; }
-.image-view--cover img     { max-width: 160px; border-radius: 4px; }
-.image-view--thumbnail img { max-width: 64px;  border-radius: 3px; }
+.image-view--branding img      { max-width: 400px;  }
+.image-view--illustration img      { width: 80%;  }

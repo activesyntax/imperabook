@@ -12,8 +12,8 @@ public static class DashboardViews
                 new ImageView(
                     Src: "/static/imperabook-logo-dark.svg",
                     Alt: "ImperaBook",
-                    Caption: "Your library, at your fingertips.",
-                    Variant: "logo"
+                    Role: ImageRole.Branding,
+                    Caption: "Your library, at your fingertips."
                 ),
                 new CardCollectionView(
                     new[]

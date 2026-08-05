@@ -1,13 +1,13 @@
 export type MessageKind = 'info' | 'success' | 'warning' | 'error';
 
-export type ImageVariant = 'logo' | 'cover' | 'thumbnail' | 'hero';
+export type ImageRole = 'branding' | 'illustration';
 
 export type ImageView = {
   type: 'image';
   src: string;
   alt: string;
+  role: ImageRole;
   caption?: string;
-  variant?: ImageVariant;
 };
 
 export type CardView = {

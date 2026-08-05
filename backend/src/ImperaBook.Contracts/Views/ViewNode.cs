@@ -11,7 +11,13 @@ namespace ImperaBook.Contracts.Views;
 [JsonDerivedType(typeof(TextView), "textView")]
 public abstract record ViewNode;
 
-public sealed record ImageView(string Src, string Alt, string? Caption, string? Variant) : ViewNode;
+public enum ImageRole
+{
+    Branding,
+    Illustration,
+}
+
+public sealed record ImageView(string Src, string Alt, ImageRole Role, string? Caption) : ViewNode;
 
 public sealed record CardCollectionView(IReadOnlyList<CardView> Items) : ViewNode;
 

@@ -10,6 +10,5 @@ import * as ViewNode from '@workspace/views/view-node';
 export class ImageView {
   view = input.required<ViewNode.ImageView>();
 
-  // Default to 'logo' when the backend omits variant.
-  variantClass = computed(() => `image-view--${this.view().variant ?? 'logo'}`);
+  roleClass = computed(() => `image-view--${this.view().role ?? 'illustration'}`);
 }
