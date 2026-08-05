@@ -11,7 +11,7 @@ public static class HelpViews
             new ViewNode[]
             {
                 new TextView(
-                    "Help",
+                    "ImperaBook help",
                     [
                         TextNode.Para(
                             "Three sections, then you know enough to work. For any single "

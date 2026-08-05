@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 
 import { CommandSpec } from '@core/model';
@@ -19,8 +19,15 @@ export class SideNav {
   readonly library = input.required<string>();
   readonly avatarUrl = input<string | null>(null);
 
+
+
+  protected readonly userLoggedIn = signal(true);
+  protected readonly commandToFilter = computed(() => !this.userLoggedIn() ? 'logout' : 'login');
+
   protected readonly pinned = computed(() => this.group('fixed'));
-  protected readonly account = computed(() => this.group('account'));
+  protected readonly account = computed(() => this.group('account').filter((c) => c.command !== this.commandToFilter()));
+
+  protected readonly application = computed(() => this.group('application'));
 
   private group(group: string): readonly CommandSpec[] {
     return this.commands
