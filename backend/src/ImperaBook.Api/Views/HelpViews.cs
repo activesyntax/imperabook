@@ -13,12 +13,7 @@ public static class HelpViews
                 new TextView(
                     "ImperaBook help",
                     [
-                        TextNode.Para(
-                            "Three sections, then you know enough to work. For any single "
-                                + "command, ",
-                            TextNode.Strong("help add book"),
-                            " explains that one on its own."
-                        ),
+                        TextNode.Para("Three sections, then you know enough to work."),
                         TextNode.H2("Getting started"),
                         TextNode.Para(
                             "ImperaBook is a keyboard-driven catalog for your personal library. "
