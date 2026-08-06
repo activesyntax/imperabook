@@ -34,146 +34,146 @@ public static class DevelopmentDataSeeder
                     Id = libraryId,
                     Name = "Home Library",
                     OwnerId = ownerId,
+
+                    PhotoHash = await SeedImage.Register("library-photo.jpg", ctx, ct),
                 }
             );
 
-        // Authors are not linked to books yet — they are seeded independently
-        // so the authors table has realistic data to work with.
-        ctx.Set<AuthorEntity>()
-            .AddRange(
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "George",
-                    LastName = "Orwell",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Jane",
-                    LastName = "Austen",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Fyodor",
-                    LastName = "Dostoevsky",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Leo",
-                    LastName = "Tolstoy",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Gabriel",
-                    LastName = "García Márquez",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Harper",
-                    LastName = "Lee",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "J.R.R.",
-                    LastName = "Tolkien",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Frank",
-                    LastName = "Herbert",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Isaac",
-                    LastName = "Asimov",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Agatha",
-                    LastName = "Christie",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Yuval Noah",
-                    LastName = "Harari",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Carl",
-                    LastName = "Sagan",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Stephen",
-                    LastName = "Hawking",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Daniel",
-                    LastName = "Kahneman",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Robert C.",
-                    LastName = "Martin",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Andrew",
-                    LastName = "Hunt",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "David",
-                    LastName = "Thomas",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Eric",
-                    LastName = "Evans",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Mary",
-                    LastName = "Shelley",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Bram",
-                    LastName = "Stoker",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Michelle",
-                    LastName = "Obama",
-                },
-                new AuthorEntity
-                {
-                    Id = Guid.NewGuid(),
-                    FirstName = "Anthony",
-                    LastName = "Bourdain",
-                }
-            );
+        var authors = new List<AuthorEntity>
+        {
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "George",
+                LastName = "Orwell",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Jane",
+                LastName = "Austen",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Fyodor",
+                LastName = "Dostoevsky",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Leo",
+                LastName = "Tolstoy",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Gabriel",
+                LastName = "García Márquez",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Harper",
+                LastName = "Lee",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "J.R.R.",
+                LastName = "Tolkien",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Frank",
+                LastName = "Herbert",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Isaac",
+                LastName = "Asimov",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Agatha",
+                LastName = "Christie",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Yuval Noah",
+                LastName = "Harari",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Carl",
+                LastName = "Sagan",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Stephen",
+                LastName = "Hawking",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Daniel",
+                LastName = "Kahneman",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Robert C.",
+                LastName = "Martin",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Andrew",
+                LastName = "Hunt",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "David",
+                LastName = "Thomas",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Eric",
+                LastName = "Evans",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Mary",
+                LastName = "Shelley",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Bram",
+                LastName = "Stoker",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Michelle",
+                LastName = "Obama",
+            },
+            new AuthorEntity
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Anthony",
+                LastName = "Bourdain",
+            },
+        };
 
         var books = new List<BookEntity>
         {
@@ -347,14 +347,20 @@ public static class DevelopmentDataSeeder
             },
         };
 
-        // Every seeded book gets a cover except the orphan, which stays uncovered on purpose: the
-        // absent-cover render path needs at least one row to exercise it, and this book already
-        // plays the exceptional case for LibraryId.
-        var registered = new Dictionary<string, string>();
+        SeedImage.LogManifest();
         foreach (var book in books.Where(b => b.Title != "Orphan Book"))
-            book.CoverHash = await SeedCovers.Register(ctx, registered, book.Title, ct);
+            book.CoverHash = await SeedArtwork.Register(ctx, book.Title, SeedImageKind.Cover, ct);
+
+        foreach (var author in authors)
+            author.PortraitHash = await SeedArtwork.Register(
+                ctx,
+                $"{author.FirstName} {author.LastName}",
+                SeedImageKind.Portrait,
+                ct
+            );
 
         ctx.Set<BookEntity>().AddRange(books);
+        ctx.Set<AuthorEntity>().AddRange(authors);
 
         await ctx.SaveChangesAsync(ct);
     }

@@ -75,6 +75,12 @@ rm -rf src/ImperaBook.Infrastructure.Data/Migrations
 docker compose down -v && docker compose up -d
 dotnet ef migrations add InitialCreate -p src/ImperaBook.Infrastructure.Data -s src/ImperaBook.Infrastructure.Data
 
+
+// Image formats are already compressed; TOAST compression would only burn CPU (DECISIONS 19).
+// EF Core cannot express column storage strategy, so this stays hand-written — do not drop it
+// when regenerating migrations.
+migrationBuilder.Sql("ALTER TABLE images ALTER COLUMN bytes SET STORAGE EXTERNAL;");
+
 ============================
 PSQL
 ============================

@@ -17,7 +17,8 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     first_name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
-                    last_name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false)
+                    last_name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    portrait_hash = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: true)
                 },
                 constraints: table =>
                 {

@@ -21,11 +21,12 @@ public sealed class AuthorQueries(ImperaBookDbContext db) : IAuthorQueries
         //     q = q.Where(b => EF.Functions.ILike(b.FirstName, $"%{query}%"));
         //
         return q.OrderBy(a => a.LastName)
-            .Select(b => new AuthorListItem
+            .Select(a => new AuthorListItem
             {
-                Id = b.Id,
-                FirstName = b.FirstName,
-                LastName = b.LastName,
+                Id = a.Id,
+                FirstName = a.FirstName,
+                LastName = a.LastName,
+                PortraitHash = a.PortraitHash,
             })
             .ToArrayAsync(ct);
     }

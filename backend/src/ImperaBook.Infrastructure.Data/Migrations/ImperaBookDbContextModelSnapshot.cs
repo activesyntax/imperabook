@@ -40,6 +40,12 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(300)")
                         .HasColumnName("last_name");
 
+                    b.Property<string>("PortraitHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("portrait_hash")
+                        .IsFixedLength();
+
                     b.HasKey("Id")
                         .HasName("pk_authors");
 

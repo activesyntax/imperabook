@@ -1,4 +1,5 @@
 using ImperaBook.Domain;
+using ImperaBook.Domain.Catalog;
 using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -15,5 +16,7 @@ public class AuthorEntityConfiguration : IEntityTypeConfiguration<AuthorEntity>
         builder.Property(a => a.FirstName).HasMaxLength(PersonName.MaxLength);
 
         builder.Property(a => a.LastName).HasMaxLength(PersonName.MaxLength);
+
+        builder.Property(b => b.PortraitHash).HasMaxLength(ContentHash.Length).IsFixedLength();
     }
 }

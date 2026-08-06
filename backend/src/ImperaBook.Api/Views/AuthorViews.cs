@@ -26,6 +26,9 @@ public static class AuthorViews
 
         var properties = new List<ItemProperty> { new("Name", name, PropertyRole.Primary) };
 
-        return new ItemView(Ref: a.Id.ToString(), Properties: properties);
+        return new ItemView(Ref: a.Id.ToString(), Properties: properties, ImageSrc: ImageSrcOf(a));
     }
+
+    private static string? ImageSrcOf(AuthorListItem a) =>
+        a.PortraitHash is { } hash ? $"/api/images/{hash}" : null;
 }

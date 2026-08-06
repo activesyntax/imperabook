@@ -5,6 +5,7 @@ public sealed record AuthorListItem
     public required Guid Id { get; init; }
     public string? FirstName { get; init; }
     public required string LastName { get; init; }
+    public string? PortraitHash { get; init; }
 }
 
 public interface IAuthorQueries
