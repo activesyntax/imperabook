@@ -13,6 +13,7 @@ public sealed record LibraryStatistics(
 
 public sealed record LibraryDetail(string Name, string? PhotoHash);
 
+// TODO: async
 public interface ILibraryQueries
 {
     Task<bool> Exists(Guid id, CancellationToken ct);

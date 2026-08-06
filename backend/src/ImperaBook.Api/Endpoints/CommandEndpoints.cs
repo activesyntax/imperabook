@@ -13,6 +13,7 @@ public static class CommandEndpoints
             .WithName("GetCommands")
             .Produces<IReadOnlyList<CommandDescriptor>>(StatusCodes.Status200OK);
 
+        // todo: inject queries onto CommandHandler
         app.MapPost(
                 "/api/command",
                 (
@@ -20,8 +21,9 @@ public static class CommandEndpoints
                     IDashboardQueries dashboard,
                     IBookQueries books,
                     IAuthorQueries authors,
+                    ILibraryQueries libraries,
                     CancellationToken ct
-                ) => Dispatch(request, dashboard, books, authors, ct)
+                ) => Dispatch(request, dashboard, books, authors, libraries, ct)
             )
             .WithName("RunCommand")
             .Produces<CommandResult>(StatusCodes.Status200OK)
@@ -30,17 +32,24 @@ public static class CommandEndpoints
         return app;
     }
 
+    // TODO: get valid library id from UserQueries. the users library should be
+    // displayed
+    static readonly Guid LibraryId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
     private static async Task<Results<Ok<CommandResult>, ProblemHttpResult>> Dispatch(
         CommandRequest request,
         IDashboardQueries dashboard,
         IBookQueries books,
         IAuthorQueries authors,
+        ILibraryQueries libraries,
+        // IUserQueries users,
         CancellationToken ct
     )
     {
         return request.Command switch
         {
             "dashboard" => TypedResults.Ok((await dashboard.GetSummaryAsync(ct)).ToCommandResult()),
+            "library" => TypedResults.Ok(await CommandHandler.Library(libraries, LibraryId, ct)),
             "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
             "search" => TypedResults.Ok(
                 (await books.List(null, request.Text, ct)).ToCommandResult(

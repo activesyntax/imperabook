@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using ImperaBook.API.Views;
 using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
@@ -27,6 +28,21 @@ public static class CommandHandler
             "All authors",
             "No authors yet.",
             new PageInfo(1, 1, authorList.Count(), "authors")
+        );
+    }
+
+    internal static async Task<CommandResult> Library(
+        ILibraryQueries libraries,
+        Guid libraryId,
+        CancellationToken ct
+    )
+    {
+        var statistics = await libraries.GetStatistics(libraryId, ct);
+        var libraryDetails = await libraries.GetLibrary(libraryId, ct);
+
+        return libraryDetails.Match(
+            library => library.ToCommandResult(statistics),
+            () => CommandResult.Empty
         );
     }
 }
