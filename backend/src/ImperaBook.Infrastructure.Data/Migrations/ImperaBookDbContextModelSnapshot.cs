@@ -137,6 +137,10 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("owner_id");
 
+                    b.Property<string>("PhotoHash")
+                        .HasColumnType("char(64)")
+                        .HasColumnName("photo_hash");
+
                     b.HasKey("Id")
                         .HasName("pk_libraries");
 
@@ -169,16 +173,6 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasName("pk_users");
 
                     b.ToTable("users", (string)null);
-                });
-
-            modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.LibraryEntity", b =>
-                {
-                    b.HasOne("ImperaBook.Infrastructure.Data.Entities.UserEntity", null)
-                        .WithMany()
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_libraries_users_owner_id");
                 });
 #pragma warning restore 612, 618
         }
