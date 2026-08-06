@@ -47,7 +47,7 @@ public sealed class LibraryQueries : ILibraryQueries
         // reason it is not a pure projection. Replace with
         //   g.Sum(b => b.PageCount ?? 0) / g.Count(b => b.PageCount != null)
         // once `add book` prompts for a page count (COMMANDS.md, Books).
-        const int totalPages = 78_450;
+        const int totalPages = 8450;
         const int booksWithPageCount = 248;
 
         return new LibraryStatistics(

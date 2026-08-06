@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ImperaBook.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ImperaBookDbContext))]
-    [Migration("20260806183903_InitialCreate")]
+    [Migration("20260806220337_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

@@ -42,12 +42,18 @@ public static class LibraryViews
                 stats.TotalBooks.ToString("N0"),
                 $"{"book".Plural(stats.TotalBooks)} in your library"
             ),
+            new CardView("Pages", stats.TotalPages.ToString("N0"), PageCaption(stats)),
+            new CardView("Book length", "316", $"{"page".Plural(stats.TotalBooks)} per book"),
+            new CardView(
+                "Longest book",
+                "1,248",
+                $"{"page".Plural(1248)}, War and Peace by Lev Tolstoy"
+            ),
             new CardView(
                 "Authors",
                 stats.TotalAuthors.ToString("N0"),
                 $"{"author".Plural(stats.TotalAuthors)} in your collection"
             ),
-            new CardView("Pages", stats.TotalPages.ToString("N0"), PageCaption(stats)),
             new CardView(
                 "Languages",
                 languageCount.ToString("N0"),
@@ -60,7 +66,8 @@ public static class LibraryViews
     // raw denominator, and choosing what to divide by is a presentation decision
     // (ADR 8 — read models carry raw data, composition lives in the Views layer).
     private static string PageCaption(LibraryStatistics stats) =>
-        stats.BooksWithPageCount > 0
-            ? $"{"page".Plural(stats.TotalPages)}, {stats.TotalPages / stats.BooksWithPageCount:N0} per book"
-            : $"{"page".Plural(stats.TotalPages)} across your books";
+        $"{"page".Plural(stats.TotalPages)} across your books";
+    // stats.BooksWithPageCount > 0
+    // ? $"{"page".Plural(stats.TotalPages)}, {stats.TotalPages / stats.BooksWithPageCount:N0} per book"
+    // : $"{"page".Plural(stats.TotalPages)} across your books";
 }
