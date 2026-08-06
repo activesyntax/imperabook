@@ -12,14 +12,12 @@ public sealed record AddBookCommand
     public string? Summary { get; init; }
     public required IReadOnlyList<Guid> AuthorIds { get; init; }
     public Guid? LibraryId { get; init; }
-
-    /// <summary>The content address returned by <c>POST /api/images</c>.</summary>
     public string? CoverHash { get; init; }
 }
 
 public sealed class AddBookCommandHandler(
     IBookWriteRepository books,
-    ILibraryRepository libraries,
+    ILibraryQueries libraries,
     IImageStore images
 )
 {

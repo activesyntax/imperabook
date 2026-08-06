@@ -7,7 +7,6 @@ public static class ApplicationServiceCollectionExtensions
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        services.AddScoped<AddBookCommandHandler>();
         return services;
     }
 }

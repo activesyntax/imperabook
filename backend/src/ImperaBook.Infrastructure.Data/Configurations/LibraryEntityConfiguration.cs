@@ -5,19 +5,20 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ImperaBook.Infrastructure.Data.Configurations;
 
-public class LibraryEntityConfiguration : IEntityTypeConfiguration<LibraryEntity>
+public sealed class LibraryEntityConfiguration : IEntityTypeConfiguration<LibraryEntity>
 {
     public void Configure(EntityTypeBuilder<LibraryEntity> builder)
     {
         builder.ToTable("libraries");
-        builder.HasKey(l => l.Id);
 
-        builder.Property(l => l.Name).IsRequired().HasMaxLength(LibraryName.MaxLength);
+        builder.HasKey(x => x.Id);
 
-        builder
-            .HasOne<UserEntity>()
-            .WithMany()
-            .HasForeignKey(l => l.OwnerId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.Property(x => x.Name).HasMaxLength(LibraryName.MaxLength).IsRequired();
+
+        builder.Property(x => x.OwnerId).IsRequired();
+
+        builder.Property(x => x.PhotoHash).HasColumnType("char(64)");
+
+        builder.HasIndex(x => x.OwnerId);
     }
 }
