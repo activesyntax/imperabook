@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using ImperaBook.API.Endpoints;
 using ImperaBook.API.Endpoints.Data;
-using ImperaBook.Application;
 using ImperaBook.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +13,6 @@ var connectionString =
         "Connection string 'ImperaBook' was not found in configuration."
     );
 
-builder.Services.AddApplication();
 builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddProblemDetails();
 builder.Services.ConfigureHttpJsonOptions(options =>

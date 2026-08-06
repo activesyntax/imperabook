@@ -1,8 +1,4 @@
 using ImperaBook.Application;
-using ImperaBook.Application.Authors;
-using ImperaBook.Application.Books;
-using ImperaBook.Application.Dashboard;
-using ImperaBook.Application.Images;
 using ImperaBook.Infrastructure.Data.Images;
 using ImperaBook.Infrastructure.Data.Queries;
 using ImperaBook.Infrastructure.Data.Repositories;

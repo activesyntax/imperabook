@@ -1,4 +1,4 @@
-using ImperaBook.Application.Images;
+using ImperaBook.Application;
 using ImperaBook.Domain.Catalog;
 using Microsoft.AspNetCore.Http.HttpResults;
 

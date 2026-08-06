@@ -1,7 +1,7 @@
 using CSharpFunctionalExtensions;
 using ImperaBook.Domain.Catalog;
 
-namespace ImperaBook.Application.Images;
+namespace ImperaBook.Application;
 
 public interface IImageStore
 {

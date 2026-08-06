@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 using CSharpFunctionalExtensions;
-using ImperaBook.Application.Images;
+using ImperaBook.Application;
 using ImperaBook.Domain.Catalog;
 using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.EntityFrameworkCore;

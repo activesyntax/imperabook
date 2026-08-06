@@ -1,4 +1,4 @@
-namespace ImperaBook.Application.Dashboard;
+namespace ImperaBook.Application;
 
 public sealed record DashboardSummary(int TotalBooks, int TotalAuthors, int TotalPages);
 

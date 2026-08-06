@@ -1,4 +1,4 @@
-using ImperaBook.Application.Dashboard;
+using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
 
 namespace ImperaBook.API.Views;

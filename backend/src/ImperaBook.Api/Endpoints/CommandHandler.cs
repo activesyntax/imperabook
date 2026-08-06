@@ -1,15 +1,12 @@
 using ImperaBook.API.Views;
-using ImperaBook.Application.Authors;
+using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
 
 namespace ImperaBook.API.Endpoints;
 
 public static class CommandHandler
 {
-    public static async Task<CommandResult> ListBooks(
-        Application.Books.IBookQueries books,
-        CancellationToken ct
-    )
+    public static async Task<CommandResult> ListBooks(IBookQueries books, CancellationToken ct)
     {
         var bookList = await books.List(null, null, ct);
         return bookList.ToCommandResult(

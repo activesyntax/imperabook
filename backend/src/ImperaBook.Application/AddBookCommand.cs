@@ -1,9 +1,9 @@
 using CSharpFunctionalExtensions;
-using ImperaBook.Application.Images;
 using ImperaBook.Domain;
 using ImperaBook.Domain.Catalog;
 
-namespace ImperaBook.Application.Books;
+// TODO: this class should be moved to ImperaBook.Infrastrucutre.Data
+namespace ImperaBook.Application;
 
 public sealed record AddBookCommand
 {

@@ -1,4 +1,4 @@
-using ImperaBook.Application.Books;
+using ImperaBook.Application;
 using Microsoft.EntityFrameworkCore;
 
 namespace ImperaBook.Infrastructure.Data.Queries;

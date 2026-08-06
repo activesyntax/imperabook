@@ -1,7 +1,5 @@
 using ImperaBook.API.Views;
-using ImperaBook.Application.Authors;
-using ImperaBook.Application.Books;
-using ImperaBook.Application.Dashboard;
+using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
 using Microsoft.AspNetCore.Http.HttpResults;
 
