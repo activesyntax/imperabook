@@ -9,4 +9,6 @@ public class BookEntity
     public Guid? LibraryId { get; set; }
 
     public string? CoverHash { get; set; }
+
+    public List<BookAuthorEntity> Authors { get; set; } = [];
 }

@@ -7,10 +7,6 @@ public static class DevelopmentDataSeeder
 {
     public static async Task SeedAsync(DbContext ctx, CancellationToken ct)
     {
-        Console.WriteLine(
-            ctx.Model.FindEntityType(typeof(ImageEntity)) is null ? "NOT MAPPED" : "mapped"
-        );
-
         if (await ctx.Set<BookEntity>().AnyAsync(ct))
             return;
 
@@ -347,7 +343,57 @@ public static class DevelopmentDataSeeder
             },
         };
 
-        SeedImage.LogManifest();
+        // Title → author last names, in credit order. A book absent from this map has no
+        // link rows, which is exactly Attribution.Unknown ("Orphan Book" is the case here).
+        var attribution = new Dictionary<string, string[]>
+        {
+            ["Pride and Prejudice"] = ["Austen"],
+            ["Crime and Punishment"] = ["Dostoevsky"],
+            ["War and Peace"] = ["Tolstoy"],
+            ["One Hundred Years of Solitude"] = ["García Márquez"],
+            ["To Kill a Mockingbird"] = ["Lee"],
+            ["1984"] = ["Orwell"],
+            ["Animal Farm"] = ["Orwell"],
+            ["The Lord of the Rings"] = ["Tolkien"],
+            ["The Hobbit"] = ["Tolkien"],
+            ["Dune"] = ["Herbert"],
+            ["Foundation"] = ["Asimov"],
+            ["Murder on the Orient Express"] = ["Christie"],
+            ["Frankenstein"] = ["Shelley"],
+            ["Dracula"] = ["Stoker"],
+            ["Sapiens"] = ["Harari"],
+            ["Cosmos"] = ["Sagan"],
+            ["A Brief History of Time"] = ["Hawking"],
+            ["Thinking, Fast and Slow"] = ["Kahneman"],
+            ["The Pragmatic Programmer"] = ["Hunt", "Thomas"],
+            ["Clean Code"] = ["Martin"],
+            ["Domain-Driven Design"] = ["Evans"],
+            ["Becoming"] = ["Obama"],
+            ["Kitchen Confidential"] = ["Bourdain"],
+        };
+
+        var authorIdByLastName = authors.ToDictionary(a => a.LastName, a => a.Id);
+
+        foreach (var (bookTitle, lastNames) in attribution)
+        {
+            // Single throws on a typo in either direction rather than seeding a book
+            // that silently reads as Unknown.
+            var book = books.Single(b => b.Title == bookTitle);
+
+            book.Authors = lastNames
+                .Select(
+                    (lastName, i) =>
+                        new BookAuthorEntity
+                        {
+                            BookId = book.Id,
+                            AuthorId = authorIdByLastName[lastName],
+                            Ordinal = i,
+                        }
+                )
+                .ToList();
+        }
+
+        // SeedImage.LogManifest();
         foreach (var book in books.Where(b => b.Title != "Orphan Book"))
             book.CoverHash = await SeedArtwork.Register(ctx, book.Title, SeedImageKind.Cover, ct);
 
@@ -359,8 +405,8 @@ public static class DevelopmentDataSeeder
                 ct
             );
 
-        ctx.Set<BookEntity>().AddRange(books);
         ctx.Set<AuthorEntity>().AddRange(authors);
+        ctx.Set<BookEntity>().AddRange(books);
 
         await ctx.SaveChangesAsync(ct);
     }
