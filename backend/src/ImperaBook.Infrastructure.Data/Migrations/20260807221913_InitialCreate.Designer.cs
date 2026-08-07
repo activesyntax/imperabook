@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ImperaBook.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ImperaBookDbContext))]
-    [Migration("20260806220337_InitialCreate")]
+    [Migration("20260807221913_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -53,6 +53,29 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasName("pk_authors");
 
                     b.ToTable("authors", (string)null);
+                });
+
+            modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.BookAuthorEntity", b =>
+                {
+                    b.Property<Guid>("BookId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("book_id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<int>("Ordinal")
+                        .HasColumnType("integer")
+                        .HasColumnName("ordinal");
+
+                    b.HasKey("BookId", "AuthorId")
+                        .HasName("pk_book_authors");
+
+                    b.HasIndex("AuthorId")
+                        .HasDatabaseName("ix_book_authors_author_id");
+
+                    b.ToTable("book_authors", (string)null);
                 });
 
             modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.BookEntity", b =>
@@ -182,6 +205,32 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasName("pk_users");
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.BookAuthorEntity", b =>
+                {
+                    b.HasOne("ImperaBook.Infrastructure.Data.Entities.AuthorEntity", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_book_authors_authors_author_id");
+
+                    b.HasOne("ImperaBook.Infrastructure.Data.Entities.BookEntity", "Book")
+                        .WithMany("Authors")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_book_authors_books_book_id");
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Book");
+                });
+
+            modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.BookEntity", b =>
+                {
+                    b.Navigation("Authors");
                 });
 #pragma warning restore 612, 618
         }

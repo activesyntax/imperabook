@@ -30,8 +30,8 @@ public static class BookViews
             ),
         };
 
-        if (!string.IsNullOrWhiteSpace(b.Subtitle))
-            properties.Add(new("Subtitle", b.Subtitle, PropertyRole.Secondary));
+        // if (!string.IsNullOrWhiteSpace(b.Subtitle))
+        //     properties.Add(new("Subtitle", b.Subtitle, PropertyRole.Secondary));
 
         return new ItemView(Ref: b.Id.ToString(), Properties: properties, ImageSrc: ImageSrcOf(b));
     }

@@ -83,6 +83,36 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                     table.PrimaryKey("pk_users", x => x.id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "book_authors",
+                columns: table => new
+                {
+                    book_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    author_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ordinal = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_book_authors", x => new { x.book_id, x.author_id });
+                    table.ForeignKey(
+                        name: "fk_book_authors_authors_author_id",
+                        column: x => x.author_id,
+                        principalTable: "authors",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_book_authors_books_book_id",
+                        column: x => x.book_id,
+                        principalTable: "books",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_book_authors_author_id",
+                table: "book_authors",
+                column: "author_id");
+
             migrationBuilder.CreateIndex(
                 name: "ix_libraries_owner_id",
                 table: "libraries",
@@ -93,10 +123,7 @@ namespace ImperaBook.Infrastructure.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "authors");
-
-            migrationBuilder.DropTable(
-                name: "books");
+                name: "book_authors");
 
             migrationBuilder.DropTable(
                 name: "images");
@@ -106,6 +133,12 @@ namespace ImperaBook.Infrastructure.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "users");
+
+            migrationBuilder.DropTable(
+                name: "authors");
+
+            migrationBuilder.DropTable(
+                name: "books");
         }
     }
 }
