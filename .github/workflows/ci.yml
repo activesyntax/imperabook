@@ -5,8 +5,13 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Callable from the Nightly and Release workflows so the test jobs are not
+  # duplicated. No inputs and no secrets: same repository, same ref.
   workflow_call:
 
+# Cancel a superseded run on the same ref — but only for pull requests.
+# A main push and a called run (nightly, release) must finish: cancelling a
+# release build halfway leaves a half-pushed image and no test result.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}

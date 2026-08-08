@@ -4,21 +4,29 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Semver, v nélkül — pl. 0.1.0'
+        description: 'Semantic version without the leading v — e.g. 0.1.0'
         required: true
       latest:
-        description: 'Kapja meg a latest taget is'
+        description: 'Also tag this image as latest'
         type: boolean
         default: true
 
 permissions:
-  contents: write     
-  packages: write
+  contents: write   # needed to create the GitHub release
+  packages: write   # needed to push to GHCR
+
+# One release at a time. Never cancel a run in progress: a cancelled build can
+# leave some tags pushed and others not.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
+  # Same fast suite that runs on every pull request.
   unit:
     uses: ./.github/workflows/ci.yml
 
+  # The Testcontainers suite, excluded from the fast loop by design.
   integration:
     name: Integration tests (Testcontainers)
     runs-on: ubuntu-latest
@@ -27,31 +35,52 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v6
+
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
-      - run: dotnet test --configuration Release --filter "Category=Integration"
+
+      - name: Integration tests
+        run: >
+          dotnet test --configuration Release
+          --filter "Category=Integration"
+          --logger "trx;LogFileName=integration-tests.trx"
+          --results-directory ${{ github.workspace }}/TestResults
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-integration-test-results
+          path: TestResults/*.trx
 
   release:
+    name: Build, push and publish
     needs: [unit, integration]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
       - uses: docker/setup-buildx-action@v3
+
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/metadata-action@v5
+
+      - name: Derive tags
         id: meta
+        uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=semver,pattern={{version}},value=${{ inputs.version }}
             type=semver,pattern={{major}}.{{minor}},value=${{ inputs.version }}
             type=raw,value=latest,enable=${{ inputs.latest }}
-      - uses: docker/build-push-action@v6
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
@@ -59,6 +88,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
 
+      # The compose file is the distribution entry point: the repository is
+      # private, so this release asset is how a self-hosting user gets it.
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
