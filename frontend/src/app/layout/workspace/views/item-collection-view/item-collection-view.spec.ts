@@ -7,6 +7,7 @@ describe('ItemCollectionView', () => {
   let fixture: ComponentFixture<ItemCollectionView>;
   const itemCollectionView: ViewNode.ItemCollectionView = {
     type: 'itemCollection',
+    title: 'Books',
     emptyMessage: 'No books found.',
     items: [
       {

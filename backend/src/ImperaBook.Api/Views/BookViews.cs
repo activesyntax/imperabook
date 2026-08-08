@@ -7,14 +7,14 @@ public static class BookViews
 {
     public static CommandResult ToCommandResult(
         this IReadOnlyList<BookListItem> books,
+        string title,
         string emptyMessage,
-        PageInfo? page = null,
-        string? heading = null
+        PageInfo? page = null
     ) =>
         new(
             new ViewNode[]
             {
-                new ItemCollectionView(emptyMessage, books.Select(ToItem).ToArray(), page, heading),
+                new ItemCollectionView(title, emptyMessage, books.Select(ToItem).ToArray(), page),
             }
         );
 
