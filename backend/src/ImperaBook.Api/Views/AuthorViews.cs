@@ -7,13 +7,13 @@ public static class AuthorViews
 {
     public static CommandResult ToCommandResult(
         this IReadOnlyList<AuthorListItem> authors,
-        string title,
         string emptyMessage,
         PageInfo? page = null
     ) =>
         new(
             new ViewNode[]
             {
+                new HeadingView("All authors", page),
                 new ItemCollectionView(authors.Select(ToItem).ToArray(), emptyMessage),
             }
         );

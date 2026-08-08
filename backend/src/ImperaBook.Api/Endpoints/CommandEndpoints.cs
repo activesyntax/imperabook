@@ -51,13 +51,6 @@ public static class CommandEndpoints
             "dashboard" => TypedResults.Ok((await dashboard.GetSummaryAsync(ct)).ToCommandResult()),
             "library" => TypedResults.Ok(await CommandHandler.Library(libraries, LibraryId, ct)),
             "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
-            "search" => TypedResults.Ok(
-                (await books.List(null, request.Text, ct)).ToCommandResult(
-                    $"Results for \"{request.Text}\"",
-                    "No books match that search."
-                )
-            ),
-
             "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
 
             "help" => TypedResults.Ok(new GeneralHelp().ToCommandResult()),
