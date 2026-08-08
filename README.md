@@ -39,14 +39,17 @@ the keyboard.
 
 **Add a book.** Type `add b` — autocomplete offers `add book`; press `Tab` or `Enter` to accept it.
 The workspace immediately renders a *draft* of the book, and it fills in live as you answer each
-prompt: Title, Author (with find-or-create typeahead so you don't create duplicate authors), then
-the optional Subtitle, Language, Year, ISBN, and Summary. Press `Enter` on the last step to save;
-`cancel` or `Esc` discards the draft and nothing is ever persisted. You watch the book take shape
-beside the prompt instead of typing into the void.
+prompt: Title, Author, then the optional Subtitle, Language, Year, ISBN, and Summary. Press `Enter`
+on the last step to save; `cancel` or `Esc` discards the draft and nothing is ever persisted. You
+watch the book take shape beside the prompt instead of typing into the void.
 
-**Browse and read.** `list books` renders the table. Move the selection with `j` / `k` (or `↓` /
-`↑`), jump to the ends with `gg` / `G`, open a row into detail with `Enter`, and step back out with
-`Esc`. These are navigation affordances — they read views, they never mutate data.
+**Browse and read.** `list books` renders the collection. Because the command bar always holds
+focus, bare letters are typing rather than shortcuts — so movement is separated by modifier instead:
+plain `↑` `↓` scroll the viewport, `Alt` + arrows move the selection across the grid, and
+`Ctrl + →` / `Ctrl + ←` (`next page` / `prev page`) fetch the adjacent batch of results. `Enter`
+opens the selected row into detail, `Esc` steps back, `Home` / `End` (`top` / `bottom`) jump to the
+first or last item on the page. These are navigation affordances — they read views, they never
+mutate data.
 
 **Search.** Just start typing words that aren't a command — `tolkien hobbit` — and the input falls
 through to multi-token full-text search. No button, no separate search box.
@@ -134,12 +137,22 @@ domain modeling** in C#.
   declaring *what* a view is, never *how* it looks — not a Server-Driven UI layer.
 - **ImperaBook.Infrastructure.Data** — Persistence behind repository interfaces via **EF Core**,
   keeping its mutable, change-tracking model out of the domain.
-- **ImperaBook.Ai** — ASP.NET Core **Minimal APIs**, with all errors mapped to a single RFC 9457
+- **ImperaBook.Api** — ASP.NET Core **Minimal APIs**, with all errors mapped to a single RFC 9457
   ProblemDetails shape at the boundary.
+
+### Two channels, not a REST surface
+
+The HTTP surface is split by purpose rather than by resource. A **control channel** —
+`POST /api/command` — handles every command in the closed grammar: one request shape, one dispatch
+path, one response contract. A **content channel** moves opaque bytes (cover images today, exports
+and bulk import later) and never introduces meaning the command response didn't already state. The
+command registry itself is served by the backend at `GET /api/commands`, so the frontend executes a
+recipe rather than inferring one.
 
 ### Database
 
-- **PostgreSQL** — relational integrity, JSONB for flexible metadata, and full-text search.
+- **PostgreSQL** — relational integrity and full-text search, with content-addressed image bytes
+  stored in-database (`bytea`, `storage external`) so a single `pg_dump` is a complete backup.
 
 ---
 
@@ -160,7 +173,33 @@ domain modeling** in C#.
   sources (Open Library, Google Books).
 - **AI cover/page inference.** Extract cataloging data from a photo of a cover (bring-your-own-key or
   metered at cost — enrichment is never a gated feature).
+- **Lending.** `lend` / `return`, so the shelf knows which books are with friends.
 - **Export.** Print-ready PDF and e-book layout output.
+
+---
+
+## Editions
+
+| | **Self-Hosted** | **Cloud** |
+| --- | --- | --- |
+| Price | Free | Subscription |
+| Distribution | Docker Compose | Managed, nothing to install |
+| Runs on | Your machine, your database | Hosted instance |
+| Data | Entirely yours | Automatic backups, cross-device sync |
+| Updates | You pull a new image | Continuous |
+
+The self-hosted edition is the full application, not a crippled demo: the same commands, the same
+catalog, the same interface. What the subscription buys is operations — hosting, backups, sync, and
+the metered AI enrichment allowance — not features held back behind a paywall.
+
+### Running it yourself
+
+```
+docker compose up -d
+```
+
+The stack is the application container plus PostgreSQL. Everything lives in a Postgres volume,
+including cover images, so a database dump is a complete backup with nothing else to remember.
 
 ---
 
@@ -175,9 +214,17 @@ domain modeling** in C#.
 
 ## License
 
-Licensed under the **GNU Affero General Public License v3.0 (AGPLv3)** — free to use, self-host, and
-modify. A separate commercial license is available for closed-source or white-label deployments that
-fall outside the AGPL's network-disclosure terms.
+**ImperaBook is proprietary, closed-source software.** The source code is not published; the
+application is distributed as a container image.
+
+- **Self-hosted use is free**, for personal and internal use, under the ImperaBook End User License
+  Agreement (`LICENSE.md` / `EULA.md`).
+- **Cloud use** is governed by the subscription Terms of Service.
+- Redistribution, resale, white-labeling, and hosting the software as a service for third parties
+  require a separate commercial agreement.
+
+Third-party open source components bundled in the distributed image are listed with their licenses
+in `NOTICE.md`.
 
 ---
 
