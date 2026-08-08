@@ -53,6 +53,7 @@ public static class CommandEndpoints
             "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
             "search" => TypedResults.Ok(
                 (await books.List(null, request.Text, ct)).ToCommandResult(
+                    $"Results for \"{request.Text}\"",
                     "No books match that search."
                 )
             ),

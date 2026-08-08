@@ -21,9 +21,11 @@ public static class LibraryViews
             );
         }
 
+        nodes.Add(new TextView(library.Name, [TextNode.Para("Your library, at a glance.")]));
+
         nodes.Add(new CardCollectionView(BuildCards(stats)));
 
-        return new CommandResult(library.Name, nodes.ToArray());
+        return new CommandResult(nodes.ToArray());
     }
 
     private static CardView[] BuildCards(LibraryStatistics stats)

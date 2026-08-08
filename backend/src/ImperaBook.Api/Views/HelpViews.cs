@@ -8,7 +8,6 @@ public static class HelpViews
 {
     public static CommandResult ToCommandResult(this GeneralHelp generalHelp) =>
         new(
-            "Help",
             new ViewNode[]
             {
                 new TextView(

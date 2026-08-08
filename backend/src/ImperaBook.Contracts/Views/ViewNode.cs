@@ -38,6 +38,7 @@ public sealed record GuidanceHint(IReadOnlyList<string> Keys, string Label);
 public sealed record PageInfo(int Current, int Count, int TotalItems, string ItemsPlural);
 
 public sealed record ItemCollectionView(
+    string Title,
     string EmptyMessage,
     IReadOnlyList<ItemView> Items,
     PageInfo? Page = null
