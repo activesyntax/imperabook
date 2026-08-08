@@ -7,6 +7,7 @@ public static class DashboardViews
 {
     public static CommandResult ToCommandResult(this DashboardSummary s) =>
         new(
+            Heading: null,
             new ViewNode[]
             {
                 new ImageView(

@@ -11,7 +11,6 @@ public static class CommandHandler
     {
         var bookList = await books.List(null, null, ct);
         return bookList.ToCommandResult(
-            "All books",
             "No books yet. Add one to start your library.",
             new PageInfo(1, 1, bookList.Count(), "books")
         );
@@ -25,7 +24,6 @@ public static class CommandHandler
         var authorList = await authors.List(null, null, ct);
 
         return authorList.ToCommandResult(
-            "All authors",
             "No authors yet.",
             new PageInfo(1, 1, authorList.Count(), "authors")
         );
