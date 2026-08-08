@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 namespace ImperaBook.Contracts.Views;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(HeadingView), "heading")]
 [JsonDerivedType(typeof(ImageView), "image")]
 [JsonDerivedType(typeof(CardCollectionView), "cardCollection")]
 [JsonDerivedType(typeof(MessageView), "message")]
@@ -10,6 +11,8 @@ namespace ImperaBook.Contracts.Views;
 [JsonDerivedType(typeof(ItemCollectionView), "itemCollection")]
 [JsonDerivedType(typeof(TextView), "textView")]
 public abstract record ViewNode;
+
+public sealed record HeadingView(string Text, PageInfo? Page = null) : ViewNode;
 
 public enum ImageRole
 {
@@ -37,12 +40,8 @@ public sealed record GuidanceHint(IReadOnlyList<string> Keys, string Label);
 
 public sealed record PageInfo(int Current, int Count, int TotalItems, string ItemsPlural);
 
-public sealed record ItemCollectionView(
-    string Title,
-    string EmptyMessage,
-    IReadOnlyList<ItemView> Items,
-    PageInfo? Page = null
-) : ViewNode;
+public sealed record ItemCollectionView(IReadOnlyList<ItemView> Items, string EmptyMessage)
+    : ViewNode;
 
 // ========== ITEM VIEW =================
 public sealed record ItemView(

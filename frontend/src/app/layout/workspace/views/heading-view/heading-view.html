@@ -1,0 +1,13 @@
+<header class="heading">
+  <h2 class="heading__text">{{ view().text }}</h2>
+
+  @if (view().page; as page) {
+  <span class="heading__meta">
+    <span class="heading__page">
+      page {{ page.current }}<span class="heading__page-sep">/</span>{{ page.count }}
+    </span>
+    <span class="heading__meta-sep" aria-hidden="true">·</span>
+    <span class="heading__total">{{ page.totalItems }} {{ page.itemsPlural }}</span>
+  </span>
+  }
+</header>

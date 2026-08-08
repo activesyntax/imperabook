@@ -1,4 +1,7 @@
 @switch (node().type) {
+@case ('heading') {
+  <app-heading-view [view]="asHeading(node())" />
+}
   @case ('image') {
     <app-image-view [view]="asImage(node())" />
   }

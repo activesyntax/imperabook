@@ -1,5 +1,6 @@
 import { Component, forwardRef, input } from '@angular/core';
 import * as ViewNode from '../view-node';
+import { HeadingView } from '../heading-view/heading-view';
 import { ImageView } from '../image-view/image-view';
 import { CardView } from '../card-view/card-view';
 import { CardCollection } from '../card-collection/card-collection';
@@ -12,6 +13,7 @@ import { UnknownView } from '../unknown-view/unknown-view';
 @Component({
   selector: 'app-view',
   imports: [
+    HeadingView,
     ImageView,
     CardView,
     CardCollection,
@@ -27,7 +29,7 @@ import { UnknownView } from '../unknown-view/unknown-view';
 })
 export class View {
   node = input.required<ViewNode.ViewNode>();
-
+  asHeading = (n: ViewNode.ViewNode) => n as ViewNode.HeadingView;
   asImage = (n: ViewNode.ViewNode) => n as ViewNode.ImageView;
   asCard = (n: ViewNode.ViewNode) => n as ViewNode.CardView;
   asCollection = (n: ViewNode.ViewNode) => n as ViewNode.CardCollectionView;

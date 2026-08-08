@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+.heading {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0 1.5rem 0.9rem;
+  border-bottom: 1px solid color-mix(in srgb, #f5efe6 8%, transparent);
+
+  &__text {
+    margin: 0 0 -0.9rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 2px solid #c07a3e;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.3rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: #f5efe6;
+  }
+
+  &__meta {
+    flex: none;
+    margin-left: auto;
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, #f5efe6 45%, transparent);
+  }
+
+  &__page {
+    font-size: 0.9rem;
+    color: color-mix(in srgb, #c07a3e 75%, #f5efe6);
+  }
+
+  &__page-sep,
+  &__meta-sep {
+    color: color-mix(in srgb, #f5efe6 25%, transparent);
+  }
+
+  &__total {
+    font-size: 0.9rem;
+  }
+}

@@ -7,7 +7,7 @@ public static class LibraryViews
 {
     public static CommandResult ToCommandResult(this LibraryDetail library, LibraryStatistics stats)
     {
-        var nodes = new List<ViewNode>(capacity: 3);
+        var nodes = new List<ViewNode>(capacity: 4) { new HeadingView(library.Name) };
 
         // TODO: upload photo placeholder
         if (library.PhotoHash is { } hash)
@@ -20,8 +20,6 @@ public static class LibraryViews
                 )
             );
         }
-
-        nodes.Add(new TextView(library.Name, [TextNode.Para("Your library, at a glance.")]));
 
         nodes.Add(new CardCollectionView(BuildCards(stats)));
 

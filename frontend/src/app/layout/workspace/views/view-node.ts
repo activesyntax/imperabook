@@ -1,3 +1,9 @@
+export interface HeadingView {
+  type: 'heading';
+  text: string;
+  page: PageInfo | null;
+}
+
 export type MessageKind = 'info' | 'success' | 'warning' | 'error';
 
 export type ImageRole = 'branding' | 'illustration';
@@ -74,7 +80,7 @@ export interface ItemCollectionView {
   readonly page?: PageInfo;
 }
 
-export type ViewNode = ImageView | CardView | CardCollectionView | MessageView | GuidanceView | ItemCollectionView | TextView;
+export type ViewNode = ImageView | CardView | CardCollectionView | MessageView | GuidanceView | ItemCollectionView | TextView | HeadingView;
 
 export type CommandResult = {
   views: ViewNode[];

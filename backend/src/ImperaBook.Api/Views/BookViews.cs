@@ -12,10 +12,7 @@ public static class BookViews
         PageInfo? page = null
     ) =>
         new(
-            new ViewNode[]
-            {
-                new ItemCollectionView(title, emptyMessage, books.Select(ToItem).ToArray(), page),
-            }
+            new ViewNode[] { new ItemCollectionView(books.Select(ToItem).ToArray(), emptyMessage) }
         );
 
     private static ItemView ToItem(BookListItem b)

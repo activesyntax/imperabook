@@ -14,7 +14,7 @@ public static class AuthorViews
         new(
             new ViewNode[]
             {
-                new ItemCollectionView(title, emptyMessage, authors.Select(ToItem).ToArray(), page),
+                new ItemCollectionView(authors.Select(ToItem).ToArray(), emptyMessage),
             }
         );
 
