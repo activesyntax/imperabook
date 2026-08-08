@@ -65,13 +65,12 @@ export interface PageInfo {
 export interface ItemCollectionView {
   readonly type: 'itemCollection';
 
-  readonly title: string;
-
   readonly emptyMessage: string;
 
   readonly items: readonly ItemView[];
 
   readonly page?: PageInfo;
+  readonly heading?: string;
 }
 
 export type ViewNode = ImageView | CardView | CardCollectionView | MessageView | GuidanceView | ItemCollectionView | TextView;
