@@ -7,7 +7,7 @@ collection should feel like operating a command center, not clicking through men
 keyboard-driven, command-based control surface with a dark, typography-driven interface — designed
 for power users, researchers, and collectors who would rather type than hunt for buttons.
 
-<img src="./ux/imperabook-ui-concept.jpg" alt="ImperaBook UI Concept" width="100%">
+<img src="./ux/imperabook-dashboard.png" alt="ImperaBook UI Concept" width="100%">
 
 The product is fully multimodal — mouse and touch work everywhere — but it is *keyboard-first* on the
 desktop, where the fastest path from intent to result is a typed command rather than a pointer
@@ -29,6 +29,8 @@ journey across the screen.
   library states literally unrepresentable. (The reasoning behind these choices, including their
   trade-offs and limits, lives in `DECISIONS.md`.)
 
+
+<img src="./ux/imperabook-all-books.png" alt="ImperaBook UI Concept" width="100%">
 ---
 
 ## How It Works — Commands in Practice
@@ -63,6 +65,8 @@ language breakdown and totals. `help` lists everything; `help add book` explains
 larger payoff is *composition*: chained and bulk operations (e.g. filtering and acting on a whole
 set at once) where the efficiency gain stops being a percentage and becomes an order of magnitude.
 
+
+<img src="./ux/imperabook-command-line.png" alt="ImperaBook UI Concept" width="100%">
 ---
 
 ## Why Keyboard-First — Efficiency and Focus
