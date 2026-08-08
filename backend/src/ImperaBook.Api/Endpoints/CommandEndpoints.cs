@@ -54,6 +54,8 @@ public static class CommandEndpoints
             "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
 
             "help" => TypedResults.Ok(new GeneralHelp().ToCommandResult()),
+            "about" => TypedResults.Ok(new About().ToCommandResult()),
+            "settings" => TypedResults.Ok(new Settings().ToCommandResult()),
 
             "add book"
             or "update book"

@@ -7,7 +7,7 @@ public sealed class About
 {
     public static About Instance { get; } = new();
 
-    private About() { }
+    internal About() { }
 
     public string Version { get; } =
         typeof(About)
@@ -33,10 +33,14 @@ public static class AboutViews
                 TextNode.Para($"Copyright © {CopyrightYear} {Vendor}. All rights reserved."),
                 TextNode.H3("Licence"),
                 TextNode.Para(
-                    "ImperaBook is proprietary software. Self-hosted use is free for ",
-                    "personal and internal use under the End User License Agreement. ",
-                    "Redistribution, resale, white-labeling, and hosting the software as ",
-                    "a service for third parties require a separate commercial agreement."
+                    TextNode.Strong("ImperaBook is proprietary software."),
+                    " Personal use is free: you may run the self-hosted edition at no cost ",
+                    "for your own private, non-commercial use."
+                ),
+                TextNode.Para(
+                    "Any other use requires a licence. Use by or on behalf of a company, ",
+                    "institution, or other organisation — including purely internal use, ",
+                    "and including non-profits — is commercial use."
                 ),
                 TextNode.Para(
                     TextNode.Link("/static/eula.html", "End User License Agreement"),

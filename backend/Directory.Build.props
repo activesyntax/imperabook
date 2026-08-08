@@ -4,4 +4,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Product>ImperaBook</Product>
+    <Company>ActiveSyntax</Company>
+    <Copyright>Copyright © 2026 ActiveSyntax. All rights reserved.</Copyright>
+  </PropertyGroup>
 </Project>
