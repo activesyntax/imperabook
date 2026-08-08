@@ -60,7 +60,7 @@ public enum PropertyRole
 }
 
 // ============ TEXT VIEW =================
-public sealed record TextView(string Title, IReadOnlyList<TextBlock> Blocks) : ViewNode;
+public sealed record TextView(IReadOnlyList<TextBlock> Blocks) : ViewNode;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(Heading), "heading")]

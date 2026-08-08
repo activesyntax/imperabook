@@ -29,7 +29,6 @@ journey across the screen.
   library states literally unrepresentable. (The reasoning behind these choices, including their
   trade-offs and limits, lives in `DECISIONS.md`.)
 
-
 <img src="./ux/imperabook-all-books.png" alt="ImperaBook UI Concept" width="100%">
 ---
 
@@ -64,7 +63,6 @@ language breakdown and totals. `help` lists everything; `help add book` explains
 `add book "The Hobbit" --author "Tolkien"` — collapsing the prompt sequence into a single line. The
 larger payoff is *composition*: chained and bulk operations (e.g. filtering and acting on a whole
 set at once) where the efficiency gain stops being a percentage and becomes an order of magnitude.
-
 
 <img src="./ux/imperabook-command-line.png" alt="ImperaBook UI Concept" width="100%">
 ---
@@ -186,7 +184,8 @@ recipe rather than inferring one.
 
 | | **Self-Hosted** | **Cloud** |
 | --- | --- | --- |
-| Price | Free | Subscription |
+| Price | Free for personal use | Subscription |
+| Commercial use | Paid licence required | Included in subscription |
 | Distribution | Docker Compose | Managed, nothing to install |
 | Runs on | Your machine, your database | Hosted instance |
 | Data | Entirely yours | Automatic backups, cross-device sync |
@@ -194,7 +193,8 @@ recipe rather than inferring one.
 
 The self-hosted edition is the full application, not a crippled demo: the same commands, the same
 catalog, the same interface. What the subscription buys is operations — hosting, backups, sync, and
-the metered AI enrichment allowance — not features held back behind a paywall.
+the metered AI enrichment allowance — not features held back behind a paywall. What the licence
+governs is *who* may use it, not *what* it does.
 
 ### Running it yourself
 
@@ -221,11 +221,16 @@ including cover images, so a database dump is a complete backup with nothing els
 **ImperaBook is proprietary, closed-source software.** The source code is not published; the
 application is distributed as a container image.
 
-- **Self-hosted use is free**, for personal and internal use, under the ImperaBook End User License
-  Agreement (`LICENSE.md` / `EULA.md`).
+- **Personal use is free.** You may run the self-hosted edition at no cost for your own private,
+  non-commercial use — your household's own library, your own collection.
+- **Any other use requires a licence.** Use by or on behalf of a company, institution, or other
+  organisation — including purely internal use, and including non-profits — is commercial use and
+  needs a paid licence, whether self-hosted or cloud.
 - **Cloud use** is governed by the subscription Terms of Service.
 - Redistribution, resale, white-labeling, and hosting the software as a service for third parties
   require a separate commercial agreement.
+
+Full terms are in the ImperaBook End User License Agreement (`EULA.md`).
 
 Third-party open source components bundled in the distributed image are listed with their licenses
 in `NOTICE.md`.

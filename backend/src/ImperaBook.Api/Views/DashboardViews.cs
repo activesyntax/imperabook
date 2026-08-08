@@ -35,34 +35,28 @@ public static class DashboardViews
                         ),
                     }
                 ),
-                new TextView(
-                    "Needs attention",
-                    [
-                        TextNode.Para(
-                            TextNode.Strong("17"),
-                            " of your ",
-                            TextNode.Strong("24"),
-                            " books are missing something."
-                        ),
-                        TextNode.Finding(
-                            "3",
-                            "books have no page count",
-                            "list books having no page count"
-                        ),
-                        TextNode.Finding("12", "books have no ISBN", "list books having no isbn"),
-                        TextNode.Finding("8", "books have no cover", "list books having no cover"),
-                        TextNode.Finding(
-                            "5",
-                            "books have no publication year",
-                            "list books having no publication year"
-                        ),
-                        TextNode.Finding(
-                            "3",
-                            "authors have no books",
-                            "list authors having no books"
-                        ),
-                    ]
-                ),
+                new TextView([
+                    TextNode.H1("Needs attention"),
+                    TextNode.Para(
+                        TextNode.Strong("17"),
+                        " of your ",
+                        TextNode.Strong("24"),
+                        " books are missing something."
+                    ),
+                    TextNode.Finding(
+                        "3",
+                        "books have no page count",
+                        "list books having no page count"
+                    ),
+                    TextNode.Finding("12", "books have no ISBN", "list books having no isbn"),
+                    TextNode.Finding("8", "books have no cover", "list books having no cover"),
+                    TextNode.Finding(
+                        "5",
+                        "books have no publication year",
+                        "list books having no publication year"
+                    ),
+                    TextNode.Finding("3", "authors have no books", "list authors having no books"),
+                ]),
             }
         );
 }
