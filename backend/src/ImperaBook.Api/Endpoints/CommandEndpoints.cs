@@ -57,7 +57,11 @@ public static class CommandEndpoints
             "about" => TypedResults.Ok(new About().ToCommandResult()),
             "settings" => TypedResults.Ok(new Settings().ToCommandResult()),
 
-            "add book"
+            "login" => TypedResults.Ok(CommandHandler.Login()),
+
+            "account"
+            or "logout"
+            or "add book"
             or "update book"
             or "remove book"
             or "show book"
