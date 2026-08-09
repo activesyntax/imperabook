@@ -1,0 +1,40 @@
+# ImperaBook — self-hosted deployment.
+#
+#   1. Copy .env.example to .env and set a password.
+#   2. docker compose up -d
+#   3. Open http://localhost:8080
+#
+# Everything, including cover images, lives in the Postgres volume, so a
+# pg_dump of this database is a complete backup.
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: imperabook
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: imperabook
+    volumes:
+      - imperabook-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U imperabook -d imperabook"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    image: ghcr.io/activesyntax/imperabook:${IMPERABOOK_VERSION:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Default: >-
+        Host=db;Port=5432;Database=imperabook;Username=imperabook;Password=${POSTGRES_PASSWORD}
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "8080:8080"
+
+volumes:
+  imperabook-pgdata:
