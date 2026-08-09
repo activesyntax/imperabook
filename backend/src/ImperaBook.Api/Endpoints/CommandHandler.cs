@@ -43,4 +43,10 @@ public static class CommandHandler
             () => CommandResult.Empty
         );
     }
+
+    internal static CommandResult Login() =>
+        new([
+            new ImageView("/static/imperabook-logo-dark.svg", "ImperaBook", ImageRole.Branding),
+            new MessageView("info", "Sign in to open your library."),
+        ]);
 }
