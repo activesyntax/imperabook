@@ -97,3 +97,4 @@ jobs:
           generate_release_notes: true
           files: deploy/docker-compose.yml
           fail_on_unmatched_files: true
+          append_body: false
