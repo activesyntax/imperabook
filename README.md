@@ -198,12 +198,94 @@ governs is *who* may use it, not *what* it does.
 
 ### Running it yourself
 
+You need [Docker](https://docs.docker.com/get-started/get-docker/) with Compose. Nothing else — no
+.NET SDK, no Node, no PostgreSQL install.
+
+**1. Download the compose file** from [activesyntax.net/imperabook](https://www.activesyntax.net)
+into an empty directory:
+
+```
+mkdir imperabook && cd imperabook
+curl -LO https://www.activesyntax.net/imperabook/docker-compose.yml
+```
+
+**2. Start the stack:**
+
 ```
 docker compose up -d
 ```
 
-The stack is the application container plus PostgreSQL. Everything lives in a Postgres volume,
-including cover images, so a database dump is a complete backup with nothing else to remember.
+The first run pulls two images and initialises the database, so it takes a minute. Subsequent
+starts are immediate.
+
+**3. Open [http://localhost:8080](http://localhost:8080).** The catalog starts populated with a
+small set of sample books, so there is something to type commands against from the first second.
+Try `list books`, then `add book`.
+
+That is the whole installation. To stop it, `docker compose down`; to update to a newer release,
+`docker compose pull && docker compose up -d`.
+
+> **This is a preview release.** There are no user accounts yet: anyone who can reach the
+> application sees the whole catalog and can change it. The compose file therefore binds the port to
+> `127.0.0.1`, so the instance is reachable from your own machine and nowhere else. Leave it that
+> way until accounts land — which they will, before the first stable release.
+
+#### What you just started
+
+Two containers: the application and a PostgreSQL database. They talk to each other over a private
+network, and only the application's port is published — to localhost. The database is not reachable
+from outside the stack, which is why the compose file ships with a fixed database password: it is an
+internal credential between two containers, not a secret about your library.
+
+If you publish the database port yourself — to connect with `psql`, for example — that stops being
+true. Change `POSTGRES_PASSWORD` **and** the password in the application's connection string in the
+same edit, and do it before the first start. PostgreSQL bakes the password into its data directory
+on initialisation, so changing it afterwards means removing the volume and starting over.
+
+#### Backup
+
+Everything lives in one Postgres volume — the catalog and the cover images, which are stored in the
+database rather than on disk. So a database dump is a complete backup, with nothing else to
+remember:
+
+```
+docker compose exec -T db pg_dump -U imperabook imperabook > imperabook-backup.sql
+```
+
+Restoring into a fresh stack:
+
+```
+docker compose exec -T db psql -U imperabook -d imperabook < imperabook-backup.sql
+```
+
+The trade-off is named plainly in `DECISIONS.md` (ADR 19): storing image bytes in the database makes
+dumps larger than they would be with a separate volume, and buys a backup that cannot be half-taken.
+A dump taken without its image volume restores into a catalog where every cover is silently gone;
+that failure mode is the one worth designing against.
+
+#### Starting over
+
+To wipe the catalog and return to the sample data:
+
+```
+docker compose down -v
+docker compose up -d
+```
+
+The `-v` removes the volume, so this deletes everything you have added. There is no undo.
+
+#### Ports
+
+The application is bound to `127.0.0.1` on purpose: while there are no accounts, it should not be
+reachable from the rest of your network. If port 8080 is already taken, change the middle number in
+`docker-compose.yml`:
+
+```yaml
+    ports:
+      - "127.0.0.1:9090:8080"
+```
+
+Then `docker compose up -d` again, and use `http://localhost:9090`.
 
 ---
 
