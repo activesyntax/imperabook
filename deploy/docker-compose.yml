@@ -1,8 +1,7 @@
 # ImperaBook — self-hosted deployment.
 #
-#   1. Copy .env.example to .env and set a password.
-#   2. docker compose up -d
-#   3. Open http://localhost:8080
+#   docker compose up -d
+#   open http://localhost:8080
 #
 # Everything, including cover images, lives in the Postgres volume, so a
 # pg_dump of this database is a complete backup.
@@ -13,7 +12,11 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: imperabook
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      # Internal credential between the two containers below, not a secret about
+      # your library: the database publishes no port. If you publish one, change
+      # this AND the password in the connection string below, before the first
+      # start — Postgres bakes it into the data directory on initialisation.
+      POSTGRES_PASSWORD: imperabook
       POSTGRES_DB: imperabook
     volumes:
       - imperabook-pgdata:/var/lib/postgresql/data
@@ -24,16 +27,18 @@ services:
       retries: 5
 
   app:
-    image: ghcr.io/activesyntax/imperabook:${IMPERABOOK_VERSION:-latest}
+    image: ghcr.io/activesyntax/imperabook:latest
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
       ConnectionStrings__Default: >-
-        Host=db;Port=5432;Database=imperabook;Username=imperabook;Password=${POSTGRES_PASSWORD}
+        Host=db;Port=5432;Database=imperabook;Username=imperabook;Password=imperabook
       ASPNETCORE_ENVIRONMENT: Production
     ports:
+      # Bound to localhost on purpose: there are no user accounts yet, so the
+      # instance must not be reachable from the rest of the network.
       - "127.0.0.1:8080:8080"
 
 volumes:
