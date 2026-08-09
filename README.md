@@ -13,6 +13,11 @@ The product is fully multimodal — mouse and touch work everywhere — but it i
 desktop, where the fastest path from intent to result is a typed command rather than a pointer
 journey across the screen.
 
+> **Status: MVP1 in development.** The application builds, deploys, and runs — the container image,
+> the Compose stack, and the release pipeline are in place — but it is not yet distributed. There
+> are no user accounts, and the command set is still filling in. Internal testing comes first; a
+> public release follows only if that goes well.
+
 ---
 
 ## What Makes ImperaBook Different?
@@ -156,6 +161,23 @@ recipe rather than inferring one.
 - **PostgreSQL** — relational integrity and full-text search, with content-addressed image bytes
   stored in-database (`bytea`, `storage external`) so a single `pg_dump` is a complete backup.
 
+### Build and release
+
+The application ships as a single container image. A multi-stage build compiles the Angular bundle
+and publishes the .NET API, then copies both into an ASP.NET runtime layer, with the frontend served
+from the API's own `wwwroot`. There is no separate web server in the stack — one application
+container and one PostgreSQL container, and nothing else to wire together.
+
+CI runs the unit suites on every push and pull request. The integration suite needs Testcontainers
+and a real PostgreSQL, so it runs nightly rather than on the fast loop. Releases are triggered by
+hand: the same test workflows run first, then the image is built and pushed to GHCR under semantic
+version tags, and the Compose file is attached to the GitHub release as the distribution entry
+point.
+
+The database schema is applied by EF Core migrations on startup — a deliberate choice for a
+single-container, self-hosted deployment. Its named cost is that a failed migration stops the
+application from starting; the alternative, letting it run against a half-built schema, is worse.
+
 ---
 
 ## MVP Plan
@@ -167,6 +189,8 @@ recipe rather than inferring one.
 - **Dashboard.** Analytical widgets: language breakdown and total collection metrics.
 - **Query engine.** Multi-token full-text search plus structured filtering (language, publication
   year).
+- **Accounts.** Sign-in and per-user catalogs, so an instance can safely be reached by more than the
+  machine it runs on.
 
 ### MVP2 — Inline Power Commands, Automation & Enrichment
 
@@ -196,17 +220,20 @@ catalog, the same interface. What the subscription buys is operations — hostin
 the metered AI enrichment allowance — not features held back behind a paywall. What the licence
 governs is *who* may use it, not *what* it does.
 
+Neither edition is available yet. The section below describes how the self-hosted edition will be
+installed — written down now because the path is built and tested end to end, and because the shape
+of the install is part of the product rather than an afterthought.
+
 ### Running it yourself
 
-You need [Docker](https://docs.docker.com/get-started/get-docker/) with Compose. Nothing else — no
-.NET SDK, no Node, no PostgreSQL install.
+Requirements: [Docker](https://docs.docker.com/get-started/get-docker/) with Compose. Nothing else —
+no .NET SDK, no Node, no PostgreSQL install.
 
-**1. Download the compose file** from [activesyntax.net/imperabook](https://www.activesyntax.net)
-into an empty directory:
+**1. Download the Compose file** into an empty directory:
 
 ```
 mkdir imperabook && cd imperabook
-curl -LO https://www.activesyntax.net/imperabook/docker-compose.yml
+curl -LO <compose file URL>
 ```
 
 **2. Start the stack:**
@@ -215,26 +242,24 @@ curl -LO https://www.activesyntax.net/imperabook/docker-compose.yml
 docker compose up -d
 ```
 
-The first run pulls two images and initialises the database, so it takes a minute. Subsequent
+The first run pulls two images and creates the database schema, so it takes a minute. Subsequent
 starts are immediate.
 
-**3. Open [http://localhost:8080](http://localhost:8080).** The catalog starts populated with a
-small set of sample books, so there is something to type commands against from the first second.
-Try `list books`, then `add book`.
+**3. Open [http://localhost:8080](http://localhost:8080).** The catalog starts empty. Type
+`add book` to catalog your first one, or `help` to see everything the command bar knows.
 
-That is the whole installation. To stop it, `docker compose down`; to update to a newer release,
+That is the whole installation. To stop it, `docker compose down`; to move to a newer release,
 `docker compose pull && docker compose up -d`.
 
-> **This is a preview release.** There are no user accounts yet: anyone who can reach the
-> application sees the whole catalog and can change it. The compose file therefore binds the port to
-> `127.0.0.1`, so the instance is reachable from your own machine and nowhere else. Leave it that
-> way until accounts land — which they will, before the first stable release.
+> **No accounts yet.** Anyone who can reach the application sees the whole catalog and can change
+> it. The Compose file therefore binds the port to `127.0.0.1`, so the instance is reachable from
+> the machine it runs on and nowhere else. Leave it that way until accounts land.
 
 #### What you just started
 
 Two containers: the application and a PostgreSQL database. They talk to each other over a private
 network, and only the application's port is published — to localhost. The database is not reachable
-from outside the stack, which is why the compose file ships with a fixed database password: it is an
+from outside the stack, which is why the Compose file ships with a fixed database password: it is an
 internal credential between two containers, not a secret about your library.
 
 If you publish the database port yourself — to connect with `psql`, for example — that stops being
@@ -265,7 +290,7 @@ that failure mode is the one worth designing against.
 
 #### Starting over
 
-To wipe the catalog and return to the sample data:
+To wipe the catalog and start from an empty one:
 
 ```
 docker compose down -v

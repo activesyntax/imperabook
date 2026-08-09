@@ -33,6 +33,7 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
+// todo: remove duplilcate UseStaticFiles
 app.UseStaticFiles(
     new StaticFileOptions
     {
@@ -41,6 +42,7 @@ app.UseStaticFiles(
             ctx.Context.Response.Headers.CacheControl = "public, max-age=3600",
     }
 );
+app.UseStaticFiles();
 
 if (app.Environment.IsDevelopment())
 {
@@ -61,5 +63,6 @@ if (app.Configuration.GetValue("RunMigrationsOnStartup", false))
     using var scope = app.Services.CreateScope();
     scope.ServiceProvider.GetRequiredService<ImperaBookDbContext>().Database.Migrate();
 }
+app.MapFallbackToFile("index.html");
 
 app.Run();
