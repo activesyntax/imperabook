@@ -56,4 +56,10 @@ if (app.Environment.IsDevelopment())
 app.MapCommandEndpoints();
 app.MapImageEndpoints();
 
+if (app.Configuration.GetValue("RunMigrationsOnStartup", false))
+{
+    using var scope = app.Services.CreateScope();
+    scope.ServiceProvider.GetRequiredService<ImperaBookDbContext>().Database.Migrate();
+}
+
 app.Run();

@@ -36,6 +36,7 @@ services:
       ConnectionStrings__Default: >-
         Host=db;Port=5432;Database=imperabook;Username=imperabook;Password=imperabook
       ASPNETCORE_ENVIRONMENT: Production
+      RunMigrationsOnStartup: "true"
     ports:
       # Bound to localhost on purpose: there are no user accounts yet, so the
       # instance must not be reachable from the rest of the network.
