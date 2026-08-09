@@ -2,9 +2,7 @@
 
 # ---- frontend -------------------------------------------------------------
 FROM node:22-alpine AS frontend
-# Output path is relative to frontend/. Angular's application builder emits
-# dist/<project>/browser, where <project> is the name in angular.json.
-ARG BROWSER_DIST=dist/imperabook/browser
+ARG BROWSER_DIST=dist/frontend/browser
 WORKDIR /src
 COPY frontend/package*.json ./
 RUN npm ci
@@ -21,7 +19,7 @@ RUN dotnet publish "$API_PROJECT" -c Release -o /app
 
 # ---- runtime --------------------------------------------------------------
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
-ARG BROWSER_DIST=dist/imperabook/browser
+ARG BROWSER_DIST=dist/frontend/browser
 WORKDIR /app
 COPY --from=backend /app ./
 COPY --from=frontend /src/${BROWSER_DIST} ./wwwroot
