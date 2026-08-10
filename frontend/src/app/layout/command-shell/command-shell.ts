@@ -17,7 +17,7 @@ import { CommandProvider } from '@app/commands/command-provider';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { Index, IndexMove as IndexChange, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 import { handleKeyboardEvent, KeyboardActions } from '@core/keyboard';
-
+import { ShellState } from './shell-state';
 
 
 
