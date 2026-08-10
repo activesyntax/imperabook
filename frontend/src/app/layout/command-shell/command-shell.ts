@@ -16,10 +16,10 @@ import { CommandRunner, CommandInput } from '@app/commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { Index, IndexMove as IndexChange, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { handleKeyboardEvent, KeyboardActions } from '@core/keyboard';
 
-type CommandIcon = Record<Command, SafeHtml>;
+
+
 
 @Component({
   selector: 'app-command-shell',
@@ -31,14 +31,11 @@ export class CommandShell {
   private readonly commands = inject(CommandProvider);
   private readonly runner = inject(CommandRunner);
   private readonly store = inject(WorkspaceStore);
-  private readonly sanitizer = inject(DomSanitizer);
 
-  protected COMMAND_ICONS: CommandIcon = {
-    'settings': '\u2699',
-    'help': '\u24d8',
-  }
   protected readonly queryDraft = signal('');
   protected readonly query = computed(() => this.queryDraft().trim());
+
+  protected readonly inputMode = signal(false);
 
   protected readonly selectedIndex: WritableSignal<Index> = signal(undefined);
   protected readonly selectedFixedIndex: WritableSignal<Index> = signal(undefined);
@@ -147,7 +144,7 @@ export class CommandShell {
 
     const cmd = this.selectedCommand();
     if (this.isCommandAccepted(cmd)) return;
-    this.runOrSearch(cmd);
+    this.run(cmd);
   }
 
   private handleEscape(event: KeyboardEvent): void {
@@ -156,7 +153,9 @@ export class CommandShell {
   }
 
   protected submit(): void {
-    this.runOrSearch(this.selectedCommand());
+
+    this.run(this.selectedCommand());
+
   }
 
   private setSelectedIndexTo(indexChange: IndexChange): void {
@@ -165,25 +164,24 @@ export class CommandShell {
     this.selectedIndex.set(index);
   }
 
-  private runOrSearch(cmd: CommandSpec | undefined): void {
-    const term = this.query();
+  private run(cmd: CommandSpec | undefined): void {
     this.reset();
 
     if (cmd !== undefined) {
+
+      console.log("COMMAND:" + cmd);
+
       void this.dispatch(cmd);
+
+      // TODO: ONLY ON SUCCESS GOT TO INPUT MODE
+      if (cmd.parameters.length > 0) {
+
+        this.inputMode.set(true);
+      }
+
       return;
     }
 
-    const search = this.commands.all().find((c) => c.command === 'search');
-
-    if (search === undefined) {
-      this.store.setResult({
-        views: [{ type: 'message', kind: 'error', text: 'Search is not available right now.' }],
-      });
-      return;
-    }
-
-    void this.dispatch(search, { query: term });
   }
 
   private async dispatch(cmd: CommandSpec, answers: CommandInput = {}): Promise<void> {

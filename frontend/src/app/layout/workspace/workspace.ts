@@ -49,7 +49,7 @@ export class Workspace {
 
   @HostListener('document:keydown', ['$event'])
   protected onScrollKeydown(event: KeyboardEvent): void {
-    console.log('Workspace: onScrollKeydown', event.key);
+    // console.log('Workspace: onScrollKeydown', event.key);
     handleKeyboardEvent(event, this.scrollActions);
   }
 

@@ -15,26 +15,11 @@
           <span class="fall">no commands</span>
         }
 
-<!--         <span class="spacer" aria-hidden="true"></span> -->
-<!---->
-<!-- @for (cmd of fixed(); track cmd.command; let i = $index) { -->
-<!--   <button -->
-<!--     type="button" -->
-<!--     class="chip chip-fixed" -->
-<!--     role="option" -->
-<!--     (mousedown)="$event.preventDefault()"> -->
-<!--     @if (COMMAND_ICONS[cmd.command]; as icon) { -->
-<!--             {{ icon}} -->
-<!--     } -->
-<!--     {{ cmd.command }} -->
-<!--   </button> -->
-<!-- } -->
-
-
     </div>
 
       <p class="desc">
 
+       <!-- TODO: simplify this logic -->
         @if (selectedCommand(); as sel) {
           <span class="cmd">{{ sel.command }}</span> · {{ sel.description }}
         <!-- · <span class="key">↵ / Tab</span> to run -->
@@ -43,7 +28,14 @@
           @if (query().length > 0) {
               <span class="cmd">search</span> · "{{ query() }}"
           } @else {
-              Welcome to ImperaBook!
+
+            @if(inputMode())
+            {
+              <span class="user">user&#64; Username:</span>
+            }
+            @else{
+                  Welcome to ImperaBook!
+            }
           }
 
         }
@@ -51,7 +43,11 @@
     <div class="entry">
       <div class="prompt">
         <img class="avatar" src="assets/img/imperabook-icon.svg" alt="" aria-hidden="true" />
-        <!-- <span class="user">user&#64;imperabook ~</span> -->
+
+        @if(inputMode())
+        {
+          <span class="user">user&#64; Username:</span>
+        }
         <input
           #bar
           class="bar"

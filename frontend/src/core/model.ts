@@ -15,4 +15,5 @@ export type CommandSpec = {
   readonly group?: CommandGroup;
   readonly order?: number;
   readonly parameters: readonly CommandParameter[];
+  readonly endpoint: string;
 };
