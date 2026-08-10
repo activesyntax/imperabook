@@ -93,4 +93,4 @@ public static class CommandEndpoints
         );
 }
 
-public sealed record CommandRequest(string Command, string? Text);
+public sealed record CommandRequest(string Command);
