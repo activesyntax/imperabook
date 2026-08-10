@@ -6,52 +6,25 @@ import { CommandResult } from '@workspace/views/view-node';
 
 const COMMAND_ENDPOINT = '/api/command';
 
-export type CommandAnswers = Readonly<Record<string, string>>;
+export type CommandParameter = string;
+export type CommandParameterValue = string;
+export type CommandInput = Readonly<Record<CommandParameter, CommandParameterValue>>;
 
 @Injectable({ providedIn: 'root' })
 export class CommandRunner {
   private readonly http = inject(HttpClient);
 
-  async run(command: CommandSpec, answers: CommandAnswers = {}): Promise<CommandResult> {
-    const composed = this.composeText(command, answers);
-
-    if ('validationError' in composed) {
-      return errorResult(composed.validationError);
-    }
+  async run(command: CommandSpec, answers: CommandInput = {}): Promise<CommandResult> {
 
     try {
       return await firstValueFrom(
         this.http.post<CommandResult>(COMMAND_ENDPOINT, {
           command: command.command,
-          text: composed.text || undefined,
         })
       );
     } catch (err) {
       return errorResult(this.describeError(err, command));
     }
-  }
-
-  private composeText(
-    command: CommandSpec,
-    answers: CommandAnswers
-  ): { text: string } | { validationError: string } {
-    const parts: string[] = [];
-
-    for (const parameter of command.parameters) {
-      const value = answers[parameter.name];
-
-      if (parameter.required && !value) {
-        return { validationError: `"${parameter.prompt}" is required.` };
-      }
-
-      if (!value) {
-        continue;
-      }
-
-      parts.push(parameter.connective ? `${parameter.connective} ${quote(value)}` : value);
-    }
-
-    return { text: parts.join(' ') };
   }
 
   private describeError(err: unknown, command: CommandSpec): string {
@@ -63,10 +36,32 @@ export class CommandRunner {
   }
 }
 
-function quote(value: string): string {
-  return `"${value.replace(/"/g, '\\"')}"`;
-}
 
 function errorResult(text: string): CommandResult {
   return { views: [{ type: 'message', kind: 'error', text }] };
 }
+// │ 34 │  private composeText(                               │    │
+// │ 35 │    command: CommandSpec,                            │    │
+// │ 36 │    answers: CommandAnswers                          │    │
+// │ 37 │  ): { text: string } | { validationError: string }↴ │    │
+// │    │                                                 … { │    │
+// │ 38 │    const parts: string[] = [];                      │    │
+// │ 39 │                                                     │    │
+// │ 40 │    for (const parameter of command.parameters) {    │    │
+// │ 41 │      const value = answers[parameter.name];         │    │
+// │ 42 │                                                     │    │
+// │ 43 │      if (parameter.required && !value) {            │    │
+// │ 44 │        return { validationError: `"${parameter.pro↵ │    │
+// │    │mpt}" is required.` };                               │    │
+// │ 45 │      }                                              │    │
+// │ 46 │                                                     │    │
+// │ 47 │      if (!value) {                                  │    │
+// │ 48 │        continue;                                    │    │
+// │ 49 │      }                                              │    │
+// │ 50 │                                                     │    │
+// │ 51 │      parts.push(parameter.connective ? `${paramete↵ │    │
+// │    │r.connective} ${quote(value)}` : value);             │    │
+// │ 52 │    }                                                │    │
+// │ 53 │                                                     │    │
+// │ 54 │    return { text: parts.join(' ') };                │    │
+// │ 55 │  }                                                  │    │

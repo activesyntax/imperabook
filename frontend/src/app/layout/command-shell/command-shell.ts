@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 
 import { Command, CommandSpec } from "@core/model";
-import { CommandRunner, CommandAnswers } from '@app/commands/command-runner';
+import { CommandRunner, CommandInput } from '@app/commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { Index, IndexMove as IndexChange, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
@@ -186,7 +186,7 @@ export class CommandShell {
     void this.dispatch(search, { query: term });
   }
 
-  private async dispatch(cmd: CommandSpec, answers: CommandAnswers = {}): Promise<void> {
+  private async dispatch(cmd: CommandSpec, answers: CommandInput = {}): Promise<void> {
     const result = await this.runner.run(cmd, answers);
     this.store.setResult(result);
   }

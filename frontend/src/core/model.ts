@@ -6,7 +6,7 @@ export type CommandParameter = {
   readonly name: string;
   readonly prompt: string;
   readonly required: boolean;
-  readonly connective?: string;
+  readonly secret: boolean;
 };
 
 export type CommandSpec = {
