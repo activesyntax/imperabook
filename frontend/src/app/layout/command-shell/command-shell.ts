@@ -4,22 +4,17 @@ import {
   Component,
   computed,
   ElementRef,
+  HostListener,
   inject,
   signal,
   viewChild,
-  WritableSignal,
-  HostListener,
 } from '@angular/core';
 
-import { Command, CommandSpec } from "@core/model";
-import { CommandRunner, CommandInput } from '@app/commands/command-runner';
+import { CommandRunner } from '@app/commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
 import { WorkspaceStore } from '@app/state/workspace-store';
-import { Index, IndexMove as IndexChange, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
-import { handleKeyboardEvent, KeyboardActions } from '@core/keyboard';
-import { ShellState } from './shell-state';
-
-
+import { UiInput } from './ui-input';
+import * as Shell from './shell-model';
 
 @Component({
   selector: 'app-command-shell',
@@ -32,30 +27,27 @@ export class CommandShell {
   private readonly runner = inject(CommandRunner);
   private readonly store = inject(WorkspaceStore);
 
-  protected readonly queryDraft = signal('');
-  protected readonly query = computed(() => this.queryDraft().trim());
+  private readonly deps: Shell.ShellDeps = {
+    suggestionsFor: (query) => this.commands.suggestionsFor(query, undefined),
+  };
 
-  protected readonly inputMode = signal(false);
+  /** Az egyetlen írható állapot. Minden más ebből származik. */
+  private readonly state = signal<Shell.ShellState>(Shell.browsing());
 
-  protected readonly selectedIndex: WritableSignal<Index> = signal(undefined);
-  protected readonly selectedFixedIndex: WritableSignal<Index> = signal(undefined);
+  protected readonly kind = computed(() => this.state().kind);
+  protected readonly text = computed(() => Shell.textOf(this.state()));
+  protected readonly query = computed(() => Shell.queryOf(this.text()));
 
-  protected readonly selectedCommand = computed(() => {
-
-    const index = this.selectedIndex();
-    if (index === undefined)
-      return undefined;
-
-    return this.suggestions()[index];
+  protected readonly suggestions = computed(() => Shell.suggestionsOf(this.state(), this.deps));
+  protected readonly selectedIndex = computed(() => {
+    const s = this.state();
+    return s.kind === 'browsing' ? s.selected : undefined;
   });
+  protected readonly activeCommand = computed(() => Shell.activeOf(this.state(), this.deps));
 
-  protected readonly suggestions = computed(() => this.commands.suggestionsFor(this.query(), undefined));
-  protected readonly fixed = computed(() =>
-    this.commands.all()
-      .filter(c => c.group === 'fixed')
-      .toSorted((a, b) => (a.order ?? 0) - (b.order ?? 0)));
-
-  // protected readonly commandList = computed(() => [...this.suggestions(), ...this.fixed(),]);
+  protected readonly parameter = computed(() => Shell.pendingParameter(this.state()));
+  protected readonly progress = computed(() => Shell.progressOf(this.state()));
+  protected readonly busy = computed(() => this.state().kind === 'running');
 
   private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
 
@@ -63,9 +55,67 @@ export class CommandShell {
     afterNextRender(() => this.focusBar());
   }
 
+  // ── DOM → UiInput ─────────────────────────────────────────────────────────
+  // Az egyetlen hely, ahol DOM-esemény van. Innentől mindkét gép tiszta.
+
+  protected onInput(event: Event): void {
+    this.send({ kind: 'text', value: (event.target as HTMLInputElement).value });
+  }
+
+  protected onKeydown(event: KeyboardEvent): void {
+    // Csak a vezérlőbillentyűk jönnek innen. A szöveg változását az input
+    // esemény hozza — a keydown még a karakter beírása ELŐTT fut le.
+    switch (event.key) {
+      case 'Enter':
+        event.preventDefault();
+        return this.send({ kind: 'commit' });
+
+      case 'Escape':
+        event.preventDefault();
+        return this.send({ kind: 'cancel' });
+
+      case 'Tab':
+        event.preventDefault();
+        return this.send({ kind: 'move', dir: event.shiftKey ? 'prev' : 'next' });
+
+      case 'Backspace':
+        // Üres mezőn nincs mit törölni: ez lépjen vissza egy paraméterrel.
+        if ((event.target as HTMLInputElement).value.length > 0) return;
+        event.preventDefault();
+        return this.send({ kind: 'back' });
+
+      default:
+        return; // karakterek, Meta, Shift, nyilak: az input ág dolga
+    }
+  }
+
+  protected submit(): void {
+    this.send({ kind: 'submit' });
+  }
+
+  // ── állapotgép ────────────────────────────────────────────────────────────
+
+  private send(input: UiInput): void {
+    const { state, effects } = Shell.transition(this.state(), input, this.deps);
+    this.state.set(state);
+
+    for (const effect of effects) void this.perform(effect);
+  }
+
+  private async perform(effect: Shell.Effect): Promise<void> {
+    try {
+      const result = await this.runner.run(effect.cmd, effect.answers);
+      this.store.setResult(result);
+    } finally {
+      this.send({ kind: 'completed' });
+    }
+  }
+
+  // ── fókusz ────────────────────────────────────────────────────────────────
+
   @HostListener('document:keydown', ['$event'])
   protected onGlobalKeydown(event: KeyboardEvent): void {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    if ((event.metaKey || event.ctrlKey) && event.key?.toLowerCase() === 'k') {
       event.preventDefault();
       this.focusBar();
       return;
@@ -87,110 +137,5 @@ export class CommandShell {
     const input = this.bar()?.nativeElement;
     input?.focus();
     input?.select();
-  }
-  protected onInput(event: Event): void {
-    this.queryDraft.set((event.target as HTMLInputElement).value);
-
-    const query = this.query()
-
-    if (query.length <= 0) {
-      this.selectedIndex.set(undefined);
-      return;
-    }
-
-    const matchIndex = this.suggestions().findIndex(c => c.command.includes(query));
-    // const matchFixedIndex = this.fixed().findIndex(c => c.command.includes(query));
-
-    this.selectedIndex.set(matchIndex);
-    // this.selectedFixedIndex.set(matchFixedIndex);
-  }
-
-  private readonly keyboardActions: KeyboardActions = {
-    Tab: (e) => this.handleTab(e),
-    Enter: (e) => this.handleEnter(e),
-    Escape: (e) => this.handleEscape(e),
-  };
-
-  protected onKeydown(event: KeyboardEvent): void {
-    handleKeyboardEvent(event, this.keyboardActions);
-  }
-
-  private handleTab(event: KeyboardEvent): void {
-
-    if (this.suggestions().length === 1 && this.selectedCommand() !== undefined) {
-      const cmd = this.selectedCommand();
-      if (this.isCommandAccepted(cmd)) return;
-    }
-
-    if (event.shiftKey) {
-      this.setSelectedIndexTo(prevCyclicIndex)
-    }
-    else {
-      this.setSelectedIndexTo(nextCyclicIndex)
-    }
-  }
-
-  private isCommandAccepted(cmd: CommandSpec | undefined): boolean {
-
-    if (cmd !== undefined && cmd.command !== this.query().toLowerCase()) {
-      this.queryDraft.set(cmd.command);
-      this.selectedIndex.set(0);
-      return true;
-    }
-    return false;
-  }
-
-  private handleEnter(event: KeyboardEvent): void {
-
-    const cmd = this.selectedCommand();
-    if (this.isCommandAccepted(cmd)) return;
-    this.run(cmd);
-  }
-
-  private handleEscape(event: KeyboardEvent): void {
-
-    this.reset();
-  }
-
-  protected submit(): void {
-
-    this.run(this.selectedCommand());
-
-  }
-
-  private setSelectedIndexTo(indexChange: IndexChange): void {
-    const range = indexRange(this.suggestions().length);
-    const index = indexChange(range, this.selectedIndex());
-    this.selectedIndex.set(index);
-  }
-
-  private run(cmd: CommandSpec | undefined): void {
-    this.reset();
-
-    if (cmd !== undefined) {
-
-      console.log("COMMAND:" + cmd);
-
-      void this.dispatch(cmd);
-
-      // TODO: ONLY ON SUCCESS GOT TO INPUT MODE
-      if (cmd.parameters.length > 0) {
-
-        this.inputMode.set(true);
-      }
-
-      return;
-    }
-
-  }
-
-  private async dispatch(cmd: CommandSpec, answers: CommandInput = {}): Promise<void> {
-    const result = await this.runner.run(cmd, answers);
-    this.store.setResult(result);
-  }
-
-  private reset(): void {
-    this.queryDraft.set('');
-    this.selectedIndex.set(undefined);
   }
 }
