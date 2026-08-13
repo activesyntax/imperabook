@@ -3,15 +3,23 @@ import { CommandInput } from '@app/commands/command-runner';
 import { UiInput } from './ui-input';
 
 /**
+ * Egy rögzített válasz. Az `undefined` a meg nem válaszolt opcionális mező —
+ * nem üres string, mert az „üresen hagyta" és a „üres értéket adott meg"
+ * két különböző állítás, és csak az egyik jut el a szerverig.
+ */
+export type Answer = string | undefined;
+
+/**
  * A bevitelmód állapotgépe. Nem tud a shellről, nem tud parancsokról — csak
- * paraméterlistát kap, és válaszokat gyűjt. Egyetlen állapota van, mert a
- * "hányadik paraméternél tartunk" származtatható az answers hosszából.
+ * paraméterlistát kap, és válaszokat gyűjt. A "hányadik paraméternél tartunk"
+ * származtatható az answers hosszából.
  */
 export type Prompting = {
   readonly kind: 'prompting';
   readonly parameters: readonly CommandParameter[];
-  readonly answers: readonly string[]; // a parameters sorrendjében, a már rögzítettek
+  readonly answers: readonly Answer[]; // a parameters sorrendjében, a már rögzítettek
   readonly draft: string;              // az épp gépelt válasz
+  readonly blocked: boolean;           // kötelező mezőn üresen próbált továbblépni
 };
 
 /**
@@ -30,13 +38,15 @@ const aborted: Outcome = { kind: 'aborted' };
 /** Belépés. `undefined`, ha nincs mit bekérni — a hívó ilyenkor át se lép ide. */
 export function begin(parameters: readonly CommandParameter[]): Prompting | undefined {
   return parameters.length > 0
-    ? { kind: 'prompting', parameters, answers: [], draft: '' }
+    ? { kind: 'prompting', parameters, answers: [], draft: '', blocked: false }
     : undefined;
 }
 
 // ── származtatott nézetek ───────────────────────────────────────────────────
 
 export const draftOf = (s: Prompting): string => s.draft;
+
+export const isBlockedNow = (s: Prompting): boolean => s.blocked;
 
 /** A soron következő, még megválaszolatlan paraméter. */
 export const current = (s: Prompting): CommandParameter | undefined =>
@@ -55,8 +65,9 @@ export function isBlocked(s: Prompting): boolean {
 
 export function transition(s: Prompting, i: UiInput): Outcome {
   switch (i.kind) {
+    // Bármilyen gépelés feloldja a blokkolt jelzést: a felhasználó reagált rá.
     case 'text':
-      return prompting({ ...s, draft: i.value });
+      return prompting({ ...s, draft: i.value, blocked: false });
 
     // Enter és a küldés gomb egyaránt: válasz rögzítése.
     case 'commit':
@@ -79,25 +90,34 @@ export function transition(s: Prompting, i: UiInput): Outcome {
 }
 
 function record(s: Prompting): Outcome {
-  if (isBlocked(s)) return prompting(s); // kötelező mező, üres válasz
+  // Kötelező mező üresen: nem lépünk tovább, és ezt látható állapotként rögzítjük.
+  if (isBlocked(s)) return prompting({ ...s, blocked: true });
 
-  const answers = [...s.answers, s.draft];
+  const value = s.draft.trim();
+  const answers: readonly Answer[] = [...s.answers, value.length > 0 ? value : undefined];
 
   return answers.length < s.parameters.length
-    ? prompting({ ...s, answers, draft: '' })
+    ? prompting({ ...s, answers, draft: '', blocked: false })
     : done(inputOf(s.parameters, answers));
 }
 
-/** Az utolsó választ visszaemeli a draftba; az elsőnél kilép. */
+/**
+ * Az utolsó választ visszaemeli a draftba; az elsőnél kilép.
+ *
+ * A jelenlét-vizsgálat a hosszon áll, nem az érték `undefined` voltán: egy
+ * átugrott opcionális mező rögzített válasz, csak épp üres.
+ */
 function retreat(s: Prompting): Outcome {
-  const previous = s.answers.at(-1);
-  if (previous === undefined) return aborted;
+  if (s.answers.length === 0) return aborted;
 
-  return prompting({ ...s, answers: s.answers.slice(0, -1), draft: previous });
+  return prompting({
+    ...s,
+    answers: s.answers.slice(0, -1),
+    draft: s.answers.at(-1) ?? '',
+    blocked: false,
+  });
 }
 
-function inputOf(parameters: readonly CommandParameter[], answers: readonly string[]): CommandInput {
-  return Object.fromEntries(
-    parameters.map((p, i) => [p.name, answers[i] ?? ''] as const)
-  );
+function inputOf(parameters: readonly CommandParameter[], answers: readonly Answer[]): CommandInput {
+  return Object.fromEntries(parameters.map((p, i) => [p.name, answers[i]] as const));
 }

@@ -26,7 +26,9 @@
             · <span class="key">{{ p.index }}/{{ p.total }}</span>
           }
           · {{ parameter()?.prompt }}
-          @if (parameter()?.required) {
+          @if (blocked()) {
+            <span class="blocked">(required — enter a value)</span>
+          } @else if (parameter()?.required) {
             <span class="fall">(required)</span>
           }
         }
@@ -49,10 +51,10 @@
 
     <div class="entry">
       <div class="prompt">
-        <img class="avatar" src="assets/img/imperabook-icon.svg" alt="" aria-hidden="true" />
+        <img class="avatar" src="/static/imperabook-icon.svg" alt="" aria-hidden="true" />
 
         @if (parameter(); as param) {
-          <span class="user">user&#64; {{ param.prompt }}:</span>
+          <span class="user">{{ param.prompt }}:</span>
         }
 
         <input
@@ -64,6 +66,8 @@
           spellcheck="false"
           [placeholder]="kind() === 'browsing' ? 'type a command or search your library' : ''"
           aria-label="Command input"
+          [class.blocked]="blocked()"
+          [attr.aria-invalid]="blocked() ? 'true' : null"
           [value]="text()"
           [readOnly]="busy()"
           (input)="onInput($event)"

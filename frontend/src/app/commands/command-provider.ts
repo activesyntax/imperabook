@@ -1,25 +1,28 @@
-
 import { inject, Injectable } from '@angular/core';
-import { Command, CommandQuery, CommandSpec } from "@core/model";
+import { Command, CommandQuery, CommandSpec } from '@core/model';
 import { CommandRegistry } from '@app/commands/command-registry';
-
 
 export type CommandFilter = (command: CommandSpec) => boolean;
 
 @Injectable({ providedIn: 'root' })
 export class CommandProvider {
-
   private readonly registry = inject(CommandRegistry);
 
-  all = this.registry.commands;
+  readonly all = this.registry.commands;
 
   suggestionsFor(query: CommandQuery, commandFilter?: CommandFilter): CommandSpec[] {
-    {
-      commandFilter ??= () => true;
+    const filter = commandFilter ?? (() => true);
 
-      const suggestedCommands = rank(this.all().filter(commandFilter), query.trim());
-      return suggestedCommands.length > 0 ? suggestedCommands : pickFeatured(this.all());
-    }
+    const suggestedCommands = rank(this.all().filter(filter), query.trim());
+    return suggestedCommands.length > 0 ? suggestedCommands : pickFeatured(this.all());
+  }
+
+  /**
+   * A katalógus újrakérése. A parancskészlet identitásfüggő, így be- és
+   * kijelentkezés után a régi lista már nem igaz.
+   */
+  reload(): void {
+    this.registry.reload();
   }
 }
 
@@ -45,10 +48,10 @@ function rank(commands: readonly CommandSpec[], query: CommandQuery): CommandSpe
 }
 
 function score(spec: CommandSpec, qTokens: readonly string[]): number {
-  const cTokens = spec.command.split(' ');
+  const cTokens = spec.command.toLowerCase().split(' ');
   const all = qTokens.every(q => cTokens.some(c => c.startsWith(q)));
   if (!all) return -1;
-  if (spec.command === qTokens.join(' ')) return 0;     // exact full command
-  if (cTokens[0].startsWith(qTokens[0])) return 1;      // leading verb
-  return 2;                                             // contained token
+  if (spec.command.toLowerCase() === qTokens.join(' ')) return 0; // exact full command
+  if (cTokens[0].startsWith(qTokens[0])) return 1;                // leading verb
+  return 2;                                                       // contained token
 }

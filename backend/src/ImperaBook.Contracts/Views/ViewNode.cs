@@ -31,7 +31,15 @@ public sealed record CardView(string Heading, string Value, string? Caption)
     public string Type => "card";
 }
 
-public sealed record MessageView(string Kind, string Text) : ViewNode;
+public enum MessageKind
+{
+    Info,
+    Success,
+    Warning,
+    Error,
+}
+
+public sealed record MessageView(string Text, MessageKind Kind) : ViewNode;
 
 public sealed record GuidanceView(string Title, string Intro, IReadOnlyList<GuidanceHint> Hints)
     : ViewNode;

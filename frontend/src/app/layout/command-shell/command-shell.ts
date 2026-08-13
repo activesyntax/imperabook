@@ -13,6 +13,7 @@ import {
 import { CommandRunner } from '@app/commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
 import { WorkspaceStore } from '@app/state/workspace-store';
+import { resultOfError } from '@app/commands/command-error';
 import { UiInput } from './ui-input';
 import * as Shell from './shell-model';
 
@@ -39,14 +40,12 @@ export class CommandShell {
   protected readonly query = computed(() => Shell.queryOf(this.text()));
 
   protected readonly suggestions = computed(() => Shell.suggestionsOf(this.state(), this.deps));
-  protected readonly selectedIndex = computed(() => {
-    const s = this.state();
-    return s.kind === 'browsing' ? s.selected : undefined;
-  });
+  protected readonly selectedIndex = computed(() => Shell.selectedIndexOf(this.state(), this.deps));
   protected readonly activeCommand = computed(() => Shell.activeOf(this.state(), this.deps));
 
   protected readonly parameter = computed(() => Shell.pendingParameter(this.state()));
   protected readonly progress = computed(() => Shell.progressOf(this.state()));
+  protected readonly blocked = computed(() => Shell.blockedOf(this.state()));
   protected readonly busy = computed(() => this.state().kind === 'running');
 
   private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
@@ -104,11 +103,24 @@ export class CommandShell {
 
   private async perform(effect: Shell.Effect): Promise<void> {
     try {
-      const result = await this.runner.run(effect.cmd, effect.answers);
-      this.store.setResult(result);
+      this.store.setResult(await this.runner.run(effect.cmd, effect.answers));
+    } catch (error) {
+      // A hiba is nézet: a felhasználónak látnia kell, hogy a parancs elhasalt.
+      this.store.setResult(resultOfError(error));
     } finally {
       this.send({ kind: 'completed' });
+      this.refreshCatalogAfter(effect.cmd);
     }
+  }
+
+  /**
+   * Az identitás megváltozhatott, és a katalógus identitásfüggő (bejelentkezés
+   * előtt csak a login érhető el). A csoport dönt, nem a parancs neve — de ez
+   * még mindig frontend-oldali következtetés: amint a CommandResult maga tudja
+   * jelezni, hogy a katalógus elavult, ez a metódus törlendő.
+   */
+  private refreshCatalogAfter(cmd: { readonly group?: string }): void {
+    if (cmd.group === 'account') this.commands.reload();
   }
 
   // ── fókusz ────────────────────────────────────────────────────────────────

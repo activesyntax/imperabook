@@ -71,9 +71,26 @@ export function suggestionsOf(state: ShellState, deps: ShellDeps): readonly Comm
   return state.kind === 'browsing' ? deps.suggestionsFor(queryOf(state.text)) : [];
 }
 
+/**
+ * A kijelölt elem indexe — nem közvetlenül az állapoté.
+ *
+ * A tárolt `selected` a Tab-lépkedés emlékezete, de a lista, amire mutat,
+ * később érkezik, mint az állapot (a registry HTTP-n jön). Ezért a tárolt index
+ * a listához igazodik: érvénytelen vagy hiányzó kijelölés a legjobb találatra
+ * esik vissza, üres lekérdezésnél pedig nincs kijelölés.
+ */
+export function selectedIndexOf(state: ShellState, deps: ShellDeps): Index {
+  if (state.kind !== 'browsing' || queryOf(state.text).length === 0) return undefined;
+
+  const matches = suggestionsOf(state, deps);
+  if (matches.length === 0) return undefined;
+
+  return state.selected !== undefined && state.selected < matches.length ? state.selected : 0;
+}
+
 export function selectedOf(state: ShellState, deps: ShellDeps): CommandSpec | undefined {
-  if (state.kind !== 'browsing' || state.selected === undefined) return undefined;
-  return deps.suggestionsFor(queryOf(state.text))[state.selected];
+  const index = selectedIndexOf(state, deps);
+  return index === undefined ? undefined : suggestionsOf(state, deps)[index];
 }
 
 /** Az épp futó, bekérés alatt álló vagy kiválasztott parancs — a leíráshoz. */
@@ -87,6 +104,11 @@ export function pendingParameter(state: ShellState): CommandParameter | undefine
 
 export function progressOf(state: ShellState): { readonly index: number; readonly total: number } | undefined {
   return state.kind === 'collecting' ? Param.progressOf(state.params) : undefined;
+}
+
+/** Kötelező mezőn üresen próbált továbblépni — a template ezt jelzi ki. */
+export function blockedOf(state: ShellState): boolean {
+  return state.kind === 'collecting' && Param.isBlockedNow(state.params);
 }
 
 // ── átmenet ─────────────────────────────────────────────────────────────────
@@ -104,7 +126,7 @@ function fromBrowsing(s: Browsing, i: UiInput, deps: ShellDeps): Step {
     case 'text': return step(retyped(s, i.value, deps));
     case 'move': return step(moved(s, i.dir, deps));
     case 'commit': return committed(s, deps);
-    case 'submit': return start(selectedOf(s, deps));
+    case 'submit': return start(s, selectedOf(s, deps));
     case 'cancel': return step(browsing());   // parancsmódban az Escape csak ürít
     case 'back':
     case 'completed': return step(s);
@@ -128,13 +150,17 @@ function fromRunning(s: Running, i: UiInput): Step {
 
 // ── parancsmód részletei ────────────────────────────────────────────────────
 
-/** Gépelés: üres lekérdezésnél nincs kiválasztás, egyébként az első találat. */
+/**
+ * Gépelés: üres lekérdezésnél nincs kiválasztás, egyébként a legjobb találat.
+ *
+ * A rangsort a suggestionsFor már elvégezte — a lista első eleme definíció
+ * szerint a legjobb egyezés, így itt nincs második, gyengébb szűrés.
+ */
 function retyped(s: Browsing, value: string, deps: ShellDeps): Browsing {
   const query = queryOf(value);
   if (query.length <= 0) return browsing(value, undefined);
 
-  const matchIndex = deps.suggestionsFor(query).findIndex(c => c.command.includes(query));
-  return browsing(value, matchIndex < 0 ? undefined : matchIndex);
+  return browsing(value, deps.suggestionsFor(query).length > 0 ? 0 : undefined);
 }
 
 /** Tab: egyetlen találatnál előbb kiegészít, utána ciklikusan lépked. */
@@ -147,14 +173,14 @@ function moved(s: Browsing, dir: 'next' | 'prev', deps: ShellDeps): Browsing {
   }
 
   const change: IndexMove = dir === 'prev' ? prevCyclicIndex : nextCyclicIndex;
-  return browsing(s.text, change(indexRange(matches.length), s.selected));
+  return browsing(s.text, change(indexRange(matches.length), selectedIndexOf(s, deps)));
 }
 
 /** Enter: első nyomásra kiegészít, a másodikra futtat. */
 function committed(s: Browsing, deps: ShellDeps): Step {
   const cmd = selectedOf(s, deps);
   const completed = completion(s, cmd);
-  return completed !== undefined ? step(completed) : start(cmd);
+  return completed !== undefined ? step(completed) : start(s, cmd);
 }
 
 function completion(s: Browsing, cmd: CommandSpec | undefined): Browsing | undefined {
@@ -162,9 +188,14 @@ function completion(s: Browsing, cmd: CommandSpec | undefined): Browsing | undef
   return browsing(cmd.command, 0);
 }
 
-/** Indítás: paraméter nélkül azonnal fut, egyébként átadja a paramétergépnek. */
-function start(cmd: CommandSpec | undefined): Step {
-  if (cmd === undefined) return step(browsing());
+/**
+ * Indítás: paraméter nélkül azonnal fut, egyébként átadja a paramétergépnek.
+ *
+ * Ha nincs mit indítani, az állapot változatlan marad — a beírt szöveg nem tűnik
+ * el a felhasználó alól. (A search fall-through külön kerül be; ez a hely.)
+ */
+function start(s: Browsing, cmd: CommandSpec | undefined): Step {
+  if (cmd === undefined) return step(s);
 
   const params = Param.begin(cmd.parameters);
   return params === undefined

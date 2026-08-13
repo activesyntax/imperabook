@@ -55,6 +55,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.MapAuthEndpoints();
 app.MapCommandEndpoints();
 app.MapImageEndpoints();
 

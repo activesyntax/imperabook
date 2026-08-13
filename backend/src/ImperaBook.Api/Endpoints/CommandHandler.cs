@@ -7,7 +7,7 @@ namespace ImperaBook.API.Endpoints;
 
 public static class CommandHandler
 {
-    public static async Task<CommandResult> ListBooks(IBookQueries books, CancellationToken ct)
+    internal static async Task<CommandResult> ListBooks(IBookQueries books, CancellationToken ct)
     {
         var bookList = await books.List(null, null, ct);
         return bookList.ToCommandResult(
@@ -16,7 +16,7 @@ public static class CommandHandler
         );
     }
 
-    internal static async Task<CommandResult?> ListAuthors(
+    internal static async Task<CommandResult> ListAuthors(
         IAuthorQueries authors,
         CancellationToken ct
     )
