@@ -463,6 +463,12 @@ token-scan parser supersedes it rather than extends it — accepted because the 
 > invariant in its own right, and that the claim as titled here never covered the non-command routes
 > that already existed. Read "one endpoint" below as "one endpoint **for commands**."
 
+> **Amended by ADR 24**, in two places. The request shape below describes the *commit* exchange of a
+> parameterised command — those are now an open/commit pair distinguished by a `stage` field, while a
+> command with no parameters remains the single exchange described here. And a command whose payload
+> cannot cross the composed-text parser carries an `Endpoint` on its descriptor and posts elsewhere;
+> `login` is the only MVP1 case, and the admission rule is in ADR 24.
+
 **Context.** ADR 16 kept `CatalogEndpoints` / `DashboardEndpoints` as separate HTTP routes because,
 at the time, the frontend placed each answer itself — route token, query key, or body field — so the
 URL was load-bearing: it was part of how a value found its way to the right place. ADR 17 changed
@@ -585,7 +591,8 @@ is not: the content channel is precisely what an `<img src>` will hit, and an im
 `Authorization` header. The realistic failure is covers returning 401 in production while every command
 works — named because it is invisible in dev and obvious only in the wrong environment. Signed
 short-lived URLs or a cookie fallback are the answers; the choice is deferred until an auth scheme is
-actually picked.
+actually picked. *(Picked in ADR 24: cookie sessions, which removes this failure rather than
+mitigating it — a browser attaches the cookie to an `<img src>` unprompted.)*
 
 *Orphan rows.* Upload-then-command means a cover can be uploaded and the command then cancelled or
 rejected. Content-addressing makes this cheap to tolerate — a re-upload of the same file deduplicates to
@@ -1040,6 +1047,198 @@ sentence being put in a field meant for a number.
 the same ordering-convention weakness `Finding` was introduced to fix, displaced one level up. It
 does not matter at four rows. If the panel grows subheadings, a block carrying an array of findings
 is the fix.
+
+---
+
+## 24. Cookie sessions over ASP.NET Core Identity; `login` is in the grammar but off the control channel
+
+**Context.** ADR 19 named this and deferred it. Splitting the HTTP surface into a control channel and
+a content channel means auth is enforced in two places, and the content channel is precisely what an
+`<img src>` hits — a tag that carries no `Authorization` header. The entry recorded the realistic
+failure (covers returning 401 in production while every command works), listed signed URLs or a
+cookie fallback as the answers, and left the scheme unpicked. Covers now exist, so the deferral is
+due.
+
+A second question arrived with it, and the two only resolve together. `login` is a verb the user
+types before anything else works. If it is not a command, then the first thing a new user meets in a
+product whose thesis is *everything is a command* is not one — the same objection ADR 22 raises
+against a gear icon, at the front door rather than in the chrome. But it cannot be an ordinary
+command either: a password would have to travel as a connective-tagged segment of the composed
+`text` string (ADR 17), which is logged, unmasked, and parsed by a grammar with no escape rules.
+
+**Decision.** Cookie authentication over ASP.NET Core Identity, and `login` stays in the grammar
+while leaving the control channel.
+
+*The scheme.* ASP.NET Core Identity on EF Core with `IdentityUser<Guid>` — `Guid` because every
+other identity in the system is one (ADR 2), and an Identity default of `string` keys would be the
+only place a user id did not look like an id. Sessions are cookies encrypted by Data Protection,
+`HttpOnly` and `SameSite`. `POST /api/command` is default-deny.
+
+The content channel then needs no separate mechanism at all: the browser attaches the cookie to an
+`<img src>` exactly as it does to a `fetch`, so `GET /api/images/{hash}` is authenticated by the
+same act that authenticated the command that produced its URL. The failure ADR 19 predicted is not
+mitigated, it is structurally absent.
+
+*JWT was evaluated and rejected*, on the same two facts. A bearer token cannot ride an image
+request, so a token scheme needs signed short-lived URLs or a cookie fallback for the content
+channel — which means adopting a cookie anyway, plus a second mechanism beside it. And `logout`
+under a bearer token is fictional: the token stays valid until it expires unless a server-side
+blacklist exists, and a blacklist is a session store, which is what a cookie already has. A scheme
+whose selling point is statelessness stops being stateless the moment logout has to mean something.
+
+*`login` is in the `CommandCatalog`; `CommandDescriptor` gains an optional `Endpoint`.* Present
+means this command's transport is its own route; absent means the control channel. That field is the
+**only** branching point. Catalog membership, ranking (ADR 13), the prompting mechanism, `help`, and
+the pinned rail (ADR 22) are all unchanged and unaware — `login` autocompletes, is described, and is
+prompted for exactly like `add book`. What differs is the URL its answers are posted to, and nothing
+else.
+
+This is the transport-layer form of the same sentence the shell obeys internally: **a command never
+carries a secret.** The grammar is closed and `login` is in it; the composed-text channel is
+unsuitable for one field of one command, so that command posts elsewhere.
+
+*Prompting is unified by an open/commit round trip.* A command that takes parameters is two
+exchanges rather than one: `stage: "open"` returns the prompt plan the shell walks, `stage: "commit"`
+sends the collected answers. A command with no parameters (`list books`, `dashboard`) has nothing to
+prompt for and stays a single exchange. Uniformity is the point within the parameterised set — the
+shell has one prompting flow, and `login` is not a special case within it. This amends ADR 18's
+single-shot `{ command, text }` request shape, which described the commit exchange only.
+
+*`logout` and `whoami` are ordinary commands* on the control channel, because neither carries a
+secret. `login` is the only MVP1 command with an `Endpoint`.
+
+**Trade-off.** *Cookies reintroduce CSRF, which a bearer token would not have.* A cookie is attached
+by the browser whether or not the application asked, so `POST /api/command` — one endpoint that
+performs every mutation in the system — is a cross-site forgery target by construction. `SameSite`
+plus antiforgery tokens is the answer and it is real work that the rejected alternative did not
+need. Named because "cookies are simpler" is only true up to this line.
+
+*The session is bound to a browser.* The README's MVP2 mobile companion is a separate client that
+will not share a cookie jar with the desktop app, so a token path is coming whether or not it is
+designed now. The honest statement is that this decision picks the scheme for the web client and
+defers the second client's, rather than picking one scheme for the product.
+
+*`Endpoint` is an escape hatch, and escape hatches accumulate.* Nothing in the type prevents a
+second, third, fourth command from taking a private route for a reason that seemed good at the time,
+and at that point the control channel is a convention rather than an architecture. The admission
+rule is narrow and written down for the same reason ADR 22 writes down the rail's: **`Endpoint` is
+admissible only when the payload cannot cross the composed-text parser.** Today that means secrets
+and nothing else. A third distinct reason appearing is not a reason to widen the rule — it is the
+signal that the control channel is under-specified and ADR 18 needs revisiting.
+
+*Logout is honest but revocation is not.* Clearing the cookie genuinely ends the session for the
+client that ran the command, which is more than a bearer token offers. A cookie already stolen stays
+valid until it expires; MVP1 has no server-side revocation list. Sliding expiry shortens the window
+and does not close it. Recorded because the JWT critique above cuts partly the same way, and
+pretending otherwise would be scoring a point rather than making a decision.
+
+*Identity brings a schema much larger than the product uses.* Roles, claims, external logins,
+two-factor and lockout tables ship for an application whose MVP1 has one library per user and no
+roles. Accepted: it is mainstream, audited, and correct on the parts that matter — password hashing
+and the token lifecycle are exactly the things not to hand-roll. The cost is a dump full of empty
+tables and a reader who has to be told they are unused.
+
+---
+
+## 25. Credential steps swap the input element; the command bar is never a credential field
+
+**Context.** The login flow (ADR 24) prompts like any other command, which means it reuses the
+shell's single stable input — one element serving command entry and parameter prompting, with no
+child component per mode. The password step switched that element's `type` to `password`.
+
+The symptom arrived later and looked unrelated. Pressing `↑` / `↓` in the command bar — plain
+scrolling, no login in sight — opened Chrome's *Manage Passwords* dropdown over the workspace.
+
+The diagnosis matters more than the fix, because the obvious reading is wrong. The problem is not
+that the credential and the command *share* an element. It is that the element **was once
+`type="password"`**. Chrome's password manager keys on a field signature — name, id, type, and the
+field's neighbours in the parsed document — and the presence of a password input is what registers
+that signature against the origin. Once registered, the same element is a credential field in every
+subsequent mode, and `↓` on a credential field is the native gesture that opens the saved-entry
+list. Nothing in the shell's own state machine is involved; the shell is in command mode and the
+browser is not.
+
+**Decision.** The command bar input is never a credential field, of any kind. Credential steps
+render **a different element**, mounted for the step and unmounted on exit.
+
+- The command bar input carries `name="ib-command"`, is always `type="text"`, and is never
+  `type="password"` and never a username field.
+- `login`'s username and password steps each render a dedicated input, in the same position, with
+  the same styling and the same keydown binding into `shell-keymap`. The user sees the command bar;
+  the browser sees a different element.
+- The two are **never co-resident in the DOM.** Structural `@if`, not `hidden`, not
+  `display: none`, not `visibility: hidden` — Chrome parses hidden fields and pairs them, so a
+  command input left mounted beside a password input is exactly the username/password pair this
+  entry exists to prevent. For the same reason the command input has no leave animation: its
+  removal from the tree must be immediate, and there is nothing to animate anyway, since the
+  replacement draws in the same place.
+
+*The username step is included deliberately.* Chrome's multi-step sign-in heuristic can associate a
+text field in one step with a password field in the next, which would mark the command bar as a
+username field even if it never held the password. The rule is therefore stated over credentials
+rather than over secrets: **no credential of any kind is entered into the command bar element.**
+
+*This extends ADR 24's principle rather than qualifying it.* "A command never carries a secret" is a
+statement about transport — the composed-text channel is logged and unmasked, so `login` posts to
+its own endpoint. The same sentence now holds one layer lower: the command bar element never *holds*
+a secret either. Transport and DOM are the two places a credential could leak into the command
+surface, and the boundary is drawn identically in both.
+
+*Bare arrows join the keymap.* `↑` / `↓` are added to `shell-keymap` with `preventDefault`. This is
+independently correct — in a single-line input the native `↑` / `↓` jump the caret to the start or
+end of the text, which competes with the viewport-scroll meaning COMMANDS.md assigns them — and
+suppressing a stray autofill popover is the secondary benefit, not the reason.
+
+*The focus invariant moves from the element to the shell.* Every surface in the app preserves
+command-bar focus (the pinned rail does it with `mousedown` + `preventDefault`, ADR 22). That
+invariant was implicitly held by the input never unmounting. It is now held explicitly: on each
+credential step the newly mounted input takes focus in the same change-detection pass that mounts
+it.
+
+**Rejected alternatives.**
+
+*Mask in userland: keep one element, intercept `beforeinput`, hold the real value in a signal and
+render `•` characters.* This was the first answer drafted here and it is the wrong trade. It solves
+a DOM-level problem by giving up native text editing — no caret positioning inside the buffer, no
+selection, no mid-string insertion — and it takes the IME and soft-keyboard paths off the supported
+route for a field where a typo is invisible. It also removes password-manager support outright,
+since there is no password field for a manager to fill. Paying in editing behaviour for something an
+element swap solves for free is backwards.
+
+*`-webkit-text-security: disc` on a text input.* Cheaper, and native editing survives — but the real
+password sits in the DOM `value` of a field the browser does not know is sensitive, reachable by any
+extension and eligible for form history. Weaker guarantee, same user-facing result, and the field
+signature still has something to catch on. Kept only as a fallback if the element swap turns out to
+be unworkable somewhere.
+
+*A hidden, off-screen `type="password"` mirror, so password managers still work.* This reintroduces
+precisely the trigger. Chrome does not require the field to be visible to register it.
+
+**Trade-off.** *The single stable input is no longer literally single.* Its accurate form is: one
+stable input for command and parameter modes, dedicated elements for credential steps. The boundary
+that was previously drawn on input *shape* — a child component returns when a step needs something
+other than single-line text — now has a second, unrelated clause on *browser trust*. Two rules
+governing one decision is worse than one, and it is stated rather than smoothed over: the second
+clause exists because a browser heuristic we do not control reads the DOM, and no amount of internal
+consistency removes it.
+
+*A one-frame focus gap.* Between unmount and mount the active element is `<body>`, and a keystroke
+landing in that frame is lost. Narrow, but real, and it did not exist while the element was
+permanent.
+
+*Multi-step credential saving is not deterministic.* Because the username and password fields are
+never in the DOM together, Chrome's save prompt will sometimes capture the password without the
+username. Chrome supports multi-step sign-in flows, but by heuristic. This is the item worth
+watching in testing — not the absence of the dropdown, which is easy to verify, but whether a
+manager can still save and refill a login.
+
+*Verified against one browser.* The behaviour described is Chrome's. Firefox and Safari use
+different heuristics and are untested here. The decision is defensible against all three in
+principle — none of them can register a field that never had the type — but only one was observed.
+
+*Existing profiles keep the association.* The saved entry persists after the fix; clearing it is a
+manual step in the browser, not something the application can do. Recorded because the first attempt
+to verify the fix will otherwise appear to fail.
 
 ---
 
