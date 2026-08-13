@@ -37,11 +37,14 @@ export const running = (cmd: CommandSpec): Running =>
 
 // ── effektek ────────────────────────────────────────────────────────────────
 
-export type Effect = {
-  readonly kind: 'run';
-  readonly cmd: CommandSpec;
-  readonly answers: CommandInput;
-};
+/**
+ * A két kör. `open` a bekérés MELLÉ kért nézet — a login ajtaja, később az
+ * `add book` piszkozata (UX.md); `run` maga a végrehajtás. Az `open` nem visz
+ * választ, mert még nincs; épp ezért nem is vihet titkot.
+ */
+export type Effect =
+  | { readonly kind: 'open'; readonly cmd: CommandSpec }
+  | { readonly kind: 'run'; readonly cmd: CommandSpec; readonly answers: CommandInput };
 
 export interface Step {
   readonly state: ShellState;
@@ -189,10 +192,17 @@ function completion(s: Browsing, cmd: CommandSpec | undefined): Browsing | undef
 }
 
 /**
- * Indítás: paraméter nélkül azonnal fut, egyébként átadja a paramétergépnek.
+ * Indítás.
  *
- * Ha nincs mit indítani, az állapot változatlan marad — a beírt szöveg nem tűnik
- * el a felhasználó alól. (A search fall-through külön kerül be; ez a hely.)
+ * Paraméter nélkül egyetlen kör: nincs mit bekérni, tehát nincs mihez nézetet
+ * kérni — a `run` válasza maga az eredmény.
+ *
+ * Paraméterrel két kör: előbb `open`, ami megadja a bekérés melletti nézetet
+ * (a login ajtaja), és csak a kitöltés után `run`. A nyitó kör mindig a
+ * vezérlőcsatornán megy, mert nem visz választ — így titkot sem.
+ *
+ * Ha nincs mit indítani, az állapot változatlan marad: a beírt szöveg nem
+ * tűnik el a felhasználó alól. (A search fall-through külön kerül be; ez a hely.)
  */
 function start(s: Browsing, cmd: CommandSpec | undefined): Step {
   if (cmd === undefined) return step(s);
@@ -200,5 +210,5 @@ function start(s: Browsing, cmd: CommandSpec | undefined): Step {
   const params = Param.begin(cmd.parameters);
   return params === undefined
     ? step(running(cmd), [{ kind: 'run', cmd, answers: {} }])
-    : step({ kind: 'collecting', cmd, params });
+    : step({ kind: 'collecting', cmd, params }, [{ kind: 'open', cmd }]);
 }

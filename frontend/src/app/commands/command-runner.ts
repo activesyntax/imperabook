@@ -19,13 +19,22 @@ export class CommandRunner {
   private readonly http = inject(HttpClient);
 
   /**
-   * Egyetlen elágazás: van-e a parancsnak saját végpontja. Minden más — a
-   * bekérés, az állapotgép, a válasz feldolgozása — azonos a két útvonalon.
-   *
-   * A saját végpont oka nem kényelem: a titkot vivő parancs nem mehet át a
-   * composed-text parseren, mert az naplózódik és nincs escape-szabálya.
+   * Nyitó kör. MINDIG a vezérlőcsatornán megy — akkor is, ha a parancsnak saját
+   * végpontja van. A nyitás nem visz titkot, csak a parancs nevét, és a válasza
+   * egy nézet: a `login` ajtaja, egy `add book` üres űrlapja.
    */
-  run(cmd: CommandSpec, answers: CommandInput = {}): Promise<CommandResult> {
+  open(cmd: CommandSpec): Promise<CommandResult> {
+    return firstValueFrom(
+      this.http.post<CommandResult>(CONTROL_CHANNEL, { command: cmd.command }),
+    );
+  }
+
+  /**
+   * Commit kör. Itt — és csak itt — számít az `endpoint`: a titkot vivő parancs
+   * nem mehet át a composed-text parseren, mert az naplózódik és nincs
+   * escape-szabálya. A transport az egyetlen elágazási pont.
+   */
+  run(cmd: CommandSpec, answers: CommandInput): Promise<CommandResult> {
     const endpoint = cmd.endpoint;
 
     return firstValueFrom(

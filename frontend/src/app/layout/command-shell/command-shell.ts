@@ -102,6 +102,17 @@ export class CommandShell {
   }
 
   private async perform(effect: Shell.Effect): Promise<void> {
+    // A nyitó kör nem zárja a futást: az állapot bekérés alatt marad, a nézet
+    // mellette érkezik meg. Ezért nincs 'completed', és nincs katalógus-újratöltés.
+    if (effect.kind === 'open') {
+      try {
+        this.store.setResult(await this.runner.open(effect.cmd));
+      } catch (error) {
+        this.store.setResult(resultOfError(error));
+      }
+      return;
+    }
+
     try {
       this.store.setResult(await this.runner.run(effect.cmd, effect.answers));
     } catch (error) {
@@ -112,7 +123,6 @@ export class CommandShell {
       this.refreshCatalogAfter(effect.cmd);
     }
   }
-
   /**
    * Az identitás megváltozhatott, és a katalógus identitásfüggő (bejelentkezés
    * előtt csak a login érhető el). A csoport dönt, nem a parancs neve — de ez
