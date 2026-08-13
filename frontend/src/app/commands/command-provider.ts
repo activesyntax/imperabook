@@ -16,14 +16,6 @@ export class CommandProvider {
     const suggestedCommands = rank(this.all().filter(filter), query.trim());
     return suggestedCommands.length > 0 ? suggestedCommands : pickFeatured(this.all());
   }
-
-  /**
-   * A katalógus újrakérése. A parancskészlet identitásfüggő, így be- és
-   * kijelentkezés után a régi lista már nem igaz.
-   */
-  reload(): void {
-    this.registry.reload();
-  }
 }
 
 const FEATURED: readonly Command[] = ['add book', 'list books', 'list authors'];
