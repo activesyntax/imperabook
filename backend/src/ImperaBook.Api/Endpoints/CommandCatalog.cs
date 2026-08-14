@@ -10,6 +10,12 @@ public enum CommandGroup
     Application,
 }
 
+public enum CredentialRole
+{
+    Username,
+    Password,
+}
+
 public sealed record CommandDescriptor(
     string Command,
     string Description,
@@ -26,12 +32,11 @@ public sealed record CommandDescriptor(
     public string? Endpoint { get; init; }
 }
 
-public sealed record CommandParameter(
-    string Name,
-    string Prompt,
-    bool Required,
-    bool Secret = false
-);
+public sealed record CommandParameter(string Name, string Prompt, bool Required)
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public CredentialRole? Credential { get; init; }
+}
 
 public static class CommandCatalog
 {
@@ -89,7 +94,10 @@ public static class CommandCatalog
         new(
             "login",
             "Enter into your library",
-            [new("username", "Username", true), new("password", "Password", true) { Secret = true }]
+            [
+                new("username", "Username", true) { Credential = CredentialRole.Username },
+                new("password", "Password", true) { Credential = CredentialRole.Password },
+            ]
         )
         {
             Group = CommandGroup.Account,

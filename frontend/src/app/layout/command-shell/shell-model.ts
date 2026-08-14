@@ -114,6 +114,18 @@ export function blockedOf(state: ShellState): boolean {
   return state.kind === 'collecting' && Param.isBlockedNow(state.params);
 }
 
+/**
+ * Credential-bekérés fut-e.
+ *
+ * A jelző a PARANCSRA vonatkozik, nem a lépésre. A bekérés teljes idejére
+ * dedikált input elem szolgál ki, akkor is, amikor épp a username-lépésnél
+ * tartunk — az önmagában nem titok, de a Chrome a rá következő password-mezővel
+ * összeköti, és a parancssort jelölné meg username-mezőnek (ADR 25).
+ */
+export function credentialModeOf(state: ShellState): boolean {
+  return state.kind === 'collecting' && state.cmd.parameters.some((p) => p.credential !== undefined);
+}
+
 // ── átmenet ─────────────────────────────────────────────────────────────────
 
 export function transition(state: ShellState, input: UiInput, deps: ShellDeps): Step {

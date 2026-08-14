@@ -2,11 +2,13 @@ export type Command = string;
 export type CommandQuery = string;
 export type CommandGroup = 'dynamic' | 'fixed' | 'account' | 'application';
 
+export type CredentialRole = 'username' | 'password';
+
 export interface CommandParameter {
   readonly name: string;
   readonly prompt: string;
   readonly required: boolean;
-  readonly secret?: boolean;
+  readonly credential?: CredentialRole;
 }
 
 export interface CommandSpec {
@@ -15,6 +17,5 @@ export interface CommandSpec {
   readonly parameters: readonly CommandParameter[];
   readonly group?: CommandGroup;
   readonly order?: number;
-  /** Ha jelen van, a parancs nem a vezérlőcsatornán fut (ADR 18), hanem ezen az útvonalon. */
   readonly endpoint?: string;
 }

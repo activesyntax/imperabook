@@ -1,8 +1,8 @@
 import {
-  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   ElementRef,
   HostListener,
   inject,
@@ -16,6 +16,19 @@ import { WorkspaceStore } from '@app/state/workspace-store';
 import { resultOfError } from '@app/commands/command-error';
 import { UiInput } from './ui-input';
 import * as Shell from './shell-model';
+
+/** Amit a template az input elemre kiír. Egy helyen, hogy a két ág ne drifteljen. */
+interface FieldAttrs {
+  readonly type: 'text' | 'password';
+  readonly name: string;
+  readonly autocomplete: string;
+}
+
+const COMMAND_FIELD: FieldAttrs = {
+  type: 'text',
+  name: 'ib-command',
+  autocomplete: 'off',
+};
 
 @Component({
   selector: 'app-command-shell',
@@ -48,10 +61,34 @@ export class CommandShell {
   protected readonly blocked = computed(() => Shell.blockedOf(this.state()));
   protected readonly busy = computed(() => this.state().kind === 'running');
 
+  // ── credential ────────────────────────────────────────────────────────────
+  // A parancssor inputja soha nem credential-mező. Credential-bekérés alatt a
+  // template MÁSIK elemet állít a helyére; ez a jelző választ közöttük (ADR 25).
+
+  protected readonly credentialMode = computed(() => Shell.credentialModeOf(this.state()));
+
+  protected readonly commandField = COMMAND_FIELD;
+
+  protected readonly credentialField = computed<FieldAttrs>(() => {
+    switch (this.parameter()?.credential) {
+      case 'password':
+        return { type: 'password', name: 'ib-credential-password', autocomplete: 'current-password' };
+      case 'username':
+        return { type: 'text', name: 'ib-credential-username', autocomplete: 'username' };
+      default:
+        // Credential-parancs nem credential lépése: dedikált elemen marad, de
+        // nem hazudik szerepet a jelszókezelőnek.
+        return { type: 'text', name: 'ib-credential-field', autocomplete: 'off' };
+    }
+  });
+
   private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
 
   constructor() {
-    afterNextRender(() => this.focusBar());
+    // A fókusz-invariánst innentől a shell tartja fenn, nem az elem élettartama:
+    // a viewChild jelzés akkor és csak akkor változik, ha MÁSIK elem került a
+    // helyére, tehát a csere után az új elem azonnal fókuszt kap (ADR 25).
+    effect(() => this.focus(this.bar()?.nativeElement));
   }
 
   // ── DOM → UiInput ─────────────────────────────────────────────────────────
@@ -146,7 +183,10 @@ export class CommandShell {
   }
 
   private focusBar(): void {
-    const input = this.bar()?.nativeElement;
+    this.focus(this.bar()?.nativeElement);
+  }
+
+  private focus(input: HTMLInputElement | undefined): void {
     input?.focus();
     input?.select();
   }

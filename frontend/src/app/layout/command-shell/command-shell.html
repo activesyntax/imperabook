@@ -57,21 +57,50 @@
           <span class="user">{{ param.prompt }}:</span>
         }
 
-        <input
-          #bar
-          class="bar"
-          [type]="parameter()?.secret ? 'password' : 'text'"
-          autocomplete="off"
-          autocapitalize="off"
-          spellcheck="false"
-          [placeholder]="kind() === 'browsing' ? 'type a command or search your library' : ''"
-          aria-label="Command input"
-          [class.blocked]="blocked()"
-          [attr.aria-invalid]="blocked() ? 'true' : null"
-          [value]="text()"
-          [readOnly]="busy()"
-          (input)="onInput($event)"
-          (keydown)="onKeydown($event)" />
+        <!--
+          Két ág, egy hely. A parancssor inputja soha nem volt és soha nem lesz
+          credential-mező — ez az, amit a Chrome jelszókezelője field signature
+          alapján megjegyez, és amitől a ↓ később felajánlást nyitna rajta.
+
+          Szerkezeti @if kell, nem [hidden] és nem display:none: a Chrome a
+          rejtett mezőket is beolvassa és párosítja, tehát a két elem soha nem
+          lehet egyszerre a DOM-ban. Ugyanezért nincs kilépő animáció sem.
+          (ADR 25)
+        -->
+        @if (credentialMode()) {
+          <input
+            #bar
+            class="bar"
+            [type]="credentialField().type"
+            [attr.name]="credentialField().name"
+            [attr.autocomplete]="credentialField().autocomplete"
+            autocapitalize="off"
+            spellcheck="false"
+            [attr.aria-label]="parameter()?.prompt"
+            [class.blocked]="blocked()"
+            [attr.aria-invalid]="blocked() ? 'true' : null"
+            [value]="text()"
+            [readOnly]="busy()"
+            (input)="onInput($event)"
+            (keydown)="onKeydown($event)" />
+        } @else {
+          <input
+            #bar
+            class="bar"
+            [type]="commandField.type"
+            [attr.name]="commandField.name"
+            [attr.autocomplete]="commandField.autocomplete"
+            autocapitalize="off"
+            spellcheck="false"
+            [placeholder]="kind() === 'browsing' ? 'type a command or search your library' : ''"
+            aria-label="Command input"
+            [class.blocked]="blocked()"
+            [attr.aria-invalid]="blocked() ? 'true' : null"
+            [value]="text()"
+            [readOnly]="busy()"
+            (input)="onInput($event)"
+            (keydown)="onKeydown($event)" />
+        }
 
         <button
           type="button"

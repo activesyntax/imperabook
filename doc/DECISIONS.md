@@ -1184,11 +1184,6 @@ its own endpoint. The same sentence now holds one layer lower: the command bar e
 a secret either. Transport and DOM are the two places a credential could leak into the command
 surface, and the boundary is drawn identically in both.
 
-*Bare arrows join the keymap.* `↑` / `↓` are added to `shell-keymap` with `preventDefault`. This is
-independently correct — in a single-line input the native `↑` / `↓` jump the caret to the start or
-end of the text, which competes with the viewport-scroll meaning COMMANDS.md assigns them — and
-suppressing a stray autofill popover is the secondary benefit, not the reason.
-
 *The focus invariant moves from the element to the shell.* Every surface in the app preserves
 command-bar focus (the pinned rail does it with `mousedown` + `preventDefault`, ADR 22). That
 invariant was implicitly held by the input never unmounting. It is now held explicitly: on each
@@ -1196,6 +1191,16 @@ credential step the newly mounted input takes focus in the same change-detection
 it.
 
 **Rejected alternatives.**
+
+*Suppress the arrow key. Already in place, and observably insufficient.* This is the first thing
+anyone proposes, and the codebase had done it before the bug was noticed: the workspace's global
+keydown listener maps `↑` / `↓` to viewport scrolling (COMMANDS.md, *Three kinds of movement*) and
+cancels the event. The dropdown opened anyway. Chrome's autofill surface is not driven by the DOM
+event a page can cancel — on a field it considers a credential field it opens on focus and on click
+as well as on the arrow key, so cancelling the keystroke removes one trigger out of several.
+Recorded because it is the obvious move, it was already made, and the symptom survived it. The
+field's credential status is the only lever; the element swap is not one mitigation among several
+but the whole fix.
 
 *Mask in userland: keep one element, intercept `beforeinput`, hold the real value in a signal and
 render `•` characters.* This was the first answer drafted here and it is the wrong trade. It solves
