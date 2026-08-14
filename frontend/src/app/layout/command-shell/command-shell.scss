@@ -161,14 +161,32 @@
   color: var(--ib-dim);
 }
 
+// Két oszlop: balra a mondat, jobbra a folyamat állapota (melyik parancs,
+// hányadik lépésnél). A kettő nem egy sorban folyik össze, mert nem ugyanazt
+// a kérdést válaszolják meg.
 .desc {
-  display: inline-block;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
   margin: 1rem 1rem;
   color: var(--ib-dim);
-  white-space: nowrap;
-  overflow: auto;
   height: 1.5rem;
+}
+
+// A mondat rövidül, ha nem fér ki. (Az `overflow: auto` és a `text-overflow`
+// korábban egymást ütötte — az ellipszishez `hidden` kell.)
+.say {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+// A státusz nem rövidül és nem tördelődik: rövid, és mindig olvasható marad.
+.status {
+  flex: none;
+  white-space: nowrap;
 }
 
 .cmd {
@@ -177,6 +195,15 @@
 
 .key {
   color: #d6cfc1;
+}
+
+// Kötelező mezőn üresen próbált továbblépni. Az accent a shell "figyelj ide"
+// színe — nem hibapiros, mert ez nem hiba: a bekérés áll, nem hasalt el.
+//
+// A `.desc` prefix nem díszítés: a `blocked` osztály az inputra is rákerül,
+// és ott a szöveg színét váltaná át, amit épp a felhasználó gépel.
+.desc .blocked {
+  color: var(--ib-accent);
 }
 
 .entry {
@@ -214,6 +241,14 @@
   &:focus-within {
 
     border-color: rgba(217, 138, 61, 1);
+  }
+
+  // A jelzés a kereten ül, nem a szövegen: a szem a beviteli mezőn van, és a
+  // leírósor a magyarázat, nem a riasztás. A `:has` erősebb, mint a
+  // `:focus-within`, tehát fókusz alatt is látszik — ami a lényeg, hiszen a
+  // blokkolt állapot mindig fókuszban következik be.
+  &:has(.bar.blocked) {
+    border-color: var(--ib-accent-bright);
   }
 }
 

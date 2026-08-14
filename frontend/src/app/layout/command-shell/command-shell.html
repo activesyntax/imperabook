@@ -21,29 +21,40 @@
     <p class="desc">
       @switch (kind()) {
         @case ('collecting') {
-          <span class="cmd">{{ activeCommand()?.command }}</span>
-          @if (progress(); as p) {
-            · <span class="key">{{ p.index }}/{{ p.total }}</span>
-          }
-          · {{ hint() }}
-          @if (blocked()) {
-            <span class="blocked">(required — enter a value)</span>
-          } @else if (parameter()?.required) {
-            <span class="fall">(required)</span>
-          }
+          <span class="say">
+            {{ hint() }}
+            @if (blocked()) {
+              <span class="blocked">(required — enter a value)</span>
+            } @else if (parameter()?.required) {
+              <span class="fall">(required)</span>
+            }
+          </span>
+
+          <span class="status">
+            <span class="cmd">{{ activeCommand()?.command }}</span>
+            @if (progress(); as p) {
+              · <span class="key">{{ p.index }}/{{ p.total }}</span>
+            }
+          </span>
         }
 
         @case ('running') {
-          <span class="cmd">{{ activeCommand()?.command }}</span> · <span class="fall">running…</span>
+          <span class="say fall">running…</span>
+          <span class="status">
+            <span class="cmd">{{ activeCommand()?.command }}</span>
+          </span>
         }
 
         @default {
           @if (activeCommand(); as sel) {
-            <span class="cmd">{{ sel.command }}</span> · {{ sel.description }}
+            <span class="say">{{ sel.description }}</span>
+            <!-- <span class="status"><span class="cmd">{{ sel.command }}</span></span> -->
           } @else if (query().length > 0) {
-            <span class="cmd">search</span> · "{{ query() }}"
+            <span class="say">"{{ query() }}"</span>
+            <span class="status"><span class="cmd">search</span></span>
           } @else {
-            Welcome to ImperaBook!
+            <span class="say">Welcome to ImperaBook!</span>
+            <span class="status"></span>
           }
         }
       }
