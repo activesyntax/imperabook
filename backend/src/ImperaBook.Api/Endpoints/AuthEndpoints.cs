@@ -1,3 +1,4 @@
+using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -10,11 +11,15 @@ public static class AuthEndpoints
     private const string DemoUsername = "john";
     private const string DemoPassword = "asdf";
 
-    private const string RejectedMessage = "Those credentials were not recognized.";
+    private const string RejectedMessage = "Username or password is incorrect.";
 
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/auth/login", (LoginRequest request) => Login(request))
+        app.MapPost(
+                "/api/auth/login",
+                (LoginRequest request, IDashboardQueries dashboard, CancellationToken ct) =>
+                    Login(request, dashboard, ct)
+            )
             .WithName("Login")
             .AllowAnonymous()
             .Produces<CommandResult>(StatusCodes.Status200OK)
@@ -23,7 +28,11 @@ public static class AuthEndpoints
         return app;
     }
 
-    private static Results<Ok<CommandResult>, ProblemHttpResult> Login(LoginRequest request)
+    private static async Task<Results<Ok<CommandResult>, ProblemHttpResult>> Login(
+        LoginRequest request,
+        IDashboardQueries dashboard,
+        CancellationToken ct
+    )
     {
         var ok =
             string.Equals(request.Username, DemoUsername, StringComparison.Ordinal)
@@ -31,28 +40,19 @@ public static class AuthEndpoints
 
         if (!ok)
         {
-            // ADR 12: a hiba ProblemDetails. A `views` extension a hibaválasznak is megadja
-            // azt, amit a sikeres válasz alapból tud — mit lásson a felhasználó. A `detail`
-            // és a MessageView ugyanabból a konstansból jön, hogy ne tudjanak elcsúszni.
             return TypedResults.Problem(
                 detail: RejectedMessage,
                 statusCode: StatusCodes.Status401Unauthorized,
-                title: "Sign-in failed",
+                title: "Log in failed",
                 extensions: new Dictionary<string, object?>
                 {
-                    ["views"] = new ViewNode[]
-                    {
-                        new MessageView(RejectedMessage, MessageKind.Error),
-                    },
+                    ["code"] = "invalid_credentials",
+                    ["views"] = CommandHandler.LoginScreen(RejectedMessage).Views,
                 }
             );
         }
 
-        return TypedResults.Ok(
-            new CommandResult([
-                new MessageView($"Signed in as {request.Username}.", MessageKind.Success),
-            ])
-        );
+        return TypedResults.Ok(await CommandHandler.LoggedIn(dashboard, request.Username, ct));
     }
 }
 

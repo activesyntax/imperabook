@@ -48,7 +48,7 @@ public static class CommandEndpoints
     {
         return request.Command switch
         {
-            "dashboard" => TypedResults.Ok((await dashboard.GetSummaryAsync(ct)).ToCommandResult()),
+            "dashboard" => TypedResults.Ok(await CommandHandler.Dashboard(dashboard, ct)),
             "library" => TypedResults.Ok(await CommandHandler.Library(libraries, LibraryId, ct)),
             "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
             "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
@@ -57,7 +57,7 @@ public static class CommandEndpoints
             "about" => TypedResults.Ok(new About().ToCommandResult()),
             "settings" => TypedResults.Ok(new Settings().ToCommandResult()),
 
-            "login" => TypedResults.Ok(CommandHandler.Login()),
+            "login" => TypedResults.Ok(CommandHandler.LoginScreen()),
 
             "account"
             or "logout"

@@ -7,6 +7,12 @@ namespace ImperaBook.API.Endpoints;
 
 public static class CommandHandler
 {
+    private static readonly ImageView LoginIllustration = new(
+        "/static/imperabook-login-dark.svg",
+        "ImperaBook",
+        ImageRole.Illustration
+    );
+
     internal static async Task<CommandResult> ListBooks(IBookQueries books, CancellationToken ct)
     {
         var bookList = await books.List(null, null, ct);
@@ -44,12 +50,36 @@ public static class CommandHandler
         );
     }
 
-    internal static CommandResult Login() =>
-        new([
-            new ImageView(
-                "/static/imperabook-login-dark.svg",
-                "ImperaBook",
-                ImageRole.Illustration
-            ),
-        ]);
+    internal static async Task<CommandResult> Dashboard(
+        IDashboardQueries dashboard,
+        CancellationToken ct
+    ) => (await dashboard.GetSummaryAsync(ct)).ToCommandResult();
+
+    /// <summary>
+    /// The login screen. <paramref name="error"/> is non-null only when a sign-in attempt was
+    /// rejected — the same surface comes back, carrying the reason.
+    /// </summary>
+    internal static CommandResult LoginScreen(string? error = null) =>
+        new(
+            error is null
+                ? [LoginIllustration]
+                : [LoginIllustration, new MessageView(error, MessageKind.Error)]
+        );
+
+    internal static async Task<CommandResult> LoggedIn(
+        IDashboardQueries dashboard,
+        string username,
+        CancellationToken ct
+    )
+    {
+        var summary = await Dashboard(dashboard, ct);
+
+        ViewNode[] views =
+        [
+            // new MessageView($"Signed in as {username}.", MessageKind.Success),
+            .. summary.Views,
+        ];
+
+        return new CommandResult(views);
+    }
 }
