@@ -35,6 +35,12 @@ public sealed record CommandDescriptor(
 public sealed record CommandParameter(string Name, string Prompt, bool Required)
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Hint { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Example { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public CredentialRole? Credential { get; init; }
 }
 
@@ -95,8 +101,17 @@ public static class CommandCatalog
             "login",
             "Enter into your library",
             [
-                new("username", "Username", true) { Credential = CredentialRole.Username },
-                new("password", "Password", true) { Credential = CredentialRole.Password },
+                new("username", "Username", true)
+                {
+                    Hint = "Please provide your username",
+                    Example = "johndoe",
+                    Credential = CredentialRole.Username,
+                },
+                new("password", "Password", true)
+                {
+                    Hint = "Please provide your password",
+                    Credential = CredentialRole.Password,
+                },
             ]
         )
         {

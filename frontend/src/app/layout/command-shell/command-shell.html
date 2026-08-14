@@ -25,7 +25,7 @@
           @if (progress(); as p) {
             · <span class="key">{{ p.index }}/{{ p.total }}</span>
           }
-          · {{ parameter()?.prompt }}
+          · {{ hint() }}
           @if (blocked()) {
             <span class="blocked">(required — enter a value)</span>
           } @else if (parameter()?.required) {
@@ -76,6 +76,7 @@
             [attr.autocomplete]="credentialField().autocomplete"
             autocapitalize="off"
             spellcheck="false"
+            [placeholder]="placeholder()"
             [attr.aria-label]="parameter()?.prompt"
             [class.blocked]="blocked()"
             [attr.aria-invalid]="blocked() ? 'true' : null"
@@ -92,7 +93,7 @@
             [attr.autocomplete]="commandField.autocomplete"
             autocapitalize="off"
             spellcheck="false"
-            [placeholder]="kind() === 'browsing' ? 'type a command or search your library' : ''"
+            [placeholder]="placeholder()"
             aria-label="Command input"
             [class.blocked]="blocked()"
             [attr.aria-invalid]="blocked() ? 'true' : null"

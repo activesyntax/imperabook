@@ -8,6 +8,8 @@ export interface CommandParameter {
   readonly name: string;
   readonly prompt: string;
   readonly required: boolean;
+  readonly hint?: string;
+  readonly example?: string;
   readonly credential?: CredentialRole;
 }
 

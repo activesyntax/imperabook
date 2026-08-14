@@ -17,7 +17,6 @@ import { resultOfError } from '@app/commands/command-error';
 import { UiInput } from './ui-input';
 import * as Shell from './shell-model';
 
-/** Amit a template az input elemre kiír. Egy helyen, hogy a két ág ne drifteljen. */
 interface FieldAttrs {
   readonly type: 'text' | 'password';
   readonly name: string;
@@ -45,7 +44,6 @@ export class CommandShell {
     suggestionsFor: (query) => this.commands.suggestionsFor(query, undefined),
   };
 
-  /** Az egyetlen írható állapot. Minden más ebből származik. */
   private readonly state = signal<Shell.ShellState>(Shell.browsing());
 
   protected readonly kind = computed(() => this.state().kind);
@@ -61,9 +59,19 @@ export class CommandShell {
   protected readonly blocked = computed(() => Shell.blockedOf(this.state()));
   protected readonly busy = computed(() => this.state().kind === 'running');
 
-  // ── credential ────────────────────────────────────────────────────────────
-  // A parancssor inputja soha nem credential-mező. Credential-bekérés alatt a
-  // template MÁSIK elemet állít a helyére; ez a jelző választ közöttük (ADR 25).
+  protected readonly hint = computed(() => {
+    const param = this.parameter();
+    return param === undefined ? undefined : (param.hint ?? param.prompt);
+  });
+
+  protected readonly placeholder = computed(() => {
+    const param = this.parameter();
+    if (param !== undefined) {
+      return param.example === undefined ? '' : `e.g. ${param.example}`;
+    }
+
+    return this.kind() === 'browsing' ? 'type a command or search your library' : '';
+  });
 
   protected readonly credentialMode = computed(() => Shell.credentialModeOf(this.state()));
 
