@@ -1052,6 +1052,11 @@ is the fix.
 
 ## 24. Cookie sessions over ASP.NET Core Identity; `login` is in the grammar but off the control channel
 
+> **Extended by ADR 26.** Everything below stands. What it left unsaid is what an `Endpoint` route
+> *returns* — this entry settles the transport and treats the response as unremarkable, and ADR 26
+> shows it is not: a private route owes the control channel's response contract, and the `Endpoint`
+> field's semantics are only complete with the two read together.
+
 **Context.** ADR 19 named this and deferred it. Splitting the HTTP surface into a control channel and
 a content channel means auth is enforced in two places, and the content channel is precisely what an
 `<img src>` hits — a tag that carries no `Authorization` header. The entry recorded the realistic
@@ -1244,6 +1249,87 @@ principle — none of them can register a field that never had the type — but 
 *Existing profiles keep the association.* The saved entry persists after the fix; clearing it is a
 manual step in the browser, not something the application can do. Recorded because the first attempt
 to verify the fix will otherwise appear to fail.
+
+---
+
+## 26. A command's response is the next view; the error shape carries one too
+
+**Context.** ADR 24 put `login` in the grammar and gave it a private route. What it did not say is
+what the response *contains*. The first implementation answered a successful sign-in with a single
+`MessageView` — "Signed in as john." — and stopped there. That is a confirmation with no
+destination: the workspace still showed the login screen, now with a green line under it, and the
+user was signed in to nothing.
+
+Every way of fixing that from the client side is worse than it looks. The shell could run
+`dashboard` itself on a 200 from `/api/auth/login`, which hardcodes a product decision — *where
+sign-in lands* — into the frontend. Or the response could carry a `redirect: "dashboard"` field the
+shell resolves against the catalog, which is the same decision moved onto the wire and dressed as
+data: the client would hold a name-to-command map and an instruction to execute one, which is
+exactly the interpretation ADR 13 and ADR 16 spent two entries keeping off the frontend.
+
+The failure side had the mirror problem. A rejected sign-in returns 401, and a 401 that carries only
+a title and a detail string tells the shell that something failed but not what to draw.
+
+**Decision.** A command's response *is* the view that follows it. Not a confirmation, not an
+instruction to navigate — the rendered state the user should now be looking at.
+
+*Success.* `POST /api/auth/login` returns the dashboard's `CommandResult`, with the success
+`MessageView` prepended to its nodes. The shell renders what it is given, as it does for every other
+command, and nothing in it knows that sign-in has a landing place.
+
+*Failure.* The 401 `ProblemDetails` carries the login screen in its `views` extension, plus an error
+`MessageView`. The rule generalizes: **any ProblemDetails may carry `views`, and when it does, that
+array is the view the client renders** — the error is not an annotation on the previous screen, it
+is a screen. This is the shape ADR 12 already established for errors, now stated as carrying a
+payload rather than only a `code` and a message.
+
+*One producer per view.* The dashboard is built by `CommandHandler.Dashboard` and called from two
+places: the `dashboard` dispatch branch and the sign-in path. The login screen is built by
+`CommandHandler.LoginScreen`, whose only parameter is an optional error string, and is called from
+the `login` dispatch branch and from the rejection path. Two call sites composing the same view
+independently is the drift this collapses — and the reason the rejection response is *the login
+screen plus a message* rather than a message alone is that the same function produces both.
+
+**The response contract, not the route, is what makes something a control-channel exchange.** ADR 19
+drew the channel line at the request: *does this name a command from the closed grammar?* ADR 24
+then gave one such command a private route, which leaves the line intact but no longer coincident
+with the URL. This entry states the consequence: an `Endpoint` route is not a third channel, so it
+owes the control channel's response contract — `CommandResult` on 200, ProblemDetails on failure,
+`ViewNode` throughout. `/api/auth/login` differs from `POST /api/command` in transport only, which
+is precisely what ADR 24 claimed and what this makes true of the response as well as the request.
+
+*The rejection message names neither field.* "Username or password is incorrect." rather than
+"no such user" — a message that distinguishes the two turns the login form into an account
+enumeration oracle. Costs a small amount of helpfulness on a genuine typo, which is the standard
+trade and taken without argument.
+
+**Trade-off.** *The auth endpoint now depends on the read side.* `/api/auth/login` takes
+`IDashboardQueries` — an endpoint whose job is authentication reaching into queries it has no
+business knowing about. The alternative is two round trips, and the second one is the client
+deciding where to go, which is the thing being avoided. Accepted, and the shape of the future cost
+is worth naming: if the landing view grows richer, the auth endpoint's dependency list grows with
+it, and at some point the honest move is a `LandingView` composer the endpoint calls instead of a
+query it injects.
+
+*The landing destination is now a method call, and nothing marks it as a product decision.* "Sign-in
+lands on the dashboard" is expressed as one line in `AuthEndpoints`. If it ever becomes per-user —
+last view, a configurable home — that is a change here, and there is no type or field that says so.
+The previous design at least had the virtue of being obviously incomplete.
+
+*The extension bag erases the declared type, and serialization depends on it.* `views` is placed
+into a `Dictionary<string, object?>`, so what the serializer writes is determined by the runtime
+element type at the call site. `IReadOnlyList<ViewNode>` writes the `type` discriminator; a
+`MessageView[]` passed directly writes the properties without it, and the frontend's closed-union
+parser fails on a payload the backend considers fine. This is the same class of hole as the
+`[JsonDerivedType]` mismatch under *Known limitations*: the union is closed to the compiler and open
+to the serializer. The guard is an endpoint test asserting that every element of a 401 body's
+`views` has a `type`, not the type system.
+
+*The shell renders from two shapes.* A view can now arrive on a 200 body or inside a problem's
+extensions, and a client that unwraps only the first silently drops every error view — which
+presents as a failed login that does nothing at all. The mitigation is placement, not discipline:
+`CommandRunner` normalizes both into one `ViewNode[]` before anything downstream sees a response, so
+there is exactly one place that knows there were ever two shapes.
 
 ---
 
