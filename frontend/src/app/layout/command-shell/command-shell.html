@@ -48,7 +48,7 @@
         @default {
           @if (activeCommand(); as sel) {
             <span class="say">{{ sel.description }}</span>
-            <!-- <span class="status"><span class="cmd">{{ sel.command }}</span></span> -->
+            <span class="status"><span class="cmd">{{ sel.command }}</span></span>
           } @else if (query().length > 0) {
             <span class="say">"{{ query() }}"</span>
             <span class="status"><span class="cmd">search</span></span>
@@ -65,7 +65,7 @@
         <img class="avatar" src="/static/imperabook-icon.svg" alt="" aria-hidden="true" />
 
         @if (parameter(); as param) {
-          <span class="user">{{ param.prompt }}:</span>
+          <span class="inputfield">{{ param.prompt }}:</span>
         }
 
         <!--
