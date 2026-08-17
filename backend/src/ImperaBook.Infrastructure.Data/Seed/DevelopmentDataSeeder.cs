@@ -1,11 +1,16 @@
 using ImperaBook.Infrastructure.Data.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace ImperaBook.Infrastructure.Data;
 
 public static class DevelopmentDataSeeder
 {
-    public static async Task SeedAsync(DbContext ctx, CancellationToken ct)
+    public static async Task SeedAsync(
+        DbContext ctx,
+        UserManager<UserEntity> users,
+        CancellationToken ct
+    )
     {
         if (await ctx.Set<BookEntity>().AnyAsync(ct))
             return;
@@ -13,15 +18,25 @@ public static class DevelopmentDataSeeder
         var ownerId = Guid.Parse("22222222-2222-2222-2222-222222222222");
         var libraryId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
-        ctx.Set<UserEntity>()
-            .Add(
-                new UserEntity
-                {
-                    Id = ownerId,
-                    FirstName = "John",
-                    LastName = "Doe",
-                }
+        var owner = new UserEntity
+        {
+            Id = ownerId,
+            UserName = "john",
+            Email = "john.doe@example.com",
+            FirstName = "John",
+            LastName = "Doe",
+        };
+
+        var created = await users.CreateAsync(owner, "startT123!!");
+
+        if (!created.Succeeded)
+        {
+            var reasons = string.Join(
+                "; ",
+                created.Errors.Select(e => $"{e.Code}: {e.Description}")
             );
+            throw new InvalidOperationException($"Seeding the development user failed. {reasons}");
+        }
 
         ctx.Set<LibraryEntity>()
             .Add(
