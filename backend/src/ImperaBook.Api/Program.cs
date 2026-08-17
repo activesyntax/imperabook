@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ImperaBook.Api.Authentication;
 using ImperaBook.API.Endpoints;
 using ImperaBook.API.Endpoints.Data;
 using ImperaBook.Infrastructure.Data;
@@ -14,6 +15,8 @@ var connectionString =
     );
 
 builder.Services.AddInfrastructure(connectionString);
+builder.Services.AddImperaBookAuthentication();
+
 builder.Services.AddProblemDetails();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

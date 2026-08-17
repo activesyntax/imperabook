@@ -17,6 +17,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddDbContext<ImperaBookDbContext>(options =>
             options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention()
         );
+
         services.AddScoped<IBookWriteRepository, BookWriteRepository>();
         services.AddScoped<IAuthorWriteRepository, AuthorWriteRepository>();
         services.AddScoped<ILibraryQueries, LibraryQueries>();
