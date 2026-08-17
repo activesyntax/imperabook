@@ -36,7 +36,6 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-// todo: remove duplilcate UseStaticFiles
 app.UseStaticFiles(
     new StaticFileOptions
     {
@@ -45,7 +44,14 @@ app.UseStaticFiles(
             ctx.Context.Response.Headers.CacheControl = "public, max-age=3600",
     }
 );
+
 app.UseStaticFiles();
+
+if (app.Configuration.GetValue("RunMigrationsOnStartup", false))
+{
+    using var scope = app.Services.CreateScope();
+    scope.ServiceProvider.GetRequiredService<ImperaBookDbContext>().Database.Migrate();
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -58,15 +64,15 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapAuthEndpoints();
 app.MapCommandEndpoints();
 app.MapImageEndpoints();
 
-if (app.Configuration.GetValue("RunMigrationsOnStartup", false))
-{
-    using var scope = app.Services.CreateScope();
-    scope.ServiceProvider.GetRequiredService<ImperaBookDbContext>().Database.Migrate();
-}
-app.MapFallbackToFile("index.html");
+app.MapFallbackToFile("index.html").AllowAnonymous();
 
 app.Run();
