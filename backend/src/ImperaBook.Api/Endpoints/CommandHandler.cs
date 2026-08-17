@@ -66,9 +66,23 @@ public static class CommandHandler
                 : [LoginIllustration, new MessageView(error, MessageKind.Error)]
         );
 
+    /// <summary>
+    /// The response to `login` when a session already exists. Not an error: the request was
+    /// valid and the answer is the current state.
+    /// </summary>
+    internal static CommandResult AlreadySignedIn(string? username) =>
+        new([
+            new MessageView(
+                username is null
+                    ? "You are already signed in."
+                    : $"You are already signed in as {username}.",
+                MessageKind.Info
+            ),
+        ]);
+
     internal static async Task<CommandResult> LoggedIn(
         IDashboardQueries dashboard,
-        string username,
+        string displayName,
         CancellationToken ct
     )
     {
@@ -76,7 +90,7 @@ public static class CommandHandler
 
         ViewNode[] views =
         [
-            // new MessageView($"Signed in as {username}.", MessageKind.Success),
+            // new MessageView($"Welcome back, {displayName}.", MessageKind.Success),
             .. summary.Views,
         ];
 
