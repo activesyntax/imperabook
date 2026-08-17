@@ -1,8 +1,9 @@
+using Microsoft.AspNetCore.Identity;
+
 namespace ImperaBook.Infrastructure.Data.Entities;
 
-public class UserEntity
+public class UserEntity : IdentityUser<Guid>
 {
-    public Guid Id { get; set; }
     public string FirstName { get; set; } = "";
     public string LastName { get; set; } = "";
 }

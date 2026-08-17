@@ -20,5 +20,11 @@ public sealed class LibraryEntityConfiguration : IEntityTypeConfiguration<Librar
         builder.Property(x => x.PhotoHash).HasColumnType("char(64)");
 
         builder.HasIndex(x => x.OwnerId);
+
+        builder
+            .HasOne<UserEntity>()
+            .WithMany()
+            .HasForeignKey(x => x.OwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
