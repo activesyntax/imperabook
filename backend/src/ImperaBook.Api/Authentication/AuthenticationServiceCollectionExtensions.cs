@@ -14,7 +14,10 @@ public static class AuthenticationServiceCollectionExtensions
     // the persistence library would mean a FrameworkReference to the whole web stack
     // from a project whose only concern is rows. The EF store below is the one line that
     // reaches back into Infrastructure, and it reaches only for the DbContext.
-    public static IServiceCollection AddImperaBookAuthentication(this IServiceCollection services)
+    public static IServiceCollection AddImperaBookAuthentication(
+        this IServiceCollection services,
+        IWebHostEnvironment environment
+    )
     {
         services
             .AddIdentityCore<UserEntity>(options =>
@@ -65,11 +68,14 @@ public static class AuthenticationServiceCollectionExtensions
             options.Cookie.HttpOnly = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
 
-            // Not Always: a self-hosted instance on a LAN over plain HTTP is a realistic
-            // deployment, and Always would mean the cookie is never set at all — a login
-            // that reports success and does nothing. Revisit for the cloud tier, where
-            // Always (and a __Host- prefix) is correct.
-            options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+            // Always in production, where the demo runs behind HTTPS. SameAsRequest in
+            // development because a browser will not store a Secure cookie over plain
+            // http://localhost — the login would report success and the session would
+            // never exist. A self-hosted LAN instance on plain HTTP is the case this
+            // will have to answer for again; today it is served by not being production.
+            options.Cookie.SecurePolicy = environment.IsDevelopment()
+                ? CookieSecurePolicy.SameAsRequest
+                : CookieSecurePolicy.Always;
 
             options.ExpireTimeSpan = TimeSpan.FromDays(14);
             options.SlidingExpiration = true;

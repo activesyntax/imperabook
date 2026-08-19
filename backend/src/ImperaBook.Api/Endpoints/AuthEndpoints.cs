@@ -9,14 +9,15 @@ namespace ImperaBook.API.Endpoints;
 
 public static class AuthEndpoints
 {
-    // One message for every rejection reason. Naming which of "no such user", "wrong
-    // password" or "locked out" occurred would let anyone probe the instance for valid
-    // usernames. The cost is real and worth stating: a locked-out user is told their
-    // password is wrong, and retrying will not help them until the window expires.
     private const string RejectedMessage = "Username or password is incorrect.";
 
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapGet("/api/auth/bootstrap", Bootstrap)
+            .WithName("Bootstrap")
+            .AllowAnonymous()
+            .Produces<BootstrapResponse>(StatusCodes.Status200OK);
+
         app.MapPost("/api/auth/login", Login)
             .WithName("Login")
             .AllowAnonymous()
@@ -24,6 +25,15 @@ public static class AuthEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         return app;
+    }
+
+    private static Ok<BootstrapResponse> Bootstrap(HttpContext http)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+
+        return TypedResults.Ok(
+            new BootstrapResponse(CommandCatalog.Login, CommandHandler.LoginScreen().Views)
+        );
     }
 
     private static async Task<Results<Ok<CommandResult>, ProblemHttpResult>> Login(
@@ -34,10 +44,6 @@ public static class AuthEndpoints
         CancellationToken ct
     )
     {
-        // `login` is the one anonymous route an authenticated request can still reach, so
-        // this branch is not politeness. Without it, a mistyped second `login` would run
-        // PasswordSignInAsync, fail, and return the login screen — while the original
-        // session is in fact still valid. The user would believe they had been thrown out.
         if (principal.Identity?.IsAuthenticated == true)
         {
             return TypedResults.Ok(CommandHandler.AlreadySignedIn(principal.Identity.Name));
@@ -50,10 +56,6 @@ public static class AuthEndpoints
             return Rejected();
         }
 
-        // lockoutOnFailure: true is what makes the lockout options configured in
-        // AddIdentityCore actually count failures — it is off by default.
-        // isPersistent: true so the cookie survives a browser restart; the session's
-        // real bound is ExpireTimeSpan (14 days) and the security stamp check.
         var result = await signIn.PasswordSignInAsync(
             user,
             request.Password,
@@ -85,3 +87,5 @@ public static class AuthEndpoints
 }
 
 public sealed record LoginRequest(string Username, string Password);
+
+public sealed record BootstrapResponse(CommandDescriptor Command, IReadOnlyList<ViewNode> Views);

@@ -66,10 +66,6 @@ public static class CommandHandler
                 : [LoginIllustration, new MessageView(error, MessageKind.Error)]
         );
 
-    /// <summary>
-    /// The response to `login` when a session already exists. Not an error: the request was
-    /// valid and the answer is the current state.
-    /// </summary>
     internal static CommandResult AlreadySignedIn(string? username) =>
         new([
             new MessageView(

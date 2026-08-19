@@ -97,28 +97,30 @@ public static class CommandCatalog
         new("help", "Show available commands", []) { Group = CommandGroup.Application, Order = 3 },
         // ACCOUNT
         new("account", "Account settings", []) { Group = CommandGroup.Account, Order = 1 },
-        new(
-            "login",
-            "Enter into your library",
-            [
-                new("username", "Username", true)
-                {
-                    Hint = "Please provide your username",
-                    Example = "johndoe",
-                    Credential = CredentialRole.Username,
-                },
-                new("password", "Password", true)
-                {
-                    Hint = "Please provide your password",
-                    Credential = CredentialRole.Password,
-                },
-            ]
-        )
-        {
-            Group = CommandGroup.Account,
-            Order = 2,
-            Endpoint = "/api/auth/login",
-        },
+        Login,
         new("logout", "Leave your library", []) { Group = CommandGroup.Account, Order = 3 },
     ];
+
+    public static readonly CommandDescriptor Login = new(
+        "login",
+        "Enter into your library",
+        [
+            new("username", "Username", true)
+            {
+                Hint = "Please provide your username",
+                Example = "johndoe",
+                Credential = CredentialRole.Username,
+            },
+            new("password", "Password", true)
+            {
+                Hint = "Please provide your password",
+                Credential = CredentialRole.Password,
+            },
+        ]
+    )
+    {
+        Group = CommandGroup.Account,
+        Order = 2,
+        Endpoint = "/api/auth/login",
+    };
 }
