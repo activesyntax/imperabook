@@ -55,6 +55,17 @@ const step = (state: ShellState, effects: readonly Effect[] = []): Step => ({ st
 
 export interface ShellDeps {
   readonly suggestionsFor: (query: string) => readonly CommandSpec[];
+
+  /**
+   * A parancs, amit a shellnek nincs miért nem futtatnia. Session nélkül a jegyzék
+   * egyetlen elemű, tehát a `browsing` — ahol a felhasználó választ — nem létező
+   * választást kínálna: üres sáv, egyetlen lehetőséggel, amit ki kell találni.
+   *
+   * Ez nem a komponens beavatkozása az állapotgépbe, hanem a gép bemenete, ugyanúgy,
+   * ahogy a `suggestionsFor` is az. Ettől lesz minden tétlenné válás — indulás, kilépés,
+   * megszakítás, visszautasított bejelentkezés — ugyanaz az egy átmenet.
+   */
+  readonly forcedCommand: () => CommandSpec | undefined;
 }
 
 // ── származtatott nézetek ───────────────────────────────────────────────────
@@ -131,9 +142,30 @@ export function credentialModeOf(state: ShellState): boolean {
 export function transition(state: ShellState, input: UiInput, deps: ShellDeps): Step {
   switch (state.kind) {
     case 'browsing': return fromBrowsing(state, input, deps);
-    case 'collecting': return fromCollecting(state, input);
-    case 'running': return fromRunning(state, input);
+    case 'collecting': return fromCollecting(state, input, deps);
+    case 'running': return fromRunning(state, input, deps);
   }
+}
+
+/**
+ * A kezdőállapot, ha a jegyzék már betöltött. A gép `browsing()`-gal jön létre, mert a
+ * komponens a jegyzék előtt épül fel; ez az a lépés, ami utólag újraértékeli.
+ */
+export function initial(deps: ShellDeps): Step {
+  return idle(deps);
+}
+
+/**
+ * A tétlen állapot — ahányszor a shellnek nincs dolga. A `forcedCommand` létezése maga az
+ * állítás, hogy nincs mit választani, és a gép ilyenkor nem vár, hanem lép.
+ *
+ * Nem ciklizál: a kényszerített parancs `collecting` vagy `running` állapotba visz, tehát
+ * a következő tétlenné válás csak azután jöhet, hogy az véget ért — és ha addigra van
+ * session, a `forcedCommand` már `undefined`-ot ad.
+ */
+function idle(deps: ShellDeps): Step {
+  const forced = deps.forcedCommand();
+  return forced === undefined ? step(browsing()) : start(browsing(), forced);
 }
 
 function fromBrowsing(s: Browsing, i: UiInput, deps: ShellDeps): Step {
@@ -142,25 +174,25 @@ function fromBrowsing(s: Browsing, i: UiInput, deps: ShellDeps): Step {
     case 'move': return step(moved(s, i.dir, deps));
     case 'commit': return committed(s, deps);
     case 'submit': return start(s, selectedOf(s, deps));
-    case 'cancel': return step(browsing());   // parancsmódban az Escape csak ürít
-    case 'back':
-    case 'completed': return step(s);
+    case 'cancel': return idle(deps);   // parancsmódban az Escape csak ürít
+    case 'back': return step(s);
+    case 'completed': return idle(deps);
   }
 }
 
 /** A teljes bevitelmódot a paramétergép kezeli; a shell csak a kilépést fordítja le. */
-function fromCollecting(s: Collecting, i: UiInput): Step {
+function fromCollecting(s: Collecting, i: UiInput, deps: ShellDeps): Step {
   const outcome = Param.transition(s.params, i);
 
   switch (outcome.kind) {
     case 'prompting': return step({ ...s, params: outcome.state });
     case 'done': return step(running(s.cmd), [{ kind: 'run', cmd: s.cmd, answers: outcome.answers }]);
-    case 'aborted': return step(browsing());
+    case 'aborted': return idle(deps);
   }
 }
 
-function fromRunning(s: Running, i: UiInput): Step {
-  return i.kind === 'completed' ? step(browsing()) : step(s);
+function fromRunning(s: Running, i: UiInput, deps: ShellDeps): Step {
+  return i.kind === 'completed' ? idle(deps) : step(s);
 }
 
 // ── parancsmód részletei ────────────────────────────────────────────────────

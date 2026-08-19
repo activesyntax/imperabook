@@ -39,6 +39,8 @@ public sealed record CommandDescriptor(
 
     [JsonIgnore]
     public CommandAccess Access { get; init; }
+
+    public bool RefreshesSession { get; init; }
 }
 
 public sealed record CommandParameter(string Name, string Prompt, bool Required)
@@ -91,6 +93,7 @@ public static class CommandCatalog
         Order = 2,
         Endpoint = "/api/auth/login",
         Access = CommandAccess.Anonymous,
+        RefreshesSession = true,
     };
 
     public static readonly IReadOnlyList<CommandDescriptor> All =
@@ -145,6 +148,11 @@ public static class CommandCatalog
         // ACCOUNT
         new("account", "Account settings", []) { Group = CommandGroup.Account, Order = 1 },
         Login,
-        new("logout", "Leave your library", []) { Group = CommandGroup.Account, Order = 3 },
+        new("logout", "Leave your library", [])
+        {
+            Group = CommandGroup.Account,
+            Order = 3,
+            RefreshesSession = true,
+        },
     ];
 }

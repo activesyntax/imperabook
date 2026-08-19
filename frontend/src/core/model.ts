@@ -20,4 +20,5 @@ export interface CommandSpec {
   readonly group?: CommandGroup;
   readonly order?: number;
   readonly endpoint?: string;
+  readonly refreshesSession?: boolean;
 }

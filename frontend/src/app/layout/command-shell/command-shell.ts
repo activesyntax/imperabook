@@ -12,6 +12,7 @@ import {
 
 import { CommandRunner } from '@app/commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
+import { CommandRegistry } from '@app/commands/command-registry';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { resultOfError } from '@app/commands/command-error';
 import { UiInput } from './ui-input';
@@ -37,11 +38,22 @@ const COMMAND_FIELD: FieldAttrs = {
 })
 export class CommandShell {
   private readonly commands = inject(CommandProvider);
+  private readonly registry = inject(CommandRegistry);
   private readonly runner = inject(CommandRunner);
   private readonly store = inject(WorkspaceStore);
 
   private readonly deps: Shell.ShellDeps = {
     suggestionsFor: (query) => this.commands.suggestionsFor(query, undefined),
+
+    // Session nélkül a jegyzék pontosan azt tartalmazza, amit futtatni lehet. Egyetlen
+    // elem: nincs mit választani, tehát a gép nem vár egy üres sávval, hanem elindítja.
+    // Több vagy nulla elem: van választás, vagy még nincs jegyzék — a gép szabad marad.
+    forcedCommand: () => {
+      if (this.registry.authenticated()) return undefined;
+
+      const available = this.registry.commands();
+      return available.length === 1 ? available[0] : undefined;
+    },
   };
 
   private readonly state = signal<Shell.ShellState>(Shell.browsing());
@@ -97,6 +109,12 @@ export class CommandShell {
     // a viewChild jelzés akkor és csak akkor változik, ha MÁSIK elem került a
     // helyére, tehát a csere után az új elem azonnal fókuszt kap (ADR 25).
     effect(() => this.focus(this.bar()?.nativeElement));
+
+    // A gép `browsing()`-gal jön létre, mert a komponens a jegyzék előtt épül fel — a
+    // `forcedCommand` ekkor még semmit nem tudna mondani. Amint a jegyzék megvan, a
+    // tétlen állapot újraértékelődik. Ez az egyetlen pont, ahol a komponens kezdeményez,
+    // és csak azért, mert a betöltés aszinkron; a döntés magában a gépben van.
+    void this.registry.ready().then(() => this.apply(Shell.initial(this.deps)));
   }
 
   // ── DOM → UiInput ─────────────────────────────────────────────────────────
@@ -140,7 +158,10 @@ export class CommandShell {
   // ── állapotgép ────────────────────────────────────────────────────────────
 
   private send(input: UiInput): void {
-    const { state, effects } = Shell.transition(this.state(), input, this.deps);
+    this.apply(Shell.transition(this.state(), input, this.deps));
+  }
+
+  private apply({ state, effects }: Shell.Step): void {
     this.state.set(state);
 
     for (const effect of effects) void this.perform(effect);

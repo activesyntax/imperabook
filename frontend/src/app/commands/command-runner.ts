@@ -42,10 +42,7 @@ export class CommandRunner {
         : this.http.post<CommandResult>(CONTROL_CHANNEL, controlBody(cmd, answers)),
     );
 
-    // A saját végpontra menő parancs a session állapotát változtathatja meg, és a jegyzék
-    // ettől függ. Az `endpoint` jelenléte ma pontosan a `login`-t jelöli; ha valaha mást is,
-    // ez a sor lesz az, ami túl tágan szól — a jelölés akkor válik külön mezővé.
-    if (endpoint !== undefined) {
+    if (cmd.refreshesSession === true) {
       await this.registry.refresh();
     }
 
