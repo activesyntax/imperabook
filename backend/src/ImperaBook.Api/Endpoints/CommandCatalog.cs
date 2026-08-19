@@ -16,6 +16,12 @@ public enum CredentialRole
     Password,
 }
 
+public enum CommandAccess
+{
+    Authenticated,
+    Anonymous,
+}
+
 public sealed record CommandDescriptor(
     string Command,
     string Description,
@@ -30,6 +36,9 @@ public sealed record CommandDescriptor(
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Endpoint { get; init; }
+
+    [JsonIgnore]
+    public CommandAccess Access { get; init; }
 }
 
 public sealed record CommandParameter(string Name, string Prompt, bool Required)
@@ -46,6 +55,44 @@ public sealed record CommandParameter(string Name, string Prompt, bool Required)
 
 public static class CommandCatalog
 {
+    static CommandCatalog()
+    {
+        // Static field initializers run in declaration order, so a descriptor referenced
+        // by All before its own field is initialized lands in the list as null — and the
+        // failure surfaces later, elsewhere, as a NullReferenceException over the catalog.
+        // Better here, at startup, naming the problem.
+        if (All.Any(c => c is null))
+        {
+            throw new InvalidOperationException(
+                "CommandCatalog.All contains a null entry: a referenced descriptor is declared after All."
+            );
+        }
+    }
+
+    public static readonly CommandDescriptor Login = new(
+        "login",
+        "Enter into your library",
+        [
+            new("username", "Username", true)
+            {
+                Hint = "Please provide your username",
+                Example = "johndoe",
+                Credential = CredentialRole.Username,
+            },
+            new("password", "Password", true)
+            {
+                Hint = "Please provide your password",
+                Credential = CredentialRole.Password,
+            },
+        ]
+    )
+    {
+        Group = CommandGroup.Account,
+        Order = 2,
+        Endpoint = "/api/auth/login",
+        Access = CommandAccess.Anonymous,
+    };
+
     public static readonly IReadOnlyList<CommandDescriptor> All =
     [
         new(
@@ -100,27 +147,4 @@ public static class CommandCatalog
         Login,
         new("logout", "Leave your library", []) { Group = CommandGroup.Account, Order = 3 },
     ];
-
-    public static readonly CommandDescriptor Login = new(
-        "login",
-        "Enter into your library",
-        [
-            new("username", "Username", true)
-            {
-                Hint = "Please provide your username",
-                Example = "johndoe",
-                Credential = CredentialRole.Username,
-            },
-            new("password", "Password", true)
-            {
-                Hint = "Please provide your password",
-                Credential = CredentialRole.Password,
-            },
-        ]
-    )
-    {
-        Group = CommandGroup.Account,
-        Order = 2,
-        Endpoint = "/api/auth/login",
-    };
 }

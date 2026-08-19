@@ -2,6 +2,8 @@ using CSharpFunctionalExtensions;
 using ImperaBook.API.Views;
 using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
+using ImperaBook.Infrastructure.Data.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace ImperaBook.API.Endpoints;
 
@@ -91,5 +93,15 @@ public static class CommandHandler
         ];
 
         return new CommandResult(views);
+    }
+
+    internal static async Task<CommandResult> SignOut(SignInManager<UserEntity> signIn)
+    {
+        await signIn.SignOutAsync();
+
+        return new CommandResult([
+            new MessageView("Signed out.", MessageKind.Info),
+            .. LoginScreen().Views,
+        ]);
     }
 }
