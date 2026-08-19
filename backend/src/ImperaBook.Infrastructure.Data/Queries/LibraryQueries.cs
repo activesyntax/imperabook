@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
 using ImperaBook.Application;
+using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ImperaBook.Infrastructure.Data.Queries;
@@ -56,5 +57,15 @@ public sealed class LibraryQueries : ILibraryQueries
             TotalPages: totalPages,
             BooksWithPageCount: booksWithPageCount
         );
+    }
+
+    public async Task<Maybe<Guid>> GetIdByOwner(Guid ownerId, CancellationToken ct)
+    {
+        var id = await _db.Set<LibraryEntity>()
+            .Where(l => l.OwnerId == ownerId)
+            .Select(l => (Guid?)l.Id)
+            .SingleOrDefaultAsync(ct);
+
+        return id is null ? Maybe<Guid>.None : Maybe<Guid>.From(id.Value);
     }
 }

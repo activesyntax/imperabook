@@ -9,6 +9,7 @@ public static class DevelopmentDataSeeder
     public static async Task SeedAsync(
         DbContext ctx,
         UserManager<UserEntity> users,
+        string password,
         CancellationToken ct
     )
     {
@@ -27,7 +28,7 @@ public static class DevelopmentDataSeeder
             LastName = "Doe",
         };
 
-        var created = await users.CreateAsync(owner, "startT123!!");
+        var created = await users.CreateAsync(owner, password);
 
         if (!created.Succeeded)
         {

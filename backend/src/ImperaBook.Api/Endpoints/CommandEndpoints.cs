@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CSharpFunctionalExtensions;
 using ImperaBook.API.Views;
 using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
@@ -42,10 +43,6 @@ public static class CommandEndpoints
         return app;
     }
 
-    // TODO: get valid library id from UserQueries. the users library should be
-    // displayed
-    static readonly Guid LibraryId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-
     private static async Task<Results<Ok<CommandResult>, ProblemHttpResult>> Dispatch(
         CommandRequest request,
         ClaimsPrincipal principal,
@@ -54,15 +51,9 @@ public static class CommandEndpoints
         IBookQueries books,
         IAuthorQueries authors,
         ILibraryQueries libraries,
-        // IUserQueries users,
         CancellationToken ct
     )
     {
-        // The route is behind the fallback policy, so an anonymous request cannot arrive
-        // here today. The check stays because the policy is route-level and access is
-        // per-command: the moment a second anonymous command opens the route, this is the
-        // only enforcement left. An unknown command is null here and falls through to the
-        // throw below rather than being reported as a permission problem.
         var descriptor = CommandCatalog.All.SingleOrDefault(c => c.Command == request.Command);
 
         if (
@@ -73,10 +64,13 @@ public static class CommandEndpoints
             return NotAuthenticated(request.Command);
         }
 
+        var libraryId = await CurrentLibraryId(principal, libraries, ct);
         return request.Command switch
         {
             "dashboard" => TypedResults.Ok(await CommandHandler.Dashboard(dashboard, ct)),
-            "library" => TypedResults.Ok(await CommandHandler.Library(libraries, LibraryId, ct)),
+            "library" => libraryId.TryGetValue(out var id)
+                ? TypedResults.Ok(await CommandHandler.Library(libraries, id, ct))
+                : NoLibrary(),
             "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
             "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
 
@@ -84,10 +78,8 @@ public static class CommandEndpoints
             "about" => TypedResults.Ok(new About().ToCommandResult()),
             "settings" => TypedResults.Ok(new Settings().ToCommandResult()),
 
-            // Reachable only with a session: the login screen belongs to the bootstrap
-            // route and to the rejection path, both of which serve a client that has none.
-            "login" => TypedResults.Ok(CommandHandler.AlreadySignedIn(principal.Identity?.Name)),
-            "logout" => TypedResults.Ok(await CommandHandler.SignOut(signIn)),
+            "login" => TypedResults.Ok(CommandHandler.LoginScreen()),
+            "logout" => TypedResults.Ok(await CommandHandler.Logout(signIn)),
 
             "account"
             or "add book"
@@ -133,6 +125,34 @@ public static class CommandEndpoints
                 ["code"] = "not_authenticated",
                 ["views"] = CommandHandler.LoginScreen().Views,
             }
+        );
+
+    private static async Task<Maybe<Guid>> CurrentLibraryId(
+        ClaimsPrincipal principal,
+        ILibraryQueries libraries,
+        CancellationToken ct
+    )
+    {
+        var subject = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        // A session without a parseable user id is not a user error, it is a broken
+        // principal — an authenticated request whose identity says nothing. Fail loud.
+        if (!Guid.TryParse(subject, out var userId))
+        {
+            throw new InvalidOperationException(
+                "Authenticated principal carries no parseable user id."
+            );
+        }
+
+        return await libraries.GetIdByOwner(userId, ct);
+    }
+
+    private static Results<Ok<CommandResult>, ProblemHttpResult> NoLibrary() =>
+        TypedResults.Problem(
+            statusCode: StatusCodes.Status404NotFound,
+            title: "No library",
+            detail: "This account has no library.",
+            extensions: new Dictionary<string, object?> { ["code"] = "no_library" }
         );
 }
 

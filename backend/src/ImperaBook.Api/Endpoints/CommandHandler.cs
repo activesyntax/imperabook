@@ -95,7 +95,7 @@ public static class CommandHandler
         return new CommandResult(views);
     }
 
-    internal static async Task<CommandResult> SignOut(SignInManager<UserEntity> signIn)
+    internal static async Task<CommandResult> Logout(SignInManager<UserEntity> signIn)
     {
         await signIn.SignOutAsync();
 

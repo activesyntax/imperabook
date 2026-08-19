@@ -21,4 +21,6 @@ public interface ILibraryQueries
     Task<Maybe<LibraryDetail>> GetLibrary(Guid id, CancellationToken ct);
 
     Task<LibraryStatistics> GetStatistics(Guid libraryId, CancellationToken ct);
+
+    Task<Maybe<Guid>> GetIdByOwner(Guid ownerId, CancellationToken ct);
 }
