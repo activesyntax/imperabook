@@ -1,14 +1,11 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 
 import { CommandParameter, CommandSpec } from '@core/model';
 import type { CommandResult } from '@workspace/views/view-node';
+import { CommandRegistry } from '@app/commands/command-registry';
 
-/**
- * A begyűjtött válaszok: paraméternév → érték. Az `undefined` a meg nem
- * válaszolt opcionális mező; a kulcs jelen van, az érték hiányzik.
- */
 export type CommandInput = Readonly<Record<string, string | undefined>>;
 
 /** ADR 18: a vezérlőcsatorna egyetlen végpontja. */
@@ -17,34 +14,60 @@ const CONTROL_CHANNEL = '/api/command';
 @Injectable({ providedIn: 'root' })
 export class CommandRunner {
   private readonly http = inject(HttpClient);
+  private readonly registry = inject(CommandRegistry);
 
   /**
-   * Nyitó kör. MINDIG a vezérlőcsatornán megy — akkor is, ha a parancsnak saját
-   * végpontja van. A nyitás nem visz titkot, csak a parancs nevét, és a válasza
-   * egy nézet: a `login` ajtaja, egy `add book` üres űrlapja.
+   * Nyitó kör. A vezérlőcsatornán megy — kivéve, ha a nézetét már megkaptuk: a `login`
+   * ajtaja a bootstrap válaszában érkezett, és session nélkül a vezérlőcsatorna zárva van.
    */
-  open(cmd: CommandSpec): Promise<CommandResult> {
-    return firstValueFrom(
-      this.http.post<CommandResult>(CONTROL_CHANNEL, { command: cmd.command }),
-    );
+  async open(cmd: CommandSpec): Promise<CommandResult> {
+    const prefetched = this.registry.openedView(cmd.command);
+    if (prefetched !== null) {
+      return prefetched;
+    }
+
+    return this.send(this.http.post<CommandResult>(CONTROL_CHANNEL, { command: cmd.command }));
   }
 
   /**
-   * Commit kör. Itt — és csak itt — számít az `endpoint`: a titkot vivő parancs
-   * nem mehet át a composed-text parseren, mert az naplózódik és nincs
-   * escape-szabálya. A transport az egyetlen elágazási pont.
+   * Commit kör. Itt — és csak itt — számít az `endpoint`: a titkot vivő parancs nem mehet
+   * át a composed-text parseren, mert az naplózódik és nincs escape-szabálya.
    */
-  run(cmd: CommandSpec, answers: CommandInput): Promise<CommandResult> {
+  async run(cmd: CommandSpec, answers: CommandInput): Promise<CommandResult> {
     const endpoint = cmd.endpoint;
 
-    return firstValueFrom(
+    const result = await this.send(
       endpoint !== undefined
         ? this.http.post<CommandResult>(endpoint, directBody(cmd.parameters, answers))
         : this.http.post<CommandResult>(CONTROL_CHANNEL, controlBody(cmd, answers)),
     );
+
+    // A saját végpontra menő parancs a session állapotát változtathatja meg, és a jegyzék
+    // ettől függ. Az `endpoint` jelenléte ma pontosan a `login`-t jelöli; ha valaha mást is,
+    // ez a sor lesz az, ami túl tágan szól — a jelölés akkor válik külön mezővé.
+    if (endpoint !== undefined) {
+      await this.registry.refresh();
+    }
+
+    return result;
+  }
+
+  /**
+   * A 401 nem csak a bejelentkezésnél fordulhat elő: egy lejárt session bármelyik parancs
+   * közben ide vezet. A válasz maga hozza a nézetet (ADR 26), a jegyzéket viszont vissza
+   * kell állítani — különben a shell olyan parancsokat kínál, amiket a szerver már elutasít.
+   */
+  private async send(request: Observable<CommandResult>): Promise<CommandResult> {
+    try {
+      return await firstValueFrom(request);
+    } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        await this.registry.refresh();
+      }
+      throw error;
+    }
   }
 }
-
 // ── vezérlőcsatorna (ADR 17/18) ─────────────────────────────────────────────
 
 function controlBody(cmd: CommandSpec, answers: CommandInput): unknown {

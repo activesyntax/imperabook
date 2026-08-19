@@ -22,9 +22,11 @@ const FEATURED: readonly Command[] = ['add book', 'list books', 'list authors'];
 
 // TODO: command suggestion graph should be used instead of this approach
 function pickFeatured(commands: readonly CommandSpec[]): CommandSpec[] {
-  return FEATURED
+  const featured = FEATURED
     .map(id => commands.find(c => c.command === id))
     .filter((c): c is CommandSpec => c !== undefined);
+
+  return featured.length > 0 ? featured : [...commands];
 }
 
 function rank(commands: readonly CommandSpec[], query: CommandQuery): CommandSpec[] {

@@ -1,11 +1,9 @@
 import {
   Component,
   computed,
-  effect,
   ElementRef,
   HostListener,
   inject,
-  untracked,
   viewChild,
 } from '@angular/core';
 import { CommandRegistry } from '@app/commands/command-registry';
@@ -18,7 +16,6 @@ import { handleKeyboardEvent, KeyboardActions } from '@core/keyboard';
 import { scrollByPage, scrollByStep, scrollToTop, scrollToBottom } from '@core/scroll';
 
 const DASHBOARD_COMMAND = 'dashboard';
-
 
 @Component({
   selector: 'app-workspace',
@@ -37,7 +34,6 @@ export class Workspace {
   private readonly scrollElement = computed(() => this.scrollContainer()?.nativeElement);
 
   private readonly scrollActions: KeyboardActions = {
-
     PageDown: (e) => scrollByPage(this.scrollElement(), 1),
     PageUp: (e) => scrollByPage(this.scrollElement(), -1),
     ArrowDown: (e) => scrollByStep(this.scrollElement(), 1),
@@ -46,36 +42,47 @@ export class Workspace {
     End: (e) => scrollToBottom(this.scrollElement()),
   };
 
-
   @HostListener('document:keydown', ['$event'])
   protected onScrollKeydown(event: KeyboardEvent): void {
-    // console.log('Workspace: onScrollKeydown', event.key);
     handleKeyboardEvent(event, this.scrollActions);
   }
 
   constructor() {
+    void this.startup();
+  }
+
+  /**
+   * Egyszeri indítás, nem `effect()`. A jegyzék bejelentkezés után újratöltődik, és egy
+   * reaktív hatás ilyenkor újra lefutna: a login válaszaként megjelenő dashboardot azonnal
+   * felülírná egy másodikkal. A nyitókép egyszer dől el, az indulásnál.
+   */
+  private async startup(): Promise<void> {
     this.store.setResult(loading());
 
-    effect(() => {
-      if (this.registry.loading()) {
-        return;
-      }
+    try {
+      await this.registry.ready();
+    } catch {
+      this.store.setResult(registryLoadFailed());
+      return;
+    }
 
-      const registryError = this.registry.error();
-      if (registryError) {
-        untracked(() => this.store.setResult(registryLoadFailed()));
-        return;
-      }
+    // Session nélkül a nyitókép a szervertől jött a bootstrapban — nincs mit futtatni,
+    // és a vezérlőcsatorna amúgy is zárva van. A kliens itt nem dönt arról, mit lát egy
+    // be nem jelentkezett felhasználó; megjeleníti, amit kapott.
+    const startupViews = this.registry.startupViews();
+    if (startupViews.length > 0) {
+      this.store.setResult({ views: [...startupViews] });
+      return;
+    }
 
-      const dashboard = this.registry.commands().find((c) => c.command === DASHBOARD_COMMAND);
+    const dashboard = this.registry.commands().find((c) => c.command === DASHBOARD_COMMAND);
 
-      if (!dashboard) {
-        untracked(() => this.store.setResult(commandNotFound()));
-        return;
-      }
+    if (dashboard === undefined) {
+      this.store.setResult(commandNotFound());
+      return;
+    }
 
-      untracked(() => void this.dispatch(dashboard));
-    });
+    await this.dispatch(dashboard);
   }
 
   private async dispatch(command: CommandSpec): Promise<void> {
