@@ -168,11 +168,15 @@ export class CommandShell {
   }
 
   private async perform(effect: Shell.Effect): Promise<void> {
-    // A nyitó kör nem zárja a futást: az állapot bekérés alatt marad, a nézet
-    // mellette érkezik meg. Ezért nincs 'completed'.
     if (effect.kind === 'open') {
       try {
-        this.store.setResult(await this.runner.open(effect.cmd));
+        const view = await this.runner.open(effect.cmd);
+
+        // A `null` azt jelenti, hogy a nyitó körnek nincs mondanivalója — a képernyőn
+        // lévő nézet érvényes marad. A bekérés fut tovább, csak nem cseréltünk hátteret.
+        if (view !== null) {
+          this.store.setResult(view);
+        }
       } catch (error) {
         this.store.setResult(resultOfError(error));
       }

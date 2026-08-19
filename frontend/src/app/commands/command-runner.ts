@@ -20,10 +20,16 @@ export class CommandRunner {
    * Nyitó kör. A vezérlőcsatornán megy — kivéve, ha a nézetét már megkaptuk: a `login`
    * ajtaja a bootstrap válaszában érkezett, és session nélkül a vezérlőcsatorna zárva van.
    */
-  async open(cmd: CommandSpec): Promise<CommandResult> {
+  async open(cmd: CommandSpec): Promise<CommandResult | null> {
     const prefetched = this.registry.openedView(cmd.command);
     if (prefetched !== null) {
       return prefetched;
+    }
+
+    // Session nélkül nincs mit kérni: a vezérlőcsatorna zárva, és a képernyőn már ott van,
+    // amit a szerver mondott. A bekérés nézet nélkül folytatódik.
+    if (!this.registry.authenticated()) {
+      return null;
     }
 
     return this.send(this.http.post<CommandResult>(CONTROL_CHANNEL, { command: cmd.command }));
@@ -58,7 +64,7 @@ export class CommandRunner {
     try {
       return await firstValueFrom(request);
     } catch (error) {
-      if (error instanceof HttpErrorResponse && error.status === 401) {
+      if (error instanceof HttpErrorResponse && error.status === 401 && this.registry.authenticated()) {
         await this.registry.refresh();
       }
       throw error;

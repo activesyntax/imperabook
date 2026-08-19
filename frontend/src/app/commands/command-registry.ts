@@ -75,15 +75,15 @@ export class CommandRegistry {
     return this.pending;
   }
 
-  /**
-   * A `login` nyitó köre már megtörtént: a nézetét a bootstrap hozta. A vezérlőcsatorna
-   * session nélkül zárva van, tehát ez nem optimalizáció, hanem az egyetlen út.
-   */
   openedView(command: string): CommandResult | null {
     const views = this.entryViews();
 
-    return !this.signedIn() && command === this.catalog()[0]?.command && views.length > 0
-      ? { views: [...views] }
-      : null;
+    if (this.signedIn() || command !== this.catalog()[0]?.command || views.length === 0) {
+      return null;
+    }
+
+    this.entryViews.set([]);
+
+    return { views: [...views] };
   }
 }

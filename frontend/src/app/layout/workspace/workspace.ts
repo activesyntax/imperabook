@@ -87,7 +87,12 @@ export class Workspace {
 
   private async dispatch(command: CommandSpec): Promise<void> {
     this.store.setResult(loading());
-    this.store.setResult(await this.runner.open(command));
+
+    const view = await this.runner.open(command);
+
+    if (view !== null) {
+      this.store.setResult(view);
+    }
   }
 }
 
