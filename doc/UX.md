@@ -11,9 +11,9 @@ pattern has a soft spot, it is named rather than hidden.
 **Concept.** The moment `add book` becomes the top-ranked suggestion in the command bar — *before*
 Enter — the workspace renders a draft book: a soft placeholder cover and the fields shown as gentle,
 muted prompts (a ghosted *e.g. The Hobbit* where the title will go, *e.g. Ursula K. Le Guin* for the
-author). As the interactive prompts collect Title, Author, and the rest, the draft fills in live. The
-command bar and the workspace become two views of the same in-progress entity: you answer the prompt,
-you watch the book take shape beside it.
+author). As each quoted value in the composed command is filled, the draft fills in with it. The
+command bar and the workspace become two views of the same in-progress entity — the sentence and the
+book it describes, side by side.
 
 **Why.** A bare command line makes you type into the void and trust that the right thing happened
 after Enter. The draft collapses that gap — the result is visible while you build it, not after.
@@ -29,8 +29,11 @@ terminal.
   command is accepted. This is the deliberate trade for responsive feedback: if the top suggestion
   shifts to a non-create command, the draft simply slides back out (see *Workspace*), so the
   occasional transient draft is cheap rather than jarring.
-- **Prompting:** each answered field updates the draft immediately; the placeholders stay until their
-  fields are filled.
+- **Composing:** the draft is driven by the *parsed state of the buffer*, not by a sequence of
+  answers — the same token list the bar already produces for its own suggestions (DECISIONS 28). A
+  segment whose value is complete lights up its field; deleting the segment puts the placeholder
+  back. Because parameter order is free, fields fill in whatever order the sentence is written, which
+  is one more reason the draft renders the whole book rather than the current step.
 - **Commit:** on the final step the draft is sent to the backend; success resolves the draft card
   into the confirmed detail, and the saved book joins the list view.
 - **Cancel / `Esc`:** the draft slides out and nothing was ever persisted.
@@ -47,7 +50,8 @@ value-like defaults: muted, lower-contrast ghost text phrased as a gentle exampl
 for the title, *e.g. Ursula K. Le Guin* for the author — and a soft, skeletal cover frame rather than
 a mock cover. The point is that an empty slot should read as *type here*, not as a saved book that
 happens to be blank — which is the risk a solid "Untitled" / "Unknown author" carries. The same
-wording appears in the matching prompt, so the prompt and the draft speak with one voice. When a
+wording appears in the connective that fills it, so the command bar and the draft speak with one
+voice. When a
 field is answered, its text snaps from the muted placeholder to the full-contrast committed value,
 and that contrast shift is itself the feedback that the field went from empty to set. Optional fields
 left blank do not linger as ghosts; they collapse to absent (DECISIONS 11).
@@ -64,10 +68,54 @@ affordable.
 orphan row, nothing persisted until the required fields are satisfied and the user commits. This sits
 cleanly inside the existing split: the frontend owns rendering, so a draft is just local view state.
 Validation is unchanged — it runs on commit through the `Result` / ProblemDetails channel
-(DECISIONS 12); the preview is a convenience, never a substitute for it. Focus stays in the command
-bar throughout; the draft is a passenger, it never steals input.
+(DECISIONS 12); the preview is a convenience, never a substitute for it. Reading the buffer to fill
+the draft is lexical, not semantic: the frontend recognizes that a value belongs to the `with title`
+segment, and knows nothing about what `add book` does. Focus stays in the command bar throughout;
+the draft is a passenger, it never steals input.
 
 **Generalizes to.** Any mutating command that targets a single entity. `update book` is the same idea
 with a non-empty starting state — show the selected book, edit it live. `show book`'s detail and the
 add/update drafts are then one surface in three states (read, creating, editing). Scoped to
 `add book` for MVP1; the rest follow once it proves out.
+
+---
+
+## 2. The command bar composes a whole sentence
+
+**Concept.** A command is written as one visible sentence and stays visible until it runs. Accepting
+`add book` lays out its skeleton — the connectives with empty quote pairs, caret in the first, `Tab`
+between them — and as segments accumulate the bar breaks them onto separate lines and grows to fit.
+`Enter` commits, `Esc` clears. The full mechanics are in `COMMANDS.md`; what follows is why.
+
+**Why not a prompt sequence.** Prompting one field at a time is the easier thing to build and the
+worse thing to use, for one reason: it hides the thing being built. Only the current step is on
+screen, so the surrounding context — what has already been given — has to be held in the head, which
+is the exact cost this product exists to remove. Correction is worse still. A typo three fields back
+needs a way back, and in a step machine that way back has to be invented: a keybinding that means
+nothing anywhere else, doing what `←` already does in every text field on the machine. The composed
+sentence needs no such invention, because it never left the text field.
+
+**What being text buys.** A visible command is a value, and values can be handled. It can be
+recalled and re-run with one quoted segment changed — which is what cataloguing several books by the
+same author actually is. It can be copied into a bug report, or out of `help` and pasted. And a user
+who has seen the sentence can eventually type it from scratch, faster than any menu, which is the
+whole promise of a keyboard-first tool. A prompt sequence has none of these properties in principle,
+not merely in this implementation.
+
+**The bar's height is a state readout.** One line means nothing is under composition — and that is
+also when bare `↑` `↓` scroll the workspace. A grown bar means a command is being written, and the
+arrows edit it. The mode is real, but it is legible at a glance rather than remembered, which is the
+condition under which a mode is acceptable here.
+
+**Where it is weakest.** Two places, both named rather than smoothed over.
+
+*The first command a new user meets teaches nothing about this.* `login` collects its credentials in
+dedicated fields, off the buffer, because a password must never be visible, editable, or re-runnable
+(DECISIONS 24/25/27). So the composition syntax is first met at `add book`, which is seven fields
+deep and writing real data. The mitigation is the skeleton — the fields are named in the bar and the
+quotes are pre-placed — and whether that is enough is the first-use question in `TESZTELES-1.md`
+most worth watching.
+
+*A long free-text value fights the form.* A multi-paragraph summary inside a quoted segment is
+genuinely worse here than in a form with a text area, and autoformat does not fix it. Unresolved;
+see `COMMANDS.md`, *Open questions*.

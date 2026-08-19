@@ -280,6 +280,12 @@ grows.)
 
 ## 13. Command input: autocomplete over a closed grammar, not a lenient reverse-parser
 
+> **Extended by ADR 27.** Token-match, the ranking rules and the rejection of a reverse-parser all
+> stand. What changed is what accepting a suggestion *does*: it now inserts a parameter skeleton into
+> the buffer rather than a bare verb. The free parameter order ADR 27 introduces is not the thing
+> rejected here — that was reordering the verb phrase itself; connective-tagged values are named
+> arguments, and their order was never load-bearing.
+
 **Context.** MVP1 is driven by a single command bar over a closed, bare-verb grammar
 (`add book`, `list books`, `search`, …). Partial or mis-ordered input has to resolve to
 *something*, and two strategies were on the table for *where* that resolution happens. The first:
@@ -393,6 +399,13 @@ pointing to it.
 ---
 
 ## 17. Multi-field mutating commands compose one canonical, connective-tagged string; parsed once, on the backend
+
+> **Superseded in part by ADR 27.** The wire form survives intact — one canonical string, a
+> connective per value, unconditional quoting. What no longer applies is everything about *how it is
+> produced*: there is no interactive prompting and no `CommandRunner` composition step, because the
+> user now types the composed string directly. The "MVP1 scope: fixed order, backend parses
+> positionally" section below is void — order is free and the positional matcher was abandoned before
+> it was written (ADR 27, ADR 28).
 
 > **Amended by ADR 18.** The connective/order/quoting reasoning below stands unchanged. What no
 > longer applies is the `route | query | body | text` location split — ADR 18 collapses everything
@@ -1147,6 +1160,10 @@ tables and a reader who has to be told they are unused.
 
 ## 25. Credential steps swap the input element; the command bar is never a credential field
 
+> **Generalized by ADR 27.** Once the command bar became the composition surface, the element swap
+> stopped being a login-specific fix and became the mechanism for a named class: commands whose
+> parameters do not live in the buffer. The reasoning below is unchanged; its scope is wider.
+
 **Context.** The login flow (ADR 24) prompts like any other command, which means it reuses the
 shell's single stable input — one element serving command entry and parameter prompting, with no
 child component per mode. The password step switched that element's `type` to `password`.
@@ -1333,6 +1350,206 @@ there is exactly one place that knows there were ever two shapes.
 
 ---
 
+## 27. The command line is the composition surface; interactive prompting removed
+
+**Context.** ADR 17 settled the wire form — one canonical string, each value preceded by a
+connective, everything quoted — and had `CommandRunner` build it from the answers to a prompt
+sequence. That left two representations stacked on each other: the prompts the user sees, and the
+composed string the system actually works with. Only the first is visible.
+
+The gap is where the cost sits, and it is not aesthetic. A prompt sequence is a state machine the
+user is *inside*: to fix a typo three fields back there has to be a way back, which is either a
+bespoke keybinding or nothing, and the surrounding context — what has already been answered — is
+off screen either way. The composed form has none of those problems, because it is text in a text
+field: the arrows already move through it, the whole command is legible at once, and correction is
+editing rather than navigation. Against that, the prompt sequence's one real advantage is that it
+works with zero prior knowledge.
+
+There is a second cost that only lands later. COMMANDS.md deferred inline parameters to MVP2 as a
+power-user shortcut. Under the prompting model that is a *third* thing — the prompts, the hidden
+composed form, and eventually a typed syntax the user has never seen. The composed form is not a
+shortcut over the prompts; it is the same sentence the system was already writing.
+
+**Decision.** The composed string is the input. The user types it, sees it, and edits it. Interactive
+prompting is removed rather than kept alongside.
+
+*Accepting a suggestion inserts a skeleton, not a word.* Accepting `add book` puts the command's
+connectives into the buffer with empty quote pairs — `add book with title "" by author ""` — cursor
+inside the first pair, `Tab` moving to the next empty one. This is the editor-snippet pattern, and
+it inherits the prompt sequence's teaching role: the fields are named in the buffer, and they are
+all visible at once rather than one at a time.
+
+*Parameter order is free.* `add book by author "George Orwell" with title "1984"` and the same
+segments in the declared order are the same command. This is what a connective bought in the first
+place (ADR 17: named arguments are order-independent because the name is on the value), now spent
+rather than banked.
+
+*Autoformat is a rendering, never the buffer.* Segments are laid out one per line as the user types,
+and the bar grows to fit. No newline enters the buffer and none goes on the wire: `Enter` stays
+commit, the request carries one normalized line, and the layout is free to change without touching
+the contract. The bar's height doubles as the visible state of the composition.
+
+*A command is a value.* Because the whole thing is text, it can be recalled, edited in one place, and
+run again — five books by the same author is one recalled line with one quoted value replaced. It can
+also be copied: a `help` example is paste-ready, and a bug report carries the exact input rather than
+a description of six prompt answers. The prompt sequence cannot do any of this in principle.
+
+*Quoting stays unconditional* (ADR 17), and the skeleton supplies both quote characters, so the
+common path never types one.
+
+**What this removes.** `CommandRunner` no longer composes anything — there is no prompt state
+machine, no per-step answer buffer, no separate cancel semantics for "abort the sequence" versus
+"clear the input". `cancel` / `Esc` clears the buffer. The frontend's remaining jobs are display,
+suggestion, and sending raw text, which is *less* client-side judgment than ADR 17 assigned it, not
+more.
+
+**Commands whose parameters do not live in the buffer.** `login` is not an exception to this model;
+it is a named class within it. Everything that makes the composition surface good — visible,
+editable, re-runnable — is exactly what a password must not be, and ADR 24's "secrets never enter
+the command stream" therefore gets *stronger* here, not weaker: more surfaces now read the buffer.
+The `CommandDescriptor` marks such commands as collecting their parameters off-buffer, and ADR 25's
+structural element swap is how they do it. One consequence is worth stating rather than discovering:
+`login` is likely a new user's first command, so the first command they meet does not teach the
+composition syntax. The mode change is at least visible — the buffer is replaced by dedicated fields
+— which makes it a lesson (secrets live elsewhere) rather than an inconsistency, but the first real
+encounter with the syntax is now `add book`, seven fields deep and writing real data. That is the
+first-use observation `TESZTELES-1.md` should watch above all others.
+
+**Trade-off — this is a scope increase, and it is taken deliberately.** Four costs, named.
+
+*The schedule moves.* Free order requires connective-scanning validation now, which ADR 17 deferred
+to MVP2 on the grounds that MVP1 had a single composed-string caller. The positional matcher is
+abandoned before it was written — which is the cheap direction to discover it in. See ADR 28 for
+what replaces it.
+
+*Bare arrow keys are reopened.* COMMANDS.md separates scroll, select, and page by modifier, and bare
+`↑` `↓` scroll the viewport on the assumption of a single-line bar. A multi-line composition needs
+the arrows for the cursor. The resolution is that the buffer's state decides — empty buffer scrolls,
+open composition moves the caret — and it is defensible only because that state is *visible*: the bar
+is one line or it is not. It is still a mode, and it lands on the part of the movement model
+COMMANDS.md already flags as the thinnest.
+
+*Escaping becomes user-facing.* ADR 17 named this as arriving with the power-user path; it arrives
+now. A quote character inside a title was previously the frontend's problem and invisible; it is now
+syntax the user can hit. The skeleton keeps it rare, not impossible.
+
+*One field resists the form.* A multi-paragraph summary as a quoted segment on a conceptual single
+line is the case where the composition bar is worse than a prompt with a text area, and no amount of
+autoformat fixes it. Recorded unresolved: either summaries stay short in MVP1, or `add book` grows an
+off-buffer step for this one field the way `login` has one for credentials — which would make the
+off-buffer class a general mechanism rather than a security carve-out.
+
+*Discoverability from zero is weaker than a prompt sequence, and cannot be settled from the desk.*
+Prompts need no prior knowledge at all; the skeleton needs the user to notice it and understand that
+the quotes are slots. The bet is that seeing all fields at once teaches more than seeing them one at
+a time, and it is a bet — measurable only by first-use observation.
+
+**Why it is still the right direction.** The asymmetry decides it. Build the composition surface and
+the prompt sequence is not missed, because the skeleton does its guiding work. Build the prompt
+sequence and MVP2 throws it away when inline parameters arrive. One of these two orders discards
+work and the other does not, which is an argument for settling it now rather than later.
+
+---
+
+## 28. Lexing and validation, not parsing; the token list is the shared artifact
+
+**Context.** ADR 27 puts a typed sentence in front of the user, and two things now have to read it:
+the backend, to turn it into a command, and the frontend, to suggest and to give live feedback. The
+obvious framings are both wrong. A grammar-first approach — a parser generator, or hand-written
+recursive descent — builds a machine for decomposing nested structure, and this grammar has none:
+`verb-phrase (connective quoted-value)*` is regular, with no recursion, no nesting and no
+precedence. String manipulation — `split`, `indexOf`, a regex — errs the other way: it produces no
+intermediate representation at all, and an intermediate representation is precisely what both
+consumers need.
+
+**Decision.** A tokenizer, and a validator over its output. Nothing between them called a parser.
+
+*The tokenizer* is a two-state scan (`OutsideValue` / `InsideQuote`) emitting
+`Verb | Connective | QuotedValue | Unknown | UnterminatedQuote`, every token carrying its offset in
+the source text.
+
+*The backend validates the token sequence against the `CommandSpec`* — every connective known, every
+required one present, none repeated, nothing trailing. These are set operations over a flat list, not
+parsing. Failures go out through ADR 12's ProblemDetails, and because tokens carry offsets, the
+failure can say *where*: the client places the caret on the offending segment instead of reporting
+that something, somewhere, is wrong.
+
+*The frontend consumes the same shape for position, not for meaning.* Which connectives has this
+command declared, which are already present, where is the caret — the suggestion for the next segment
+is a set difference. Live feedback (an unterminated quote, a connective that matches nothing) is
+lexical, and that is the line: recognizing that a token is not a known connective is not
+interpretation of the command, and the frontend still learns nothing about what any command *does*.
+Worth stating explicitly, because from outside it looks like the thin-client rule (ADR 15) being
+bent.
+
+**The duplication, and why it is affordable.** Two implementations exist, TypeScript and C#. What
+does *not* duplicate is the vocabulary: connectives are already served by `GET /api/commands`
+(ADR 16), so only the scanning algorithm is written twice, and it is short and stable. What makes it
+safe is that **the frontend tokenizer is a UX device with no authority.** Raw typed text goes on the
+wire — never a reconstruction — and the backend lexes it again; that pass is the only one that
+decides anything. A divergence in the client's scanner produces a bad suggestion, not a bad write.
+The alternative, a single implementation shared by both ends, is examined and rejected in ADR 29.
+
+**The ceiling, named now so the later change is a gate rather than a failure.** This holds exactly as
+long as the grammar stays flat. The moment it wants grouping or chaining —
+`filter (lang "hu" or lang "en")`, piping one command's result into another, which is what the
+README's MVP2 "composition" promises — a lexer and a set-difference validator stop being enough and a
+real parser earns its place. That is a planned upgrade at a known trigger, not a rewrite forced by
+surprise.
+
+**Trade-off.** Two scanners to keep in step, and no compiler enforcing that they agree; the guard is
+that only one of them is authoritative and the other's failure mode is cosmetic. And the validator is
+deliberately less capable than a parser — it can say "this connective is unknown at offset 22" and
+never anything about structure, because there is no structure to describe. If a diagnostic ever wants
+to talk about nesting, that is the ceiling above announcing itself.
+
+---
+
+## 29. The tokenizer stays in C#; a second language enters at the parser, if at all
+
+**Context.** ADR 1 collapsed an earlier polyglot backend into a single language and named what that
+bought: one toolchain, no interop seam. ADR 28's tokenizer reopened the question, because scanning
+and parsing are the workload where an ML-family language is genuinely strongest, and ADR 28 already
+names a future parser with a recursive grammar. The question asked was whether to write the tokenizer
+in F# now, partly as the front half of that parser and partly as a distinguishing skill on the
+portfolio side of the project.
+
+**Decision.** No, not for the tokenizer. The gate for a second language is the parser, and it is not
+open yet.
+
+*The lexer is the wrong candidate on its own merits.* Two states, five token kinds, one loop over
+offsets. There is nothing to pattern-match and no algebra to express, so the language's actual
+strengths go unused — while the costs arrive in full: a second toolchain and build target in CI, and
+a discriminated union that is awkward to consume from the C# side that has to validate it. Paying an
+interop seam and getting none of the benefit is precisely the shape ADR 1 rejected; this case
+illustrates that decision rather than testing it.
+
+*The parser is a real candidate.* If MVP2's composition grammar becomes recursive, closed unions,
+exhaustive matching and parser combinators produce materially better code than the C# equivalent, and
+the interop surface is a single function — `string -> Result<Ast, ParseError>` — which is the seam at
+its thinnest. That is when this is worth revisiting, and only then.
+
+*Fable was considered, because it has a real technical argument and the others do not.* Compiling one
+F# tokenizer to both JavaScript and .NET would remove ADR 28's duplicate scanner outright. It is
+rejected because ADR 28 has already established that the duplication is not a correctness surface —
+the client's scanner is advisory and the server's is authoritative — so the problem being solved does
+not hurt, while the cost lands squarely on the Angular build as a permanent toolchain dependency.
+
+**Trade-off, including the part that is not technical.** The portfolio motive is named rather than
+buried, because it was real: F# is a differentiator in interviews. It is set aside on two grounds.
+It is thin — the market for it is small enough that it functions as a second-round conversation
+topic, not as a first-pass keyword, and this project's differentiator on that axis is already this
+document. And it does not survive contact with the format: an entry reading "F# because it looks
+good" cannot be written in the same voice as the ones around it, and a reader who reaches this file
+is exactly the reader who would notice. A decision log is only worth what its weakest justification
+is worth.
+
+The cost of the decision proper: two scanners rather than one, and an ML-family language kept out of
+a codebase where a small, well-scoped use existed. If the parser arrives, that use returns with a
+better argument behind it.
+
+---
+
 # Known limitations
 
 **`record struct` zero-value.** A `readonly record struct` always permits `default(T)`, which runs no
@@ -1379,6 +1596,13 @@ format change, and costs roughly forty lines plus hand-written caching headers; 
 favours the extension. Note also that assets cannot use `Cache-Control: immutable` the way images can:
 an image's URL is its content, so it can never go stale, while an asset keeps its name across deploys and
 must revalidate.
+
+**Quoting is user-facing syntax with no escape rule yet.** ADR 27 puts the composed string in front
+of the user, so a value containing a double quote — a title with quoted words in it — is now something
+a user can type and the tokenizer can trip over. The skeleton supplies both quote characters and makes
+the case rare, but rare is not handled: MVP1 has no escape convention, and an embedded quote currently
+produces an `UnterminatedQuote` token and a parse error pointing at the wrong offset. The fix is a
+convention (backslash, or a doubled quote) plus a tokenizer state; it is small, and it is not written.
 
 **Polymorphic union membership is not compile-checked.** `[JsonDerivedType(typeof(X), "x")]` takes a
 `Type` argument, and the compiler does not verify that `X` actually derives from the base the

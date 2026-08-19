@@ -4,26 +4,70 @@
 
 ImperaBook is driven by plain-text commands typed into a single command bar.
 
-- Commands are **bare verbs** — you type the command, and the interactive shell then prompts for each parameter in turn. There are no flags or special characters in MVP1.
+- A command is **one sentence, typed in one place**: a verb phrase followed by any number of parameter segments, each a **connective** naming the field and a **quoted value** — `add book by author "George Orwell" with title "1984" published in "1949"`.
+- Parameters are **order-free**. The connective names the value, so the segments can be given in whatever order the sentence comes out in.
 - A few commands carry a fixed qualifier in the name itself (`list incomplete books having no isbn`). These are whole entries in the registry, not a verb plus an argument: the qualifier is drawn from a closed, schema-fixed set, so it can be completed rather than typed. Open values (a language, a year) stay parameters.
-- Required fields are marked `*`. Optional fields can be skipped at the prompt.
-- As you type, the command bar **autocompletes** from a closed command registry using **token-match**: typing `book` surfaces every book command (`add book`, `show book`, `list books`, …), typing `add` surfaces every `add` command. `Tab` / `Enter` accepts the highlighted suggestion. Suggestions are ranked — see *Command suggestion model* below.
+- Required parameters are marked `*`. Optional ones are simply left out of the sentence.
+- As you type, the command bar **autocompletes** from a closed command registry using **token-match**: typing `book` surfaces every book command (`add book`, `show book`, `list books`, …), typing `add` surfaces every `add` command. `Tab` / `Enter` accepts the highlighted suggestion, which inserts the command's **skeleton** — see *Composing a command*. Suggestions are ranked — see *Command suggestion model* below.
 - Any input that does **not** match a known command is handled as a full-text search (the same as the explicit `search` command).
 - Moving through results and drilling into an item are **navigation commands** with keybinding fast-paths (see *Navigation*); they read views, they do not mutate data.
-- `cancel` aborts the current prompt sequence at any point.
+- `cancel` (`Esc`) clears the buffer; nothing composed is ever persisted until `Enter`.
+- **Passwords are never typed into the command bar.** `login` is a command like any other and is completed like any other, but its credential steps replace the bar with dedicated fields (DECISIONS 25/27). Nothing secret enters the composed sentence.
 
-MVP1 has **one library per user**; book operations target it implicitly. Inline parameters for power users (e.g. `add book "The Hobbit" --author "Tolkien"`) are deferred to MVP2.
+MVP1 has **one library per user**; book operations target it implicitly.
+
+---
+
+---
+
+## Composing a command
+
+**The skeleton.** Accepting a suggestion does not type a word, it lays out the command. Accepting
+`add book` puts its connectives in the bar with empty quote pairs:
+
+```
+add book with title "" by author ""
+```
+
+The caret lands inside the first pair; `Tab` moves to the next empty one. Both quote characters are
+supplied, so the common path never types one. The skeleton carries the **required** parameters; the
+optional ones are offered as suggestions once the required ones are filled (see *Suggestion inside a
+command*).
+
+**Autoformat.** As segments accumulate, the bar lays them out one per line and grows to fit:
+
+```
+add book
+  with title "Nineteen Eighty-Four"
+  by author "George Orwell"
+  published in "1949"
+```
+
+The line breaks are **display only** — the buffer holds one line, `Enter` always commits, and what
+travels is a single normalized string. The bar's height is therefore a readout of how much command is
+currently under composition.
+
+**Editing and re-running.** The command is ordinary text in an ordinary text field: the arrow keys,
+`Home` / `End`, word-wise `Ctrl + ←/→` and selection all behave the way they do everywhere else. A
+mistake three fields back is a cursor move, not a special "go back" gesture. A previous command can be
+recalled, one quoted value changed, and run again — which is what cataloguing five books by the same
+author actually looks like. It is also copyable: the examples in `help` can be pasted, and a bug report
+can carry the exact input.
+
+**Quoting.** Every value is quoted, always, whether or not it contains a space. One rule, no
+judgment call about which values need it. MVP1 has **no escape convention**, so a value containing a
+double quote is not yet expressible (DECISIONS, *Known limitations*).
 
 ---
 
 ## Books
 
-| Command | Description | Prompts for |
+| Command | Description | Parameters |
 | --- | --- | --- |
-| `add book` | Catalog a new book | Title*, Subtitle, Author*, Language, Publication year, ISBN, Summary |
-| `update book` | Edit an existing book | Book to edit (select/search), then any of the fields above |
-| `remove book` | Delete a book | Book to remove (select/search), confirmation |
-| `show book` | Show full detail for one book | Book to view (select/search) |
+| `add book` | Catalog a new book | `with title`*, `by author`*, `subtitled`, `in language`, `published in`, `with isbn`, `with summary` |
+| `update book` | Edit an existing book | `named`* (target), then any parameter of `add book` |
+| `remove book` | Delete a book | `named`* (target), then a confirmation |
+| `show book` | Show full detail for one book | `named`* (target) |
 | `list books` | List all books | — |
 | `list incomplete books` | List books with any missing field | — |
 | `list incomplete books having no isbn` | Narrow to books with no ISBN | — |
@@ -33,26 +77,26 @@ MVP1 has **one library per user**; book operations target it implicitly. Inline 
 
 ## Authors
 
-| Command | Description | Prompts for |
+| Command | Description | Parameters |
 | --- | --- | --- |
-| `add author` | Create an author record | Name* |
-| `update author` | Rename an author | Author to edit, new Name |
-| `remove author` | Delete an author | Author to remove, confirmation |
+| `add author` | Create an author record | `named`* |
+| `update author` | Rename an author | `named`*(target), `renamed to`* |
+| `remove author` | Delete an author | `named`* (target), then a confirmation |
 | `list authors` | List all authors | — |
 | `list unattributed authors` | List authors with no books attributed to them | — |
 
 ## Query
 
-| Command | Description | Prompts for |
+| Command | Description | Parameters |
 | --- | --- | --- |
-| `search` | Multi-token full-text search | Search term(s) |
-| `filter` | Structured filtering by metadata | Filter dimensions, built interactively: language, publication year |
+| `search` | Multi-token full-text search | the rest of the line, unquoted and without a connective — the whole remainder *is* the term |
+| `filter` | Structured filtering by metadata | `in language`, `published in` |
 
 > Typing any unrecognized text runs `search` implicitly, so the explicit `search` command is mainly a discoverability affordance.
 
 ## Dashboard
 
-| Command | Description | Prompts for |
+| Command | Description | Parameters |
 | --- | --- | --- |
 | `dashboard` | Render analytical widgets | — (shows collection metrics and the *Needs attention* panel) |
 
@@ -71,7 +115,7 @@ Navigation commands move you between and within views (the item grid, detail, an
 screens that other commands produce). They never mutate data. Each has a keybinding fast-path
 in parentheses; the typed command exists for discoverability and `help`.
 
-| Command | Description | Prompts for |
+| Command | Description | Parameters |
 | --- | --- | --- |
 | `back` | Return to the previous view (`Esc`) | — |
 | `open` | Open the selected item in detail view (`Enter`) | — |
@@ -97,7 +141,7 @@ result view supports to be separated by modifier rather than by letter:
 
 | Movement | Keys | What moves |
 | --- | --- | --- |
-| **Scroll** | `↑` `↓`, `Page Up` / `Page Down` | The viewport. Nothing is selected, nothing is fetched. |
+| **Scroll** | `↑` `↓`, `Page Up` / `Page Down` — *while the command bar is empty* | The viewport. Nothing is selected, nothing is fetched. |
 | **Select** | `Alt` + `↑` `↓` `←` `→` | The selection, one item at a time, in two dimensions across the grid. Brings the selected item into view if it is off screen. |
 | **Page** | `Ctrl + →` / `Ctrl + ←` (`next page` / `prev page`) | The result set. Fetches the adjacent batch from the server. |
 
@@ -111,6 +155,13 @@ The commands are named `next page` and `prev page`, not `next` and `prev`. A bar
 the ambiguity the three-level model can least afford. The noun also gives the suggestion model a
 second entry point: typing `page` surfaces both paging commands, the same way `book` surfaces every
 book command.
+
+**Arrows while composing.** A command under composition is multi-line text, and the arrow keys have
+to move the caret through it — so bare `↑` `↓` scroll the viewport only while the bar is **empty**,
+and move the caret once anything is typed. This is a mode, and it is accepted only because the mode is
+visible without being told: an empty one-line bar scrolls, a bar with a command in it edits. `Alt` +
+arrows (select) and `Ctrl` + arrows (page) are unaffected and work in both states, which keeps the two
+movements that touch the result set reachable without clearing what you were typing.
 
 **Why `Alt` and not `Ctrl` for selection.** `Ctrl + ←/→` is word-wise cursor movement in a text
 field on Windows and Linux, and the command bar is a text field that always has focus. Taking it
@@ -126,19 +177,20 @@ a stationary cursor and the cursor moving inside a stationary viewport are genui
 acts, and collapsing them trades a good experience for a tidier table.
 
 **Known rough edge.** Three levels is still a lot for an interface whose thesis is reduced
-cognitive load, and the boundary between `Page Down` (move within the loaded batch) and `next page`
-(fetch another batch) is not self-evident from the keys alone. The answer is interactive guidance
+cognitive load — four, counting the empty-bar condition above — and the boundary between `Page Down`
+(move within the loaded batch) and `next page` (fetch another batch) is not self-evident from the keys
+alone. The answer is interactive guidance
 rather than documentation: the view states what is available *now* — how much of the result set is
 on screen, and which keys act on it — so the model does not have to be held in the head. Until that
 lands, this is the first-use observation in `TESZTELES-1.md` most worth watching.
 
 ## Shell
 
-| Command | Description | Prompts for |
+| Command | Description | Parameters |
 | --- | --- | --- |
 | `help` | Show available commands | Optional command name for detail |
 | `clear` | Clear the screen | — |
-| `cancel` | Abort the current prompt sequence | — |
+| `cancel` | Clear the command bar (`Esc`) | — |
 | `quit` / `exit` | Exit ImperaBook | — |
 
 ---
@@ -180,17 +232,51 @@ below is the full index.
 4. **Context gates navigation** — navigation commands are suggested only while their view is on screen; otherwise they are hidden, not just deprioritized.
 5. **No match falls through** — if nothing matches a known command, no suggestion is selected; on submit the raw input runs as `search`.
 
+### Suggestion inside a command
+
+Completion does not stop at the verb. Once a command is accepted and its skeleton is in the bar, the
+bar is still reading what is there — and what it reads is a flat list of tokens, each with its
+position (see DECISIONS 28).
+
+- **Remaining connectives are offered.** With the caret outside a quoted value, the suggestions are
+  the command's declared connectives minus the ones already present. Accepting one appends
+  `connective ""` and puts the caret inside.
+- **Optional parameters are discovered here, not memorised.** The skeleton carries only the required
+  ones; everything else appears in this list, which is how a user finds out that `add book` accepts
+  an ISBN.
+- **Lexical problems are shown as they happen.** An unclosed quote, or a word outside a value that
+  matches no known connective, is visible in the bar before `Enter`. This is scanning, not
+  interpretation — the bar knows that a token is not a connective, and nothing about what the command
+  will do.
+- **Nothing is corrected automatically.** As with the verb (ADR 13), an ambiguous or unrecognized
+  segment produces a menu, never a guess, and a command that cannot be validated fails loud on submit
+  with the offending offset (DECISIONS 12/28).
+
 ---
 
 ## Out of scope for MVP1
 
-Deferred to MVP2 or later: **library creation and management** (one library per user in MVP1), **tags and categories** (including tag-based filtering and category distribution on the dashboard), inline parameters/flags, lending (`lend` / `return`), reading status, per-command library switching, batch edit, **marking a field as intentionally absent** for a single book (which is what would let the *Needs attention* list reach zero), ISBN scan, AI cover/page inference, and export utilities. Single-token typo tolerance in suggestions (e.g. `add bok` → `add book`) is also MVP2; word-order reinterpretation (e.g. `book add` → `add book`) is rejected outright, not deferred (see ADR 13).
+Deferred to MVP2 or later: **library creation and management** (one library per user in MVP1), **tags and categories** (including tag-based filtering and category distribution on the dashboard), **command composition** (grouping, boolean conditions, and chaining one command's result into another — the point at which the flat grammar needs a real parser, DECISIONS 28), **an escape convention for quotes inside a value**, lending (`lend` / `return`), reading status, per-command library switching, batch edit, **marking a field as intentionally absent** for a single book (which is what would let the *Needs attention* list reach zero), ISBN scan, AI cover/page inference, and export utilities. Single-token typo tolerance in suggestions (e.g. `add bok` → `add book`) is also MVP2; word-order reinterpretation of the **verb phrase** (e.g. `book add` → `add book`) is rejected outright, not deferred (see ADR 13). Free ordering of *parameter* segments is not that, and is in MVP1 (see ADR 27).
+
+Note that **inline parameters are no longer a deferred power-user feature** — they are the only input model (ADR 27). What MVP2 adds on top is composition, not syntax.
 
 ## Open questions
 
-1. **Author find-or-create.** Does `add book` auto-create an unknown author from the name entered at its prompt, or must the author already exist (via `add author`)? The Author FK / `AddAuthor` path is still pending, so pick one before implementing the author prompt in `add book`.
+1. **Author find-or-create.** Does `add book` auto-create an unknown author from the name given in `by author "…"`, or must the author already exist (via `add author`)? The Author FK / `AddAuthor` path is still pending, so pick one before implementing the author segment of `add book`.
 
-2. **Does `filter` absorb the incomplete listings?** `filter` builds structured filtering
+2. **How does a command name its target?** `update book`, `remove book` and `show book` act on one
+   existing record. `named "…"` is the placeholder above and it is not obviously right: the natural
+   gesture is to select the row in a result view and then type the verb, which makes the target a
+   piece of *view state* rather than a parameter in the sentence. Both are plausible and they
+   interact — a targeted command that reads the selection is not re-runnable in the way ADR 27 values,
+   while `named "…"` is ambiguous the moment two books share a title. Settle before implementing
+   `update book`.
+
+3. **The summary field.** A multi-paragraph summary inside a quoted segment is the one place the
+   composed sentence is worse than a form. Either summaries stay short in MVP1, or `add book` grows an
+   off-buffer step for this field the way `login` has one for credentials (DECISIONS 27).
+
+4. **Does `filter` absorb the incomplete listings?** `filter` builds structured filtering
    interactively, and "has no ISBN" is a filter dimension. They are kept separate because the
    named commands are completable and reachable from a dashboard row, while `filter` covers open
    values and combinations — but if `filter` ever gains presence/absence dimensions, the overlap
