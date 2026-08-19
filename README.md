@@ -27,6 +27,10 @@ journey across the screen.
   command (`add book`, `list books`, `show book`, …), typing `add` surfaces every `add` command.
   Anything that isn't a recognized command falls through to full-text search — there is no mode to
   toggle. Inspired by modern terminal tools like Vim and Helix.
+- **The whole command is one visible sentence.** Parameters are written inline, each named by a
+  connective — `add book with title "1984" by author "George Orwell"` — so nothing is hidden behind
+  a prompt you have already answered. Order is free, the bar grows to fit as you type, and a finished
+  command is ordinary text: editable, recallable, copyable, re-runnable with one value changed.
 - **Typography-driven aesthetic.** A dark, minimalist interface built to maximize legibility,
   screen real estate, and scannability — the text *is* the interface.
 - **Type-driven domain modeling.** A pure, immutable C# core using closed sealed-record hierarchies,
@@ -39,15 +43,28 @@ journey across the screen.
 
 ## How It Works — Commands in Practice
 
-In MVP1 commands are **bare verbs** with interactive prompting: you type the verb, and the shell
-prompts for each field in turn. There are no flags or syntax to memorize, and your hands never leave
-the keyboard.
+A command is a sentence you write in one place. The verb comes first, then any number of parameters,
+each introduced by a connective that names it and a value in quotes. There are no flags to memorize
+and no dialog to tab through, and your hands never leave the keyboard.
 
 **Add a book.** Type `add b` — autocomplete offers `add book`; press `Tab` or `Enter` to accept it.
-The workspace immediately renders a *draft* of the book, and it fills in live as you answer each
-prompt: Title, Author, then the optional Subtitle, Language, Year, ISBN, and Summary. Press `Enter`
-on the last step to save; `cancel` or `Esc` discards the draft and nothing is ever persisted. You
-watch the book take shape beside the prompt instead of typing into the void.
+Completion then keeps going: the suggestion row offers the command's next parameter — `with title`
+first, since it is required — and accepting it appends `with title ""` with the caret between the
+quotes. Type the value, and the row offers the next one. Optional parameters (`subtitled`,
+`in language`, `published in`, `with isbn`) appear the same way, so you discover them rather than
+memorize them, and any of them can be given in any order:
+
+```
+add book
+  with title "Nineteen Eighty-Four"
+  by author "George Orwell"
+  published in "1949"
+```
+
+The bar lays the segments out one per line and grows to fit, and the workspace renders a *draft* of
+the book that fills in beside it as each value lands. `Enter` saves; `Esc` clears the bar and nothing
+is ever persisted. Because the command stays on screen as text, a typo four fields back is a cursor
+move — and the next book by the same author is the same line with one value replaced.
 
 **Browse and read.** `list books` renders the collection. Because the command bar always holds
 focus, bare letters are typing rather than shortcuts — so movement is separated by modifier instead:
@@ -64,10 +81,10 @@ through to multi-token full-text search. No button, no separate search box.
 publication year). `show book` opens one book's full detail. `dashboard` renders the collection's
 language breakdown and totals. `help` lists everything; `help add book` explains one command.
 
-**Where this is going (MVP2).** Inline parameters arrive for power users —
-`add book "The Hobbit" --author "Tolkien"` — collapsing the prompt sequence into a single line. The
-larger payoff is *composition*: chained and bulk operations (e.g. filtering and acting on a whole
-set at once) where the efficiency gain stops being a percentage and becomes an order of magnitude.
+**Where this is going (MVP2).** *Composition*: grouping, boolean conditions, and chaining one
+command's result into another — filtering a set and acting on the whole of it at once. That is where
+the efficiency gain stops being a percentage and becomes an order of magnitude, and it is also the
+point at which the flat grammar needs a real parser rather than the tokenizer that serves it today.
 
 <img src="./ux/imperabook-command-line.png" alt="ImperaBook UI Concept" width="100%">
 ---
@@ -153,8 +170,10 @@ The HTTP surface is split by purpose rather than by resource. A **control channe
 `POST /api/command` — handles every command in the closed grammar: one request shape, one dispatch
 path, one response contract. A **content channel** moves opaque bytes (cover images today, exports
 and bulk import later) and never introduces meaning the command response didn't already state. The
-command registry itself is served by the backend at `GET /api/commands`, so the frontend executes a
-recipe rather than inferring one.
+command registry itself — every command and the connectives it accepts — is served by the backend at
+`GET /api/commands`, so completion is driven by the backend's own vocabulary. What the frontend sends
+is the raw text the user typed; the backend tokenizes and validates it, and that pass is the only one
+that decides anything.
 
 ### Database
 
@@ -184,8 +203,9 @@ application from starting; the alternative, letting it run against a half-built 
 
 ### MVP1 — Keyboard-Driven Core Management & Dashboard
 
-- **Command execution.** Core CRUD via bare-verb commands with interactive prompting and an
-  anticipatory draft preview; autocomplete guides you to the canonical command as you type.
+- **Command execution.** Core CRUD via inline, connective-tagged commands with an anticipatory draft
+  preview; autocomplete guides you to the canonical command and then through its parameters, one
+  step at a time.
 - **Dashboard.** Analytical widgets: language breakdown and total collection metrics.
 - **Query engine.** Multi-token full-text search plus structured filtering (language, publication
   year).
@@ -194,7 +214,8 @@ application from starting; the alternative, letting it run against a half-built 
 
 ### MVP2 — Inline Power Commands, Automation & Enrichment
 
-- **Inline parameters.** `add book "The Hobbit" --author "Tolkien"` and chained/bulk operations.
+- **Command composition.** Grouping, boolean conditions, and chaining one command's result into
+  another — bulk operations over a filtered set.
 - **ISBN smart scan.** Camera barcode scanning on mobile with metadata population from external
   sources (Open Library, Google Books).
 - **AI cover/page inference.** Extract cataloging data from a photo of a cover (bring-your-own-key or

@@ -8,7 +8,7 @@ ImperaBook is driven by plain-text commands typed into a single command bar.
 - Parameters are **order-free**. The connective names the value, so the segments can be given in whatever order the sentence comes out in.
 - A few commands carry a fixed qualifier in the name itself (`list incomplete books having no isbn`). These are whole entries in the registry, not a verb plus an argument: the qualifier is drawn from a closed, schema-fixed set, so it can be completed rather than typed. Open values (a language, a year) stay parameters.
 - Required parameters are marked `*`. Optional ones are simply left out of the sentence.
-- As you type, the command bar **autocompletes** from a closed command registry using **token-match**: typing `book` surfaces every book command (`add book`, `show book`, `list books`, …), typing `add` surfaces every `add` command. `Tab` / `Enter` accepts the highlighted suggestion, which inserts the command's **skeleton** — see *Composing a command*. Suggestions are ranked — see *Command suggestion model* below.
+- As you type, the command bar **autocompletes** from a closed command registry using **token-match**: typing `book` surfaces every book command (`add book`, `show book`, `list books`, …), typing `add` surfaces every `add` command. `Tab` / `Enter` accepts the highlighted suggestion. Completion does not stop at the verb: once the command is in the bar, the same row offers its **next parameter**, one at a time — see *Composing a command*. Suggestions are ranked — see *Command suggestion model* below.
 - Any input that does **not** match a known command is handled as a full-text search (the same as the explicit `search` command).
 - Moving through results and drilling into an item are **navigation commands** with keybinding fast-paths (see *Navigation*); they read views, they do not mutate data.
 - `cancel` (`Esc`) clears the buffer; nothing composed is ever persisted until `Enter`.
@@ -22,17 +22,21 @@ MVP1 has **one library per user**; book operations target it implicitly.
 
 ## Composing a command
 
-**The skeleton.** Accepting a suggestion does not type a word, it lays out the command. Accepting
-`add book` puts its connectives in the bar with empty quote pairs:
+**One step at a time.** Completion does not stop at the verb. Accepting `add book` types the verb;
+the suggestion row then offers the command's parameters, and accepting one appends its connective
+with an empty quoted value, caret inside:
 
 ```
-add book with title "" by author ""
+add book                      → row offers: with title, by author, subtitled, in language, …
+                                (required first)
+add book with title "▮"       → type the value
+add book with title "1984"    → row offers the remaining parameters
 ```
 
-The caret lands inside the first pair; `Tab` moves to the next empty one. Both quote characters are
-supplied, so the common path never types one. The skeleton carries the **required** parameters; the
-optional ones are offered as suggestions once the required ones are filled (see *Suggestion inside a
-command*).
+Both quote characters come with the accepted parameter, so the common path never types one. The same
+gesture drives every step — `Tab` or `Enter` on the highlighted suggestion — and nothing is ever
+pre-placed in the buffer that you then have to delete: a parameter you do not want is one you simply
+never accept.
 
 **Autoformat.** As segments accumulate, the bar lays them out one per line and grows to fit:
 
@@ -234,16 +238,17 @@ below is the full index.
 
 ### Suggestion inside a command
 
-Completion does not stop at the verb. Once a command is accepted and its skeleton is in the bar, the
-bar is still reading what is there — and what it reads is a flat list of tokens, each with its
-position (see DECISIONS 28).
+Once a command name is in the bar, the matcher keeps running on what follows it — and what it reads
+is a flat list of tokens, each with its position (see DECISIONS 28).
 
-- **Remaining connectives are offered.** With the caret outside a quoted value, the suggestions are
-  the command's declared connectives minus the ones already present. Accepting one appends
+- **The remaining parameters are offered.** With the caret outside a quoted value, the suggestions
+  are the command's declared connectives minus the ones already present. Accepting one appends
   `connective ""` and puts the caret inside.
-- **Optional parameters are discovered here, not memorised.** The skeleton carries only the required
-  ones; everything else appears in this list, which is how a user finds out that `add book` accepts
-  an ISBN.
+- **Required first.** Required parameters are ranked above optional ones and marked, so the ordering
+  of the row is itself the statement of what the command still needs.
+- **Optional parameters are discovered here, not memorised.** Nothing is pre-placed; everything the
+  command accepts appears in this row as it becomes available, which is how a user finds out that
+  `add book` takes an ISBN.
 - **Lexical problems are shown as they happen.** An unclosed quote, or a word outside a value that
   matches no known connective, is visible in the bar before `Enter`. This is scanning, not
   interpretation — the bar knows that a token is not a connective, and nothing about what the command

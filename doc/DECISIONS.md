@@ -281,8 +281,10 @@ grows.)
 ## 13. Command input: autocomplete over a closed grammar, not a lenient reverse-parser
 
 > **Extended by ADR 27.** Token-match, the ranking rules and the rejection of a reverse-parser all
-> stand. What changed is what accepting a suggestion *does*: it now inserts a parameter skeleton into
-> the buffer rather than a bare verb. The free parameter order ADR 27 introduces is not the thing
+> stand. What changed is what accepting a suggestion *does*: the matcher now runs on the whole buffer
+> rather than only on its first word, so after the verb it offers the command's next parameter and
+> accepting one appends a connective and an empty quoted value. The free parameter order ADR 27
+> introduces is not the thing
 > rejected here — that was reordering the verb phrase itself; connective-tagged values are named
 > arguments, and their order was never load-bearing.
 
@@ -1373,11 +1375,22 @@ shortcut over the prompts; it is the same sentence the system was already writin
 **Decision.** The composed string is the input. The user types it, sees it, and edits it. Interactive
 prompting is removed rather than kept alongside.
 
-*Accepting a suggestion inserts a skeleton, not a word.* Accepting `add book` puts the command's
-connectives into the buffer with empty quote pairs — `add book with title "" by author ""` — cursor
-inside the first pair, `Tab` moving to the next empty one. This is the editor-snippet pattern, and
-it inherits the prompt sequence's teaching role: the fields are named in the buffer, and they are
-all visible at once rather than one at a time.
+*Completion continues after the verb, one segment at a time.* Accepting `add book` types the verb and
+nothing more. The suggestion row then offers what may come next — the command's parameters, required
+ones first — and accepting `with title` appends `with title ""` with the caret inside the quotes.
+Type the value, and the row offers the next parameter. The same gesture (`Tab` / `Enter` on a
+highlighted suggestion) drives every step, so there is one mechanism rather than a verb mechanism and
+a parameter mechanism.
+
+*Why not lay out the whole command at once.* An editor-style skeleton —
+`add book with title "" by author ""` inserted on acceptance, `Tab` jumping between empty pairs — was
+the first design and was dropped. It shows the shape sooner, and it pays for that three times over: a
+second navigation gesture that means "next empty slot" and exists nowhere else in the app; a buffer
+full of empty pairs the user must delete if they do not want a field, which turns the optional case
+into cleanup work; and a hard split between the required parameters the skeleton pre-places and the
+optional ones that must still be suggested — two mechanisms where the incremental form has one. The
+incremental form also degrades better: the suggestion row is *advice* the user may ignore and type
+over, whereas a skeleton is text already in the buffer that has to be dealt with.
 
 *Parameter order is free.* `add book by author "George Orwell" with title "1984"` and the same
 segments in the declared order are the same command. This is what a connective bought in the first
@@ -1394,8 +1407,8 @@ run again — five books by the same author is one recalled line with one quoted
 also be copied: a `help` example is paste-ready, and a bug report carries the exact input rather than
 a description of six prompt answers. The prompt sequence cannot do any of this in principle.
 
-*Quoting stays unconditional* (ADR 17), and the skeleton supplies both quote characters, so the
-common path never types one.
+*Quoting stays unconditional* (ADR 17), and an accepted parameter brings both quote characters with
+it, so the common path never types one.
 
 **What this removes.** `CommandRunner` no longer composes anything — there is no prompt state
 machine, no per-step answer buffer, no separate cancel semantics for "abort the sequence" versus
@@ -1431,7 +1444,7 @@ COMMANDS.md already flags as the thinnest.
 
 *Escaping becomes user-facing.* ADR 17 named this as arriving with the power-user path; it arrives
 now. A quote character inside a title was previously the frontend's problem and invisible; it is now
-syntax the user can hit. The skeleton keeps it rare, not impossible.
+syntax the user can hit. Supplying the quote pair on acceptance keeps it rare, not impossible.
 
 *One field resists the form.* A multi-paragraph summary as a quoted segment on a conceptual single
 line is the case where the composition bar is worse than a prompt with a text area, and no amount of
@@ -1439,13 +1452,21 @@ autoformat fixes it. Recorded unresolved: either summaries stay short in MVP1, o
 off-buffer step for this one field the way `login` has one for credentials — which would make the
 off-buffer class a general mechanism rather than a security carve-out.
 
-*Discoverability from zero is weaker than a prompt sequence, and cannot be settled from the desk.*
-Prompts need no prior knowledge at all; the skeleton needs the user to notice it and understand that
-the quotes are slots. The bet is that seeing all fields at once teaches more than seeing them one at
-a time, and it is a bet — measurable only by first-use observation.
+*The command's full shape is not visible up front.* This is what the skeleton bought and the
+incremental form gives up: nothing in the bar says that `add book` wants a title *and* an author
+until the second one is offered, and a user who stops after the title finds out at `Enter` rather
+than at a glance. Two things carry that weight instead — the suggestion row ranks and marks the
+required parameters, and the draft preview (UX.md) renders the whole book with its unfilled fields
+ghosted, which is the shape the skeleton would have shown, on a surface with room for it. Whether
+that is enough is a first-use question, not a desk question.
+
+*Discoverability from zero is still weaker than a prompt sequence.* A prompt demands an answer; a
+suggestion merely offers one, and can be typed straight past. The bet is that a persistent, visible
+sentence plus a next-step suggestion teaches more than a sequence of modal questions — and it is a
+bet, measurable only by observation.
 
 **Why it is still the right direction.** The asymmetry decides it. Build the composition surface and
-the prompt sequence is not missed, because the skeleton does its guiding work. Build the prompt
+the prompt sequence is not missed, because step-by-step completion does its guiding work. Build the prompt
 sequence and MVP2 throws it away when inline parameters arrive. One of these two orders discards
 work and the other does not, which is an argument for settling it now rather than later.
 
@@ -1599,8 +1620,8 @@ must revalidate.
 
 **Quoting is user-facing syntax with no escape rule yet.** ADR 27 puts the composed string in front
 of the user, so a value containing a double quote — a title with quoted words in it — is now something
-a user can type and the tokenizer can trip over. The skeleton supplies both quote characters and makes
-the case rare, but rare is not handled: MVP1 has no escape convention, and an embedded quote currently
+a user can type and the tokenizer can trip over. Accepting a parameter supplies both quote characters
+and makes the case rare, but rare is not handled: MVP1 has no escape convention, and an embedded quote currently
 produces an `UnterminatedQuote` token and a parse error pointing at the wrong offset. The fix is a
 convention (backslash, or a doubled quote) plus a tokenizer state; it is small, and it is not written.
 

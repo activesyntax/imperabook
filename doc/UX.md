@@ -82,10 +82,19 @@ add/update drafts are then one surface in three states (read, creating, editing)
 
 ## 2. The command bar composes a whole sentence
 
-**Concept.** A command is written as one visible sentence and stays visible until it runs. Accepting
-`add book` lays out its skeleton — the connectives with empty quote pairs, caret in the first, `Tab`
-between them — and as segments accumulate the bar breaks them onto separate lines and grows to fit.
-`Enter` commits, `Esc` clears. The full mechanics are in `COMMANDS.md`; what follows is why.
+**Concept.** A command is written as one visible sentence and stays visible until it runs.
+Completion walks it one segment at a time — accepting `add book` types the verb, the suggestion row
+then offers `with title`, accepting it appends `with title ""` with the caret between the quotes —
+and as segments accumulate the bar breaks them onto separate lines and grows to fit. `Enter` commits,
+`Esc` clears. The full mechanics are in `COMMANDS.md`; what follows is why.
+
+**The guidance of a prompt, without being inside one.** The suggestion row does what a prompt
+sequence did — it tells you what comes next — and that is deliberate: the step-by-step help was the
+prompt model's one real virtue, and it is kept. What is dropped is the enclosure. The row is advice
+sitting *beside* a buffer you own, not a question you are obliged to answer; every previous segment
+stays on screen, editable, and you can ignore the suggestion and type the next connective yourself.
+The difference between guidance and a state machine is exactly this: whether the previous answers are
+still in front of you.
 
 **Why not a prompt sequence.** Prompting one field at a time is the easier thing to build and the
 worse thing to use, for one reason: it hides the thing being built. Only the current step is on
@@ -112,9 +121,10 @@ condition under which a mode is acceptable here.
 *The first command a new user meets teaches nothing about this.* `login` collects its credentials in
 dedicated fields, off the buffer, because a password must never be visible, editable, or re-runnable
 (DECISIONS 24/25/27). So the composition syntax is first met at `add book`, which is seven fields
-deep and writing real data. The mitigation is the skeleton — the fields are named in the bar and the
-quotes are pre-placed — and whether that is enough is the first-use question in `TESZTELES-1.md`
-most worth watching.
+deep and writing real data. The mitigation is that the suggestion row names each field as it becomes
+relevant and supplies the quotes on acceptance, and that the draft preview above shows the whole
+shape of a book while the sentence is still being written. Whether that is enough is the first-use
+question in `TESZTELES-1.md` most worth watching.
 
 *A long free-text value fights the form.* A multi-paragraph summary inside a quoted segment is
 genuinely worse here than in a form with a text area, and autoformat does not fix it. Unresolved;
