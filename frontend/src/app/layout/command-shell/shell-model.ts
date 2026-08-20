@@ -85,21 +85,13 @@ export function suggestionsOf(state: ShellState, deps: ShellDeps): readonly Comm
   return state.kind === 'browsing' ? deps.suggestionsFor(queryOf(state.text)) : [];
 }
 
-/**
- * A kijelölt elem indexe — nem közvetlenül az állapoté.
- *
- * A tárolt `selected` a Tab-lépkedés emlékezete, de a lista, amire mutat,
- * később érkezik, mint az állapot (a registry HTTP-n jön). Ezért a tárolt index
- * a listához igazodik: érvénytelen vagy hiányzó kijelölés a legjobb találatra
- * esik vissza, üres lekérdezésnél pedig nincs kijelölés.
- */
 export function selectedIndexOf(state: ShellState, deps: ShellDeps): Index {
-  if (state.kind !== 'browsing' || queryOf(state.text).length === 0) return undefined;
+  if (state.kind !== 'browsing') return undefined;
 
   const matches = suggestionsOf(state, deps);
   if (matches.length === 0) return undefined;
 
-  return state.selected !== undefined && state.selected < matches.length ? state.selected : 0;
+  return state.selected !== undefined && state.selected < matches.length ? state.selected : undefined;
 }
 
 export function selectedOf(state: ShellState, deps: ShellDeps): CommandSpec | undefined {
@@ -120,24 +112,15 @@ export function progressOf(state: ShellState): { readonly index: number; readonl
   return state.kind === 'collecting' ? Param.progressOf(state.params) : undefined;
 }
 
-/** Kötelező mezőn üresen próbált továbblépni — a template ezt jelzi ki. */
 export function blockedOf(state: ShellState): boolean {
   return state.kind === 'collecting' && Param.isBlockedNow(state.params);
 }
 
-/**
- * Credential-bekérés fut-e.
- *
- * A jelző a PARANCSRA vonatkozik, nem a lépésre. A bekérés teljes idejére
- * dedikált input elem szolgál ki, akkor is, amikor épp a username-lépésnél
- * tartunk — az önmagában nem titok, de a Chrome a rá következő password-mezővel
- * összeköti, és a parancssort jelölné meg username-mezőnek (ADR 25).
- */
 export function credentialModeOf(state: ShellState): boolean {
   return state.kind === 'collecting' && state.cmd.parameters.some((p) => p.credential !== undefined);
 }
 
-// ── átmenet ─────────────────────────────────────────────────────────────────
+// ── TRANSITION ─────────────────────────────────────────────────────────────────
 
 export function transition(state: ShellState, input: UiInput, deps: ShellDeps): Step {
   switch (state.kind) {
