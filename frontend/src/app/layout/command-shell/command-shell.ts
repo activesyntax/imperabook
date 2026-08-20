@@ -118,15 +118,12 @@ export class CommandShell {
   }
 
   // ── DOM → UiInput ─────────────────────────────────────────────────────────
-  // Az egyetlen hely, ahol DOM-esemény van. Innentől mindkét gép tiszta.
 
   protected onInput(event: Event): void {
     this.send({ kind: 'text', value: (event.target as HTMLInputElement).value });
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    // Csak a vezérlőbillentyűk jönnek innen. A szöveg változását az input
-    // esemény hozza — a keydown még a karakter beírása ELŐTT fut le.
     switch (event.key) {
       case 'Enter':
         event.preventDefault();
@@ -140,14 +137,8 @@ export class CommandShell {
         event.preventDefault();
         return this.send({ kind: 'move', dir: event.shiftKey ? 'prev' : 'next' });
 
-      case 'Backspace':
-        // Üres mezőn nincs mit törölni: ez lépjen vissza egy paraméterrel.
-        if ((event.target as HTMLInputElement).value.length > 0) return;
-        event.preventDefault();
-        return this.send({ kind: 'back' });
-
       default:
-        return; // karakterek, Meta, Shift, nyilak: az input ág dolga
+        return;
     }
   }
 
@@ -155,7 +146,7 @@ export class CommandShell {
     this.send({ kind: 'submit' });
   }
 
-  // ── állapotgép ────────────────────────────────────────────────────────────
+  // ── STATE MACHINE  ────────────────────────────────────────────────────────────
 
   private send(input: UiInput): void {
     this.apply(Shell.transition(this.state(), input, this.deps));
