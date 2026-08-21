@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { flushCommandRegistry, provideHttpTesting } from '@testing/http';
+import { provideHttpTesting } from '@testing/http';
 import { SideNav } from './side-nav';
 
 describe('SideNav', () => {
@@ -18,7 +18,6 @@ describe('SideNav', () => {
     fixture.componentRef.setInput('avatarUrl', null);
     component = fixture.componentInstance;
     fixture.detectChanges();      // dispatches the resource request
-    flushCommandRegistry();       // answers it → resource resolves
     await fixture.whenStable();
   });
 
