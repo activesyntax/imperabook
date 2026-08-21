@@ -1,3 +1,4 @@
+using ImperaBook.Application;
 using ImperaBook.Infrastructure.Data;
 using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -8,17 +9,13 @@ namespace ImperaBook.Api.Authentication;
 
 public static class AuthenticationServiceCollectionExtensions
 {
-    // Identity registration lives in the API layer, not in Infrastructure: SignInManager
-    // and SecurityStampValidator ship in the ASP.NET Core shared framework because their
-    // job is HTTP — issuing and validating a cookie on an HttpContext. Putting them in
-    // the persistence library would mean a FrameworkReference to the whole web stack
-    // from a project whose only concern is rows. The EF store below is the one line that
-    // reaches back into Infrastructure, and it reaches only for the DbContext.
     public static IServiceCollection AddImperaBookAuthentication(
         this IServiceCollection services,
         IWebHostEnvironment environment
     )
     {
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
         services
             .AddIdentityCore<UserEntity>(options =>
             {
