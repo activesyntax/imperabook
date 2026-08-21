@@ -8,11 +8,12 @@ ImperaBook is driven by plain-text commands typed into a single command bar.
 - Parameters are **order-free**. The connective names the value, so the segments can be given in whatever order the sentence comes out in.
 - A few commands carry a fixed qualifier in the name itself (`list incomplete books having no isbn`). These are whole entries in the registry, not a verb plus an argument: the qualifier is drawn from a closed, schema-fixed set, so it can be completed rather than typed. Open values (a language, a year) stay parameters.
 - Required parameters are marked `*`. Optional ones are simply left out of the sentence.
-- As you type, the command bar **autocompletes** from a closed command registry using **token-match**: typing `book` surfaces every book command (`add book`, `show book`, `list books`, …), typing `add` surfaces every `add` command. `Tab` / `Enter` accepts the highlighted suggestion. Completion does not stop at the verb: once the command is in the bar, the same row offers its **next parameter**, one at a time — see *Composing a command*. Suggestions are ranked — see *Command suggestion model* below.
+- As you type, the command bar **autocompletes** from a closed command registry using **token-match**: typing `book` surfaces every book command (`add book`, `show book`, `list books`, …), typing `add` surfaces every `add` command. **`Tab` selects, `Enter` confirms** — see *The two keys* below. Completion does not stop at the verb: once the command is in the bar, the same row offers its **next parameter**, one at a time — see *Composing a command*. Suggestions are ranked — see *Command suggestion model* below.
 - Any input that does **not** match a known command is handled as a full-text search (the same as the explicit `search` command).
 - Moving through results and drilling into an item are **navigation commands** with keybinding fast-paths (see *Navigation*); they read views, they do not mutate data.
 - `cancel` (`Esc`) clears the buffer; nothing composed is ever persisted until `Enter`.
-- **Passwords are never typed into the command bar.** `login` is a command like any other and is completed like any other, but its credential steps replace the bar with dedicated fields (DECISIONS 25/27). Nothing secret enters the composed sentence.
+- **Passwords are never typed into the command bar.** `login` is in the grammar like any other command, but its credential steps replace the bar with dedicated fields (DECISIONS 25/27). Nothing secret enters the composed sentence.
+- **With no session, `login` starts itself.** It is the only runnable command at that point, so there is nothing to choose between and an empty bar would be a guessing game. The name still appears in the bar before the credential fields take over (DECISIONS 30). `Esc` cancels it, which — since there is still nothing else to run — starts it again with the fields cleared.
 
 MVP1 has **one library per user**; book operations target it implicitly.
 
@@ -33,10 +34,33 @@ add book with title "▮"       → type the value
 add book with title "1984"    → row offers the remaining parameters
 ```
 
-Both quote characters come with the accepted parameter, so the common path never types one. The same
-gesture drives every step — `Tab` or `Enter` on the highlighted suggestion — and nothing is ever
-pre-placed in the buffer that you then have to delete: a parameter you do not want is one you simply
-never accept.
+Both quote characters come with the accepted parameter, so the common path never types one, and
+nothing is ever pre-placed in the buffer that you then have to delete: a parameter you do not want
+is one you simply never accept.
+
+**The two keys.** `Tab` and `Enter` do different jobs, and neither changes meaning with the size of
+the suggestion row.
+
+| Key | What it does |
+| --- | --- |
+| `Tab` / `Shift + Tab` | Moves the highlight down / up the suggestion row, cycling. **Never writes to the buffer.** |
+| `Enter` | Writes the highlighted suggestion into the buffer. If it is already there, runs the command. |
+
+So `add b` → `Tab` to land on `add book` → `Enter` puts `add book` in the bar → `Enter` runs it.
+With one match the first `Tab` is unnecessary; with several it is how you pick. Typing the whole
+name yourself skips straight to the second `Enter`, since the buffer already holds it.
+
+The separation is deliberate. An earlier version had `Tab` complete the buffer when exactly one
+suggestion matched and merely move the highlight otherwise — so the same key wrote text or did not,
+depending on how many results the query happened to return. One key selects, one key confirms, and
+what each does is knowable without counting the row (DECISIONS 27).
+
+**There is no "back one parameter" key.** `Backspace` deletes a character and nothing else; on an
+empty field it does nothing, as it does in every text field. A dedicated step-back gesture was
+built and removed — it is exactly the invented keybinding DECISIONS 27 rejects prompt sequences
+for needing, and on a masked credential field it was invisible: eight dots deleted, a ninth press,
+and you were somewhere else with nothing on screen having said so. `Esc` cancels the whole command
+and is the only way out of a step.
 
 **Autoformat.** As segments accumulate, the bar lays them out one per line and grows to fit:
 
@@ -88,6 +112,12 @@ double quote is not yet expressible (DECISIONS, *Known limitations*).
 | `remove author` | Delete an author | `named`* (target), then a confirmation |
 | `list authors` | List all authors | — |
 | `list unattributed authors` | List authors with no books attributed to them | — |
+
+> **`list unattributed authors` cannot be implemented as the schema stands.** An author row has no
+> owner column, so "my authors" is expressed as the authors credited on my books — and an author
+> with no attributed books therefore belongs to nobody and is listed by nobody. This is the exact
+> record the command exists to surface. The fix is `authors.owner_id`, one column and one index
+> (DECISIONS 31, *Known limitations*); until it lands, the entry is a plan, not a command.
 
 ## Query
 
@@ -197,6 +227,22 @@ lands, this is the first-use observation in `TESZTELES-1.md` most worth watching
 | `cancel` | Clear the command bar (`Esc`) | — |
 | `quit` / `exit` | Exit ImperaBook | — |
 
+## Account
+
+| Command | Description | Parameters |
+| --- | --- | --- |
+| `login` | Start a session | `username`*, `password`* — collected off-buffer, in dedicated fields |
+| `logout` | End the session | — |
+| `account` | Account settings | — (not implemented in MVP1) |
+
+`login` is the only command an unauthenticated client may run, and the only one whose answers do
+not travel through the command channel: it posts to its own endpoint, because the composed text is
+logged, visible and parsed by a grammar with no escape rules (DECISIONS 24/25). `logout` carries no
+secret and is an ordinary command on the control channel.
+
+Both change what is runnable, so the command registry is reloaded after either one. Signed out,
+the registry holds `login` and nothing else — which is why it starts itself (see *Input model*).
+
 ---
 
 ## Command suggestion model
@@ -227,6 +273,7 @@ below is the full index.
 | `page` | next page, prev page |
 | `back` `open` `top` `bottom` | the navigation command itself (only when a view is active) |
 | `help` `clear` `cancel` `quit` / `exit` | the shell command itself |
+| `login` `logout` `account` | the account command itself (`login` only while signed out, the other two only while signed in) |
 
 **Ranking.** When several commands match, they are ordered by:
 

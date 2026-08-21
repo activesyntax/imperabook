@@ -85,8 +85,9 @@ add/update drafts are then one surface in three states (read, creating, editing)
 **Concept.** A command is written as one visible sentence and stays visible until it runs.
 Completion walks it one segment at a time — accepting `add book` types the verb, the suggestion row
 then offers `with title`, accepting it appends `with title ""` with the caret between the quotes —
-and as segments accumulate the bar breaks them onto separate lines and grows to fit. `Enter` commits,
-`Esc` clears. The full mechanics are in `COMMANDS.md`; what follows is why.
+and as segments accumulate the bar breaks them onto separate lines and grows to fit. `Tab` moves the
+highlight through the row and never writes; `Enter` accepts the highlighted suggestion, and a second
+`Enter` runs the command. `Esc` clears. The full mechanics are in `COMMANDS.md`; what follows is why.
 
 **The guidance of a prompt, without being inside one.** The suggestion row does what a prompt
 sequence did — it tells you what comes next — and that is deliberate: the step-by-step help was the
@@ -118,14 +119,64 @@ condition under which a mode is acceptable here.
 
 **Where it is weakest.** Two places, both named rather than smoothed over.
 
-*The first command a new user meets teaches nothing about this.* `login` collects its credentials in
-dedicated fields, off the buffer, because a password must never be visible, editable, or re-runnable
-(DECISIONS 24/25/27). So the composition syntax is first met at `add book`, which is seven fields
-deep and writing real data. The mitigation is that the suggestion row names each field as it becomes
-relevant and supplies the quotes on acceptance, and that the draft preview above shows the whole
-shape of a book while the sentence is still being written. Whether that is enough is the first-use
-question in `TESZTELES-1.md` most worth watching.
+*The first thing a new user meets is not this, and is no longer even typed.* `login` collects its
+credentials in dedicated fields, off the buffer, because a password must never be visible,
+editable, or re-runnable (DECISIONS 24/25/27) — so it never demonstrated the composition surface in
+the first place. It is now also started by the shell rather than typed, since with no session it is
+the only runnable command and an empty bar with one legal input is a guessing game (DECISIONS 30).
+The consequence is that the composition syntax is first met at `add book`: seven fields deep,
+writing real data, with no rehearsal behind it.
+
+That makes the mitigations below load-bearing rather than supporting. The suggestion row names each
+field as it becomes relevant and supplies the quotes on acceptance; the draft preview above shows
+the whole shape of a book while the sentence is still being written; and `Tab` selects while
+`Enter` confirms, so nothing runs by accident on the way. Whether that is enough is the first-use
+question in `TESZTELES-1.md` most worth watching — and it is now the *only* one, because the
+gentler introduction that `login` might have been is gone by design.
 
 *A long free-text value fights the form.* A multi-paragraph summary inside a quoted segment is
 genuinely worse here than in a form with a text area, and autoformat does not fix it. Unresolved;
 see `COMMANDS.md`, *Open questions*.
+
+---
+
+## 3. The signed-out shell is a different view, not a disabled one
+
+**Concept.** Without a session the shell is not the ordinary interface with most of it greyed out.
+It is a smaller interface: one command in the registry, one view on the workspace, and a command bar
+that has already started the only thing there is to start. The user types a username and a password
+into dedicated fields, and lands on the dashboard.
+
+**Why it is not the normal shell in a disabled state.** A disabled control invites a press that goes
+nowhere, which is the same objection ADR 21 raises against rendering a paging affordance when there
+is nothing to page to. Signed out, almost every affordance would be in that state — a pinned rail of
+commands that all fail, a suggestion row listing verbs the server will refuse. The honest rendering
+is the one that shows what is actually available, and what is actually available is `login`.
+
+That is also why the shell runs it rather than waiting. A row of one suggestion in front of an empty
+bar is not a choice; it is a prompt to guess correctly. The command name still appears in the bar
+before the credential fields replace it, so the user sees that signing in was a command
+(DECISIONS 30) — but nobody is asked to discover a name that has no alternatives.
+
+**What arrives with the session.** The registry reloads, so the suggestion row, the pinned rail, and
+`help` all widen at once, from one source. Nothing in the frontend enumerates what becomes available
+— it re-reads the catalog, and the catalog is the server's answer to "what may this session run".
+The same happens in reverse on `logout`.
+
+**Failure is a view, not a banner.** A rejected sign-in returns the login screen *with the reason on
+it* — one surface carrying its own error, composed by the same producer that builds the clean one
+(DECISIONS 26). There is no separate error state to design and no toast to place. The practical
+consequence is a rule the shell obeys: a restarted `login` must not repaint over that answer, so the
+opening round returns *nothing to show* rather than the pristine screen, and what the server said
+stays on screen while the fields clear.
+
+**Where it is weakest.**
+
+*Cancelling does nothing visible.* `Esc` during sign-in clears the fields and restarts the command,
+because there is no other state to return to. That is correct and it reads as unresponsive — the
+user pressed a key and the screen looks the same. A cleared field is thin feedback for a deliberate
+act.
+
+*One command is not a lesson.* The signed-out shell demonstrates that commands exist and nothing
+about how they are written. It is a foyer, not an introduction, and the first real one is `add book`
+(section 2, *Where it is weakest*).

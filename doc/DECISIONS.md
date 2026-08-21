@@ -199,6 +199,19 @@ so the decision is made before the code is.)
 
 ## 11. Optional values are `Maybe<T>`, not nullable and not a bespoke "empty" case
 
+> **Amended: `Location` is deferred to MVP2 and no longer exists in MVP1.** The governing rule
+> below is unchanged and still correct. What changed is that its worked example is gone, and the
+> reason is worth recording because it shows the rule being applied to itself. `Location` carried
+> two unrelated questions in one type: *which library does this book belong to*, and *where is the
+> physical copy right now*. The first is not a location at all — a book belongs to a library by
+> definition of being catalogued, so it is a required `Id<Library>` on `Book` and
+> `books.library_id` is `NOT NULL`. The second is the lending question, and lending is MVP2
+> (README). Split that way, MVP1's half is a mandatory foreign key and MVP2's half is a DU that
+> does not exist yet. What the DU had in MVP1 was one reachable case and a growth story, which is
+> not a DU — it is a field with an argument attached. The entry below keeps `Location` as the
+> illustration because the reasoning is what earns a DU *when* the case set is real, and the
+> honest note is that the example was chosen before the case set was.
+
 **Context.** A book's subtitle and summary are optional. Three representations were on the table:
 a nullable field (`Subtitle?`), a `Maybe<Subtitle>`, or a closed DU with an explicit empty case
 (`Empty | Present(value)`), by analogy to how `Location` models its alternatives.
@@ -894,6 +907,12 @@ after all.
 
 ## 22. Pinned commands: one visual language for everything runnable
 
+> **Bounded by ADR 30.** The teaching argument below — activation *types* the command rather than
+> executing it silently, so the user learns the name — holds everywhere the user had a choice.
+> ADR 30 finds the one place where they do not: with no session, exactly one command is runnable,
+> and the shell runs it unasked. The name still appears, which is the part of this entry that was
+> load-bearing; what is given up is the act of choosing.
+
 **Context.** The shell had grown chrome around the command bar — a settings button, a help
 button, a user avatar block — each a control that looked like an ordinary web application
 affordance. That is a second interaction language sitting next to the first, and it contradicts
@@ -1071,6 +1090,10 @@ is the fix.
 > *returns* — this entry settles the transport and treats the response as unremarkable, and ADR 26
 > shows it is not: a private route owes the control channel's response contract, and the `Endpoint`
 > field's semantics are only complete with the two read together.
+
+> **Extended by ADR 30.** The scheme and the `Endpoint` rule stand. What this entry does not
+> answer is how a client with no session learns that `login` exists at all — the catalog it would
+> read is itself behind the session. ADR 30 names the surface that answers it.
 
 **Context.** ADR 19 named this and deferred it. Splitting the HTTP surface into a control channel and
 a content channel means auth is enforced in two places, and the content channel is precisely what an
@@ -1354,6 +1377,23 @@ there is exactly one place that knows there were ever two shapes.
 
 ## 27. The command line is the composition surface; interactive prompting removed
 
+> **Amended by ADR 30 in one place.** The trade-off below states that `login` is likely a new
+> user's first command and therefore teaches nothing about the composition syntax. That is
+> resolved by conceding it rather than fixing it: the user no longer types `login` at all — the
+> shell runs it, because with no session there is nothing else to run. ADR 30 has the argument.
+> Everything else here, including the first-use observation about `add book`, is unchanged and
+> becomes *more* load-bearing: `add book` is now unambiguously the first encounter with the
+> syntax.
+
+> **Amended: `Tab` selects, `Enter` completes and then runs.** An earlier implementation had
+> `Tab` complete the buffer when exactly one suggestion matched, which made the two keys do
+> overlapping things and made `Tab`'s effect depend on how many results there happened to be.
+> They are now separated by role: `Tab` moves the highlight and never writes to the buffer,
+> `Enter` writes the highlighted command into the buffer on the first press and runs it on the
+> second. One key selects, one key confirms, and neither changes meaning with the size of the
+> list. `Backspace` was briefly a "step back one parameter" gesture and has been removed — it is
+> exactly the invented keybinding this entry rejects prompt sequences for needing.
+
 **Context.** ADR 17 settled the wire form — one canonical string, each value preceded by a
 connective, everything quoted — and had `CommandRunner` build it from the answers to a prompt
 sequence. That left two representations stacked on each other: the prompts the user sees, and the
@@ -1571,6 +1611,163 @@ better argument behind it.
 
 ---
 
+## 30. The bootstrap surface: what a client needs before it can prove who it is
+
+**Context.** ADR 24 made `POST /api/command` default-deny and put `login` in the grammar. Wiring
+that up produced a closed loop that only shows itself at runtime. The shell loads the command
+registry at startup to know what exists; the registry is behind the session; the one command that
+would create a session is *in* the registry. A browser with no cookie gets a 401 for the catalog,
+therefore never learns that `login` exists, therefore cannot sign in. The same loop caught
+`index.html` — an endpoint like any other, so the fallback policy denied the very document that
+would have rendered a login screen.
+
+The first fix was to mark each blocked route `AllowAnonymous` and move on. Three of them, which is
+the point at which a fix stops being a fix: the control channel, the registry, and the SPA shell
+were all open, and the fallback policy was left protecting exactly one real endpoint. That is not
+a security posture, it is a list of exceptions with a policy on top.
+
+Two framings were tried and both were wrong. Grouping the exceptions under one `MapGroup` with a
+comment is tidier and identical in effect — the same routes are open, only the apology is
+centralised. Hardcoding the `login` descriptor into the client closes the registry, but reopens
+`/api/command` anyway (a parameterised command's opening round goes there), duplicates the
+descriptor with no compile-time link to the catalog, and — to close the control channel too —
+would move the login *view* into the frontend, which is the design ADR 20 withdrew in full.
+
+**Decision.** One route, `GET /api/auth/bootstrap`, anonymous, returning the `login` descriptor
+and the login view together.
+
+```json
+{ "command": { "command": "login", "parameters": [...], "endpoint": "/api/auth/login" },
+  "views":   [ ... ] }
+```
+
+Both halves are **republished from the definitions the control channel already uses**:
+`CommandCatalog.Login` is a named field that `CommandCatalog.All` also references, and the views
+come from `CommandHandler.LoginScreen()`, the same producer the rejection path and the 401 handler
+call. Nothing here is a second definition — which is what separates this from the client-side
+hardcode, where the duplication would have had no shared source at all. ADR 19's channel test
+holds: the route introduces no meaning of its own.
+
+With this in place `/api/commands` and `POST /api/command` both close. The anonymous surface is
+`index.html`, `/api/auth/bootstrap`, and `/api/auth/login` — the document, the descriptor, and the
+exchange that trades credentials for a session. That set is nameable in one sentence, which the
+previous set was not.
+
+**A session-changing command declares itself.** The catalog is stale the moment a session begins
+or ends, so `CommandDescriptor` carries `RefreshesSession`. This is deliberately *not* derived
+from `Endpoint`: that field means the payload cannot cross the composed-text parser (ADR 24) and
+is about secrets. The two coincide for `login` and diverge for `logout`, which changes the session
+on the control channel and has no `Endpoint`. Reading one as the other would work today and break
+on the first command that has one property without the other — `register` and a password change
+are both already on that list.
+
+**The shell runs `login` unasked.** With no session the registry holds exactly one command, so the
+state machine's idle state is not idle: there is nothing to choose between, and an empty command
+bar with one legal input is a guessing game. Idle therefore resolves through the registry — if
+exactly one command is available, entering the idle state *starts* it. This is one transition in
+`shell-model.ts`, not a special case in the component, which matters because idle is reached from
+four places (startup, a completed command, a cancelled one, and a rejected sign-in) and all four
+must behave identically. An earlier attempt did this with a reactive effect in the component that
+watched the session flag and injected keystrokes; it worked for two of the four paths and was a
+state machine hiding beside the state machine.
+
+The name still appears in the bar before the credential fields replace it, which preserves the
+half of ADR 22's teaching argument that survives here.
+
+**Trade-off.** *ADR 22's teaching argument is conceded, not satisfied.* The user does not choose
+`login`, so they do not learn it by choosing. The defence is that `login` was never able to teach
+the thing worth teaching: ADR 25 puts its credential steps on dedicated elements, so it does not
+demonstrate the composition surface, and ADR 27 already named it as the wrong first lesson. What
+is lost is the knowledge that signing *in* was a command — which matters mainly because `logout`
+is one, and a user who never saw the first will not look for the second. Mitigated by the name
+being visible during the run, and unproven: this is a first-use observation, not a settled point.
+
+*Four routes are open where one policy claims to close everything.* The fallback policy now
+guards `/api/images` and whatever is added later. That is worth keeping — the next endpoint is
+closed by default, which is when a policy earns its keep — but it should not be read as the thing
+protecting the catalog. Access control lives in the dispatcher, per command, via
+`CommandDescriptor.Access`, whose zero value is `Authenticated` so that a descriptor written
+without a thought about access is closed.
+
+*`Access` has one reader.* The dispatcher checks it; the catalog does not filter on it, because
+with `/api/commands` closed there is nothing to filter — an anonymous client never receives the
+list. Filtering is one line (`All.Where(c => c.Access == Anonymous)`) on the day a second
+anonymous command exists, and the field is carried now because the dispatcher needs it regardless.
+Half a mechanism, stated as such.
+
+*The bootstrap view is served once per session, and that is load-bearing.* A rejected sign-in
+answers with the login screen *plus the error* (ADR 26), and the shell then re-enters idle and
+restarts `login` — which, if the opening round re-served the pristine bootstrap view, would erase
+the error the server had just sent. The registry therefore clears its stored view after handing it
+over, and the opening round returns "no view, keep what is on screen" rather than an empty one.
+The distinction is modelled (`Opening = view | noView`) rather than left as a nullable, because a
+null there reads as a missing value and it is an assertion.
+
+---
+
+## 31. User scope is an injected dependency, not a query parameter
+
+**Context.** Authentication makes every read on the catalog a scoped read, and ADR 8 already named
+why that is dangerous here: read models are flat projections queried straight from the store,
+trusted rather than re-validated, and fast precisely because nothing on that path re-checks
+anything. The scope is one `WHERE` clause away from being forgotten, and a forgotten scope does
+not fail — it returns another user's library, successfully, with a 200.
+
+The obvious shape is a `Guid ownerId` parameter on every query method. It is explicit and it reads
+well at the call site. Its defect is structural: a parameter must be passed correctly at every
+call site, forever, including the ones written a year from now by someone reading the interface
+rather than this document. Forgetting to pass it is not possible when it is required, but passing
+the *wrong* one is, and adding a new method without it compiles.
+
+**Decision.** An `ICurrentUser` port in the Application layer, implemented in the API layer over
+`IHttpContextAccessor`, injected into every `*Queries` implementation. The scope stops being an
+argument and becomes a property of the query object.
+
+```csharp
+public interface ICurrentUser { Guid Id { get; } }
+```
+
+The library id is deliberately *not* on it. Resolving it costs a round trip, a property cannot
+await, and MVP1 has exactly one caller that needs it — the write path, which fills
+`books.library_id`. Putting it here would charge every request, including `help`, for a lookup one
+command uses. The write path calls `ILibraryQueries.GetId` instead. The trigger to revisit is a
+third caller, at which point the type is no longer `CurrentUser` but a request scope, and should
+be renamed rather than extended.
+
+`Id` is non-nullable and throws when the principal carries no parseable id. Every caller sits
+behind the dispatcher's access check, so "no user" is not a domain case to branch on — it is a
+broken pipeline, and ADR 7's rule applies: do not manufacture a branch whose only correct body is
+`throw`.
+
+**What this removes.** `IBookQueries.List` loses its `libraryId` parameter, `ILibraryQueries`
+loses it from three methods. Not defaulted, not made optional — removed. There is no longer a call
+that *can* ask for another user's rows, which is the same move ADR 2 makes on the domain: the
+invalid case is not guarded, it is unrepresentable.
+
+**Trade-off.** *An admin read is now a new type, not a parameter.* Reading every library
+regardless of owner is impossible through these interfaces, and the temptation when that
+requirement arrives will be to restore the parameter. That would be the wrong repair. The right
+one is a second interface that says in its name that it does not scope — two contracts with two
+intents, the way `IImageStore` splits `Exists` from `OpenRead` (ADR 20). Recorded because the
+cheap fix will look obvious at the time. No admin surface is planned; the requirement is
+hypothetical and the file for it is not written.
+
+*Authors are scoped through books, and it does not hold.* An author row has no owner column, so
+"my authors" is expressed as an `EXISTS` over the books that credit them. That is slower than an
+indexed column and, worse, it makes an author with no attributed books belong to nobody — which
+forecloses `list unattributed authors` (COMMANDS.md) and is precisely the record the *Needs
+attention* panel exists to surface (ADR 23). The fix is `authors.owner_id`: one column, one index,
+and every author query collapses to the same `WHERE` shape as the others. Listed under *Known
+limitations* until it lands.
+
+*The scope is invisible at the call site.* `books.List(null, ct)` does not say that it is scoped;
+the constructor does. This is the same trade ADR 6 accepts on `Result`: a guarantee that holds
+because the compiler enforces the dependency, rather than a reminder that holds because everyone
+remembers. The cost is that a reader of the interface alone cannot tell scoped from unscoped,
+which is an argument for the naming discipline above when the second contract arrives.
+
+---
+
 # Known limitations
 
 **`record struct` zero-value.** A `readonly record struct` always permits `default(T)`, which runs no
@@ -1633,3 +1830,22 @@ not a build error. This happened once, with `CommandBlock` (23) registered on `I
 deriving from `TextBlock`. Co-locating the registration with the derived type rather than listing
 every case above the base makes the mismatch visible at the declaration, but the guarantee is a
 convention either way: the closed unions are closed to the compiler and open to the serializer.
+
+**Authors have no owner column.** Every other scoped read filters on an indexed `owner_id`;
+authors filter through the books that credit them, because `authors` has no such column (ADR 31).
+Two costs. It is an `EXISTS` subquery per row where the others are an index lookup — irrelevant at
+this scale, and it will not stay irrelevant. And an author with no attributed books belongs to no
+user at all, so `list unattributed authors` cannot be implemented and the *Needs attention* panel
+(ADR 23) cannot see the exact records it exists to surface. The fix is one column, one index, and
+a line in the `AddAuthor` write path; it is small, it is decided, and it is not written.
+
+**The Data Protection key ring is stored unencrypted.** Keys live in `data_protection_keys` in the
+same database as everything else (ADR 24's cookie scheme, ADR 19's reasoning about single-artifact
+backups). On Linux, with no DPAPI and no certificate configured, the framework writes them as
+plain XML and says so in a startup warning. The threat model does not change — anyone holding the
+dump holds the catalog too — but the escalation path shortens: a leaked dump previously yielded
+password hashes, which are useless directly, and now also yields the ability to forge a session
+cookie for any user. `ProtectKeysWithCertificate` is the answer, and it is deferred because
+provisioning, rotating and delivering a certificate is a separate operational surface that the
+single-machine self-hosted case does not justify. The cloud tier is where this stops being
+deferrable, and it should be settled before that tier serves anyone but its author.

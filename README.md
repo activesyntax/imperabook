@@ -14,9 +14,10 @@ desktop, where the fastest path from intent to result is a typed command rather 
 journey across the screen.
 
 > **Status: MVP1 in development.** The application builds, deploys, and runs — the container image,
-> the Compose stack, and the release pipeline are in place — but it is not yet distributed. There
-> are no user accounts, and the command set is still filling in. Internal testing comes first; a
-> public release follows only if that goes well.
+> the Compose stack, and the release pipeline are in place — but it is not yet distributed. Sign-in
+> and per-user catalogs are in; self-service registration is not, so accounts are created by the
+> operator. The command set is still filling in. Internal testing comes first; a public release
+> follows only if that goes well.
 
 ---
 
@@ -47,7 +48,8 @@ A command is a sentence you write in one place. The verb comes first, then any n
 each introduced by a connective that names it and a value in quotes. There are no flags to memorize
 and no dialog to tab through, and your hands never leave the keyboard.
 
-**Add a book.** Type `add b` — autocomplete offers `add book`; press `Tab` or `Enter` to accept it.
+**Add a book.** Type `add b` — autocomplete offers `add book`; `Tab` moves the highlight if several
+commands match, `Enter` accepts the highlighted one.
 Completion then keeps going: the suggestion row offers the command's next parameter — `with title`
 first, since it is required — and accepting it appends `with title ""` with the caret between the
 quotes. Type the value, and the row offers the next one. Optional parameters (`subtitled`,
@@ -65,6 +67,12 @@ The bar lays the segments out one per line and grows to fit, and the workspace r
 the book that fills in beside it as each value lands. `Enter` saves; `Esc` clears the bar and nothing
 is ever persisted. Because the command stays on screen as text, a typo four fields back is a cursor
 move — and the next book by the same author is the same line with one value replaced.
+
+**Sign in.** The first screen is the smallest the shell ever gets: one command available, so it
+starts itself. You see `login` appear in the bar, then dedicated fields for username and password —
+a password is never typed into the command bar, because that buffer is visible, editable, logged,
+and parsed by a grammar with no escape rules. Signing in lands you on the dashboard; the command set
+widens the moment the session exists. `logout` is an ordinary command and takes you back.
 
 **Browse and read.** `list books` renders the collection. Because the command bar always holds
 focus, bare letters are typing rather than shortcuts — so movement is separated by modifier instead:
@@ -162,7 +170,10 @@ domain modeling** in C#.
 - **ImperaBook.Infrastructure.Data** — Persistence behind repository interfaces via **EF Core**,
   keeping its mutable, change-tracking model out of the domain.
 - **ImperaBook.Api** — ASP.NET Core **Minimal APIs**, with all errors mapped to a single RFC 9457
-  ProblemDetails shape at the boundary.
+  ProblemDetails shape at the boundary. **ASP.NET Core Identity** with cookie sessions lives here
+  rather than in Infrastructure: issuing and validating a session cookie is an HTTP concern, and the
+  persistence library should not depend on the web stack to store a row. Authorization is
+  default-deny, and per-command rather than per-route — there is only one route.
 
 ### Two channels, not a REST surface
 
@@ -174,6 +185,14 @@ command registry itself — every command and the connectives it accepts — is 
 `GET /api/commands`, so completion is driven by the backend's own vocabulary. What the frontend sends
 is the raw text the user typed; the backend tokenizes and validates it, and that pass is the only one
 that decides anything.
+
+Both channels are closed to an unauthenticated caller, which creates a problem worth naming: the
+registry that would tell a browser `login` exists is itself behind the session. The answer is a
+third, deliberately tiny surface — a bootstrap route that hands out the `login` descriptor and the
+login view, both republished from the same definitions the control channel uses, plus the sign-in
+route itself. Credentials never travel as command text: it is logged, visible in the bar, and parsed
+by a grammar with no escape rules, so `login` posts to its own endpoint. `logout` carries no secret
+and stays an ordinary command.
 
 ### Database
 
@@ -209,8 +228,10 @@ application from starting; the alternative, letting it run against a half-built 
 - **Dashboard.** Analytical widgets: language breakdown and total collection metrics.
 - **Query engine.** Multi-token full-text search plus structured filtering (language, publication
   year).
-- **Accounts.** Sign-in and per-user catalogs, so an instance can safely be reached by more than the
-  machine it runs on.
+- **Accounts.** Cookie-based sign-in over ASP.NET Core Identity, and per-user catalogs — every read
+  is scoped to its owner in the query itself rather than by a filter each caller has to remember to
+  pass. An instance can safely be reached by more than the machine it runs on. Self-service
+  registration is deferred; accounts are created by the operator.
 
 ### MVP2 — Inline Power Commands, Automation & Enrichment
 
@@ -272,9 +293,15 @@ starts are immediate.
 That is the whole installation. To stop it, `docker compose down`; to move to a newer release,
 `docker compose pull && docker compose up -d`.
 
-> **No accounts yet.** Anyone who can reach the application sees the whole catalog and can change
-> it. The Compose file therefore binds the port to `127.0.0.1`, so the instance is reachable from
-> the machine it runs on and nowhere else. Leave it that way until accounts land.
+> **One account, created for you.** The first start creates the account named in the Compose file
+> and no other — self-service registration is not built yet, so there is no sign-up screen and no
+> way to add a second user without editing the stack. Change `IMPERABOOK_ADMIN_PASSWORD` before the
+> first start; it is a real credential, not an internal one like the database password below.
+>
+> The Compose file still binds the port to `127.0.0.1`. Sign-in makes exposing the instance
+> *possible* rather than advisable: there is no rate limiting on the login endpoint yet, and the
+> session cookie is only marked `Secure` when the app is served over HTTPS. Publish it beyond
+> localhost only behind a reverse proxy that terminates TLS.
 
 #### What you just started
 
@@ -290,9 +317,9 @@ on initialisation, so changing it afterwards means removing the volume and start
 
 #### Backup
 
-Everything lives in one Postgres volume — the catalog and the cover images, which are stored in the
-database rather than on disk. So a database dump is a complete backup, with nothing else to
-remember:
+Everything lives in one Postgres volume — the catalog, the cover images (stored in the database
+rather than on disk), and the session signing keys. So a database dump is a complete backup, with
+nothing else to remember:
 
 ```
 docker compose exec -T db pg_dump -U imperabook imperabook > imperabook-backup.sql
@@ -309,6 +336,12 @@ dumps larger than they would be with a separate volume, and buys a backup that c
 A dump taken without its image volume restores into a catalog where every cover is silently gone;
 that failure mode is the one worth designing against.
 
+The same reasoning puts the session signing keys in the database — a backup that restores everyone
+into a logged-out state is the split-storage failure again, in a different costume. It has a
+consequence worth stating: **treat the dump as sensitive.** It contains password hashes, which are
+useless on their own, and the signing keys, which are not encrypted at rest and would let a holder
+forge a session for any account. Store it the way you would store the password itself.
+
 #### Starting over
 
 To wipe the catalog and start from an empty one:
@@ -322,9 +355,11 @@ The `-v` removes the volume, so this deletes everything you have added. There is
 
 #### Ports
 
-The application is bound to `127.0.0.1` on purpose: while there are no accounts, it should not be
-reachable from the rest of your network. If port 8080 is already taken, change the middle number in
-`docker-compose.yml`:
+The application is bound to `127.0.0.1` on purpose. Sign-in exists now, so this is no longer the
+only thing standing between your catalog and the network — but the login endpoint has no rate
+limiting yet and the session cookie needs HTTPS to be marked `Secure`, so reaching the instance from
+elsewhere should mean a reverse proxy with TLS in front of it, not a wider bind. If port 8080 is
+already taken, change the middle number in `docker-compose.yml`:
 
 ```yaml
     ports:
