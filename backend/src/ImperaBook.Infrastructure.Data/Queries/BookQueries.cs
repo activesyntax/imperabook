@@ -5,20 +5,21 @@ namespace ImperaBook.Infrastructure.Data.Queries;
 
 public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBookQueries
 {
-    public Task<BookListItem[]> List(string? titleContains, CancellationToken ct)
+    public Task<BookListItem[]> List(CancellationToken ct)
     {
-        var title = string.IsNullOrWhiteSpace(titleContains) ? null : titleContains.Trim();
-
-        var q =
-            from b in db.Books.AsNoTracking()
-            join l in db.Libraries.AsNoTracking() on b.LibraryId equals l.Id
-            where l.OwnerId == user.Id
-            select b;
-
-        if (title is not null)
-            q = q.Where(b => EF.Functions.ILike(b.Title, $"%{title}%"));
+        var q = db
+            .Books.AsNoTracking()
+            .Join(
+                db.Libraries.AsNoTracking(),
+                b => b.LibraryId,
+                l => l.Id,
+                (b, l) => new { Book = b, Library = l }
+            )
+            .Where(x => x.Library.OwnerId == user.Id)
+            .Select(x => x.Book);
 
         return q.OrderBy(b => b.Title)
+            .ThenBy(b => b.Id)
             .Select(b => new BookListItem
             {
                 Id = b.Id,
@@ -33,7 +34,6 @@ public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBo
                         LastName = ba.Author.LastName,
                     })
                     .ToList(),
-                LibraryId = b.LibraryId,
                 CoverHash = b.CoverHash,
             })
             .ToArrayAsync(ct);

@@ -45,7 +45,7 @@ title, zero authors, a book "in" a library that does not exist.
 **Decision.** Constrained values are `record struct` value objects with private constructors and
 smart constructors returning `Result<T, CatalogValidationError>` (e.g. `Title.Create`). Identities
 are phantom-typed (`Id<TEntity>`), so `Id<Book>` and `Id<Author>` cannot be confused at compile
-time. Sum types (`Attribution`, `Location`) are closed sealed-record hierarchies. "At least one
+time. Sum types (`Attribution`) are closed sealed-record hierarchies. "At least one
 author" is encoded structurally in `Authors` — a non-optional primary plus the rest — so zero
 authors cannot be constructed.
 
@@ -144,8 +144,8 @@ branch on an unreachable "this is a bug" case makes things worse: someone fills 
 `() => ""` and a silent failure ships.
 
 **Decision.** Total `Match` is the enforced read on cases where both branches are real: `Result<T, E>`
-(Ok / Error), `Maybe<T>` (Some / None) for genuinely optional values, `Attribution` (Unknown /
-ByAuthors), `Location` (Library / Unknown). The "never-constructed" state of a value object is not a
+(Ok / Error), `Maybe<T>` (Some / None) for genuinely optional values, and `Attribution` (Unknown /
+ByAuthors). The "never-constructed" state of a value object is not a
 domain case — it is a CLR artifact meaning "bug here" — so it fails loud automatically rather than
 through a forced branch.
 
@@ -175,8 +175,9 @@ Stated explicitly because it looks like an oversight if it is not named.
 ## 9. Aggregate boundaries by reference, not embedding
 
 **Decision.** Entities within an aggregate are embedded; cross-aggregate references use `Id<TEntity>`
-rather than the entity. `Book` holds `Id<Author>` and (via `Location`) `Id<Library>`, never an
-`Author` or `Library` object.
+rather than the entity. `Book` holds `Id<Author>` and `Id<Library>`, never an `Author` or `Library`
+object. (The library id reached `Book` through `Location` when that type existed; it is now a
+required field of its own — see the amendment on 11.)
 
 **Trade-off.** Reads that need author or library *names* must project/join (handled on the read side,
 see 8) rather than walking an object graph. Accepted: it keeps aggregates small and their boundaries
@@ -806,8 +807,11 @@ it, and the answer is an archive, not a document.
 should not — cross-checking storage from the pure core would put I/O in the domain. The check belongs one
 layer out, and that is where it lives: `AddBookCommandHandler` splits cover handling in two, with
 `ParseCoverHash` accumulating a malformed address alongside a bad title, and `ResolveCover` calling
-`IImageStore.Exists` to turn an unknown address into `ApplicationError.ImageNotFound` — the same
-distinction `ResolveLocation` draws between a malformed and an unknown library id. Two consequences stay
+`IImageStore.Exists` to turn an unknown address into `ApplicationError.ImageNotFound`. This entry
+originally paired that with `ResolveLocation`, which drew the same malformed-versus-unknown
+distinction for the library id; that function is gone with `Location` (see 11), because the library
+is no longer a reference the request carries — it is resolved from the session (31), so there is no
+malformed or unknown case left to distinguish. Two consequences stay
 open. Resolution proves the row existed *at write time*; nothing prevents later loss, so a stale
 reference still surfaces as a broken image. And the write path short-circuits on the first lookup failure
 rather than accumulating, so a bad library id masks a bad cover hash — inconsistent with field
@@ -1752,13 +1756,20 @@ intents, the way `IImageStore` splits `Exists` from `OpenRead` (ADR 20). Recorde
 cheap fix will look obvious at the time. No admin surface is planned; the requirement is
 hypothetical and the file for it is not written.
 
-*Authors are scoped through books, and it does not hold.* An author row has no owner column, so
-"my authors" is expressed as an `EXISTS` over the books that credit them. That is slower than an
-indexed column and, worse, it makes an author with no attributed books belong to nobody — which
-forecloses `list unattributed authors` (COMMANDS.md) and is precisely the record the *Needs
-attention* panel exists to surface (ADR 23). The fix is `authors.owner_id`: one column, one index,
-and every author query collapses to the same `WHERE` shape as the others. Listed under *Known
-limitations* until it lands.
+*Ownership has two shapes, and that is deliberate.* A book reaches its owner through its library
+(`books.library_id` → `libraries.owner_id`), an author directly (`authors.owner_id`). A later
+reader will look for symmetry here and should find the answer instead: an author is not the
+property of a shelf. Under MVP2's multiple libraries the same Tolkien is credited on books in two
+of them, and a per-library author would have to be duplicated or shared — so the direct column is
+the shape that survives, and the join is the one that is correct only because a book physically
+sits somewhere.
+
+The first implementation did scope authors through books, because `authors` had no owner column at
+the time. It was wrong in a way worth recording: an author with no attributed books belonged to
+nobody, which foreclosed `list unattributed authors` (COMMANDS.md) and hid precisely the records
+the *Needs attention* panel exists to surface (ADR 23). The fix was one column and one index. What
+makes it worth naming is that the defect was not slowness — it was a count that silently omitted
+the rows the feature was about, and nothing in the query said so.
 
 *The scope is invisible at the call site.* `books.List(null, ct)` does not say that it is scoped;
 the constructor does. This is the same trade ADR 6 accepts on `Result`: a guarantee that holds
@@ -1830,14 +1841,6 @@ not a build error. This happened once, with `CommandBlock` (23) registered on `I
 deriving from `TextBlock`. Co-locating the registration with the derived type rather than listing
 every case above the base makes the mismatch visible at the declaration, but the guarantee is a
 convention either way: the closed unions are closed to the compiler and open to the serializer.
-
-**Authors have no owner column.** Every other scoped read filters on an indexed `owner_id`;
-authors filter through the books that credit them, because `authors` has no such column (ADR 31).
-Two costs. It is an `EXISTS` subquery per row where the others are an index lookup — irrelevant at
-this scale, and it will not stay irrelevant. And an author with no attributed books belongs to no
-user at all, so `list unattributed authors` cannot be implemented and the *Needs attention* panel
-(ADR 23) cannot see the exact records it exists to surface. The fix is one column, one index, and
-a line in the `AddAuthor` write path; it is small, it is decided, and it is not written.
 
 **The Data Protection key ring is stored unencrypted.** Keys live in `data_protection_keys` in the
 same database as everything else (ADR 24's cookie scheme, ADR 19's reasoning about single-artifact

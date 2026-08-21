@@ -113,11 +113,10 @@ double quote is not yet expressible (DECISIONS, *Known limitations*).
 | `list authors` | List all authors | — |
 | `list unattributed authors` | List authors with no books attributed to them | — |
 
-> **`list unattributed authors` cannot be implemented as the schema stands.** An author row has no
-> owner column, so "my authors" is expressed as the authors credited on my books — and an author
-> with no attributed books therefore belongs to nobody and is listed by nobody. This is the exact
-> record the command exists to surface. The fix is `authors.owner_id`, one column and one index
-> (DECISIONS 31, *Known limitations*); until it lands, the entry is a plan, not a command.
+> An author belongs to a user directly (`authors.owner_id`), not to a library and not to the books
+> that credit them — which is what makes this command expressible at all. Scoping authors through
+> their books, as an earlier schema did, put an unattributed author outside every user's catalog:
+> exactly the record this command exists to find (DECISIONS 31).
 
 ## Query
 
@@ -308,13 +307,15 @@ is a flat list of tokens, each with its position (see DECISIONS 28).
 
 ## Out of scope for MVP1
 
-Deferred to MVP2 or later: **library creation and management** (one library per user in MVP1), **tags and categories** (including tag-based filtering and category distribution on the dashboard), **command composition** (grouping, boolean conditions, and chaining one command's result into another — the point at which the flat grammar needs a real parser, DECISIONS 28), **an escape convention for quotes inside a value**, lending (`lend` / `return`), reading status, per-command library switching, batch edit, **marking a field as intentionally absent** for a single book (which is what would let the *Needs attention* list reach zero), ISBN scan, AI cover/page inference, and export utilities. Single-token typo tolerance in suggestions (e.g. `add bok` → `add book`) is also MVP2; word-order reinterpretation of the **verb phrase** (e.g. `book add` → `add book`) is rejected outright, not deferred (see ADR 13). Free ordering of *parameter* segments is not that, and is in MVP1 (see ADR 27).
+Deferred to MVP2 or later: **library creation and management** (one library per user in MVP1), **tags and categories** (including tag-based filtering and category distribution on the dashboard), **command composition** (grouping, boolean conditions, and chaining one command's result into another — the point at which the flat grammar needs a real parser, DECISIONS 28), **an escape convention for quotes inside a value**, lending (`lend` / `return`, which is also where
+*where a copy physically is* becomes a question the model answers — MVP1 only records that a book
+belongs to a library, DECISIONS 11), reading status, per-command library switching, batch edit, **marking a field as intentionally absent** for a single book (which is what would let the *Needs attention* list reach zero), ISBN scan, AI cover/page inference, and export utilities. Single-token typo tolerance in suggestions (e.g. `add bok` → `add book`) is also MVP2; word-order reinterpretation of the **verb phrase** (e.g. `book add` → `add book`) is rejected outright, not deferred (see ADR 13). Free ordering of *parameter* segments is not that, and is in MVP1 (see ADR 27).
 
 Note that **inline parameters are no longer a deferred power-user feature** — they are the only input model (ADR 27). What MVP2 adds on top is composition, not syntax.
 
 ## Open questions
 
-1. **Author find-or-create.** Does `add book` auto-create an unknown author from the name given in `by author "…"`, or must the author already exist (via `add author`)? The Author FK / `AddAuthor` path is still pending, so pick one before implementing the author segment of `add book`.
+1. **Author find-or-create.** Does `add book` auto-create an unknown author from the name given in `by author "…"`, or must the author already exist (via `add author`)? One half of this is now settled: whichever way it goes, the *lookup* is scoped to the signed-in user, since an author belongs to a person rather than to a library or to the books that credit them (DECISIONS 31). What is still open is whether a miss creates a row or fails, and — if it creates — what stops two spellings of one person becoming two authors. The `AddAuthor` write path is pending either way, so pick before implementing the author segment of `add book`.
 
 2. **How does a command name its target?** `update book`, `remove book` and `show book` act on one
    existing record. `named "…"` is the placeholder above and it is not obviously right: the natural

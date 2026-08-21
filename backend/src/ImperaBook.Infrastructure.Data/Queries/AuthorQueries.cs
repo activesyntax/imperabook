@@ -7,9 +7,11 @@ public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : I
 {
     public Task<AuthorListItem[]> List(CancellationToken ct)
     {
-        var q = db.Authors.Where(a => a.OwnerId == user.Id).AsNoTracking();
+        var q = db.Authors.AsNoTracking().Where(a => a.OwnerId == user.Id);
 
         return q.OrderBy(a => a.LastName)
+            .ThenBy(a => a.FirstName)
+            .ThenBy(a => a.Id)
             .Select(a => new AuthorListItem
             {
                 Id = a.Id,

@@ -1,13 +1,19 @@
 using CSharpFunctionalExtensions;
 using ImperaBook.Application;
+using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ImperaBook.Infrastructure.Data.Queries;
 
 public sealed class LibraryQueries(ImperaBookDbContext db, ICurrentUser user) : ILibraryQueries
 {
-    private IQueryable<Entities.LibraryEntity> Owned =>
+    private IQueryable<LibraryEntity> Owned =>
         db.Libraries.AsNoTracking().Where(l => l.OwnerId == user.Id);
+
+    private IQueryable<BookEntity> OwnedBooks =>
+        db
+            .Books.AsNoTracking()
+            .Join(Owned, book => book.LibraryId, library => library.Id, (book, _) => book);
 
     public Task<bool> ExistsAsync(Guid id, CancellationToken ct) =>
         Owned.AnyAsync(l => l.Id == id, ct);
@@ -30,22 +36,11 @@ public sealed class LibraryQueries(ImperaBookDbContext db, ICurrentUser user) : 
 
     public async Task<LibraryStatistics> GetStatisticsAsync(CancellationToken ct)
     {
-        var books =
-            from b in db.Books.AsNoTracking()
-            join l in Owned on b.LibraryId equals l.Id
-            select b;
+        var totalBooks = await OwnedBooks.CountAsync(ct);
 
-        var totalBooks = await books.CountAsync(ct);
-
-        // Authors are scoped through books, because an author row has no owner. The known
-        // cost: an author with no books attributed is invisible to every user, including
-        // the one who created them — which forecloses `list unattributed authors`
-        // (COMMANDS.md). See the note below; this is a stopgap, not the answer.
-        var totalAuthors = await books
-            .SelectMany(b => b.Authors)
-            .Select(ba => ba.AuthorId)
-            .Distinct()
-            .CountAsync(ct);
+        var totalAuthors = await db
+            .Authors.AsNoTracking()
+            .CountAsync(a => a.OwnerId == user.Id, ct);
 
         // TODO: BookEntity carries no page count yet, so these two cannot be computed.
         // Fixed placeholders — the only fabricated values in this class.

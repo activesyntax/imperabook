@@ -241,7 +241,9 @@ application from starting; the alternative, letting it run against a half-built 
   sources (Open Library, Google Books).
 - **AI cover/page inference.** Extract cataloging data from a photo of a cover (bring-your-own-key or
   metered at cost — enrichment is never a gated feature).
-- **Lending.** `lend` / `return`, so the shelf knows which books are with friends.
+- **Lending.** `lend` / `return`, so the shelf knows which books are with friends. This is also
+  where *where a copy currently is* enters the model at all: MVP1 records only that a book belongs
+  to a library, because that is the whole of what cataloguing asserts.
 - **Export.** Print-ready PDF and e-book layout output.
 
 ---
