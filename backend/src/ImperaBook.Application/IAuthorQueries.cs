@@ -10,5 +10,5 @@ public sealed record AuthorListItem
 
 public interface IAuthorQueries
 {
-    Task<AuthorListItem[]> List(Guid? libraryId, string? query, CancellationToken ct);
+    Task<AuthorListItem[]> List(string? query, CancellationToken ct);
 }

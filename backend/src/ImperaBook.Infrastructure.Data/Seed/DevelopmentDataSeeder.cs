@@ -350,12 +350,11 @@ public static class DevelopmentDataSeeder
                 Subtitle = "Adventures in the Culinary Underbelly",
                 LibraryId = libraryId,
             },
-            // Unshelved book (no library)
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Orphan Book",
-                LibraryId = null,
+                LibraryId = libraryId,
             },
         };
 

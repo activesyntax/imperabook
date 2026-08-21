@@ -13,14 +13,13 @@ public sealed record LibraryStatistics(
 
 public sealed record LibraryDetail(string Name, string? PhotoHash);
 
-// TODO: async
 public interface ILibraryQueries
 {
-    Task<bool> Exists(Guid id, CancellationToken ct);
+    Task<bool> ExistsAsync(Guid id, CancellationToken ct);
 
-    Task<Maybe<LibraryDetail>> GetLibrary(Guid id, CancellationToken ct);
+    Task<Maybe<LibraryDetail>> GetLibraryAsync(CancellationToken ct);
 
-    Task<LibraryStatistics> GetStatistics(Guid libraryId, CancellationToken ct);
+    Task<LibraryStatistics> GetStatisticsAsync(CancellationToken ct);
 
-    Task<Maybe<Guid>> GetIdByOwner(Guid ownerId, CancellationToken ct);
+    Task<Maybe<Guid>> GetIdAsync(CancellationToken ct);
 }

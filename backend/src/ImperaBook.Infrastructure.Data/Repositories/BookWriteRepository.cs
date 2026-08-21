@@ -19,12 +19,7 @@ public class BookWriteRepository : IBookWriteRepository
             Title = book.Title.Value,
             Subtitle = book.Subtitle.Map(s => s.Value).GetValueOrDefault(),
             Summary = book.Summary.Map(s => s.Value).GetValueOrDefault(),
-            LibraryId = book.Location switch
-            {
-                Location.AtLibrary lib => lib.LibraryId.Value,
-                Location.Unknown => null,
-                _ => throw new InvalidOperationException("Unhandled Location case."),
-            },
+            LibraryId = book.Library.Value
         };
 
         _db.Books.Add(entity);

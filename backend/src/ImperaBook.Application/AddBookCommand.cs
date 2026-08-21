@@ -32,13 +32,13 @@ public sealed class AddBookCommandHandler(
 
         var (title, subtitle, summary, coverHash, authors) = fields.Value;
 
-        var location = await ResolveLocation(command.LibraryId, ct);
-        if (location.IsFailure)
-            return location.Error;
-
         var cover = await ResolveCover(coverHash, ct);
         if (cover.IsFailure)
             return cover.Error;
+
+        var libraryId = await ResolveLibrary(ct);
+        if (libraryId.IsFailure)
+            return libraryId.Error;
 
         var attribution = Attribution.Of(authors);
         var bookId = Id<Book>.New();
@@ -48,12 +48,22 @@ public sealed class AddBookCommandHandler(
             subtitle,
             summary,
             attribution,
-            location.Value,
-            cover.Value
+            cover.Value,
+            libraryId.Value
         );
 
         await books.Add(book, ct);
         return bookId.Value;
+    }
+
+    private async Task<Result<Id<Library>, ApplicationError>> ResolveLibrary(CancellationToken ct)
+    {
+        var libraryId = await libraries.GetIdAsync(ct);
+
+        return libraryId.Match(
+            id => Result.Success<Id<Library>, ApplicationError>(Id<Library>.From(id)),
+            () => Result.Failure<Id<Library>, ApplicationError>(new ApplicationError.NoLibrary())
+        );
     }
 
     private record struct BookFields(
@@ -96,21 +106,6 @@ public sealed class AddBookCommandHandler(
         string.IsNullOrWhiteSpace(raw)
             ? Maybe<ContentHash>.None
             : ContentHash.Create(raw).Map(Maybe<ContentHash>.From);
-
-    private async Task<Result<Location, ApplicationError>> ResolveLocation(
-        Guid? libraryId,
-        CancellationToken ct
-    )
-    {
-        if (libraryId is not { } id)
-            return new Location.Unknown();
-
-        if (!await libraries.Exists(id, ct))
-            return new ApplicationError.LibraryNotFound(id);
-
-        Id<Library> guid = Id<Library>.From(id);
-        return new Location.AtLibrary(guid);
-    }
 
     private async Task<Result<Maybe<ContentHash>, ApplicationError>> ResolveCover(
         Maybe<ContentHash> hash,

@@ -19,5 +19,5 @@ public sealed record BookListItem
 
 public interface IBookQueries
 {
-    Task<BookListItem[]> List(Guid? libraryId, string? titleContains, CancellationToken ct);
+    Task<BookListItem[]> List(string? titleContains, CancellationToken ct);
 }

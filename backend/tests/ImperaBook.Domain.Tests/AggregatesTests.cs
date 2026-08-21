@@ -20,24 +20,17 @@ public class AggregatesTests
         var attribution = Attribution.Of(Authors.Create(new[] { Id<Author>.New() }));
         var summary = Summary.Create("A book about Dune.").Value;
         var cover = SampleCover();
+        var library = Id<Library>.New();
 
-        var book = Book.Create(
-            id,
-            title,
-            subtitle,
-            summary,
-            attribution,
-            new Location.Unknown(),
-            cover
-        );
+        var book = Book.Create(id, title, subtitle, summary, attribution, cover, library);
 
         Assert.Equal(id, book.Id);
         Assert.Equal(title, book.Title);
         Assert.Equal(subtitle, book.Subtitle.Value);
         Assert.Equal(summary, book.Summary.Value);
         Assert.Equal(attribution, book.Attribution);
-        Assert.IsType<Location.Unknown>(book.Location);
         Assert.Equal(cover, book.Cover.Value);
+        Assert.Equal(library, book.Library);
     }
 
     [Fact]
@@ -49,8 +42,8 @@ public class AggregatesTests
             Maybe<Subtitle>.None,
             Maybe<Summary>.None,
             Attribution.Of(Authors.Create(new[] { Id<Author>.New() })),
-            new Location.Unknown(),
-            Maybe<ContentHash>.None
+            Maybe<ContentHash>.None,
+            Id<Library>.New()
         );
 
         Assert.Equal(Maybe<ContentHash>.None, book.Cover);

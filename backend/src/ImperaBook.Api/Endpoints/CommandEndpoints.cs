@@ -64,15 +64,17 @@ public static class CommandEndpoints
             return NotAuthenticated(request.Command);
         }
 
-        var libraryId = await CurrentLibraryId(principal, libraries, ct);
         return request.Command switch
         {
-            "dashboard" => TypedResults.Ok(await CommandHandler.Dashboard(dashboard, ct)),
-            "library" => libraryId.TryGetValue(out var id)
-                ? TypedResults.Ok(await CommandHandler.Library(libraries, id, ct))
-                : NoLibrary(),
+            "library" => TypedResults.Ok(await CommandHandler.Library(libraries, ct)),
             "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
             "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
+            "dashboard" => TypedResults.Ok(await CommandHandler.Dashboard(dashboard, ct)),
+            // "library" => libraryId.TryGetValue(out var id)
+            //     ? TypedResults.Ok(await CommandHandler.Library(libraries, id, ct))
+            //     : NoLibrary(),
+            // "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
+            // "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
 
             "help" => TypedResults.Ok(new GeneralHelp().ToCommandResult()),
             "about" => TypedResults.Ok(new About().ToCommandResult()),
@@ -126,26 +128,6 @@ public static class CommandEndpoints
                 ["views"] = CommandHandler.LoginScreen().Views,
             }
         );
-
-    private static async Task<Maybe<Guid>> CurrentLibraryId(
-        ClaimsPrincipal principal,
-        ILibraryQueries libraries,
-        CancellationToken ct
-    )
-    {
-        var subject = principal.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        // A session without a parseable user id is not a user error, it is a broken
-        // principal — an authenticated request whose identity says nothing. Fail loud.
-        if (!Guid.TryParse(subject, out var userId))
-        {
-            throw new InvalidOperationException(
-                "Authenticated principal carries no parseable user id."
-            );
-        }
-
-        return await libraries.GetIdByOwner(userId, ct);
-    }
 
     private static Results<Ok<CommandResult>, ProblemHttpResult> NoLibrary() =>
         TypedResults.Problem(

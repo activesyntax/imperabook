@@ -3,16 +3,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ImperaBook.Infrastructure.Data.Queries;
 
-public sealed class BookQueries(ImperaBookDbContext db) : IBookQueries
+public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBookQueries
 {
-    public Task<BookListItem[]> List(Guid? libraryId, string? titleContains, CancellationToken ct)
+    public Task<BookListItem[]> List(string? titleContains, CancellationToken ct)
     {
         var title = string.IsNullOrWhiteSpace(titleContains) ? null : titleContains.Trim();
 
-        var q = db.Books.AsNoTracking();
-
-        if (libraryId is { } lib)
-            q = q.Where(b => b.LibraryId == lib);
+        var q =
+            from b in db.Books.AsNoTracking()
+            join l in db.Libraries.AsNoTracking() on b.LibraryId equals l.Id
+            where l.OwnerId == user.Id
+            select b;
 
         if (title is not null)
             q = q.Where(b => EF.Functions.ILike(b.Title, $"%{title}%"));

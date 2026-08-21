@@ -17,17 +17,6 @@ internal static class ApplicationErrorResults
                 }
             ),
 
-            ApplicationError.LibraryNotFound notFound => Results.Problem(
-                title: "Referenced library does not exist.",
-                detail: $"No library found with id '{notFound.LibraryId}'.",
-                statusCode: StatusCodes.Status422UnprocessableEntity,
-                extensions: new Dictionary<string, object?>
-                {
-                    ["code"] = "library_not_found",
-                    ["libraryId"] = notFound.LibraryId,
-                }
-            ),
-
             _ => throw new InvalidOperationException(
                 $"Unhandled ApplicationError: {error.GetType().Name}"
             ),

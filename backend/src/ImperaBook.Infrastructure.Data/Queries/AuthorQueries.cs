@@ -6,7 +6,7 @@ namespace ImperaBook.Infrastructure.Data.Queries;
 public sealed class AuthorQueries(ImperaBookDbContext db) : IAuthorQueries
 {
     // todo: use maybe for query param, or use a default value for the parameter
-    public Task<AuthorListItem[]> List(Guid? libraryId, string? query, CancellationToken ct)
+    public Task<AuthorListItem[]> List(string? query, CancellationToken ct)
     {
         var nameQuery = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
 

@@ -17,7 +17,7 @@ public static class CommandHandler
 
     internal static async Task<CommandResult> ListBooks(IBookQueries books, CancellationToken ct)
     {
-        var bookList = await books.List(null, null, ct);
+        var bookList = await books.List(null, ct);
         return bookList.ToCommandResult(
             "No books yet. Add one to start your library.",
             new PageInfo(1, 1, bookList.Count(), "books")
@@ -29,7 +29,7 @@ public static class CommandHandler
         CancellationToken ct
     )
     {
-        var authorList = await authors.List(null, null, ct);
+        var authorList = await authors.List(null, ct);
 
         return authorList.ToCommandResult(
             "No authors yet.",
@@ -43,8 +43,8 @@ public static class CommandHandler
         CancellationToken ct
     )
     {
-        var statistics = await libraries.GetStatistics(libraryId, ct);
-        var libraryDetails = await libraries.GetLibrary(libraryId, ct);
+        var statistics = await libraries.GetStatisticsAsync(ct);
+        var libraryDetails = await libraries.GetLibraryAsync(ct);
 
         return libraryDetails.Match(
             library => library.ToCommandResult(statistics),
@@ -103,5 +103,19 @@ public static class CommandHandler
             new MessageView("Signed out.", MessageKind.Info),
             .. LoginScreen().Views,
         ]);
+    }
+
+    internal static async Task<CommandResult> Library(
+        ILibraryQueries libraries,
+        CancellationToken ct
+    )
+    {
+        var statistics = await libraries.GetStatisticsAsync(ct);
+        var libraryDetails = await libraries.GetLibraryAsync(ct);
+
+        return libraryDetails.Match(
+            library => library.ToCommandResult(statistics),
+            () => CommandResult.Empty
+        );
     }
 }
