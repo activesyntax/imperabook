@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ImperaBook.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ImperaBookDbContext))]
-    [Migration("20260819172301_InitialCreate")]
+    [Migration("20260821163132_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -42,6 +42,10 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)")
                         .HasColumnName("last_name");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
 
                     b.Property<string>("PortraitHash")
                         .HasMaxLength(64)
@@ -91,7 +95,7 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasColumnName("cover_hash")
                         .IsFixedLength();
 
-                    b.Property<Guid?>("LibraryId")
+                    b.Property<Guid>("LibraryId")
                         .HasColumnType("uuid")
                         .HasColumnName("library_id");
 

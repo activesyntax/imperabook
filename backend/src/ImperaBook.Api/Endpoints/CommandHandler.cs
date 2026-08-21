@@ -29,7 +29,7 @@ public static class CommandHandler
         CancellationToken ct
     )
     {
-        var authorList = await authors.List(null, ct);
+        var authorList = await authors.List(ct);
 
         return authorList.ToCommandResult(
             "No authors yet.",

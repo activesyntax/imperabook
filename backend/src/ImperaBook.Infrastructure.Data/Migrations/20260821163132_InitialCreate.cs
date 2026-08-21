@@ -17,6 +17,7 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    owner_id = table.Column<Guid>(type: "uuid", nullable: false),
                     first_name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
                     last_name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     portrait_hash = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: true)
@@ -34,7 +35,7 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                     title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     subtitle = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     summary = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
-                    library_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    library_id = table.Column<Guid>(type: "uuid", nullable: false),
                     cover_hash = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: true)
                 },
                 constraints: table =>

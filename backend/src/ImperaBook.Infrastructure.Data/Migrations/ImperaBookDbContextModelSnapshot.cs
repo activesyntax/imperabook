@@ -40,6 +40,10 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(300)")
                         .HasColumnName("last_name");
 
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
                     b.Property<string>("PortraitHash")
                         .HasMaxLength(64)
                         .HasColumnType("character(64)")
@@ -88,7 +92,7 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasColumnName("cover_hash")
                         .IsFixedLength();
 
-                    b.Property<Guid?>("LibraryId")
+                    b.Property<Guid>("LibraryId")
                         .HasColumnType("uuid")
                         .HasColumnName("library_id");
 

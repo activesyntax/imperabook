@@ -56,132 +56,154 @@ public static class DevelopmentDataSeeder
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "George",
                 LastName = "Orwell",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Jane",
                 LastName = "Austen",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Fyodor",
                 LastName = "Dostoevsky",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Leo",
                 LastName = "Tolstoy",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Gabriel",
                 LastName = "García Márquez",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Harper",
                 LastName = "Lee",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "J.R.R.",
                 LastName = "Tolkien",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Frank",
                 LastName = "Herbert",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Isaac",
                 LastName = "Asimov",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Agatha",
                 LastName = "Christie",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Yuval Noah",
                 LastName = "Harari",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Carl",
                 LastName = "Sagan",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Stephen",
                 LastName = "Hawking",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Daniel",
                 LastName = "Kahneman",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Robert C.",
                 LastName = "Martin",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Andrew",
                 LastName = "Hunt",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "David",
                 LastName = "Thomas",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Eric",
                 LastName = "Evans",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Mary",
                 LastName = "Shelley",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Bram",
                 LastName = "Stoker",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Michelle",
                 LastName = "Obama",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
+                OwnerId = ownerId,
                 FirstName = "Anthony",
                 LastName = "Bourdain",
             },
@@ -391,8 +413,6 @@ public static class DevelopmentDataSeeder
 
         foreach (var (bookTitle, lastNames) in attribution)
         {
-            // Single throws on a typo in either direction rather than seeding a book
-            // that silently reads as Unknown.
             var book = books.Single(b => b.Title == bookTitle);
 
             book.Authors = lastNames

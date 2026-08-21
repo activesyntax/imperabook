@@ -53,9 +53,10 @@ public class AggregatesTests
     public void Author_Create_allows_optional_first_name()
     {
         var id = Id<Author>.New();
+        var ownerId = Id<User>.New();
         var last = PersonName.Create("Tolkien").Value;
 
-        var author = Author.Create(id, firstName: Maybe<PersonName>.None, last);
+        var author = Author.Create(id, ownerId, firstName: Maybe<PersonName>.None, last);
 
         Assert.Equal(id, author.Id);
         Assert.Equal(Maybe<PersonName>.None, author.FirstName);
