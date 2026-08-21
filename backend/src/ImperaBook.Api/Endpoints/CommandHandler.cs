@@ -17,7 +17,7 @@ public static class CommandHandler
 
     internal static async Task<CommandResult> ListBooks(IBookQueries books, CancellationToken ct)
     {
-        var bookList = await books.List(null, ct);
+        var bookList = await books.List(ct);
         return bookList.ToCommandResult(
             "No books yet. Add one to start your library.",
             new PageInfo(1, 1, bookList.Count(), "books")
