@@ -16,194 +16,217 @@ public static class DevelopmentDataSeeder
         if (await ctx.Set<BookEntity>().AnyAsync(ct))
             return;
 
-        var ownerId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-        var libraryId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var ownerId_01 = Guid.NewGuid();
+        var ownerId_02 = Guid.NewGuid();
+        var libraryId_01 = Guid.NewGuid();
+        var libraryId_02 = Guid.NewGuid();
 
-        var owner = new UserEntity
+        var owner1 = new UserEntity
         {
-            Id = ownerId,
-            UserName = "john",
-            Email = "john.doe@example.com",
-            FirstName = "John",
-            LastName = "Doe",
+            Id = ownerId_01,
+            UserName = "bill",
+            Email = "bill.taylor@activesyntax.net",
+            FirstName = "Bill",
+            LastName = "Taylor",
         };
 
-        var created = await users.CreateAsync(owner, password);
+        var owner2 = new UserEntity
+        {
+            Id = ownerId_02,
+            UserName = "mary",
+            Email = "mary.johnson@activesyntax.net",
+            FirstName = "Mary",
+            LastName = "Johnson",
+        };
 
-        if (!created.Succeeded)
+        var createdOwner1 = await users.CreateAsync(owner1, password);
+        var createdOwner2 = await users.CreateAsync(owner2, password);
+
+        if (!createdOwner1.Succeeded || !createdOwner2.Succeeded)
         {
             var reasons = string.Join(
                 "; ",
-                created.Errors.Select(e => $"{e.Code}: {e.Description}")
+                createdOwner1.Errors.Select(e => $"{e.Code}: {e.Description}"),
+                createdOwner2.Errors.Select(e => $"{e.Code}: {e.Description}")
             );
             throw new InvalidOperationException($"Seeding the development user failed. {reasons}");
         }
 
-        ctx.Set<LibraryEntity>()
-            .Add(
-                new LibraryEntity
-                {
-                    Id = libraryId,
-                    Name = "Home Library",
-                    OwnerId = ownerId,
+        var libraries = new List<LibraryEntity>()
+        {
+            new LibraryEntity
+            {
+                Id = libraryId_01,
+                Name = "Home Library",
+                OwnerId = ownerId_01,
 
-                    PhotoHash = await SeedImage.Register("library-photo.jpg", ctx, ct),
-                }
-            );
+                PhotoHash = await SeedImage.Register("library-photo.jpg", ctx, ct),
+            },
+            new LibraryEntity
+            {
+                Id = libraryId_02,
+                Name = "Home Library",
+                OwnerId = ownerId_02,
+
+                PhotoHash = await SeedImage.Register("library-photo-2.jpg", ctx, ct),
+            },
+        };
+
+        ctx.Set<LibraryEntity>().AddRange(libraries);
 
         var authors = new List<AuthorEntity>
         {
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "George",
                 LastName = "Orwell",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_02,
                 FirstName = "Jane",
                 LastName = "Austen",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Fyodor",
                 LastName = "Dostoevsky",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Leo",
                 LastName = "Tolstoy",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Gabriel",
                 LastName = "García Márquez",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Harper",
                 LastName = "Lee",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "J.R.R.",
                 LastName = "Tolkien",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Frank",
                 LastName = "Herbert",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Isaac",
                 LastName = "Asimov",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Agatha",
                 LastName = "Christie",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Yuval Noah",
                 LastName = "Harari",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Carl",
                 LastName = "Sagan",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Stephen",
                 LastName = "Hawking",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Daniel",
                 LastName = "Kahneman",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Robert C.",
                 LastName = "Martin",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Andrew",
                 LastName = "Hunt",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "David",
                 LastName = "Thomas",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Eric",
                 LastName = "Evans",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Mary",
                 LastName = "Shelley",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_01,
                 FirstName = "Bram",
                 LastName = "Stoker",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_02,
                 FirstName = "Michelle",
                 LastName = "Obama",
             },
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
-                OwnerId = ownerId,
+                OwnerId = ownerId_02,
                 FirstName = "Anthony",
                 LastName = "Bourdain",
             },
@@ -216,31 +239,31 @@ public static class DevelopmentDataSeeder
             {
                 Id = Guid.NewGuid(),
                 Title = "Pride and Prejudice",
-                LibraryId = libraryId,
+                LibraryId = libraryId_02,
             },
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Crime and Punishment",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "War and Peace",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "One Hundred Years of Solitude",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "To Kill a Mockingbird",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             // Dystopian / political fiction
             new()
@@ -248,14 +271,14 @@ public static class DevelopmentDataSeeder
                 Id = Guid.NewGuid(),
                 Title = "1984",
                 Subtitle = "Nineteen Eighty-Four",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Animal Farm",
                 Subtitle = "A Fairy Story",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             // Fantasy
             new()
@@ -263,34 +286,34 @@ public static class DevelopmentDataSeeder
                 Id = Guid.NewGuid(),
                 Title = "The Lord of the Rings",
                 Subtitle = "The Fellowship of the Ring",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "The Hobbit",
                 Subtitle = "There and Back Again",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             // Science fiction
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Dune",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Foundation",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             // Mystery / crime
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Murder on the Orient Express",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             // Horror / gothic
             new()
@@ -298,13 +321,13 @@ public static class DevelopmentDataSeeder
                 Id = Guid.NewGuid(),
                 Title = "Frankenstein",
                 Subtitle = "The Modern Prometheus",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Dracula",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             // History / non-fiction
             new()
@@ -312,28 +335,28 @@ public static class DevelopmentDataSeeder
                 Id = Guid.NewGuid(),
                 Title = "Sapiens",
                 Subtitle = "A Brief History of Humankind",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             // Science / popular science
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Cosmos",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "A Brief History of Time",
                 Subtitle = "From the Big Bang to Black Holes",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             // Psychology
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Thinking, Fast and Slow",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             // Technology / software
             new()
@@ -341,28 +364,28 @@ public static class DevelopmentDataSeeder
                 Id = Guid.NewGuid(),
                 Title = "The Pragmatic Programmer",
                 Subtitle = "Your Journey to Mastery",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Clean Code",
                 Subtitle = "A Handbook of Agile Software Craftsmanship",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Domain-Driven Design",
                 Subtitle = "Tackling Complexity in the Heart of Software",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
             // Biography / memoir
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Becoming",
-                LibraryId = libraryId,
+                LibraryId = libraryId_02,
             },
             // Food / travel
             new()
@@ -370,13 +393,13 @@ public static class DevelopmentDataSeeder
                 Id = Guid.NewGuid(),
                 Title = "Kitchen Confidential",
                 Subtitle = "Adventures in the Culinary Underbelly",
-                LibraryId = libraryId,
+                LibraryId = libraryId_02,
             },
             new()
             {
                 Id = Guid.NewGuid(),
                 Title = "Orphan Book",
-                LibraryId = libraryId,
+                LibraryId = libraryId_01,
             },
         };
 
