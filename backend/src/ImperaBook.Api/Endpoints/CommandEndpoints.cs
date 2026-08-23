@@ -17,9 +17,9 @@ public static class CommandEndpoints
         // and a client with no session gets the one it may run from /api/auth/bootstrap
         // instead. Filtering this list by principal is the move to make if a second
         // anonymous command ever exists; today there is nothing to filter.
-        app.MapGet("/api/commands", () => TypedResults.Ok(CommandCatalog.All))
+        app.MapGet("/api/commands", GetCommands)
             .WithName("GetCommands")
-            .Produces<IReadOnlyList<CommandDescriptor>>(StatusCodes.Status200OK);
+            .Produces<CommandCatalogResponse>(StatusCodes.Status200OK);
 
         // todo: inject queries onto CommandHandler
         app.MapPost(
@@ -136,6 +136,28 @@ public static class CommandEndpoints
             detail: "This account has no library.",
             extensions: new Dictionary<string, object?> { ["code"] = "no_library" }
         );
+
+    private static async Task<Ok<CommandCatalogResponse>> GetCommands(
+        IUserQueries users,
+        HttpContext http,
+        CancellationToken ct
+    )
+    {
+        http.Response.Headers.CacheControl = "no-store";
+
+        var owner = await users.GetOwner(ct);
+
+        return TypedResults.Ok(
+            new CommandCatalogResponse(owner.ToSessionView(), CommandCatalog.All)
+        );
+    }
 }
 
 public sealed record CommandRequest(string Command);
+
+public sealed record SessionView(string DisplayName, string LibraryName);
+
+public sealed record CommandCatalogResponse(
+    SessionView Session,
+    IReadOnlyList<CommandDescriptor> Commands
+);

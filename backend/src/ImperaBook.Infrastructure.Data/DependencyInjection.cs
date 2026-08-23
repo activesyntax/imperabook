@@ -21,6 +21,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IBookWriteRepository, BookWriteRepository>();
         services.AddScoped<IAuthorWriteRepository, AuthorWriteRepository>();
         services.AddScoped<ILibraryQueries, LibraryQueries>();
+        services.AddScoped<IUserQueries, UserQueries>();
 
         services.AddScoped<IDashboardQueries, DashboardQueries>();
         services.AddScoped<IBookQueries, BookQueries>();
