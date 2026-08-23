@@ -8,14 +8,19 @@ import type { CommandResult, ViewNode } from '@workspace/views/view-node';
 const COMMANDS_URL = '/api/commands';
 const BOOTSTRAP_URL = '/api/auth/bootstrap';
 
-/**
- * Amit egy session nélküli kliens kap: a `login` leírója és a hozzá tartozó nézet.
- * Mindkettő ugyanabból a szerveroldali definícióból származik, amit a vezérlőcsatorna
- * is használ — a kliens nem ismeri a `login`-t, csak megkapja.
- */
 interface BootstrapResponse {
   readonly command: CommandSpec;
   readonly views: readonly ViewNode[];
+}
+
+export interface SessionView {
+  readonly displayName: string;
+  readonly libraryName: string;
+}
+
+interface CommandCatalogResponse {
+  readonly session: SessionView;
+  readonly commands: readonly CommandSpec[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -25,29 +30,25 @@ export class CommandRegistry {
   private readonly catalog = signal<readonly CommandSpec[]>([]);
   private readonly signedIn = signal(false);
   private readonly entryViews = signal<readonly ViewNode[]>([]);
+  private readonly currentSession = signal<SessionView | null>(null);
 
   private pending: Promise<void> | null = null;
 
   readonly commands = this.catalog.asReadonly();
   readonly authenticated = this.signedIn.asReadonly();
 
-  /**
-   * A nyitókép: session nélkül a bootstrap nézete, egyébként üres. A workspace ezt
-   * rendereli indításkor, ahelyett hogy maga döntené el, mit mutat egy anonim kliensnek.
-   */
+  readonly session = this.currentSession.asReadonly();
+
   readonly startupViews = this.entryViews.asReadonly();
 
-  /**
-   * A session állapota a szerver válaszából derül ki, nem feltételezésből. A jegyzék
-   * lekérése az a kérdés, hogy „van-e sessionöm" — 200 az igen, 401 a nem. Fordítva
-   * (előbb bootstrap, aztán ha kell jegyzék) egy visszatérő, érvényes sütivel érkező
-   * felhasználó is login-képernyőt kapna, mielőtt bárki megkérdezné a szervert.
-   */
   async load(): Promise<void> {
     try {
-      const commands = await firstValueFrom(this.http.get<CommandSpec[]>(COMMANDS_URL));
+      const catalog = await firstValueFrom(
+        this.http.get<CommandCatalogResponse>(COMMANDS_URL),
+      );
 
-      this.catalog.set(commands);
+      this.catalog.set(catalog.commands);
+      this.currentSession.set(catalog.session);
       this.entryViews.set([]);
       this.signedIn.set(true);
     } catch (error) {
@@ -58,18 +59,17 @@ export class CommandRegistry {
       const bootstrap = await firstValueFrom(this.http.get<BootstrapResponse>(BOOTSTRAP_URL));
 
       this.catalog.set([bootstrap.command]);
+      this.currentSession.set(null);
       this.entryViews.set(bootstrap.views);
       this.signedIn.set(false);
     }
   }
 
-  /** Egyszeri betöltés; több hívó ugyanarra a promise-ra vár. */
   ready(): Promise<void> {
     this.pending ??= this.load();
     return this.pending;
   }
 
-  /** Bejelentkezés vagy kijelentkezés után a jegyzék újra lekérdezendő. */
   refresh(): Promise<void> {
     this.pending = this.load();
     return this.pending;

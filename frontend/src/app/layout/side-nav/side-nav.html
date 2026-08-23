@@ -1,5 +1,11 @@
 <nav class="nav" aria-label="Commands">
-  <app-user-badge class="nav__identity" [name]="name()" [library]="library()" [avatarUrl]="avatarUrl()" />
+@if (session(); as owner) {
+    <app-user-badge
+      class="nav__identity"
+      [name]="owner.displayName"
+      [library]="owner.libraryName"
+    />
+  }
 
   @if (account().length > 0) {
   <ul class="nav__list" aria-label="Account commands">

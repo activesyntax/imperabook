@@ -4,6 +4,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { CommandSpec } from '@core/model';
 import { CommandProvider } from '@app/commands/command-provider';
 import { UserBadge } from '@app/layout/user-badge/user-badge';
+import { CommandRegistry } from '@app/commands/command-registry';
 
 @Component({
   selector: 'app-side-nav',
@@ -14,6 +15,7 @@ import { UserBadge } from '@app/layout/user-badge/user-badge';
 })
 export class SideNav {
   private readonly commands = inject(CommandProvider);
+  private readonly registry = inject(CommandRegistry);
 
   readonly name = input.required<string>();
   readonly library = input.required<string>();
@@ -35,4 +37,6 @@ export class SideNav {
       .filter((c) => c.group === group)
       .toSorted((a, b) => (a.order ?? 0) - (b.order ?? 0));
   }
+
+  protected readonly session = this.registry.session;
 }
