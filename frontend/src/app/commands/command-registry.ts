@@ -31,6 +31,7 @@ export class CommandRegistry {
   private readonly signedIn = signal(false);
   private readonly entryViews = signal<readonly ViewNode[]>([]);
   private readonly currentSession = signal<SessionView | null>(null);
+  private readonly answered = signal(false);
 
   private pending: Promise<void> | null = null;
 
@@ -40,6 +41,8 @@ export class CommandRegistry {
   readonly session = this.currentSession.asReadonly();
 
   readonly startupViews = this.entryViews.asReadonly();
+
+  readonly loaded = this.answered.asReadonly();
 
   async load(): Promise<void> {
     try {
@@ -51,6 +54,7 @@ export class CommandRegistry {
       this.currentSession.set(catalog.session);
       this.entryViews.set([]);
       this.signedIn.set(true);
+      this.answered.set(true);
     } catch (error) {
       if (!(error instanceof HttpErrorResponse) || error.status !== 401) {
         throw error;
@@ -62,6 +66,7 @@ export class CommandRegistry {
       this.currentSession.set(null);
       this.entryViews.set(bootstrap.views);
       this.signedIn.set(false);
+      this.answered.set(true);
     }
   }
 

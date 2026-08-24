@@ -7,6 +7,7 @@ import {
   HostListener,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 
@@ -111,10 +112,16 @@ export class CommandShell {
     effect(() => this.focus(this.bar()?.nativeElement));
 
     // A gép `browsing()`-gal jön létre, mert a komponens a jegyzék előtt épül fel — a
-    // `forcedCommand` ekkor még semmit nem tudna mondani. Amint a jegyzék megvan, a
-    // tétlen állapot újraértékelődik. Ez az egyetlen pont, ahol a komponens kezdeményez,
-    // és csak azért, mert a betöltés aszinkron; a döntés magában a gépben van.
-    void this.registry.ready().then(() => this.apply(Shell.initial(this.deps)));
+    // `forcedCommand` ekkor még semmit nem tudna mondani. Amint a jegyzék válaszolt, a
+    // tétlen állapot újraértékelődik. A komponens nem tölt be semmit és nem kezel
+    // betöltési hibát: azt a `ShellStartup` teszi, egy helyen. Itt csak egy tény
+    // olvasása van, és a `loaded` egyirányú, tehát ez egyszer fut le — a későbbi
+    // session-váltásokat a gép saját tétlen átmenete kezeli (ADR 30).
+    effect(() => {
+      if (!this.registry.loaded()) return;
+
+      untracked(() => this.apply(Shell.initial(this.deps)));
+    });
   }
 
   // ── DOM → UiInput ─────────────────────────────────────────────────────────

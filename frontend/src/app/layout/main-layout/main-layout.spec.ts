@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpTesting } from '@testing/http';
+
 import { MainLayout } from './main-layout';
 
 describe('MainLayout', () => {
@@ -9,7 +9,6 @@ describe('MainLayout', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MainLayout],
-      providers: [provideHttpTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MainLayout);
