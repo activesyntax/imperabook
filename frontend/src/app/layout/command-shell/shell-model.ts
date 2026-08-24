@@ -4,18 +4,12 @@ import { Index, IndexMove, indexRange, nextCyclicIndex, prevCyclicIndex } from '
 import { UiInput } from './ui-input';
 import * as Param from './param-model';
 
-// ── állapotok ───────────────────────────────────────────────────────────────
-
 export type Browsing = {
   readonly kind: 'browsing';
   readonly text: string;
   readonly selected: Index;
 };
 
-/**
- * Bevitelmód. A shell csak annyit tud róla, MELYIK parancsért fut — a
- * billentyűértelmezés teljes egészében a paramétergépé.
- */
 export type Collecting = {
   readonly kind: 'collecting';
   readonly cmd: CommandSpec;
@@ -35,13 +29,6 @@ export const browsing = (text = '', selected: Index = undefined): Browsing =>
 export const running = (cmd: CommandSpec): Running =>
   ({ kind: 'running', cmd });
 
-// ── effektek ────────────────────────────────────────────────────────────────
-
-/**
- * A két kör. `open` a bekérés MELLÉ kért nézet — a login ajtaja, később az
- * `add book` piszkozata (UX.md); `run` maga a végrehajtás. Az `open` nem visz
- * választ, mert még nincs; épp ezért nem is vihet titkot.
- */
 export type Effect =
   | { readonly kind: 'open'; readonly cmd: CommandSpec }
   | { readonly kind: 'run'; readonly cmd: CommandSpec; readonly answers: CommandInput };
@@ -56,20 +43,8 @@ const step = (state: ShellState, effects: readonly Effect[] = []): Step => ({ st
 export interface ShellDeps {
   readonly suggestionsFor: (query: string) => readonly CommandSpec[];
 
-  /**
-   * A parancs, amit a shellnek nincs miért nem futtatnia. Session nélkül a jegyzék
-   * egyetlen elemű, tehát a `browsing` — ahol a felhasználó választ — nem létező
-   * választást kínálna: üres sáv, egyetlen lehetőséggel, amit ki kell találni.
-   *
-   * Ez nem a komponens beavatkozása az állapotgépbe, hanem a gép bemenete, ugyanúgy,
-   * ahogy a `suggestionsFor` is az. Ettől lesz minden tétlenné válás — indulás, kilépés,
-   * megszakítás, visszautasított bejelentkezés — ugyanaz az egy átmenet.
-   */
   readonly forcedCommand: () => CommandSpec | undefined;
 }
-
-// ── származtatott nézetek ───────────────────────────────────────────────────
-// A komponensnek elég ezt az egy modult ismernie; a Param felé itt megy a híd.
 
 export const queryOf = (text: string): string => text.trim();
 
@@ -99,7 +74,6 @@ export function selectedOf(state: ShellState, deps: ShellDeps): CommandSpec | un
   return index === undefined ? undefined : suggestionsOf(state, deps)[index];
 }
 
-/** Az épp futó, bekérés alatt álló vagy kiválasztott parancs — a leíráshoz. */
 export function activeOf(state: ShellState, deps: ShellDeps): CommandSpec | undefined {
   return state.kind === 'browsing' ? selectedOf(state, deps) : state.cmd;
 }
@@ -130,22 +104,10 @@ export function transition(state: ShellState, input: UiInput, deps: ShellDeps): 
   }
 }
 
-/**
- * A kezdőállapot, ha a jegyzék már betöltött. A gép `browsing()`-gal jön létre, mert a
- * komponens a jegyzék előtt épül fel; ez az a lépés, ami utólag újraértékeli.
- */
 export function initial(deps: ShellDeps): Step {
   return idle(deps);
 }
 
-/**
- * A tétlen állapot — ahányszor a shellnek nincs dolga. A `forcedCommand` létezése maga az
- * állítás, hogy nincs mit választani, és a gép ilyenkor nem vár, hanem lép.
- *
- * Nem ciklizál: a kényszerített parancs `collecting` vagy `running` állapotba visz, tehát
- * a következő tétlenné válás csak azután jöhet, hogy az véget ért — és ha addigra van
- * session, a `forcedCommand` már `undefined`-ot ad.
- */
 function idle(deps: ShellDeps): Step {
   const forced = deps.forcedCommand();
   return forced === undefined ? step(browsing()) : start(browsing(), forced);
@@ -163,7 +125,6 @@ function fromBrowsing(s: Browsing, i: UiInput, deps: ShellDeps): Step {
   }
 }
 
-/** A teljes bevitelmódot a paramétergép kezeli; a shell csak a kilépést fordítja le. */
 function fromCollecting(s: Collecting, i: UiInput, deps: ShellDeps): Step {
   const outcome = Param.transition(s.params, i);
 
@@ -178,14 +139,6 @@ function fromRunning(s: Running, i: UiInput, deps: ShellDeps): Step {
   return i.kind === 'completed' ? idle(deps) : step(s);
 }
 
-// ── parancsmód részletei ────────────────────────────────────────────────────
-
-/**
- * Gépelés: üres lekérdezésnél nincs kiválasztás, egyébként a legjobb találat.
- *
- * A rangsort a suggestionsFor már elvégezte — a lista első eleme definíció
- * szerint a legjobb egyezés, így itt nincs második, gyengébb szűrés.
- */
 function retyped(s: Browsing, value: string, deps: ShellDeps): Browsing {
   const query = queryOf(value);
   if (query.length <= 0) return browsing(value, undefined);
@@ -193,7 +146,6 @@ function retyped(s: Browsing, value: string, deps: ShellDeps): Browsing {
   return browsing(value, deps.suggestionsFor(query).length > 0 ? 0 : undefined);
 }
 
-/** Tab: egyetlen találatnál előbb kiegészít, utána ciklikusan lépked. */
 function moved(s: Browsing, dir: 'next' | 'prev', deps: ShellDeps): Browsing {
   const matches = deps.suggestionsFor(queryOf(s.text));
 
@@ -206,7 +158,6 @@ function moved(s: Browsing, dir: 'next' | 'prev', deps: ShellDeps): Browsing {
   return browsing(s.text, change(indexRange(matches.length), selectedIndexOf(s, deps)));
 }
 
-/** Enter: első nyomásra kiegészít, a másodikra futtat. */
 function committed(s: Browsing, deps: ShellDeps): Step {
   const cmd = selectedOf(s, deps);
   const completed = completion(s, cmd);
@@ -218,19 +169,6 @@ function completion(s: Browsing, cmd: CommandSpec | undefined): Browsing | undef
   return browsing(cmd.command, 0);
 }
 
-/**
- * Indítás.
- *
- * Paraméter nélkül egyetlen kör: nincs mit bekérni, tehát nincs mihez nézetet
- * kérni — a `run` válasza maga az eredmény.
- *
- * Paraméterrel két kör: előbb `open`, ami megadja a bekérés melletti nézetet
- * (a login ajtaja), és csak a kitöltés után `run`. A nyitó kör mindig a
- * vezérlőcsatornán megy, mert nem visz választ — így titkot sem.
- *
- * Ha nincs mit indítani, az állapot változatlan marad: a beírt szöveg nem
- * tűnik el a felhasználó alól. (A search fall-through külön kerül be; ez a hely.)
- */
 function start(s: Browsing, cmd: CommandSpec | undefined): Step {
   if (cmd === undefined) return step(s);
 
