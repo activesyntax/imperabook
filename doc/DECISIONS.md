@@ -95,16 +95,54 @@ multiply.
 vertical-slice folders) makes the codebase's structure predictable and navigable. The risk is
 that adopting the layout also pulls in the libraries the template usually ships with by default.
 
-**Decision.** Adopt the vocabulary and folders (`Books/Commands`, `Books/Queries`,
-`...Command` / `...Query` types, `...CommandHandler` / `...QueryHandler` handlers) while keeping
-the type-driven domain underneath. Parameterless or single-primitive queries do not get an empty
-request record — with no mediator, boxing nothing into a request object is pure ceremony, and the
-handler suffix carries the convention.
+**Decision.** Adopt the vocabulary — `...Command` types, `...CommandHandler` handlers, `...Queries`
+read-side services — while keeping the type-driven domain underneath. Parameterless or
+single-primitive queries do not get an empty request record: with no mediator, boxing nothing into a
+request object is pure ceremony, and the handler suffix carries the convention.
 
-**Trade-off.** The structure itself is low-cost and conventional. The judgment is in *not* also
-importing the heavyweight libraries the template usually ships with (see 3 and 4) — the layout is
-adopted, the frameworks are not. The one dependency deliberately taken on, CSharpFunctionalExtensions,
-is a small Result/Maybe library rather than a framework (see 6).
+**The folders are not adopted with it, and the reason is that half of them have nothing to hold.**
+The template's symmetry is `Books/Commands` beside `Books/Queries`. The second half never
+materialised here, because the read side has no handlers to file: a query projects directly into a
+read model record (8), so what the Application layer owns is an *interface* — `IBookQueries` — and
+its implementation lives in Infrastructure. A `Queries` folder would be an empty level named after a
+class of file this design does not produce. That is the same shape as a `Result` that cannot fail, or
+a single-field wrapper around an already-validated value: a name with nothing behind it.
+
+What the layer actually contains is therefore two populations, and they are filed differently:
+
+- **Ports, flat at the root.** `IBookCommands`, `IBookQueries`, `IAuthorQueries`, `ICurrentUser`,
+  `IImageStore`, `ApplicationError`. One file each, roughly ten of them, and alphabetical order
+  already groups them by slice because the slice name follows the `I`. Foldering a population of
+  one-file members organises nothing.
+- **Command handlers, grouped per slice.** `Books/AddBookCommand.cs`. These are the files that grow —
+  a handler is a hundred-odd lines and there will be three or four per slice — so the grouping is
+  doing work rather than announcing an intention. No `Commands` level underneath, for the reason
+  above: a subfolder that exists to be distinguished from a sibling that does not exist.
+
+The trigger to add a level is a slice holding more files than fit on a screen, not tidiness.
+
+**Trade-off.** *A reader arriving from the standard template does not find its shape.* The
+vocabulary is conventional and the layout is not, which is the more surprising of the two orders —
+someone looking for `Books/Queries` finds a flat list of interfaces instead. The defence is that the
+*names* carry the convention and the names are what a file search matches; a directory tree is
+navigation for the eye, and this codebase is navigated by symbol. Recorded because "we use CQRS" now
+implies a layout that is not there.
+
+*Application and Infrastructure are bucketed on different axes.* `Infrastructure.Data` is split
+technically — `Entities`, `Configurations`, `Migrations`, `Queries` — while the Application layer's
+handlers are split by slice. That reads as inconsistency and is not: migrations and EF
+configurations do not divide into `Books` and `Authors` in any useful way, and the two layers are
+organising different things (10). Stated so the asymmetry is a decision rather than drift.
+
+*The root mixes cross-cutting ports with slice ports.* `ICurrentUser` (31) and `IImageStore` (20)
+belong to no slice, and sit beside ones that do. At this count the mixture is legible; if the root
+passes roughly fifteen files, an `Abstractions` folder for the cross-cutting three is the cheap
+move — and pushing them into a slice they do not belong to is the expensive one to avoid.
+
+*The libraries stayed out, which was the original point.* The judgment in this entry was never the
+folders; it was *not* importing the heavyweight libraries the template ships with by default (3, 4).
+The one dependency deliberately taken on, CSharpFunctionalExtensions, is a small Result/Maybe
+library rather than a framework (6). That half is unchanged.
 
 ---
 
