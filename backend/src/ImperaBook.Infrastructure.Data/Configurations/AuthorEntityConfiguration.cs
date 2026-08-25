@@ -18,5 +18,13 @@ public class AuthorEntityConfiguration : IEntityTypeConfiguration<AuthorEntity>
         builder.Property(a => a.LastName).HasMaxLength(PersonName.MaxLength);
 
         builder.Property(b => b.PortraitHash).HasMaxLength(ContentHash.Length).IsFixedLength();
+        builder.Property(a => a.Vitality).HasConversion<string>().HasMaxLength(16).IsRequired();
+
+        builder.ToTable(t =>
+            t.HasCheckConstraint(
+                "ck_authors_vitality_death",
+                "vitality = 'Deceased' or death_year is null"
+            )
+        );
     }
 }

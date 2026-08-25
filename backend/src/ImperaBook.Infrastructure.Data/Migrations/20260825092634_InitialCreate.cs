@@ -20,11 +20,15 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                     owner_id = table.Column<Guid>(type: "uuid", nullable: false),
                     first_name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
                     last_name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
-                    portrait_hash = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: true)
+                    portrait_hash = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: true),
+                    birth_year = table.Column<int>(type: "integer", nullable: true),
+                    vitality = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
+                    death_year = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_authors", x => x.id);
+                    table.CheckConstraint("ck_authors_vitality_death", "vitality = 'Deceased' or death_year is null");
                 });
 
             migrationBuilder.CreateTable(

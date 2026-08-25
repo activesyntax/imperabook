@@ -1,3 +1,4 @@
+using ImperaBook.Application;
 using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -74,6 +75,14 @@ public static class DevelopmentDataSeeder
 
         ctx.Set<LibraryEntity>().AddRange(libraries);
 
+        // Vitality coverage is deliberate — the seed exercises every branch the view
+        // and the Needs attention panel will have to render:
+        //   Deceased + both years   — the majority
+        //   Deceased + no birth     — Shelley, Stoker
+        //   Deceased + no death     — Christie: the row the panel exists to surface
+        //   Deceased + neither      — Dostoevsky
+        //   Living                  — Harari, Martin, Obama (no death column at all)
+        //   Unknown                 — Hunt, Thomas, Evans: we don't know if they're alive
         var authors = new List<AuthorEntity>
         {
             new AuthorEntity
@@ -82,6 +91,9 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_01,
                 FirstName = "George",
                 LastName = "Orwell",
+                BirthYear = 1903,
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 1950,
             },
             new AuthorEntity
             {
@@ -89,13 +101,18 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_02,
                 FirstName = "Jane",
                 LastName = "Austen",
+                BirthYear = 1775,
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 1817,
             },
+            // Deceased, neither year recorded.
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
                 OwnerId = ownerId_01,
                 FirstName = "Fyodor",
                 LastName = "Dostoevsky",
+                Vitality = VitalityKind.Deceased,
             },
             new AuthorEntity
             {
@@ -103,6 +120,9 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_01,
                 FirstName = "Leo",
                 LastName = "Tolstoy",
+                BirthYear = 1828,
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 1910,
             },
             new AuthorEntity
             {
@@ -110,6 +130,9 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_01,
                 FirstName = "Gabriel",
                 LastName = "García Márquez",
+                BirthYear = 1927,
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 2014,
             },
             new AuthorEntity
             {
@@ -117,6 +140,9 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_01,
                 FirstName = "Harper",
                 LastName = "Lee",
+                BirthYear = 1926,
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 2016,
             },
             new AuthorEntity
             {
@@ -124,6 +150,9 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_01,
                 FirstName = "J.R.R.",
                 LastName = "Tolkien",
+                BirthYear = 1892,
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 1973,
             },
             new AuthorEntity
             {
@@ -131,6 +160,9 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_01,
                 FirstName = "Frank",
                 LastName = "Herbert",
+                BirthYear = 1920,
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 1986,
             },
             new AuthorEntity
             {
@@ -138,20 +170,29 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_01,
                 FirstName = "Isaac",
                 LastName = "Asimov",
+                BirthYear = 1920,
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 1992,
             },
+            // Deceased, death year missing — a Needs attention row.
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
                 OwnerId = ownerId_01,
                 FirstName = "Agatha",
                 LastName = "Christie",
+                BirthYear = 1890,
+                Vitality = VitalityKind.Deceased,
             },
+            // Living — no death column to fill.
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
                 OwnerId = ownerId_01,
                 FirstName = "Yuval Noah",
                 LastName = "Harari",
+                BirthYear = 1976,
+                Vitality = VitalityKind.Living,
             },
             new AuthorEntity
             {
@@ -159,6 +200,9 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_01,
                 FirstName = "Carl",
                 LastName = "Sagan",
+                BirthYear = 1934,
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 1996,
             },
             new AuthorEntity
             {
@@ -166,6 +210,9 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_01,
                 FirstName = "Stephen",
                 LastName = "Hawking",
+                BirthYear = 1942,
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 2018,
             },
             new AuthorEntity
             {
@@ -173,20 +220,29 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_01,
                 FirstName = "Daniel",
                 LastName = "Kahneman",
+                BirthYear = 1934,
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 2024,
             },
+            // Living.
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
                 OwnerId = ownerId_01,
                 FirstName = "Robert C.",
                 LastName = "Martin",
+                BirthYear = 1952,
+                Vitality = VitalityKind.Living,
             },
+            // Unknown — we don't know whether they're alive. Zero value, set explicitly
+            // here so the case is visible rather than inherited from the default.
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
                 OwnerId = ownerId_01,
                 FirstName = "Andrew",
                 LastName = "Hunt",
+                Vitality = VitalityKind.Unknown,
             },
             new AuthorEntity
             {
@@ -194,20 +250,27 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_01,
                 FirstName = "David",
                 LastName = "Thomas",
+                Vitality = VitalityKind.Unknown,
             },
+            // Unknown vitality, but the birth year is on record.
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
                 OwnerId = ownerId_01,
                 FirstName = "Eric",
                 LastName = "Evans",
+                BirthYear = 1962,
+                Vitality = VitalityKind.Unknown,
             },
+            // Deceased, birth year missing.
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
                 OwnerId = ownerId_01,
                 FirstName = "Mary",
                 LastName = "Shelley",
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 1851,
             },
             new AuthorEntity
             {
@@ -215,13 +278,18 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_01,
                 FirstName = "Bram",
                 LastName = "Stoker",
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 1912,
             },
+            // Living.
             new AuthorEntity
             {
                 Id = Guid.NewGuid(),
                 OwnerId = ownerId_02,
                 FirstName = "Michelle",
                 LastName = "Obama",
+                BirthYear = 1964,
+                Vitality = VitalityKind.Living,
             },
             new AuthorEntity
             {
@@ -229,9 +297,11 @@ public static class DevelopmentDataSeeder
                 OwnerId = ownerId_02,
                 FirstName = "Anthony",
                 LastName = "Bourdain",
+                BirthYear = 1956,
+                Vitality = VitalityKind.Deceased,
+                DeathYear = 2018,
             },
         };
-
         var books = new List<BookEntity>
         {
             // Classic literature

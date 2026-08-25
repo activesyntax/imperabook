@@ -27,4 +27,8 @@ public abstract record CatalogValidationError
     public sealed record ContentHashRequired : CatalogValidationError;
 
     public sealed record ContentHashMalformed(int ExpectedLength) : CatalogValidationError;
+
+    public sealed record YearOutOfRange(int Min, int Max) : CatalogValidationError;
+
+    public sealed record DeathBeforeBirth(int Birth, int Death) : CatalogValidationError;
 }

@@ -8,19 +8,32 @@ public sealed record Author
     public Id<User> Owner { get; }
     public Maybe<PersonName> FirstName { get; }
     public PersonName LastName { get; }
+    public LifeRange LifeRange { get; }
+    public Maybe<ContentHash> Portrait { get; }
 
-    private Author(Id<Author> id, Id<User> owner, Maybe<PersonName> firstName, PersonName lastName)
+    private Author(
+        Id<Author> id,
+        Id<User> owner,
+        Maybe<PersonName> firstName,
+        PersonName lastName,
+        LifeRange lifeRange,
+        Maybe<ContentHash> portrait
+    )
     {
         Id = id;
         Owner = owner;
         FirstName = firstName;
         LastName = lastName;
+        LifeRange = lifeRange;
+        Portrait = portrait;
     }
 
     public static Author Create(
         Id<Author> id,
         Id<User> owner,
         Maybe<PersonName> firstName,
-        PersonName lastName
-    ) => new(id, owner, firstName, lastName);
+        PersonName lastName,
+        LifeRange lifeRange,
+        Maybe<ContentHash> portrait
+    ) => new(id, owner, firstName, lastName, lifeRange, portrait);
 }

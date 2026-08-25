@@ -1,12 +1,21 @@
 namespace ImperaBook.Application;
 
-public sealed record AuthorListItem
+public enum VitalityKind
 {
-    public required Guid Id { get; init; }
-    public string? FirstName { get; init; }
-    public required string LastName { get; init; }
-    public string? PortraitHash { get; init; }
+    Unknown = 0,
+    Living = 1,
+    Deceased = 2,
 }
+
+public sealed record AuthorListItem(
+    Guid Id,
+    string? FirstName,
+    string LastName,
+    string? PortraitHash,
+    int? BirthYear,
+    VitalityKind Vitality,
+    int? DeathYear
+);
 
 public interface IAuthorQueries
 {

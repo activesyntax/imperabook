@@ -55,8 +55,17 @@ public class AggregatesTests
         var id = Id<Author>.New();
         var ownerId = Id<User>.New();
         var last = PersonName.Create("Tolkien").Value;
+        var lifeRange = LifeRange.Create(Year.Create(1992).Value, new Vitality.Living()).Value;
+        var portrait = Maybe<ContentHash>.None;
 
-        var author = Author.Create(id, ownerId, firstName: Maybe<PersonName>.None, last);
+        var author = Author.Create(
+            id,
+            ownerId,
+            firstName: Maybe<PersonName>.None,
+            last,
+            lifeRange,
+            portrait
+        );
 
         Assert.Equal(id, author.Id);
         Assert.Equal(Maybe<PersonName>.None, author.FirstName);

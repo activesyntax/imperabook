@@ -29,6 +29,14 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<int?>("BirthYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("birth_year");
+
+                    b.Property<int?>("DeathYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("death_year");
+
                     b.Property<string>("FirstName")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)")
@@ -50,10 +58,19 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasColumnName("portrait_hash")
                         .IsFixedLength();
 
+                    b.Property<string>("Vitality")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("vitality");
+
                     b.HasKey("Id")
                         .HasName("pk_authors");
 
-                    b.ToTable("authors", (string)null);
+                    b.ToTable("authors", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_authors_vitality_death", "vitality = 'Deceased' or death_year is null");
+                        });
                 });
 
             modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.BookAuthorEntity", b =>
