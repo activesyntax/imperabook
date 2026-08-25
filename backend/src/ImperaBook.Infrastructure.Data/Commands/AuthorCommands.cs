@@ -5,11 +5,11 @@ using ImperaBook.Infrastructure.Data.Entities;
 
 namespace ImperaBook.Infrastructure.Data.Commands;
 
-public class AuthorWriteRepository : IAuthorWriteRepository
+public class AuthorCommands : IAuthorCommands
 {
     private readonly ImperaBookDbContext _db;
 
-    public AuthorWriteRepository(ImperaBookDbContext db) => _db = db;
+    public AuthorCommands(ImperaBookDbContext db) => _db = db;
 
     public async Task Add(Author author, CancellationToken ct)
     {

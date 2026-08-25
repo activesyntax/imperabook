@@ -18,8 +18,8 @@ public static class InfrastructureServiceCollectionExtensions
             options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention()
         );
 
-        services.AddScoped<IBookWriteRepository, BookWriteRepository>();
-        services.AddScoped<IAuthorWriteRepository, AuthorWriteRepository>();
+        services.AddScoped<IBookCommands, BookCommands>();
+        services.AddScoped<IAuthorCommands, AuthorCommands>();
         services.AddScoped<ILibraryQueries, LibraryQueries>();
         services.AddScoped<IUserQueries, UserQueries>();
 

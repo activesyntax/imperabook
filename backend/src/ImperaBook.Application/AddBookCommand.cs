@@ -16,7 +16,7 @@ public sealed record AddBookCommand
 }
 
 public sealed class AddBookCommandHandler(
-    IBookWriteRepository books,
+    IBookCommands books,
     ILibraryQueries libraries,
     IImageStore images
 )
