@@ -4,40 +4,18 @@ namespace ImperaBook.Domain.Catalog;
 
 public sealed record Book
 {
-    public Id<Book> Id { get; }
-    public Title Title { get; }
-    public Maybe<Subtitle> Subtitle { get; }
-    public Maybe<Summary> Summary { get; }
-    public Attribution Attribution { get; }
-    public Maybe<ContentHash> Cover { get; }
-    public Id<Library> Library { get; }
+    public required Id<Book> Id { get; init; }
+    public required Id<Library> Library { get; init; }
+    public required Title Title { get; init; }
 
-    private Book(
-        Id<Book> id,
-        Title title,
-        Maybe<Subtitle> subtitle,
-        Maybe<Summary> summary,
-        Attribution attribution,
-        Maybe<ContentHash> cover,
-        Id<Library> libraryId
-    )
-    {
-        Id = id;
-        Title = title;
-        Subtitle = subtitle;
-        Summary = summary;
-        Attribution = attribution;
-        Cover = cover;
-        Library = libraryId;
-    }
+    public Maybe<Subtitle> Subtitle { get; init; }
+    public Attribution Attribution { get; init; } = new Attribution.Unknown();
+    public Maybe<Summary> Summary { get; init; }
+    public Maybe<ContentHash> Cover { get; init; }
 
-    public static Book Create(
-        Id<Book> id,
-        Title title,
-        Maybe<Subtitle> subtitle,
-        Maybe<Summary> summary,
-        Attribution attribution,
-        Maybe<ContentHash> cover,
-        Id<Library> libraryId
-    ) => new(id, title, subtitle, summary, attribution, cover, libraryId);
+    public Maybe<Isbn> Isbn { get; init; }
+    public Maybe<Year> Published { get; init; }
+    public Maybe<Publisher> Publisher { get; init; }
+    public Maybe<LanguageCode> Language { get; init; }
+    public Maybe<PageCount> Pages { get; init; }
 }

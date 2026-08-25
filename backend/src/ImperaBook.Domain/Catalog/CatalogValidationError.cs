@@ -31,4 +31,16 @@ public abstract record CatalogValidationError
     public sealed record YearOutOfRange(int Min, int Max) : CatalogValidationError;
 
     public sealed record DeathBeforeBirth(int Birth, int Death) : CatalogValidationError;
+
+    public sealed record IsbnInvalid : CatalogValidationError;
+
+    public sealed record LanguageCodeInvalid : CatalogValidationError;
+
+    public sealed record PublisherTooLong(int Max) : CatalogValidationError;
+
+    public sealed record PageCountInvalid : CatalogValidationError;
+
+    public sealed record PageCountOutOfRange(int Min, int Max) : CatalogValidationError;
+
+    public sealed record NotANumber(string s) : CatalogValidationError;
 }

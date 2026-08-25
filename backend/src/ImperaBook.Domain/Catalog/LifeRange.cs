@@ -2,25 +2,6 @@ using CSharpFunctionalExtensions;
 
 namespace ImperaBook.Domain.Catalog;
 
-public readonly record struct Year
-{
-    public const int MinValue = -3000;
-    public const int MaxValue = 2200;
-
-    public int Value { get; }
-
-    private Year(int value) => Value = value;
-
-    public static Result<Year, CatalogValidationError> Create(int value) =>
-        value is < MinValue or > MaxValue
-            ? new CatalogValidationError.YearOutOfRange(MinValue, MaxValue)
-            : new Year(value);
-
-    public override string ToString() => Value.ToString();
-
-    public static explicit operator int(Year year) => year.Value;
-}
-
 public abstract record Vitality
 {
     private Vitality() { }
