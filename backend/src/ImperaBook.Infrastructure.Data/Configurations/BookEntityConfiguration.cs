@@ -19,9 +19,22 @@ public class BookEntityConfiguration : IEntityTypeConfiguration<BookEntity>
         builder.Property(b => b.Summary).HasMaxLength(Summary.MaxLength);
 
         builder.Property(b => b.CoverHash).HasMaxLength(ContentHash.Length).IsFixedLength();
+        builder.Property(x => x.Isbn).HasMaxLength(13).IsFixedLength();
+        builder.Property(x => x.Publisher).HasMaxLength(Publisher.MaxLength);
+        builder.Property(x => x.Language).HasMaxLength(2).IsFixedLength();
 
-        // LibraryId stays a plain nullable Guid for now — no FK yet,
-        // because the libraries table doesn't exist. That comes later.
-        //
+        builder.ToTable(t =>
+        {
+            t.HasCheckConstraint(
+                "ck_books_page_count",
+                "page_count is null or (page_count between 1 and 20000)"
+            );
+            t.HasCheckConstraint(
+                "ck_books_published_year",
+                "published_year is null or (published_year between -3000 and 2200)"
+            );
+        });
+
+        builder.HasIndex(x => x.Language);
     }
 }

@@ -7,41 +7,55 @@ public static class BookViews
 {
     public static CommandResult ToCommandResult(
         this IReadOnlyList<BookListItem> books,
+        string title,
         string emptyMessage,
         PageInfo? page = null
     ) =>
         new(
             new ViewNode[]
             {
-                new HeadingView("All books", page),
-                new ItemCollectionView(books.Select(ToItem).ToArray(), emptyMessage),
+                new ItemCollectionView(
+                    Title: title,
+                    EmptyMessage: emptyMessage,
+                    Items: books.Select(ToItem).ToArray(),
+                    Page: page
+                ),
             }
         );
 
-    private static ItemView ToItem(BookListItem b)
-    {
-        var properties = new List<ItemProperty>
-        {
-            new("Title", b.Title, PropertyRole.Primary),
-            new(
-                b.Authors.Count > 1 ? "Authors" : "Author",
-                AuthorValue(b.Authors),
-                PropertyRole.Secondary
-            ),
-        };
+    public static CommandResult ToCommandResult(this BookDetail book) =>
+        new(new ViewNode[] { ToDetail(book) });
 
-        // if (!string.IsNullOrWhiteSpace(b.Subtitle))
-        //     properties.Add(new("Subtitle", b.Subtitle, PropertyRole.Secondary));
+    private static BookItemView ToItem(BookListItem b) =>
+        new(
+            Id: b.Id,
+            Title: b.Title,
+            Subtitle: b.Subtitle,
+            Authors: b.Authors.Select(ToPerson).ToArray(),
+            CoverSrc: ImageSrcOf(b.CoverHash)
+        );
 
-        return new ItemView(Ref: b.Id.ToString(), Properties: properties, ImageSrc: ImageSrcOf(b));
-    }
+    private static BookDetailView ToDetail(BookDetail b) =>
+        new(
+            Id: b.Id,
+            Title: b.Title,
+            Subtitle: b.Subtitle,
+            Authors: b.Authors.Select(ToPerson).ToArray(),
+            Summary: b.Summary,
+            CoverSrc: ImageSrcOf(b.CoverHash),
+            Isbn: b.Isbn,
+            Published: b.Published,
+            Publisher: b.Publisher,
+            Language: b.Language,
+            Pages: b.Pages
+        );
 
-    private static string AuthorValue(IReadOnlyList<BookListAuthor> authors) =>
-        authors.Count == 0 ? "Unknown" : string.Join(", ", authors.Select(FullName));
+    // Name parts stay separate. Joining them is a presentation decision that differs by locale —
+    // "George Orwell" against "Jókai Mór" — and the client is the side that knows which it wants.
+    private static PersonRef ToPerson(BookAuthor a) => new(a.Id, a.FirstName, a.LastName);
 
-    private static string FullName(BookListAuthor a) =>
-        string.IsNullOrWhiteSpace(a.FirstName) ? a.LastName : $"{a.FirstName} {a.LastName}";
-
-    private static string? ImageSrcOf(BookListItem b) =>
-        b.CoverHash is { } hash ? $"/api/images/{hash}" : null;
+    // An absent cover sends no URL, not a placeholder one (ADR 20). The same rule now covers the
+    // empty author list: no "Unknown" string is composed here, because what an unattributed book
+    // looks like is a rendering question.
+    private static string? ImageSrcOf(string? hash) => hash is { } h ? $"/api/images/{h}" : null;
 }

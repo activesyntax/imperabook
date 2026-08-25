@@ -8,7 +8,7 @@ ImperaBook is driven by plain-text commands typed into a single command bar.
 - Parameters are **order-free**. The connective names the value, so the segments can be given in whatever order the sentence comes out in.
 - A few commands carry a fixed qualifier in the name itself (`list incomplete books having no isbn`). These are whole entries in the registry, not a verb plus an argument: the qualifier is drawn from a closed, schema-fixed set, so it can be completed rather than typed. Open values (a language, a year) stay parameters.
 - Required parameters are marked `*`. Optional ones are simply left out of the sentence.
-- As you type, the command bar **autocompletes** from a closed command registry using **token-match**: typing `book` surfaces every book command (`add book`, `show book`, `list books`, …), typing `add` surfaces every `add` command. **`Tab` selects, `Enter` confirms** — see *The two keys* below. Completion does not stop at the verb: once the command is in the bar, the same row offers its **next parameter**, one at a time — see *Composing a command*. Suggestions are ranked — see *Command suggestion model* below.
+- As you type, the command bar **autocompletes** from a closed command registry using **token-match**: typing `book` surfaces every book command (`add book`, `list books`, `update book`, …), typing `add` surfaces every `add` command. **`Tab` selects, `Enter` confirms** — see *The two keys* below. Completion does not stop at the verb: once the command is in the bar, the same row offers its **next parameter**, one at a time — see *Composing a command*. Suggestions are ranked — see *Command suggestion model* below.
 - Any input that does **not** match a known command is handled as a full-text search (the same as the explicit `search` command).
 - Moving through results and drilling into an item are **navigation commands** with keybinding fast-paths (see *Navigation*); they read views, they do not mutate data.
 - `cancel` (`Esc`) clears the buffer; nothing composed is ever persisted until `Enter`.
@@ -93,15 +93,20 @@ double quote is not yet expressible (DECISIONS, *Known limitations*).
 | Command | Description | Parameters |
 | --- | --- | --- |
 | `add book` | Catalog a new book | `with title`*, `by author`*, `subtitled`, `in language`, `published in`, `with isbn`, `with summary` |
-| `update book` | Edit an existing book | `named`* (target), then any parameter of `add book` |
-| `remove book` | Delete a book | `named`* (target), then a confirmation |
-| `show book` | Show full detail for one book | `named`* (target) |
+| `update book` | Edit an existing book | acts on the selected row; then any parameter of `add book` |
+| `remove book` | Delete a book | acts on the selected row; then a confirmation naming the book |
 | `list books` | List all books | — |
 | `list incomplete books` | List books with any missing field | — |
 | `list incomplete books having no isbn` | Narrow to books with no ISBN | — |
 | `list incomplete books having no cover` | Narrow to books with no cover | — |
 | `list incomplete books having no year` | Narrow to books with no publication year | — |
 | `list incomplete books having no language` | Narrow to books with no language set | — |
+
+> **There is no `show book`.** Detail is reached by opening a row, not by naming one: any result
+> view arrives with its first item already selected, so `orwell` then `Enter` is the whole gesture,
+> and `Alt` + arrows pick a different row first. A verb that finds one book by name would be a
+> third route to a screen `search` and `open` already reach — the redundancy ADR 13 rejects the
+> reverse-parser for. What it costs is named under *Selection is the target*.
 
 ## Authors
 
@@ -122,10 +127,34 @@ double quote is not yet expressible (DECISIONS, *Known limitations*).
 
 | Command | Description | Parameters |
 | --- | --- | --- |
-| `search` | Multi-token full-text search | the rest of the line, unquoted and without a connective — the whole remainder *is* the term |
+| `search` | Multi-token full-text search across the catalog | the rest of the line, unquoted and without a connective — the whole remainder *is* the term |
 | `filter` | Structured filtering by metadata | `in language`, `published in` |
 
 > Typing any unrecognized text runs `search` implicitly, so the explicit `search` command is mainly a discoverability affordance.
+
+**What is searched.** Everything in the catalog that is prose: titles, subtitles, author names,
+publishers, summaries. Ranked, not flat — a match in a title outranks one in a summary, or a long
+summary would bury the field people are actually looking for.
+
+Three kinds of field stay out, each for its own reason. **ISBNs are not words**: the canonical
+13-digit form is one token and the hyphenated form is several, neither of which a word index handles
+usefully, so an ISBN is matched exactly against the stored canonical form and joined into the same
+result set. **Codes and numbers are filter dimensions, not terms** — typing `en` does not mean "show
+me English books", and `1949` is a year to a person and a token to an index; `filter` is where these
+belong. **The cover has nothing to match.**
+
+**A result set may be mixed.** An author who matches appears as an author row beside the book rows,
+and opening it lists that author's books. In practice most author matches surface as books already,
+since the author's name is a searchable field *of the book* — the standalone author row is what is
+left when someone has no books credited to them, which is precisely the record `list unattributed
+authors` exists to find. The view contract carries the difference (DECISIONS 32); nothing about the
+list, the paging or the selection changes.
+
+Search results behave like any other result view, including when there is exactly one of them: the
+row is selected, not opened. A single hit that opened itself would make `Enter` mean two different
+things depending on a count the user cannot predict while typing — the same defect that separated
+`Tab` from `Enter` (DECISIONS 27) — and it would hide the fact that the search matched only once,
+which is itself worth seeing.
 
 ## Dashboard
 
@@ -166,6 +195,26 @@ the faster path for anyone who reaches for them, but they sit off the home row, 
 is built for people whose hands stay on it. Typing `top` never leaves the command bar. The
 duplication costs two entries in the registry and buys a choice for two different typing habits.
 
+### Selection is the target
+
+**A result view always has a selection, from the moment it renders.** The first item on the page is
+selected before the user touches anything, so `Enter` opens it and `Alt` + arrows pick a different
+one first. Nothing has to be aimed before it can be acted on, which is what lets `search` + `open`
+stand in for a `show book` that no longer exists.
+
+This settles how a command names the record it acts on: **the target is view state, not a parameter
+in the sentence.** `update book` and `remove book` act on the selected row. The alternative,
+`named "…"`, was ambiguous the moment two books share a title, and would have made every targeted
+command carry a second lookup that can fail in its own way.
+
+**The cost, stated where it lands.** A targeted command is no longer a complete value. `remove book`
+does not say *which* book in its own text, so it cannot be recalled and re-run with one value
+changed the way `add book` can (DECISIONS 27), and a command carried into a bug report no longer
+carries what it acted on. That is tolerable for a read — opening the wrong row costs a keystroke —
+and it is the reason `remove book` keeps its confirmation step: for a destructive command the target
+has to be restated *somewhere*, and if it is not in the sentence it must be on screen before the
+act. The confirmation therefore names the book, rather than asking a generic "are you sure".
+
 ### Three kinds of movement
 
 The command bar always holds focus, so bare letters are typing, not shortcuts — there are no
@@ -174,7 +223,7 @@ result view supports to be separated by modifier rather than by letter:
 
 | Movement | Keys | What moves |
 | --- | --- | --- |
-| **Scroll** | `↑` `↓`, `Page Up` / `Page Down` — *while the command bar is empty* | The viewport. Nothing is selected, nothing is fetched. |
+| **Scroll** | `↑` `↓`, `Page Up` / `Page Down` — *while the command bar is empty* | The viewport only. The selection stays where it is, nothing is fetched. |
 | **Select** | `Alt` + `↑` `↓` `←` `→` | The selection, one item at a time, in two dimensions across the grid. Brings the selected item into view if it is off screen. |
 | **Page** | `Ctrl + →` / `Ctrl + ←` (`next page` / `prev page`) | The result set. Fetches the adjacent batch from the server. |
 
@@ -259,12 +308,11 @@ below is the full index.
 | `add` | add book, add author |
 | `update` | update book, update author |
 | `remove` | remove book, remove author |
-| `show` | show book |
 | `list` | list books, list incomplete books, list authors, list unattributed authors |
 | `incomplete` | list incomplete books and all four of its narrowings |
 | `isbn` / `cover` / `year` / `language` | the matching `list incomplete books having no …` |
 | `unattributed` | list unattributed authors |
-| `book` / `books` | add book, update book, remove book, show book, list books, list incomplete books (+ narrowings) |
+| `book` / `books` | add book, update book, remove book, list books, list incomplete books (+ narrowings) |
 | `author` / `authors` | add author, update author, remove author, list authors |
 | `search` | search |
 | `filter` | filter |
@@ -317,13 +365,13 @@ Note that **inline parameters are no longer a deferred power-user feature** — 
 
 1. **Author find-or-create.** Does `add book` auto-create an unknown author from the name given in `by author "…"`, or must the author already exist (via `add author`)? One half of this is now settled: whichever way it goes, the *lookup* is scoped to the signed-in user, since an author belongs to a person rather than to a library or to the books that credit them (DECISIONS 31). What is still open is whether a miss creates a row or fails, and — if it creates — what stops two spellings of one person becoming two authors. The `AddAuthor` write path is pending either way, so pick before implementing the author segment of `add book`.
 
-2. **How does a command name its target?** `update book`, `remove book` and `show book` act on one
-   existing record. `named "…"` is the placeholder above and it is not obviously right: the natural
-   gesture is to select the row in a result view and then type the verb, which makes the target a
-   piece of *view state* rather than a parameter in the sentence. Both are plausible and they
-   interact — a targeted command that reads the selection is not re-runnable in the way ADR 27 values,
-   while `named "…"` is ambiguous the moment two books share a title. Settle before implementing
-   `update book`.
+2. **~~How does a command name its target?~~ Settled: the selection.** `update book` and
+   `remove book` act on the selected row, not on a `named "…"` parameter — see *Selection is the
+   target*. What is still open is the narrower question that answer creates: **what a targeted
+   command does with no selection.** Refusing is honest and stops the flow; falling back to the
+   first row is a guess about intent, which is what ADR 13 rejects everywhere else. Refusal is the
+   likelier answer, and the wording of that refusal is the part that decides whether it reads as
+   guidance or as a wall.
 
 3. **The summary field.** A multi-paragraph summary inside a quoted segment is the one place the
    composed sentence is worse than a form. Either summaries stay short in MVP1, or `add book` grows an

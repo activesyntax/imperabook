@@ -351,7 +351,7 @@ backend parser responsibility; the load-bearing question was whether to build th
 
 **Decision.** Autocomplete on the frontend, strict exact-match on the backend, and no reverse-parser
 between them. The frontend matches typed tokens against a command registry and ranks the hits —
-typing `book` surfaces `add book` / `list books` / `show book` / `remove book`, typing `add`
+typing `book` surfaces `add book` / `list books` / `update book` / `remove book`, typing `add`
 surfaces every `add` command (token-match, deliberately not strict prefix, so a mid-name token still
 hits). The backend tokenizes, exact-matches the leading verb against the known set, and dispatches;
 anything that does not match a verb falls through to full-text search — the behaviour the `search`
@@ -735,6 +735,8 @@ every image is a URL and the client does not need to know what kind of image it 
 ```csharp
 public sealed record ImageView(string Src, string Alt, string? Caption, string? Variant) : ViewNode;
 
+// ItemView is superseded by ADR 32's per-entity item nodes; the Src reasoning is unaffected,
+// since a typed node carries the same string on a field of its own.
 public sealed record ItemView(
     string Ref,
     IReadOnlyList<ItemProperty> Properties,
@@ -869,6 +871,11 @@ the same doomed insert in whatever code ran next.
 
 ## 21. A collection view describes itself: title, emptiness, and extent are backend facts
 
+> **Amended by ADR 32.** Everything below stands — the three fields are facts about the *set*, and
+> that is exactly what survived. What changed is the element type: `Items` is now a closed union of
+> per-entity nodes rather than `ItemView[]`, so a collection can hold books and authors at once.
+> The generic-component payoff named in the trade-off is the part ADR 32 spends.
+
 **Context.** `ItemCollectionView` carried a list of items and nothing else. That was enough while the
 only producer was `list books`, and it stopped being enough the moment a second one existed: a search
 result and a full listing arrive at the frontend as the same node, and the component rendering them has
@@ -889,7 +896,7 @@ public sealed record PageInfo(int From, int To, int Total);
 public sealed record ItemCollectionView(
     string Title,
     string EmptyMessage,
-    IReadOnlyList<ItemView> Items,
+    IReadOnlyList<ItemNode> Items,   // ItemView[] when this entry was written; see ADR 32
     PageInfo? Page = null
 ) : ViewNode;
 ```
@@ -1817,6 +1824,86 @@ which is an argument for the naming discipline above when the second contract ar
 
 ---
 
+---
+
+## 32. Item and detail nodes are typed per entity; the collection that holds them is not
+
+**Context.** `ItemView` was a `Ref` and an array of label/value `ItemProperty` pairs — a shape the
+frontend could render without knowing what it held. That was the thin-client rule at its purest, and
+two unrelated requirements arrived at the same time to say it was not being kept.
+
+The first was already shipped and unnoticed. `UX.md`'s draft preview puts a placeholder in each
+empty field — *e.g. The Hobbit* where the title goes, *e.g. Ursula K. Le Guin* for the author — which
+means the frontend must know which slot is the title. Against a `Properties` array it can only find
+out by matching on the label string. That is the same knowledge the typed node would declare, held in
+the worst available form: undeclared, unchecked, and broken by editing a caption. **The leak had
+already happened; what was missing was the declaration.**
+
+The second is what widening search to the whole catalog does to a result set. Once `tolkien` matches
+authors as well as books, a collection holds two kinds of row, and a list of `Ref` strings cannot say
+what `open` should open. Encoding the kind into the string (`book:{guid}`) puts a parser in the
+client, which is the class of client-side interpretation ADR 20 withdrew an entire design over.
+
+**Decision.** The elements are typed; the container is not.
+
+```csharp
+[JsonDerivedType(typeof(BookItemView), "bookItem")]
+[JsonDerivedType(typeof(AuthorItemView), "authorItem")]
+public abstract record ItemNode;
+
+public sealed record ItemCollectionView(
+    string Title,
+    string EmptyMessage,
+    IReadOnlyList<ItemNode> Items,
+    PageInfo? Page = null
+) : ViewNode;
+```
+
+`ItemView` and `ItemProperty` are removed rather than kept alongside. `DetailView` becomes
+`BookDetailView` — a detail node had no container to protect, so there is nothing to keep generic
+there.
+
+*The container survives because its three fields are facts about the set, not about the elements.*
+`Title`, `EmptyMessage` and `PageInfo` (21) are unchanged and still required. Paging, selection and
+the empty state stay in one component rather than being reimplemented per entity, and the
+heterogeneous result set that motivated half this entry becomes expressible rather than special:
+the list is mixed because its element type is a union.
+
+*`AuthorDetailView` is not written, because nothing opens one.* Opening an author row runs that
+author's books — a listing, which already exists. ADR 21 shipped `PageInfo` ahead of its behaviour
+and flagged that as the one justified exception; doing it a second time without the same narrow
+argument would make the exception a habit.
+
+**Which leak this is, and which it is not.** ADR 20 withdrew a design where the client held a
+name-to-path table, and the reason was specific: those were *the backend's own facts about its own
+routes*, so the client held a copy of something only the backend could change. A book having a title,
+authors and a cover is not that. It is the shape of the domain, it is what the user is looking at,
+and it does not change because the backend reorganises. The line this entry draws:
+
+**the frontend may know the shape of an entity; it may not know the backend's own facts** — routes,
+storage layout, what a command does, which view follows which. Every earlier entry that reads as
+"keep the client thin" is about the second list, and none of them is weakened here.
+
+**Trade-off.** *ADR 21's payoff is spent, permanently.* A new listing was previously free on the
+frontend: compose a different `ItemCollectionView` and the existing component drew it. From here
+every entity costs a node and a component, and MVP2 brings tags, lending and libraries. This is the
+real price and it is per-entity, not one-off — it will be paid three more times on the current plan.
+
+*Two closed unions, closed only to the compiler.* `ItemNode` inherits the hole under *Known
+limitations*: `[JsonDerivedType]` membership is not compile-checked, so a node can be registered on
+the wrong base and fail at first serialization. One more union is one more place for that.
+
+*Typed nodes invite presentation onto the contract.* A `BookItemView` with a `Highlight` or a
+`Badge` field would be trivially easy to add and would be the thing ADR 15 exists to prevent — and
+easier to justify now, because the node already names the entity. The rule is narrow enough to
+check: **a node carries the entity's fields and nothing about how to draw them.** A field that would
+not appear in a `pg_dump` of that row does not belong on the node.
+
+*The draft preview stops being a variant of the read surface.* `UX.md` calls the draft "the existing
+`DetailView` in a draft variant", which was true when one node served every entity. It is now
+`BookDetailView` in a draft variant — narrower, and honest in the same way: the preview is still the
+real result template, partially filled, and now the template is typed to what it previews.
+
 # Known limitations
 
 **`record struct` zero-value.** A `readonly record struct` always permits `default(T)`, which runs no
@@ -1847,6 +1934,11 @@ contract whose premise is that nodes declare *what they are*. An enum would clos
 the semantics; a dedicated node kind (`BrandingView`) would fix the semantics by admitting that a logo is
 not a general image. Neither earns its keep at one call site, so the honest statement is that this is the
 last frontend fact still travelling on the view contract, and it is known rather than overlooked.
+
+ADR 32 may close this without addressing it. A `BookItemView` carries its cover on a field that is a
+cover by construction, so the node's own type says what `Variant` was saying. If the logo is the only
+remaining caller after that, the honest move is `BrandingView` — the option rejected above for costing
+more than it bought, at a call count where the arithmetic has changed.
 
 **Asset URLs encode a theme.** `/static/imperabook-logo-dark.svg` has the backend choosing the dark
 variant, and theme selection is a frontend concern — the cost of serving assets as opaque bytes rather

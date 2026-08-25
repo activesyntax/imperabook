@@ -25,7 +25,7 @@ journey across the screen.
 
 - **Command-driven control.** A single command bar drives the whole app. As you type, it
   autocompletes from a closed command grammar using token-match: typing `book` surfaces every book
-  command (`add book`, `list books`, `show book`, …), typing `add` surfaces every `add` command.
+  command (`add book`, `list books`, `update book`, …), typing `add` surfaces every `add` command.
   Anything that isn't a recognized command falls through to full-text search — there is no mode to
   toggle. Inspired by modern terminal tools like Vim and Helix.
 - **The whole command is one visible sentence.** Parameters are written inline, each named by a
@@ -83,11 +83,14 @@ first or last item on the page. These are navigation affordances — they read v
 mutate data.
 
 **Search.** Just start typing words that aren't a command — `tolkien hobbit` — and the input falls
-through to multi-token full-text search. No button, no separate search box.
+through to multi-token full-text search across the catalog: titles, subtitles, author names,
+publishers. No button, no separate search box. Results arrive with the first row already selected,
+so `Enter` opens it — which is why there is no `show book` verb. Finding a record and looking at one
+are the same gesture here, and search is the tool people already reach for.
 
-**Filter, inspect, summarize.** `filter` walks you through structured filtering (language,
-publication year). `show book` opens one book's full detail. `dashboard` renders the collection's
-language breakdown and totals. `help` lists everything; `help add book` explains one command.
+**Filter and summarize.** `filter` walks you through structured filtering (language, publication
+year). `dashboard` renders the collection's language breakdown and totals. `help` lists everything;
+`help add book` explains one command.
 
 **Where this is going (MVP2).** *Composition*: grouping, boolean conditions, and chaining one
 command's result into another — filtering a set and acting on the whole of it at once. That is where

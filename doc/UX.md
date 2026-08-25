@@ -38,12 +38,17 @@ terminal.
   into the confirmed detail, and the saved book joins the list view.
 - **Cancel / `Esc`:** the draft slides out and nothing was ever persisted.
 
-**What it renders.** The draft is the existing `DetailView` (from the `CommandView` contract) in a
+**What it renders.** The draft is `BookDetailView` (from the `CommandView` contract) in a
 draft variant — the *same surface* the book will have once saved, not a bespoke form. That keeps the
 preview honest: you are looking at the real result template, partially filled. Empty optional fields
 render as absent, consistent with how `Maybe<T>` optionals are shown elsewhere (DECISIONS 11);
 required-but-unfilled fields show the muted example placeholders described under *Placeholder
 treatment*.
+
+A per-field placeholder is only expressible because the node is typed to the entity (DECISIONS 32).
+Against a generic array of label/value pairs the frontend would have to find the title by matching on
+its caption — the same knowledge, held where nothing checks it. This section was the requirement that
+made the leak visible.
 
 **Placeholder treatment.** Empty fields use the conventional input-placeholder convention rather than
 value-like defaults: muted, lower-contrast ghost text phrased as a gentle example — *e.g. The Hobbit*
@@ -74,9 +79,10 @@ segment, and knows nothing about what `add book` does. Focus stays in the comman
 the draft is a passenger, it never steals input.
 
 **Generalizes to.** Any mutating command that targets a single entity. `update book` is the same idea
-with a non-empty starting state — show the selected book, edit it live. `show book`'s detail and the
-add/update drafts are then one surface in three states (read, creating, editing). Scoped to
-`add book` for MVP1; the rest follow once it proves out.
+with a non-empty starting state — the selected book, edited live. The detail reached by opening a row
+and the add/update drafts are then one surface in three states (read, creating, editing), which is
+what makes `BookDetailView` one node rather than three. Scoped to `add book` for MVP1; the rest
+follow once it proves out.
 
 ---
 

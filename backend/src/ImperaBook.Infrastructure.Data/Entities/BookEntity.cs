@@ -10,5 +10,11 @@ public class BookEntity
 
     public string? CoverHash { get; set; }
 
+    public string? Isbn { get; set; }
+    public int? PublishedYear { get; set; }
+    public string? Publisher { get; set; }
+    public string? Language { get; set; }
+    public int? PageCount { get; set; }
+
     public List<BookAuthorEntity> Authors { get; set; } = [];
 }
