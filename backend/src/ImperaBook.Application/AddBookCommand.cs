@@ -32,39 +32,20 @@ public sealed class AddBookCommandHandler(
         CancellationToken ct
     )
     {
-        var fields = ValidateFields(command);
-        if (fields.IsFailure)
-            return fields.Error;
+        var library = await ResolveLibrary(ct);
+        if (library.IsFailure)
+            return library.Error;
 
-        var f = fields.Value;
+        var book = BuildBook(command, Id<Book>.New(), library.Value);
+        if (book.IsFailure)
+            return book.Error;
 
-        var cover = await ResolveCover(f.Cover, ct);
+        var cover = await VerifyCover(book.Value.Cover, ct);
         if (cover.IsFailure)
             return cover.Error;
 
-        var libraryId = await ResolveLibrary(ct);
-        if (libraryId.IsFailure)
-            return libraryId.Error;
-
-        var bookId = Id<Book>.New();
-        var book = new Book
-        {
-            Id = bookId,
-            Library = libraryId.Value,
-            Title = f.Title,
-            Subtitle = f.Subtitle,
-            Attribution = Attribution.Of(f.Authors),
-            Summary = f.Summary,
-            Cover = cover.Value,
-            Isbn = f.Isbn,
-            Published = f.Published,
-            Publisher = f.Publisher,
-            Language = f.Language,
-            Pages = f.Pages,
-        };
-
-        await books.Add(book, ct);
-        return bookId.Value;
+        await books.Add(book.Value, ct);
+        return book.Value.Id.Value;
     }
 
     private async Task<Result<Id<Library>, ApplicationError>> ResolveLibrary(CancellationToken ct)
@@ -77,34 +58,36 @@ public sealed class AddBookCommandHandler(
         );
     }
 
-    private readonly record struct BookFields(
-        Title Title,
-        Authors Authors,
-        Maybe<Subtitle> Subtitle,
-        Maybe<Summary> Summary,
-        Maybe<ContentHash> Cover,
-        Maybe<Isbn> Isbn,
-        Maybe<Year> Published,
-        Maybe<Publisher> Publisher,
-        Maybe<LanguageCode> Language,
-        Maybe<PageCount> Pages
-    );
+    private async Task<UnitResult<ApplicationError>> VerifyCover(
+        Maybe<ContentHash> cover,
+        CancellationToken ct
+    )
+    {
+        if (!cover.TryGetValue(out var hash))
+            return UnitResult.Success<ApplicationError>();
 
-    private static Result<BookFields, ApplicationError> ValidateFields(AddBookCommand command)
+        return await images.Exists(hash, ct)
+            ? UnitResult.Success<ApplicationError>()
+            : UnitResult.Failure<ApplicationError>(new ApplicationError.ImageNotFound(hash));
+    }
+
+    private static Result<Book, ApplicationError> BuildBook(
+        AddBookCommand command,
+        Id<Book> id,
+        Id<Library> library
+    )
     {
         var title = Title.Create(command.Title);
         var authors = Authors.Create(command.AuthorIds.Select(Id<Author>.From));
 
-        // Text-shaped values handle their own absence: a string can be blank, so blankness is
-        // something the type's own input can express (ADR 11).
         var subtitle = Subtitle.Create(command.Subtitle);
         var summary = Summary.Create(command.Summary);
         var isbn = Isbn.Create(command.Isbn);
         var publisher = Publisher.Create(command.Publisher);
         var language = LanguageCode.Create(command.Language);
-        var cover = Optional(command.CoverHash, ContentHash.Create);
-        var published = OptionalNumber<int, Year>(command.Published, Year.Create);
-        var pages = OptionalNumber<uint, PageCount>(command.Pages, PageCount.Create);
+        var cover = ContentHash.Create(command.CoverHash);
+        var published = ParseYear(command.Published);
+        var pages = ParsePageCount(command.Pages);
 
         CatalogValidationError?[] errors =
         [
@@ -124,64 +107,44 @@ public sealed class AddBookCommandHandler(
         if (failures.Count > 0)
             return new ApplicationError.Validation(failures);
 
-        return Result.Success<BookFields, ApplicationError>(
-            new BookFields(
-                title.Value,
-                authors.Value, // asserted above: AuthorRequired covers the absent case
-                subtitle.Value,
-                summary.Value,
-                cover.Value,
-                isbn.Value,
-                published.Value,
-                publisher.Value,
-                language.Value,
-                pages.Value
-            )
-        );
+        return new Book
+        {
+            Id = id,
+            Library = library,
+            Title = title.Value,
+            Subtitle = subtitle.Value,
+            Attribution = Attribution.Of(authors),
+            Summary = summary.Value,
+            Cover = cover.Value,
+            Isbn = isbn.Value,
+            Published = published.Value,
+            Publisher = publisher.Value,
+            Language = language.Value,
+            Pages = pages.Value,
+        };
     }
 
-    /// <summary>
-    /// For text value objects whose <c>Create</c> is also used where the value is required, and
-    /// which therefore return a bare <c>Result</c>.
-    /// </summary>
-    private static Result<Maybe<T>, CatalogValidationError> Optional<T>(
-        string? raw,
-        Func<string, Result<T, CatalogValidationError>> create
-    ) => string.IsNullOrWhiteSpace(raw) ? Maybe<T>.None : create(raw.Trim()).Map(Maybe<T>.From);
-
-    /// <summary>
-    /// Text-to-number conversion is a shape concern and stops here; the value object below only
-    /// ever sees a number. Parsing is invariant because command text is not localized input.
-    /// Moves to the command boundary once <c>CommandParameter</c> declares a parameter kind, at
-    /// which point the failure carries a source offset instead of a field name.
-    /// </summary>
-    private static Result<Maybe<T>, CatalogValidationError> OptionalNumber<TNumber, T>(
-        string? raw,
-        Func<TNumber, Result<T, CatalogValidationError>> create
-    )
-        where TNumber : IParsable<TNumber>
+    private static Result<Maybe<Year>, CatalogValidationError> ParseYear(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
-            return Maybe<T>.None;
+            return Maybe<Year>.None;
 
         var trimmed = raw.Trim();
 
-        return TNumber.TryParse(trimmed, CultureInfo.InvariantCulture, out var number)
-            ? create(number).Map(Maybe<T>.From)
+        return int.TryParse(trimmed, CultureInfo.InvariantCulture, out var value)
+            ? Year.Create(value).Map(Maybe<Year>.From)
             : new CatalogValidationError.NotANumber(trimmed);
     }
 
-    private async Task<Result<Maybe<ContentHash>, ApplicationError>> ResolveCover(
-        Maybe<ContentHash> hash,
-        CancellationToken ct
-    )
+    private static Result<Maybe<PageCount>, CatalogValidationError> ParsePageCount(string? raw)
     {
-        if (!hash.TryGetValue(out var contentHash))
-            return Maybe<ContentHash>.None;
+        if (string.IsNullOrWhiteSpace(raw))
+            return Maybe<PageCount>.None;
 
-        if (!await images.Exists(contentHash, ct))
-            return new ApplicationError.ImageNotFound(contentHash);
+        var trimmed = raw.Trim();
 
-        return hash;
+        return uint.TryParse(trimmed, CultureInfo.InvariantCulture, out var value)
+            ? PageCount.Create(value).Map(Maybe<PageCount>.From)
+            : new CatalogValidationError.NotANumber(trimmed);
     }
 }
