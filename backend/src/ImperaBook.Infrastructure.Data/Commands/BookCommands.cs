@@ -3,7 +3,7 @@ using ImperaBook.Application;
 using ImperaBook.Domain.Catalog;
 using ImperaBook.Infrastructure.Data.Entities;
 
-namespace ImperaBook.Infrastructure.Data.Repositories;
+namespace ImperaBook.Infrastructure.Data.Commands;
 
 public class BookWriteRepository : IBookWriteRepository
 {
