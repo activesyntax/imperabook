@@ -40,11 +40,18 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                     subtitle = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     summary = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
                     library_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    cover_hash = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: true)
+                    cover_hash = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: true),
+                    isbn = table.Column<string>(type: "character(13)", fixedLength: true, maxLength: 13, nullable: true),
+                    published_year = table.Column<int>(type: "integer", nullable: true),
+                    publisher = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    language = table.Column<string>(type: "character(2)", fixedLength: true, maxLength: 2, nullable: true),
+                    page_count = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_books", x => x.id);
+                    table.CheckConstraint("ck_books_page_count", "page_count is null or (page_count between 1 and 20000)");
+                    table.CheckConstraint("ck_books_published_year", "published_year is null or (published_year between -3000 and 2200)");
                 });
 
             migrationBuilder.CreateTable(
@@ -213,6 +220,11 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                 name: "ix_book_authors_author_id",
                 table: "book_authors",
                 column: "author_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_books_language",
+                table: "books",
+                column: "language");
 
             migrationBuilder.CreateIndex(
                 name: "ix_libraries_owner_id",

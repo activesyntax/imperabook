@@ -109,9 +109,34 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                         .HasColumnName("cover_hash")
                         .IsFixedLength();
 
+                    b.Property<string>("Isbn")
+                        .HasMaxLength(13)
+                        .HasColumnType("character(13)")
+                        .HasColumnName("isbn")
+                        .IsFixedLength();
+
+                    b.Property<string>("Language")
+                        .HasMaxLength(2)
+                        .HasColumnType("character(2)")
+                        .HasColumnName("language")
+                        .IsFixedLength();
+
                     b.Property<Guid>("LibraryId")
                         .HasColumnType("uuid")
                         .HasColumnName("library_id");
+
+                    b.Property<int?>("PageCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("page_count");
+
+                    b.Property<int?>("PublishedYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("published_year");
+
+                    b.Property<string>("Publisher")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("publisher");
 
                     b.Property<string>("Subtitle")
                         .HasMaxLength(500)
@@ -132,7 +157,15 @@ namespace ImperaBook.Infrastructure.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_books");
 
-                    b.ToTable("books", (string)null);
+                    b.HasIndex("Language")
+                        .HasDatabaseName("ix_books_language");
+
+                    b.ToTable("books", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_books_page_count", "page_count is null or (page_count between 1 and 20000)");
+
+                            t.HasCheckConstraint("ck_books_published_year", "published_year is null or (published_year between -3000 and 2200)");
+                        });
                 });
 
             modelBuilder.Entity("ImperaBook.Infrastructure.Data.Entities.ImageEntity", b =>
