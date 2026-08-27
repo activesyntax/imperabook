@@ -50,7 +50,10 @@ body {
   );
 
   font-family: var(--ib-mono);
-  font-size: 16px;
+  // The anchor every other font-size in the app is a multiple of. 1rem rather
+  // than a hard 16px so the whole scale follows the browser's text-size
+  // setting instead of pinning it.
+  font-size: 1rem;
   line-height: 1.5;
   color: var(--ib-text);
 }

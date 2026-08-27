@@ -1,9 +1,9 @@
 :host {
   display: block;
-  // pt units are inherited from the previous iteration and left alone on
-  // purpose: converting the shell to a single scale moves every size in it
-  // at once, and belongs in its own commit.
-  font-size: 16pt;
+  // The shell runs one step above the workspace scale. Sizes here are rem like
+  // everywhere else — converted from the old pt values (16/24/26pt) and rounded
+  // up to the app's one-decimal step, so each is within ~1% of where it was.
+  font-size: 1.4rem;
 }
 
 // The bottom arm of the chrome. No box-shadow and no lift: elevation is
@@ -120,7 +120,7 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
-  font-size: 26pt;
+  font-size: 2.2rem;
 }
 
 .avatar {
@@ -159,7 +159,7 @@
 
 .inputfield {
   flex: none;
-  font-size: 16pt;
+  font-size: 1.4rem;
   color: var(--ib-dim);
   white-space: nowrap;
 }
@@ -171,7 +171,7 @@
   border: none;
   outline: none;
   background: transparent;
-  font-size: 24pt;               // larger than the rest of the shell
+  font-size: 2rem;               // larger than the rest of the shell
   line-height: 1;
   caret-color: var(--ib-accent-bright);
 

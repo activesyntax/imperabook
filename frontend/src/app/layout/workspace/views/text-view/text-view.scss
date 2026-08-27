@@ -29,7 +29,7 @@
 .body {
   padding: 16px 18px 20px;
   color: var(--ib-text, #d9cdbf);
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   line-height: 1.6;
 }
 
@@ -52,7 +52,7 @@
 
 .body h3 {
   margin: 2.4em 0 0.7em;
-  font-size: 0.92rem;
+  font-size: 1rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ib-rule);
@@ -60,7 +60,7 @@
 
 .body h4 {
   margin: 1.8em 0 0.5em;
-  font-size: 0.95rem;
+  font-size: 1rem;
   letter-spacing: 0.09em;
   color: var(--ib-muted, #a8968a);
 }
@@ -120,7 +120,7 @@
 .finding-value {
   justify-self: end;
   color: var(--ib-heading, #efe4d6);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
 }
 
 .finding-text {
@@ -188,7 +188,7 @@
 
 .command-row-name {
   font-family: var(--ib-mono, 'JetBrains Mono', monospace);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--ib-heading, #efe4d6);
 }
 
