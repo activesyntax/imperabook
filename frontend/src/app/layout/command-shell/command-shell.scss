@@ -15,7 +15,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;   // suggestions at top, prompt at the bottom
-  padding: 16px var(--ib-gutter) 22px;
+  padding: 32px var(--ib-gutter) 22px;
 }
 
 .suggestions {
@@ -58,21 +58,16 @@
   color: var(--ib-dim);
 }
 
-// Két oszlop: balra a mondat, jobbra a folyamat állapota (melyik parancs,
-// hányadik lépésnél). A kettő nem egy sorban folyik össze, mert nem ugyanazt
-// a kérdést válaszolják meg.
 .desc {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 1.5rem;
-  margin: 1rem 0;   // horizontal margin removed; the gutter is .main's job
+  margin: 16px 0;
   height: 1.5rem;
   color: var(--ib-dim);
 }
 
-// A mondat rövidül, ha nem fér ki. (Az `overflow: auto` és a `text-overflow`
-// korábban egymást ütötte — az ellipszishez `hidden` kell.)
 .say {
   min-width: 0;
   overflow: hidden;
