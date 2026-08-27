@@ -1,8 +1,6 @@
 <section class="main">
-  <div class="stage">
-    <app-workspace class="workspace" />
-    <app-command-shell class="shell" />
-  </div>
+  <app-workspace class="workspace" />
+  <app-command-shell class="shell" />
 
   <app-side-nav class="side-nav" [name]="session.userName()" [library]="session.libraryName()"
     [avatarUrl]="session.avatarUrl()" />

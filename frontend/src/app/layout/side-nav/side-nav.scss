@@ -1,9 +1,11 @@
 :host {
   display: flex;
   flex: none;
-  width: 215px;
+  // 215 + 2×14 padding: the pills keep the width they had before the nav
+  // gained a surface of its own.
+  width: 243px;
   min-width: 0;
-  font-family: var(--ib-mono, 'JetBrains Mono', ui-monospace, 'SF Mono', monospace);
+  background: var(--ib-chrome-bg);
 }
 
 .nav {
@@ -12,20 +14,21 @@
   flex-direction: column;
   gap: 10px;
   min-width: 0;
-  padding: 18px 0 0;
+  padding: 18px 14px 0;
 }
 
+// State, not a verb — no pill form, because pill means runnable (ADR 22).
 .nav__identity {
   padding-bottom: 12px;
-  border-bottom: 0.5px solid rgba(236, 230, 219, 0.12);
+  border-bottom: 0.5px solid var(--ib-border-faint);
 }
 
 .nav__title {
-  margin: 16px 0 0px 8px;
+  margin: 16px 0 0 8px;
   font-size: 0.9rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ib-accent-dim, #b27a43);
+  color: var(--ib-accent-dim);
 }
 
 .nav__list {
@@ -35,53 +38,51 @@
   margin: 0;
   padding: 0;
   list-style: none;
-
 }
 
 .nav__empty {
   padding: 0 8px;
   font-size: 0.85rem;
-  color: var(--ib-dim, #857d6e);
+  color: var(--ib-dim);
 }
 
+// Same form as the shell's suggestion chip — one visual language for
+// everything runnable. The icon is the only difference, and it encodes
+// permanence, not a different kind of thing (ADR 22).
 .pin {
   display: flex;
   align-items: center;
   gap: 0.55em;
   width: 100%;
   padding: 9px 13px;
-  border: 0.5px solid var(--ib-border, rgba(236, 230, 219, 0.35));
-  border-radius: 16px;
-  background: #2a241d;
-  font: inherit;
-  // min-height: 50px;
-
+  border: 0.5px solid var(--ib-border);
+  border-radius: var(--ib-radius-pill);
+  background: var(--ib-pill-bg);
+  color: var(--ib-pill-text);
   font-size: 1rem;
   line-height: 1.1;
   text-align: left;
   white-space: nowrap;
   cursor: pointer;
-  color: #c4bcad;
   transition: background 80ms ease, color 80ms ease, border-color 80ms ease;
 
   &:hover {
-    color: var(--ib-text, #ece6db);
-    border-color: var(--ib-accent-dim, #b27a43);
+    color: var(--ib-text);
+    border-color: var(--ib-accent-dim);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--ib-accent, #d89356);
+    outline: 2px solid var(--ib-accent);
     outline-offset: 2px;
   }
 }
 
-// The icon is the only thing that marks a pill as pinned rather than suggested.
 .pin__icon {
   display: inline-flex;
   flex: none;
   width: 16px;
   height: 16px;
-  color: var(--ib-accent, #d89356);
+  color: var(--ib-accent);
 
   svg {
     display: block;

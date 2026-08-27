@@ -1,27 +1,37 @@
+// A grid item has a definite height, so height: 100% inside resolves against
+// a real number. This is the same declaration that broke under flex, and it
+// works here for that reason alone.
 :host {
   display: block;
-  height: 100%;
-}
-
-.workspace-frame {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background-color: #000;
-  border: 1px solid #5a5a5a;
-  border-radius: 14px;
+  min-height: 0;
   overflow: hidden;
 }
 
 .workspace {
-  flex: 1 1 auto;
-  min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 32px;
-  padding: 20px 0 60px;
-  overflow-y: auto;
+  padding: 20px var(--ib-gutter) 40px;
 
--webkit-mask-image: linear-gradient(to bottom, #000 max(85%, 100% - 80px), transparent);
-        mask-image: linear-gradient(to bottom, #000 max(85%, 100% - 80px), transparent);
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--ib-border-faint) transparent;
+
+  &::-webkit-scrollbar { width: 10px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+
+  &::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 5px;
+    background: var(--ib-border-faint);
+    background-clip: content-box;
+
+    &:hover {
+      background: var(--ib-border);
+      background-clip: content-box;
+    }
+  }
 }

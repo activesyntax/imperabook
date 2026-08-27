@@ -1,32 +1,39 @@
+// One grid, four explicit tracks — no .stage wrapper and no nested flex.
+// Grid tracks give their items a definite height, so the scroller inside the
+// workspace inherits a real number instead of a flex-basis resolution that
+// three ancestors all have to get right.
+//
+// minmax(0, …) rather than a bare 1fr on both axes: a bare 1fr means
+// minmax(auto, 1fr), and that auto floor refuses to shrink below the content,
+// which is exactly what stops the workspace from ever overflowing.
 .main {
-  width: 1300px;
+  width: 100%;
   max-width: 1300px;
   margin: 0 auto;
   height: 100vh;
-  display: flex;
-  align-items: stretch;
-  gap: 20px;
-}
 
-.stage {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
 }
 
 .workspace {
-  flex: 1 1 auto;
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
   min-height: 0;
-  width: 100%;
-  margin-bottom: 5px;
 }
 
+// The bottom arm of the chrome. Meets the side nav at the corner: no gap
+// anywhere in this grid, on purpose.
 .shell {
-  flex: 0 0 auto;
+  grid-column: 1;
+  grid-row: 2;
   min-width: 0;
 }
 
+// The right arm, spanning both rows so the L is continuous.
 .side-nav {
-  flex: 0 0 auto;
+  grid-column: 2;
+  grid-row: 1 / -1;
 }

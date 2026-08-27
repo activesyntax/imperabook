@@ -1,94 +1,40 @@
 :host {
-  --ib-page: #0f0d0a;
-  --ib-surface: #1a1610;        // lighter than the page so the panel lifts off it
-  // --ib-surface: #161616;        // lighter than the page so the panel lifts off it
-
-  --ib-border: rgba(236, 230, 219, 0.35);
-  --ib-text: #ece6db;
-  --ib-muted: #a69e8f;
-  --ib-dim: #857d6e;
-
-  // --ib-accent: #e59347;
-  // --ib-accent: #cb9364;
---ib-accent: #d89356;
-
-  --ib-accent-dim: #b27a43;
-  --ib-accent-bright: #f0a558;
-  --ib-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
-
-
   display: block;
-  position: relative;
-  z-index: 1;
-  margin-top: calc(var(--ib-shell-lift) * -1); // the shell is the boss: it sits on top
-  padding: 0 16px 28px;                         // float off the bottom + side gutter
-
-  font-size: 16pt;               // base size for the shell
+  // pt units are inherited from the previous iteration and left alone on
+  // purpose: converting the shell to a single scale moves every size in it
+  // at once, and belongs in its own commit.
+  font-size: 16pt;
 }
 
+// The bottom arm of the chrome. No box-shadow and no lift: elevation is
+// carried by tone, because a cast shadow would redraw the panel edge that
+// removing the workspace frame exists to delete. (The old
+// `margin-top: calc(var(--ib-shell-lift) * -1)` referenced a variable that
+// was never defined anywhere, so it had no effect either.)
 .shell {
-  box-sizing: border-box;
-
   display: flex;
-  align-items: stretch;          // both columns share the taller column's height
-  // gap: 10px;
-  // padding: 16px 18px;
-  background: var(--ib-surface);
-  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55); // elevation
-  font-family: var(--ib-mono);
-  color: var(--ib-text);
+  align-items: stretch;   // both columns share the taller column's height
+  background: var(--ib-chrome-bg);
 }
 
-// ── shared card styling ─────────────────────────────────────────────────────
-.box {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 11px 13px;
-  border: 0.5px solid var(--ib-border);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.018);
-}
-
-.box-title {
-  font-size: smaller;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ib-accent-dim);
-}
-
-// ── left column: suggested-commands card (top) + prompt (bottom) ────────────
+// Owns the shell's horizontal gutter, so the suggestion row, the description
+// line and the prompt all start on the same vertical line — and that line is
+// the workspace grid's. This alignment is what ties the two together now that
+// no frame encloses either.
 .main {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between; // card at top, prompt anchored at the bottom
-  // gap: 30px;
-}
-
-.suggested {
-  min-width: 0;
-
-  height: 100px;
-  border: 0.5px solid var(--ib-border);
-  // border-bottom: 0.5px solid var(--ib-border);
-  border-left: 0.5px solid var(--ib-border);
-  border-right: 0.5px solid var(--ib-border);
-  border-radius: 14px; /* Rounded top, flat bottom */
-
-  line-height: 2.5;
-}
-
-.spacer {
-  flex: 1;
+  justify-content: space-between;   // suggestions at top, prompt at the bottom
+  padding: 16px var(--ib-gutter) 22px;
 }
 
 .suggestions {
-   display: flex;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 16px 16px;
+  padding: 0 0 4px;
   overflow-x: auto;
   scrollbar-width: none;
 
@@ -99,15 +45,14 @@
 
 .chip {
   flex: none;
-  font: inherit;
   line-height: 1;
   padding: 7px 14px;
-  border-radius: 16px;
+  border: 0.5px solid var(--ib-border);
+  border-radius: var(--ib-radius-pill);
+  background: var(--ib-pill-bg);
+  color: var(--ib-pill-text);
   white-space: nowrap;
   cursor: pointer;
-  color: #c4bcad;
-  background: #2a241d;
-  border: 0.5px solid var(--ib-border);
   transition: background 80ms ease, color 80ms ease;
 
   &:hover {
@@ -115,46 +60,10 @@
   }
 
   &.active {
-    color: #1a140d;
+    color: var(--ib-on-accent);
     background: var(--ib-accent);
     border-color: var(--ib-accent);
   }
-}
-
-.chip-fixed {
- display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 2px;              /* square-ish = categorically not a pill */
-  background: rgba(255, 255, 255, 0.02);
-  color: rgba(255, 255, 255, 0.55);
-  transition: border-color 120ms ease, color 120ms ease, background-color 120ms ease;
-
-  &:hover {
-    border-color: rgba(255, 255, 255, 0.28);
-    color: rgba(255, 255, 255, 0.82);
-    background: rgba(255, 255, 255, 0.04);
-  }
-
-  &.active {
-    border-color: var(--accent, #e8933a);
-    color: var(--accent, #e8933a);
-    background: rgba(232, 147, 58, 0.08);
-  }
-
-}
-
-.chip-icon {
-  display: inline-flex;
-  width: 14px;
-  height: 14px;
-}
-
-.chip-icon svg {
-  width: 100%;
-  height: 100%;
-  fill: #fff;   /* FA paths are fills, not strokes */
 }
 
 .fall {
@@ -169,9 +78,9 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 1.5rem;
-  margin: 1rem 1rem;
-  color: var(--ib-dim);
+  margin: 1rem 0;   // horizontal margin removed; the gutter is .main's job
   height: 1.5rem;
+  color: var(--ib-dim);
 }
 
 // A mondat rövidül, ha nem fér ki. (Az `overflow: auto` és a `text-overflow`
@@ -194,7 +103,7 @@
 }
 
 .key {
-  color: #d6cfc1;
+  color: var(--ib-muted);
 }
 
 // Kötelező mezőn üresen próbált továbblépni. Az accent a shell "figyelj ide"
@@ -211,17 +120,15 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
-  font-size:26pt;
+  font-size: 26pt;
 }
 
 .avatar {
   flex: none;
+  display: block;
   width: 50px;
   height: 50px;
   margin-right: 20px;
-  // border-radius: 12px;
-  // border: 0.5px solid var(--ib-border);
-  display: block;
 }
 
 .prompt {
@@ -232,15 +139,13 @@
   align-items: center;           // input text on the vertical centre line
   gap: 10px;
   padding: 0 7px 0 14px;
-  border: 0.5px solid var(--ib-border);
+  border: 0.5px solid color-mix(in srgb, var(--ib-accent) 55%, transparent);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.022);
   transition: border-color 90ms ease;
-  border-color: rgba(217, 138, 61, 0.55);
 
   &:focus-within {
-
-    border-color: rgba(217, 138, 61, 1);
+    border-color: var(--ib-accent);
   }
 
   // A jelzés a kereten ül, nem a szövegen: a szem a beviteli mezőn van, és a
@@ -266,14 +171,12 @@
   border: none;
   outline: none;
   background: transparent;
-  font: inherit;
   font-size: 24pt;               // larger than the rest of the shell
   line-height: 1;
-  color: var(--ib-text);
   caret-color: var(--ib-accent-bright);
 
   &::placeholder {
-    color: #57514799;
+    color: color-mix(in srgb, var(--ib-dim) 60%, transparent);
   }
 }
 
@@ -288,42 +191,17 @@
   border: none;
   border-radius: 9px;
   cursor: pointer;
-  color: #1a140d;                 /* dark glyph on the fill */
-  background: var(--ib-accent);   /* filled by default */
+  color: var(--ib-on-accent);     // dark glyph on the fill
+  background: var(--ib-accent);
   transition: background 90ms ease, color 90ms ease;
 
   &:hover  { background: var(--ib-accent-bright); }
   &:active { background: var(--ib-accent-dim); }
 
-  svg { width: 26px; height: 26px; display: block; }  /* was 80px */
-}
-.panels {
-  flex: none;
-  width: 256px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 10px;
-  // border-left: 2px solid var(--ib-border);
-  padding-left: 25px;
-}
-
-.box-cmds {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px 13px;
-  line-height: 1.2;
-  color: var(--ib-muted);
-}
-
-// On narrow screens the side cards fold away; the commands are still typeable.
-@media (max-width: 700px) {
-  .panels {
-    display: none;
-  }
-
-  .shell {
-    gap: 0;
+  svg {
+    display: block;
+    width: 26px;
+    height: 26px;
   }
 }
 

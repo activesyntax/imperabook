@@ -1,29 +1,32 @@
+// Draws no surface of its own. It sits on the workspace, and the workspace is
+// the page — a background here would be the removed frame in another costume,
+// and at --ib-chrome-bg it would be the chrome's colour competing with the
+// seam. Horizontal padding is the workspace's gutter, not this component's.
 .item-collection {
   $header-pad-bottom: 0.9rem;
 
   display: flex;
   flex-direction: column;
-  background: #1a1610;
-  border-radius: 0.5rem;
 
   &__header {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.25rem 1.5rem $header-pad-bottom;
-    border-bottom: 1px solid color-mix(in srgb, #f5efe6 8%, transparent);
+    padding: 0 0 $header-pad-bottom;
+    border-bottom: 1px solid var(--ib-border-faint);
   }
 
+  // The negative margin pulls the accent rule down onto the header's own
+  // border, so the title underline and the header rule are one line.
   &__title {
     margin: 0 0 (-$header-pad-bottom);
     padding-bottom: $header-pad-bottom;
-    border-bottom: 2px solid #c07a3e;
-    font-family: 'JetBrains Mono', monospace;
+    border-bottom: 2px solid var(--ib-accent);
     font-size: 1.3rem;
     font-weight: 500;
     letter-spacing: -0.01em;
-    color: #f5efe6;
+    color: var(--ib-text);
   }
 
   &__meta {
@@ -31,42 +34,38 @@
     display: flex;
     align-items: baseline;
     gap: 0.45rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     font-variant-numeric: tabular-nums;
-    color: color-mix(in srgb, #f5efe6 45%, transparent);
+    color: var(--ib-dim);
   }
 
   &__page {
-    font-size: 0.9rem;
-    color: color-mix(in srgb, #c07a3e 75%, #f5efe6);
+    color: var(--ib-accent-dim);
   }
 
-  &__page-sep {
-    color: color-mix(in srgb, #f5efe6 25%, transparent);
+  &__page-sep,
+  &__meta-sep {
+    color: color-mix(in srgb, var(--ib-text) 25%, transparent);
   }
 
   &__total {
-    font-size: 0.9rem;
-  }
-
-  &__meta-sep {
-    color: color-mix(in srgb, #f5efe6 25%, transparent);
+    color: var(--ib-muted);
   }
 
   &__grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 2rem 2.5rem;
-    padding: 1.5rem;
+    // Top only. The header already carries its own bottom padding, and the
+    // two stacked were the empty band between the rule and the first row.
+    padding: 1.5rem 0 0;
   }
 
   &__empty {
     grid-column: 1 / -1;
-    padding: 1.5rem;
-    font-family: 'JetBrains Mono', monospace;
+    padding: 2.5rem 0;
     font-size: 0.85rem;
-    color: color-mix(in srgb, #f5efe6 50%, transparent);
+    color: var(--ib-muted);
     text-align: center;
   }
 }

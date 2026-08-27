@@ -1,45 +1,68 @@
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
-@use '@angular/material' as mat;
+:root {
+  --ib-page: #0a0a0a;
+  --ib-chrome-bg: #1a1610;
 
-html {
+  --ib-pill-bg: #2a241d;
+  --ib-pill-text: #c4bcad;
+  --ib-radius-pill: 16px;
+
+  // Text
+  --ib-text: #ece6db;
+  --ib-muted: #a69e8f;
+  --ib-dim: #857d6e;
+
+  // Accent
+  --ib-accent: #d89356;
+  --ib-accent-dim: #b27a43;
+  --ib-accent-bright: #f0a558;
+  --ib-on-accent: #1a140d;
+
+  --ib-border: rgba(236, 230, 219, 0.35);
+  --ib-border-faint: rgba(236, 230, 219, 0.12);
+
+  --ib-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+
+  --ib-gutter: 24px;
+}
+
+// ── Base ────────────────────────────────────────────────────────────────────
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
   height: 100%;
-  @include mat.theme(
-    (
-      color: (
-        primary: mat.$cyan-palette,
-        tertiary: mat.$orange-palette,
-      ),
-      typography: Roboto,
-      density: 0,
-    )
-  );
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
+  margin: 0;
+
   color-scheme: dark;
 
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: #0a0a0a;
+  background-color: var(--ib-page);
   background-image: radial-gradient(
     ellipse at top,
-    rgba(40, 30, 20, 0.4),   /* faint warm glow up top, behind the logo */
+    rgba(40, 30, 20, 0.4),
     transparent 60%
   );
 
-  color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-body-medium);
-
-  // Reset the user agent margin.
-  margin: 0;
-  height: 100%;
+  font-family: var(--ib-mono);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ib-text);
 }
-/* You can add global styles to this file, and also import other style files */
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+app-view {
+  display: contents;
+}
