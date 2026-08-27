@@ -5,7 +5,7 @@
 
 .shell {
   display: flex;
-  align-items: stretch;   // both columns share the taller column's height
+  align-items: stretch;
   background: var(--ib-chrome-bg);
 }
 
@@ -14,8 +14,8 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;   // suggestions at top, prompt at the bottom
-  padding: 32px var(--ib-gutter) 22px;
+  justify-content: space-between;
+  padding: 26px var(--ib-gutter) 22px;
 }
 
 .suggestions {
@@ -154,7 +154,7 @@
   border: none;
   outline: none;
   background: transparent;
-  font-size: 2rem;               // larger than the rest of the shell
+  font-size: 2rem;
   line-height: 1;
   caret-color: var(--ib-accent-bright);
 
@@ -174,7 +174,7 @@
   border: none;
   border-radius: 9px;
   cursor: pointer;
-  color: var(--ib-on-accent);     // dark glyph on the fill
+  color: var(--ib-on-accent);
   background: var(--ib-accent);
   transition: background 90ms ease, color 90ms ease;
 
