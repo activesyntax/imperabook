@@ -8,50 +8,6 @@
   display: flex;
   flex-direction: column;
 
-  &__header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0 0 $header-pad-bottom;
-    border-bottom: 1px solid var(--ib-border-faint);
-  }
-
-  // The negative margin pulls the accent rule down onto the header's own
-  // border, so the title underline and the header rule are one line.
-  &__title {
-    margin: 0 0 (-$header-pad-bottom);
-    padding-bottom: $header-pad-bottom;
-    border-bottom: 2px solid var(--ib-accent);
-    font-size: 1.3rem;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    color: var(--ib-text);
-  }
-
-  &__meta {
-    flex: none;
-    display: flex;
-    align-items: baseline;
-    gap: 0.45rem;
-    font-size: 0.9rem;
-    font-variant-numeric: tabular-nums;
-    color: var(--ib-dim);
-  }
-
-  &__page {
-    color: var(--ib-accent-dim);
-  }
-
-  &__page-sep,
-  &__meta-sep {
-    color: color-mix(in srgb, var(--ib-text) 25%, transparent);
-  }
-
-  &__total {
-    color: var(--ib-muted);
-  }
-
   &__grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));

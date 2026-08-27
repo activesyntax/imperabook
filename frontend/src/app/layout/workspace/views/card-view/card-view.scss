@@ -1,28 +1,42 @@
+:host {
+  display: flex;
+  flex: 0 0 auto;
+}
+
 .card {
   flex: 0 0 auto;
   width: 230px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
   gap: 10px;
   padding: 24px 20px;
-  background: var(--ib-surface, #161616);
-  border: 1px solid var(--ib-border, #2a2a2a);
+  background: var(--ib-card-bg);
+  border: 1px solid var(--ib-border);
   border-radius: 8px;
 }
+
+// Letterspacing adds a trailing gap after the last character, which throws
+// centred text off by half of it. The negative indent takes it back.
 .card__heading {
   text-transform: uppercase;
   letter-spacing: 0.12em;
+  text-indent: 0.12em;
   font-size: 0.8rem;
-  color: var(--ib-accent, #c8763f);
+  color: var(--ib-accent);
 }
+
 .card__value {
   font-size: 2.5rem;
   font-weight: 600;
   line-height: 1;
-  color: var(--ib-text, #f5f0e8);
+  font-variant-numeric: tabular-nums;
+  color: var(--ib-text);
 }
+
 .card__caption {
   font-size: 0.9rem;
-  color: var(--ib-text-muted, #8a7a6a);
+  line-height: 1.35;
+  color: var(--ib-muted);
 }
