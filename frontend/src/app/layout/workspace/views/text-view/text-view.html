@@ -1,6 +1,3 @@
-<header class="bar">
-  <span class="bar-title">{{ view().title }}</span>
-</header>
 <div class="body">
   @for (block of view().blocks; track $index) {
     @switch (block.type) {

@@ -1,10 +1,6 @@
 :host {
   display: block;
-  width: 85%;
-  min-width: 360px;
-  margin-inline: auto;
-  // No overflow: hidden. It was clipping to a border-radius that is gone, and
-  // left in place it would clip the focus outlines on the rows below.
+ max-width: 72ch;
 }
 
 .bar {
@@ -22,7 +18,7 @@
 }
 
 .body {
-  padding: 16px 18px 20px;
+  padding: 0px;
   color: var(--ib-text);
   font-size: 1.1rem;
   line-height: 1.6;

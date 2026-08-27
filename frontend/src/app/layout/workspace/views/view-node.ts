@@ -119,4 +119,4 @@ export interface Hint {
 
 export type TextBlock = Heading | Paragraph | CommandBlock | Finding | Hint;
 
-export interface TextView { type: 'textView'; title: string; blocks: TextBlock[]; }
+export interface TextView { type: 'textView'; blocks: TextBlock[]; }
