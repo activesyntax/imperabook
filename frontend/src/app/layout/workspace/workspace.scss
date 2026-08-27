@@ -7,6 +7,17 @@
   overflow: hidden;
 }
 
+// The frame has to carry the host's definite height down to the scroller.
+// Left at its default `height: auto` it sizes to content, and then the
+// scroller's `height: 100%` resolves against that auto height — so the
+// scroller grows past the viewport and gets clipped by the host instead of
+// scrolling. A definite `height: 100%` here (resolving against the definite
+// grid-track height of the host) restores the chain.
+.workspace-frame {
+  height: 100%;
+  min-height: 0;
+}
+
 .workspace {
   height: 100%;
   display: flex;
