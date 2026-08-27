@@ -1,26 +1,14 @@
 :host {
   display: block;
-  // The shell runs one step above the workspace scale. Sizes here are rem like
-  // everywhere else — converted from the old pt values (16/24/26pt) and rounded
-  // up to the app's one-decimal step, so each is within ~1% of where it was.
   font-size: 1.4rem;
 }
 
-// The bottom arm of the chrome. No box-shadow and no lift: elevation is
-// carried by tone, because a cast shadow would redraw the panel edge that
-// removing the workspace frame exists to delete. (The old
-// `margin-top: calc(var(--ib-shell-lift) * -1)` referenced a variable that
-// was never defined anywhere, so it had no effect either.)
 .shell {
   display: flex;
   align-items: stretch;   // both columns share the taller column's height
   background: var(--ib-chrome-bg);
 }
 
-// Owns the shell's horizontal gutter, so the suggestion row, the description
-// line and the prompt all start on the same vertical line — and that line is
-// the workspace grid's. This alignment is what ties the two together now that
-// no frame encloses either.
 .main {
   flex: 1;
   min-width: 0;

@@ -876,6 +876,19 @@ the same doomed insert in whatever code ran next.
 > per-entity nodes rather than `ItemView[]`, so a collection can hold books and authors at once.
 > The generic-component payoff named in the trade-off is the part ADR 32 spends.
 
+> **Amended: `Title` and `Page` moved to a sibling `heading` node; `EmptyMessage` stayed.** The
+> governing argument is untouched — what a set is, why it is empty, and how much of it is on screen
+> are backend facts, and a frontend reconstructing them is guessing. What changed is which node
+> carries them, and the reason is that a heading and a collection turned out to have different
+> producers. The dashboard wants a heading over content that is not a collection at all; a
+> collection rendered inside a card wants none. Folding both into one node made every producer of
+> one answer for the other, and the visible symptom was an `itemCollection` drawing an empty header
+> band beneath a `heading` that had already drawn the same title. Two producers for one element is
+> the drift ADR 26 collapses — the same collapse, applied to the union instead of to a handler.
+>
+> `EmptyMessage` stays, because emptiness is a fact about the *item set* and belongs where the items
+> are. Read every `Title` below as `HeadingView.Text`.
+
 **Context.** `ItemCollectionView` carried a list of items and nothing else. That was enough while the
 only producer was `list books`, and it stopped being enough the moment a second one existed: a search
 result and a full listing arrive at the frontend as the same node, and the component rendering them has
@@ -891,13 +904,16 @@ a set of exactly thirty. In each case the frontend would be reconstructing the q
 **Decision.** The node states three things about itself, alongside its items.
 
 ```csharp
-public sealed record PageInfo(int From, int To, int Total);
+public sealed record PageInfo(int Current, int Count, int TotalItems, string ItemsPlural);
+
+public sealed record HeadingView(
+    string Text,
+    PageInfo? Page = null
+) : ViewNode;
 
 public sealed record ItemCollectionView(
-    string Title,
     string EmptyMessage,
-    IReadOnlyList<ItemNode> Items,   // ItemView[] when this entry was written; see ADR 32
-    PageInfo? Page = null
+    IReadOnlyList<ItemNode> Items   // ItemView[] when this entry was written; see ADR 32
 ) : ViewNode;
 ```
 
@@ -909,11 +925,27 @@ from `Title` because emptiness is not the absence of a fact but a fact of its ow
 above are unrelated, and a component holding one generic string can only ever report one of them
 correctly.
 
-*How much of the result set is on screen.* `Page` — `1–30 of 248`, 1-based and inclusive because that is
-how a person reads a range, with the arithmetic done server-side so every client shows the same numbers.
-Optional, and this is the one place optionality carries meaning rather than convenience: **absent means
-the entire result set is already visible.** The frontend hides the range and the paging affordance
-outright rather than rendering a disabled control that invites a press going nowhere.
+*How much of the result set is on screen.* `Page` — `page 1/4 · 248 books`, with the arithmetic done
+server-side so every client shows the same numbers. Optional, and this is the one place optionality
+carries meaning rather than convenience: **absent means the entire result set is already visible.** The
+frontend hides the range and the paging affordance outright rather than rendering a disabled control
+that invites a press going nowhere.
+
+**Amended: page ordinal, not item range.** This entry originally specified `From`, `To` and `Total` —
+`1–30 of 248` — on the argument that a range is how a person reads their position in a set. That is true
+of a scrollbar and false of this interface. The keys are `next page` and `prev page` (`COMMANDS.md`,
+*Three kinds of movement*), the unit the user moves in is a page, and paging is explicit rather than
+continuous — so a range denominated in items describes a position the user has no control over.
+`Current` and `Count` name the thing the keys actually move. `TotalItems` survives from the original
+because the size of the whole set is a separate fact from the position in it, and it is the one a person
+asks for first.
+
+`ItemsPlural` is the noun for the counted set — `books`, `authors` — and it is on the wire because the
+backend is what knows which entity was listed. It is also, plainly, more copy in the API layer, on the
+trajectory the trade-off below already named. English pluralisation is regular enough that a suffix rule
+would work; the reason it is a field rather than a rule is that the rule stops working at the first
+language that inflects, and a field defers that problem to the same place the rest of the copy already
+defers it to.
 
 `Title` and `EmptyMessage` are non-optional deliberately. A new dispatch branch cannot compile without
 saying what it shows and what its emptiness means, which is the same enforcement argument that removed
@@ -951,6 +983,22 @@ paging *model* is already decided and written down, the frontend break is alread
 second break to add three integers would cost more than carrying a nullable field that renders nothing.
 If paging is still unimplemented several milestones from now, that is the signal this was speculation
 after all.
+
+*The compile-time enforcement is now partial, and that was the entry's strongest claim.* The argument for
+a non-optional `Title` was that a new dispatch branch cannot compile without saying what it shows — the
+same enforcement argument that removed the raw `.Value` getters from `Result` (ADR 6). Split across two
+nodes, it covers half: a branch can emit an `ItemCollectionView` and no heading, and nothing fails. The
+list simply renders untitled, which is precisely the defect the required field existed to prevent. What
+replaced enforcement is weaker and should be named as such — the heading is the first thing a composer
+writes, so its absence is visible at the composer rather than deduced from the output, and the endpoint
+tests assert a heading precedes every collection. Review and tests, not the type system.
+
+*`PageInfo` moved rather than shipped, and the clause above has fired.* This entry said that if paging
+were still unimplemented several milestones on, that would be the signal the type was speculation. It was
+carried through one wire break and relocated in a second before anything sent a non-null value. The
+honest reading is that the clause was right and the shape was wrong: what returned was not the record
+that was banked but a differently-shaped one, which is what a speculative type usually costs — not
+carrying capacity, but the confidence that the design was settled when it was not.
 
 ---
 
@@ -1852,10 +1900,8 @@ client, which is the class of client-side interpretation ADR 20 withdrew an enti
 public abstract record ItemNode;
 
 public sealed record ItemCollectionView(
-    string Title,
     string EmptyMessage,
-    IReadOnlyList<ItemNode> Items,
-    PageInfo? Page = null
+    IReadOnlyList<ItemNode> Items
 ) : ViewNode;
 ```
 
@@ -1863,16 +1909,17 @@ public sealed record ItemCollectionView(
 `BookDetailView` — a detail node had no container to protect, so there is nothing to keep generic
 there.
 
-*The container survives because its three fields are facts about the set, not about the elements.*
-`Title`, `EmptyMessage` and `PageInfo` (21) are unchanged and still required. Paging, selection and
-the empty state stay in one component rather than being reimplemented per entity, and the
-heterogeneous result set that motivated half this entry becomes expressible rather than special:
-the list is mixed because its element type is a union.
+*The container survives because its remaining field is a fact about the set, not about the elements.*
+`EmptyMessage` (21) is unchanged and still required; `Title` and `Page` have since moved to a sibling
+`heading` node, which narrows this entry's claim without touching it. Selection and the empty state
+stay in one component rather than being reimplemented per entity, and the heterogeneous result set
+that motivated half this entry becomes expressible rather than special: the list is mixed because its
+element type is a union.
 
 *`AuthorDetailView` is not written, because nothing opens one.* Opening an author row runs that
 author's books — a listing, which already exists. ADR 21 shipped `PageInfo` ahead of its behaviour
-and flagged that as the one justified exception; doing it a second time without the same narrow
-argument would make the exception a habit.
+and flagged that as the one justified exception, and has since conceded it; doing it a second time
+without the same narrow argument would make the exception a habit.
 
 **Which leak this is, and which it is not.** ADR 20 withdrew a design where the client held a
 name-to-path table, and the reason was specific: those were *the backend's own facts about its own

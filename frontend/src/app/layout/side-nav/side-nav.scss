@@ -1,8 +1,6 @@
 :host {
   display: flex;
   flex: none;
-  // 215 + 2×14 padding: the pills keep the width they had before the nav
-  // gained a surface of its own.
   width: 243px;
   min-width: 0;
   background: var(--ib-chrome-bg);
@@ -17,7 +15,6 @@
   padding: 18px 14px 0;
 }
 
-// State, not a verb — no pill form, because pill means runnable (ADR 22).
 .nav__identity {
   padding-bottom: 12px;
   border-bottom: 0.5px solid var(--ib-border-faint);
@@ -46,9 +43,6 @@
   color: var(--ib-dim);
 }
 
-// Same form as the shell's suggestion chip — one visual language for
-// everything runnable. The icon is the only difference, and it encodes
-// permanence, not a different kind of thing (ADR 22).
 .pin {
   display: flex;
   align-items: center;

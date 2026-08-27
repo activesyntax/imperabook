@@ -1,3 +1,7 @@
+:host {
+  display: block;
+}
+
 .item-view {
   display: flex;
   flex-direction: column;
@@ -7,9 +11,9 @@
     aspect-ratio: 2 / 3;
     position: relative;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, #f5efe6 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ib-text) 12%, transparent);
     border-radius: 3px;
-    background: color-mix(in srgb, #f5efe6 4%, transparent);
+    background: color-mix(in srgb, var(--ib-text) 4%, transparent);
 
     container-type: inline-size;
   }
@@ -21,6 +25,9 @@
     object-fit: cover;
   }
 
+  // A book with no cover is not a book whose cover is a placeholder graphic
+  // (ADR 20) — the absent case is a typographic fallback, decided here rather
+  // than sent by the backend.
   &__cover-fallback {
     position: absolute;
     inset: 0;
@@ -29,13 +36,13 @@
     justify-content: center;
     padding: 12%;
     overflow: hidden;
-    font-family: 'JetBrains Mono', monospace;
-    // Sized against the card, so a three-column and a four-column layout both read correctly.
+    // Sized against the card, so a three-column and a four-column layout both
+    // read correctly.
     font-size: 8cqw;
     line-height: 1.35;
     text-align: center;
     text-wrap: balance;
-    color: color-mix(in srgb, #f5efe6 45%, transparent);
+    color: var(--ib-dim);
   }
 
   &__body {
@@ -47,23 +54,20 @@
 
   &__primary {
     margin: 0;
-    font-family: 'JetBrains Mono', monospace;
     font-size: 0.9rem;
     font-weight: 500;
     line-height: 1.35;
-    color: #f5efe6;
+    color: var(--ib-text);
   }
 
   &__secondary {
-    font-family: 'JetBrains Mono', monospace;
     font-size: 0.8rem;
     line-height: 1.4;
-    color: color-mix(in srgb, #f5efe6 55%, transparent);
+    color: var(--ib-muted);
   }
 
   &__meta {
-    font-family: 'JetBrains Mono', monospace;
     font-size: 0.7rem;
-    color: color-mix(in srgb, #f5efe6 40%, transparent);
+    color: var(--ib-dim);
   }
 }

@@ -1,23 +1,18 @@
 :host {
-  --ib-rule: var(--ib-accent, #b9743f);
-
   display: block;
   width: 85%;
   min-width: 360px;
-  // max-width: 110ch;              /* prose measure, not a pixel guess */
   margin-inline: auto;
-  // background: var(--ib-surface, #161413);
-  // border: 1px solid color-mix(in srgb, var(--ib-rule) 45%, transparent);
-  // border-radius: 12px;
-  overflow: hidden;
+  // No overflow: hidden. It was clipping to a border-radius that is gone, and
+  // left in place it would clip the focus outlines on the rows below.
 }
 
 .bar {
   display: flex;
   align-items: center;
   padding: 11px 18px;
-  border-bottom: 1px solid var(--ib-divider, #221e1a);
-  color: var(--ib-rule);
+  border-bottom: 1px solid var(--ib-border-faint);
+  color: var(--ib-accent);
 }
 
 .bar-title {
@@ -28,17 +23,22 @@
 
 .body {
   padding: 16px 18px 20px;
-  color: var(--ib-text, #d9cdbf);
+  color: var(--ib-text);
   font-size: 1.1rem;
   line-height: 1.6;
 }
 
+// ── Prose ───────────────────────────────────────────────────────────────────
+// Each level carries its own colour below, so the shared rule only holds what
+// they actually share.
 .body h2,
 .body h3,
 .body h4 {
-  color: var(--ib-heading, #efe4d6);
   font-weight: 500;
-  &:first-child { margin-top: 0; }
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
 .body h2 {
@@ -47,7 +47,7 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ib-accent-dim, #b27a43);
+  color: var(--ib-accent-dim);
 }
 
 .body h3 {
@@ -55,35 +55,73 @@
   font-size: 1rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ib-rule);
+  color: var(--ib-accent);
 }
 
 .body h4 {
   margin: 1.8em 0 0.5em;
   font-size: 1rem;
   letter-spacing: 0.09em;
-  color: var(--ib-muted, #a8968a);
+  color: var(--ib-muted);
 }
+
 .body p {
   margin: 0 0 0.85em;
-  &:last-child { margin-bottom: 0; }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
-.body strong { color: var(--ib-heading, #efe4d6); font-weight: 600; }
-.body em     { font-style: italic; }
+.body strong {
+  font-weight: 600;
+  color: var(--ib-text);
+}
+
+.body em {
+  font-style: italic;
+}
 
 .link {
-  color: var(--ib-rule);
+  color: var(--ib-accent);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
   border-radius: 2px;
 
-  &:hover { text-decoration-thickness: 2px; }
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
 
   &:focus-visible {
-    outline: 2px solid var(--ib-rule);
+    outline: 2px solid var(--ib-accent);
     outline-offset: 2px;
+  }
+}
+
+// ── Runnable rows ───────────────────────────────────────────────────────────
+// The whole row is the button, not a control inside it: one focusable element
+// per finding and a target large enough to hit (ADR 23). The three variants
+// differ only in their column layout, so the reset and the states are stated
+// once.
+.finding,
+.command-row,
+.command {
+  width: 100%;
+  padding: 6px 4px;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--ib-accent) 6%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ib-accent);
+    outline-offset: -2px;
   }
 }
 
@@ -92,49 +130,67 @@
   grid-template-columns: 3.2ch 1fr auto;
   align-items: baseline;
   gap: 0 14px;
-  width: 100%;
   padding: 9px 4px;
-  background: transparent;
-  border: 0;
-  border-top: 1px solid var(--ib-divider, #221e1a);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
+  border-top: 1px solid var(--ib-border-faint);
 
   & + .command,
   &:last-child {
-    border-bottom: 1px solid var(--ib-divider, #221e1a);
-  }
-
-  &:hover {
-    background: color-mix(in srgb, var(--ib-rule) 6%, transparent);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--ib-rule);
-    outline-offset: -2px;
+    border-bottom: 1px solid var(--ib-border-faint);
   }
 }
 
+// A column of right-aligned numbers is only possible if the number is its own
+// fact rather than a run inside the sentence (ADR 23).
 .finding-value {
   justify-self: end;
-  color: var(--ib-heading, #efe4d6);
   font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ib-text);
 }
 
 .finding-text {
-  color: var(--ib-text, #d9cdbf);
+  color: var(--ib-text);
 }
 
+// Bordered but untinted, unlike the keycaps below: this names a command the
+// row will run, and a key is something the user presses on their keyboard.
+// Neither wears the pill form, which means runnable-on-its-own (ADR 22).
 .finding-command {
-  font-family: var(--ib-mono, 'JetBrains Mono', monospace);
-  font-size: 0.8rem;
-  color: var(--ib-muted, #a8968a);
-  border: 1px solid color-mix(in srgb, var(--ib-rule) 28%, transparent);
-  border-radius: 5px;
   padding: 3px 9px;
+  font-size: 0.8rem;
+  color: var(--ib-muted);
+  border: 1px solid color-mix(in srgb, var(--ib-accent) 28%, transparent);
+  border-radius: 5px;
 }
+
+.command-row {
+  display: grid;
+  grid-template-columns: 24ch 1fr;
+  align-items: baseline;
+  gap: 0 16px;
+}
+
+.command-row-name {
+  font-size: 0.9rem;
+  color: var(--ib-text);
+}
+
+.command-row-text {
+  color: var(--ib-muted);
+}
+
+// The no-description variant. Previously unstyled, so it rendered as a native
+// button — grey chrome in the middle of the prose.
+.command {
+  display: block;
+}
+
+.command-name {
+  font-size: 0.9rem;
+  color: var(--ib-text);
+}
+
+// ── Hints ───────────────────────────────────────────────────────────────────
 .hint {
   display: grid;
   grid-template-columns: 16ch 1fr;
@@ -150,48 +206,15 @@
 }
 
 .hint kbd {
-  font-family: var(--ib-mono, 'JetBrains Mono', monospace);
-  font-size: 0.8rem;
-  color: var(--ib-heading, #efe4d6);
-  background: color-mix(in srgb, var(--ib-rule) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ib-rule) 28%, transparent);
-  border-radius: 5px;
   padding: 3px 8px;
+  font-size: 0.8rem;
+  color: var(--ib-text);
+  background: color-mix(in srgb, var(--ib-accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ib-accent) 28%, transparent);
+  border-radius: 5px;
   white-space: nowrap;
 }
 
 .hint-text {
-  color: var(--ib-muted, #a8968a);
-}
-
-.command-row {
-  display: grid;
-  grid-template-columns: 24ch 1fr;
-  align-items: baseline;
-  gap: 0 16px;
-  width: 100%;
-  padding: 6px 4px;
-  background: transparent;
-  border: 0;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-
-  &:hover { background: color-mix(in srgb, var(--ib-rule) 6%, transparent); }
-
-  &:focus-visible {
-    outline: 2px solid var(--ib-rule);
-    outline-offset: -2px;
-  }
-}
-
-.command-row-name {
-  font-family: var(--ib-mono, 'JetBrains Mono', monospace);
-  font-size: 0.9rem;
-  color: var(--ib-heading, #efe4d6);
-}
-
-.command-row-text {
-  color: var(--ib-muted, #a8968a);
+  color: var(--ib-muted);
 }

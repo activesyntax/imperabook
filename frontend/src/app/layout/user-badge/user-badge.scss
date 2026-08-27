@@ -1,4 +1,6 @@
-:host { display: flex; }
+:host {
+  display: flex;
+}
 
 .badge {
   display: flex;
@@ -10,22 +12,21 @@
 }
 
 .badge__avatar {
+  flex: 0 0 auto;
   width: 50px;
   height: 50px;
   border-radius: 50%;
   object-fit: cover;
-  flex: 0 0 auto;
 }
 
 .badge__avatar--mono {
   display: grid;
   place-items: center;
-  font-family: var(--ib-font-mono, monospace);
   font-size: 1rem;
   font-weight: 600;
-  color: var(--ib-accent, #cf8a4a);
-  background: var(--ib-accent-dim, rgba(207, 138, 74, 0.12));
-  border: 1px solid var(--ib-accent-dim-border, rgba(207, 138, 74, 0.25));
+  color: var(--ib-accent);
+  background: color-mix(in srgb, var(--ib-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ib-accent) 25%, transparent);
   user-select: none;
 }
 
@@ -39,23 +40,22 @@
 .badge__name {
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--ib-text, #e8e2d9);
+  color: var(--ib-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .badge__library {
-  font-family: var(--ib-font-mono, monospace);
   font-size: 0.9rem;
-  color: var(--ib-text-muted, #8a817a);
+  color: var(--ib-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .badge__sigil {
-  color: var(--ib-accent, #cf8a4a);
-  opacity: 0.7;
   margin-right: 0.15rem;
+  color: var(--ib-accent);
+  opacity: 0.7;
 }
