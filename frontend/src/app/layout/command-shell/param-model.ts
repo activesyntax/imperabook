@@ -12,6 +12,11 @@ export type Prompting = {
   readonly blocked: boolean;
 };
 
+export type Specifying = {
+  readonly kind: 'specifying';
+  readonly parameters: readonly CommandParameter[];
+}
+
 export type Outcome =
   | { readonly kind: 'prompting'; readonly state: Prompting }
   | { readonly kind: 'done'; readonly answers: CommandInput }

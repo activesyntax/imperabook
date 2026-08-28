@@ -16,12 +16,18 @@ export type Collecting = {
   readonly params: Param.Prompting;
 };
 
+export type Filling = {
+  readonly kind: 'filling';
+  readonly cmd: CommandSpec;
+  readonly params: Param.Specifying;
+};
+
 export type Running = {
   readonly kind: 'running';
   readonly cmd: CommandSpec;
 };
 
-export type ShellState = Browsing | Collecting | Running;
+export type ShellState = Browsing | Collecting | Filling | Running;
 
 export const browsing = (text = '', selected: Index = undefined): Browsing =>
   ({ kind: 'browsing', text, selected });
@@ -52,6 +58,7 @@ export function textOf(state: ShellState): string {
   switch (state.kind) {
     case 'browsing': return state.text;
     case 'collecting': return Param.draftOf(state.params);
+    case 'filling': return `$PARAMETERS: {state.params.parameters.length}`;
     case 'running': return '';
   }
 }
@@ -100,6 +107,7 @@ export function transition(state: ShellState, input: UiInput, deps: ShellDeps): 
   switch (state.kind) {
     case 'browsing': return fromBrowsing(state, input, deps);
     case 'collecting': return fromCollecting(state, input, deps);
+    case 'filling': return fromFilling(state, input, deps);
     case 'running': return fromRunning(state, input, deps);
   }
 }
@@ -133,6 +141,10 @@ function fromCollecting(s: Collecting, i: UiInput, deps: ShellDeps): Step {
     case 'done': return step(running(s.cmd), [{ kind: 'run', cmd: s.cmd, answers: outcome.answers }]);
     case 'aborted': return idle(deps);
   }
+}
+
+function fromFilling(s: Filling, i: UiInput, deps: ShellDeps): Step {
+  return idle(deps)
 }
 
 function fromRunning(s: Running, i: UiInput, deps: ShellDeps): Step {

@@ -46,9 +46,6 @@ export class CommandShell {
   private readonly deps: Shell.ShellDeps = {
     suggestionsFor: (query) => this.commands.suggestionsFor(query, undefined),
 
-    // Session nélkül a jegyzék pontosan azt tartalmazza, amit futtatni lehet. Egyetlen
-    // elem: nincs mit választani, tehát a gép nem vár egy üres sávval, hanem elindítja.
-    // Több vagy nulla elem: van választás, vagy még nincs jegyzék — a gép szabad marad.
     forcedCommand: () => {
       if (this.registry.authenticated()) return undefined;
 
@@ -97,8 +94,6 @@ export class CommandShell {
       case 'username':
         return { type: 'text', name: 'ib-credential-username', autocomplete: 'username' };
       default:
-        // Credential-parancs nem credential lépése: dedikált elemen marad, de
-        // nem hazudik szerepet a jelszókezelőnek.
         return { type: 'text', name: 'ib-credential-field', autocomplete: 'off' };
     }
   });
@@ -106,17 +101,8 @@ export class CommandShell {
   private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
 
   constructor() {
-    // A fókusz-invariánst innentől a shell tartja fenn, nem az elem élettartama:
-    // a viewChild jelzés akkor és csak akkor változik, ha MÁSIK elem került a
-    // helyére, tehát a csere után az új elem azonnal fókuszt kap (ADR 25).
     effect(() => this.focus(this.bar()?.nativeElement));
 
-    // A gép `browsing()`-gal jön létre, mert a komponens a jegyzék előtt épül fel — a
-    // `forcedCommand` ekkor még semmit nem tudna mondani. Amint a jegyzék válaszolt, a
-    // tétlen állapot újraértékelődik. A komponens nem tölt be semmit és nem kezel
-    // betöltési hibát: azt a `ShellStartup` teszi, egy helyen. Itt csak egy tény
-    // olvasása van, és a `loaded` egyirányú, tehát ez egyszer fut le — a későbbi
-    // session-váltásokat a gép saját tétlen átmenete kezeli (ADR 30).
     effect(() => {
       if (!this.registry.loaded()) return;
 
@@ -156,7 +142,11 @@ export class CommandShell {
   // ── STATE MACHINE  ────────────────────────────────────────────────────────────
 
   private send(input: UiInput): void {
+
+    // console.log('STATE BEFORE:', this.state(), input);
     this.apply(Shell.transition(this.state(), input, this.deps));
+    console.log('STATE AFTER:', this.state(), input);
+
   }
 
   private apply({ state, effects }: Shell.Step): void {
@@ -170,8 +160,6 @@ export class CommandShell {
       try {
         const view = await this.runner.open(effect.cmd);
 
-        // A `null` azt jelenti, hogy a nyitó körnek nincs mondanivalója — a képernyőn
-        // lévő nézet érvényes marad. A bekérés fut tovább, csak nem cseréltünk hátteret.
         if (view !== null) {
           this.store.setResult(view);
         }
@@ -184,7 +172,6 @@ export class CommandShell {
     try {
       this.store.setResult(await this.runner.run(effect.cmd, effect.answers));
     } catch (error) {
-      // A hiba is nézet: a felhasználónak látnia kell, hogy a parancs elhasalt.
       this.store.setResult(resultOfError(error));
     } finally {
       this.send({ kind: 'completed' });

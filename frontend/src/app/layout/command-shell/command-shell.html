@@ -68,16 +68,6 @@
           <span class="inputfield">{{ param.prompt }}:</span>
         }
 
-        <!--
-          Két ág, egy hely. A parancssor inputja soha nem volt és soha nem lesz
-          credential-mező — ez az, amit a Chrome jelszókezelője field signature
-          alapján megjegyez, és amitől a ↓ később felajánlást nyitna rajta.
-
-          Szerkezeti @if kell, nem [hidden] és nem display:none: a Chrome a
-          rejtett mezőket is beolvassa és párosítja, tehát a két elem soha nem
-          lehet egyszerre a DOM-ban. Ugyanezért nincs kilépő animáció sem.
-          (ADR 25)
-        -->
         @if (credentialMode()) {
           <input
             #bar
