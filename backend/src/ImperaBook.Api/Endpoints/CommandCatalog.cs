@@ -53,6 +53,9 @@ public sealed record CommandParameter(string Name, string Prompt, bool Required)
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public CredentialRole? Credential { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Connective { get; init; }
 }
 
 public static class CommandCatalog
@@ -102,13 +105,13 @@ public static class CommandCatalog
             "add book",
             "Catalog a new book",
             [
-                new("title", "Title", true),
-                new("subtitle", "Subtitle", false),
-                new("author", "Author", true),
-                new("language", "Language", false),
-                new("publicationYear", "Publication year", false),
-                new("isbn", "ISBN", false),
-                new("summary", "Summary", false),
+                new("title", "Title", true) { Connective = "with title" },
+                new("author", "Author", true) { Connective = "by author" },
+                new("subtitle", "Subtitle", false) { Connective = "subtitled" },
+                new("language", "Language", false) { Connective = "in language" },
+                new("publicationYear", "Publication year", false) { Connective = "published in" },
+                new("isbn", "ISBN", false) { Connective = "with isbn" },
+                new("summary", "Summary", false) { Connective = "with summary" },
             ]
         )
         {
