@@ -3,37 +3,7 @@ import { CommandInput } from '@app/commands/command-runner';
 import { Index, IndexMove, indexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 import { UiInput } from './ui-input';
 import * as Param from './param-model';
-
-export type Browsing = {
-  readonly kind: 'browsing';
-  readonly text: string;
-  readonly selected: Index;
-};
-
-export type Collecting = {
-  readonly kind: 'collecting';
-  readonly cmd: CommandSpec;
-  readonly params: Param.Prompting;
-};
-
-export type Filling = {
-  readonly kind: 'filling';
-  readonly cmd: CommandSpec;
-  readonly params: Param.Specifying;
-};
-
-export type Running = {
-  readonly kind: 'running';
-  readonly cmd: CommandSpec;
-};
-
-export type ShellState = Browsing | Collecting | Filling | Running;
-
-export const browsing = (text = '', selected: Index = undefined): Browsing =>
-  ({ kind: 'browsing', text, selected });
-
-export const running = (cmd: CommandSpec): Running =>
-  ({ kind: 'running', cmd });
+import { ShellState, Browsing, Running, Filling, Collecting, browsing, running } from './shell-state';
 
 export type Effect =
   | { readonly kind: 'open'; readonly cmd: CommandSpec }

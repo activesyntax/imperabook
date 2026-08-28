@@ -18,6 +18,7 @@ import { WorkspaceStore } from '@app/state/workspace-store';
 import { resultOfError } from '@app/commands/command-error';
 import { UiInput } from './ui-input';
 import * as Shell from './shell-model';
+import * as ShellState from './shell-state';
 
 interface FieldAttrs {
   readonly type: 'text' | 'password';
@@ -54,7 +55,7 @@ export class CommandShell {
     },
   };
 
-  private readonly state = signal<Shell.ShellState>(Shell.browsing());
+  private readonly state = signal<ShellState.ShellState>(ShellState.browsing());
 
   protected readonly kind = computed(() => this.state().kind);
   protected readonly text = computed(() => Shell.textOf(this.state()));
