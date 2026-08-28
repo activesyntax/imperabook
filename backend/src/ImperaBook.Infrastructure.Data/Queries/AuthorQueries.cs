@@ -1,4 +1,5 @@
 using ImperaBook.Application;
+using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ImperaBook.Infrastructure.Data.Queries;
@@ -22,4 +23,10 @@ public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : I
                 a.DeathYear
             ))
             .ToArrayAsync(ct);
+}
+
+public static class AuthorQueriesExtensions
+{
+    public static IEnumerable<AuthorName> Names(this IEnumerable<BookAuthorEntity> authors) =>
+        authors.Select(a => new AuthorName(a.Author.FirstName, a.Author.LastName));
 }

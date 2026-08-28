@@ -4,11 +4,25 @@ namespace ImperaBook.Application;
 
 public sealed record LanguageCount(string? Language, int Count);
 
+public sealed record BookReference
+{
+    public required Guid Id { get; init; }
+    public required string Title { get; init; }
+    public required IReadOnlyList<BookAuthor> Authors { get; init; }
+}
+
+public sealed record ShortestBook(BookReference Book, int PageCount);
+
+public sealed record LongestBook(BookReference Book, int PageCount);
+
 public sealed record LibraryStatistics(
     int TotalBooks,
     int TotalAuthors,
     int TotalPages,
-    int BooksWithPageCount
+    int TotalLanguages,
+    int BooksWithPageCount,
+    double AvgPagesPerBook,
+    Maybe<LongestBook> LongestBook
 );
 
 public sealed record LibraryDetail(string Name, string? PhotoHash);

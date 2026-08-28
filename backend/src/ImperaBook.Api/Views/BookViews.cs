@@ -19,12 +19,6 @@ public static class BookViews
             }
         );
 
-    /// <summary>
-    /// The detail of one book, composed from the same nodes every other view uses. Fields that are
-    /// absent contribute no block at all rather than a block reading "—": an unset publisher is not
-    /// a publisher whose name is a dash, and what an empty slot should look like is the frontend's
-    /// question (ADR 20).
-    /// </summary>
     public static CommandResult ToCommandResult(this BookDetail b)
     {
         var nodes = new List<ViewNode> { new HeadingView(b.Title) };
@@ -37,7 +31,7 @@ public static class BookViews
         if (!string.IsNullOrWhiteSpace(b.Subtitle))
             blocks.Add(new Paragraph([new EmphasisRun([b.Subtitle])]));
 
-        blocks.Add(Field(b.Authors.Count > 1 ? "Authors" : "Author", AuthorValue(b.Authors)));
+        blocks.Add(Field(b.Authors.Count > 1 ? "Authors" : "Author", b.Authors.AsText()));
 
         AddField(blocks, "ISBN", b.Isbn);
         AddField(blocks, "Published", b.Published?.ToString(CultureInfo.InvariantCulture));
@@ -62,7 +56,7 @@ public static class BookViews
             new("Title", b.Title, PropertyRole.Primary),
             new(
                 b.Authors.Count > 1 ? "Authors" : "Author",
-                AuthorValue(b.Authors),
+                b.Authors.AsText(),
                 PropertyRole.Secondary
             ),
         };
@@ -84,12 +78,6 @@ public static class BookViews
     // comes to a key/value pair, and enough while a detail is a short list of them.
     private static Paragraph Field(string label, string value) =>
         new([new StrongRun([label]), $" {value}"]);
-
-    private static string AuthorValue(IReadOnlyList<BookAuthor> authors) =>
-        authors.Count == 0 ? "Unknown" : string.Join(", ", authors.Select(FullName));
-
-    private static string FullName(BookAuthor a) =>
-        string.IsNullOrWhiteSpace(a.FirstName) ? a.LastName : $"{a.FirstName} {a.LastName}";
 
     /// <summary>
     /// An ISO 639-1 code is stored; a reader wants a language. Resolution is invariant rather than

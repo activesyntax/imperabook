@@ -1,4 +1,5 @@
 using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions.ValueTasks;
 using ImperaBook.Application;
 using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -42,16 +43,54 @@ public sealed class LibraryQueries(ImperaBookDbContext db, ICurrentUser user) : 
             .Authors.AsNoTracking()
             .CountAsync(a => a.OwnerId == user.Id, ct);
 
-        // TODO: BookEntity carries no page count yet, so these two cannot be computed.
-        // Fixed placeholders — the only fabricated values in this class.
-        const int totalPages = 8450;
-        const int booksWithPageCount = 248;
+        var stats = await OwnedBooks
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalPages = g.Sum(b => b.PageCount ?? 0),
+                WithPageCount = g.Count(b => b.PageCount.HasValue),
+                LanguageCount = g.Count(b => b.Language != null),
+            })
+            .SingleOrDefaultAsync(ct);
+
+        var longestBook = await GetLongestBookAsync(ct);
+
+        var totalPages = stats?.TotalPages ?? 0;
+        var booksWithPageCount = stats?.WithPageCount ?? 0;
+        var totalLanguages = stats?.LanguageCount ?? 0;
+        var avgPagesPerBook = booksWithPageCount > 0 ? (double)totalPages / booksWithPageCount : 0;
 
         return new LibraryStatistics(
             TotalBooks: totalBooks,
             TotalAuthors: totalAuthors,
             TotalPages: totalPages,
-            BooksWithPageCount: booksWithPageCount
+            TotalLanguages: totalLanguages,
+            BooksWithPageCount: booksWithPageCount,
+            AvgPagesPerBook: avgPagesPerBook,
+            LongestBook: longestBook
         );
     }
+
+    private async Task<Maybe<LongestBook>> GetLongestBookAsync(CancellationToken ct) =>
+        await OwnedBooks
+            .Where(b => b.PageCount != null)
+            .OrderByDescending(b => b.PageCount)
+            .Select(b => new LongestBook(
+                new BookReference
+                {
+                    Id = b.Id,
+                    Title = b.Title,
+                    Authors = b
+                        .Authors.OrderBy(ba => ba.Ordinal)
+                        .Select(ba => new BookAuthor
+                        {
+                            Id = ba.AuthorId,
+                            FirstName = ba.Author.FirstName,
+                            LastName = ba.Author.LastName,
+                        })
+                        .ToList(),
+                },
+                b.PageCount!.Value
+            ))
+            .FirstOrDefaultAsync(ct);
 }

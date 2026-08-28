@@ -7,6 +7,8 @@ public enum VitalityKind
     Deceased = 2,
 }
 
+public sealed record AuthorName(string? FirstName, string LastName);
+
 public sealed record AuthorListItem(
     Guid Id,
     string? FirstName,

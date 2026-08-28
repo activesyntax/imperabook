@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
 
@@ -28,10 +29,15 @@ public static class LibraryViews
 
     private static CardView[] BuildCards(LibraryStatistics stats)
     {
-        // A row with no language set is not a language. Counting nulls would
-        // report an unfilled field as a distinct value.
-        // var languageCount = stats.Languages.Count(l => l.Language is not null);
-        var languageCount = 3;
+        var languageCount = stats.TotalLanguages;
+        var (longestBookPageCount, longestBookDescription) = stats.LongestBook.Match(
+            l =>
+                (
+                    l.PageCount.ToString("N0"),
+                    $"{"page".Plural(l.PageCount)}, {l.Book.Title} by {l.Book.Authors.AsText()}"
+                ),
+            () => ("—", "unknown")
+        );
 
         return
         [
@@ -41,12 +47,12 @@ public static class LibraryViews
                 $"{"book".Plural(stats.TotalBooks)} in your library"
             ),
             new CardView("Pages", stats.TotalPages.ToString("N0"), PageCaption(stats)),
-            new CardView("Book length", "316", $"{"page".Plural(stats.TotalBooks)} per book"),
             new CardView(
-                "Longest book",
-                "1,248",
-                $"{"page".Plural(1248)}, War and Peace by Lev Tolstoy"
+                "Book length",
+                stats.AvgPagesPerBook.ToString("N0"),
+                $"{"page".Plural(stats.TotalBooks)} per book"
             ),
+            new CardView("Longest book", longestBookPageCount, longestBookDescription),
             new CardView(
                 "Authors",
                 stats.TotalAuthors.ToString("N0"),
@@ -60,9 +66,6 @@ public static class LibraryViews
         ];
     }
 
-    // The average is computed here, not in the read model: BooksWithPageCount is the
-    // raw denominator, and choosing what to divide by is a presentation decision
-    // (ADR 8 — read models carry raw data, composition lives in the Views layer).
     private static string PageCaption(LibraryStatistics stats) =>
         $"{"page".Plural(stats.TotalPages)} across your books";
     // stats.BooksWithPageCount > 0

@@ -24,9 +24,9 @@ public sealed class DashboardQueries(ImperaBookDbContext db, ICurrentUser user) 
             .Authors.AsNoTracking()
             .CountAsync(a => a.OwnerId == user.Id, ct);
 
-        // TODO: BookEntity carries no page count yet. Fixed placeholder — the only
-        // fabricated value in this class.
-        const int totalPages = 8450;
+        var totalPages = await OwnedBooks
+            .Where(b => b.PageCount.HasValue)
+            .SumAsync(b => b.PageCount ?? 0, ct);
 
         return new DashboardSummary(totalBooks, totalAuthors, totalPages);
     }
