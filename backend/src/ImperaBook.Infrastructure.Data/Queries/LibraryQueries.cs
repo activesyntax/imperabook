@@ -43,29 +43,18 @@ public sealed class LibraryQueries(ImperaBookDbContext db, ICurrentUser user) : 
             .Authors.AsNoTracking()
             .CountAsync(a => a.OwnerId == user.Id, ct);
 
-        var stats = await OwnedBooks
-            .GroupBy(_ => 1)
-            .Select(g => new
-            {
-                TotalPages = g.Sum(b => b.PageCount ?? 0),
-                WithPageCount = g.Count(b => b.PageCount.HasValue),
-                LanguageCount = g.Count(b => b.Language != null),
-            })
-            .SingleOrDefaultAsync(ct);
+        var totalPages = await OwnedBooks.SumAsync(b => b.PageCount ?? 0, ct);
+        var booksWithPages = await OwnedBooks.CountAsync(b => b.PageCount != null, ct);
+        var totalLanguages = await OwnedBooks.CountAsync(b => b.Language != null, ct);
+        var avgPagesPerBook = booksWithPages > 0 ? (double)totalPages / booksWithPages : 0;
 
         var longestBook = await GetLongestBookAsync(ct);
-
-        var totalPages = stats?.TotalPages ?? 0;
-        var booksWithPageCount = stats?.WithPageCount ?? 0;
-        var totalLanguages = stats?.LanguageCount ?? 0;
-        var avgPagesPerBook = booksWithPageCount > 0 ? (double)totalPages / booksWithPageCount : 0;
-
         return new LibraryStatistics(
             TotalBooks: totalBooks,
             TotalAuthors: totalAuthors,
             TotalPages: totalPages,
             TotalLanguages: totalLanguages,
-            BooksWithPageCount: booksWithPageCount,
+            BooksWithPageCount: booksWithPages,
             AvgPagesPerBook: avgPagesPerBook,
             LongestBook: longestBook
         );
