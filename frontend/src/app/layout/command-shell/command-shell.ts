@@ -17,8 +17,9 @@ import { CommandRegistry } from '@app/commands/command-registry';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { resultOfError } from '@app/commands/command-error';
 import { UiInput } from './ui-input';
-import * as Shell from './shell-model';
+import * as Shell from './shell';
 import * as ShellState from './shell-state';
+import * as Transition from './shell-transition';
 
 interface FieldAttrs {
   readonly type: 'text' | 'password';
@@ -55,15 +56,15 @@ export class CommandShell {
     },
   };
 
-  private readonly state = signal<ShellState.ShellState>(ShellState.browsing());
+  private readonly state = signal<Shell.State>(ShellState.browsing());
 
   protected readonly kind = computed(() => this.state().kind);
-  protected readonly text = computed(() => Shell.textOf(this.state()));
-  protected readonly query = computed(() => Shell.queryOf(this.text()));
+  protected readonly text = computed(() => Shell.text(this.state()));
+  protected readonly query = computed(() => Shell.query(this.text()));
 
-  protected readonly suggestions = computed(() => Shell.suggestionsOf(this.state(), this.deps));
-  protected readonly selectedIndex = computed(() => Shell.selectedIndexOf(this.state(), this.deps));
-  protected readonly activeCommand = computed(() => Shell.activeOf(this.state(), this.deps));
+  protected readonly suggestions = computed(() => Transition.suggestionsOf(this.state(), this.deps));
+  protected readonly selectedIndex = computed(() => Transition.selectedIndexOf(this.state(), this.deps));
+  protected readonly activeCommand = computed(() => Transition.activeOf(this.state(), this.deps));
 
   protected readonly parameter = computed(() => Shell.pendingParameter(this.state()));
   protected readonly progress = computed(() => Shell.progressOf(this.state()));
@@ -145,8 +146,8 @@ export class CommandShell {
   private send(input: UiInput): void {
 
     // console.log('STATE BEFORE:', this.state(), input);
-    this.apply(Shell.transition(this.state(), input, this.deps));
-    console.log('STATE AFTER:', this.state(), input);
+    this.apply(Transition.transition(this.state(), input, this.deps));
+    console.log('STATE: ', this.state(), input);
 
   }
 

@@ -25,14 +25,13 @@ export type Running = {
   readonly cmd: CommandSpec;
 };
 
-export type ShellState = Browsing | Collecting | Filling | Running;
 
 
-
-// HELPERS
-//
 export const browsing = (text = '', selected: Index = undefined): Browsing =>
   ({ kind: 'browsing', text, selected });
 
 export const running = (cmd: CommandSpec): Running =>
   ({ kind: 'running', cmd });
+
+
+
