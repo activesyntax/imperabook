@@ -54,11 +54,12 @@
             autocapitalize="off"
             spellcheck="false"
             aria-label="Command input"
+
+            (input)="onInput($event)"
             [value]="text()"
             [readOnly]="busy()"
             (keydown)="onKeydown($event)" />
 
-            <!-- (input)="onInput($event)" -->
         <button
           type="button"
           class="send"

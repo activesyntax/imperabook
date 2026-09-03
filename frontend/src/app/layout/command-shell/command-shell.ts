@@ -61,10 +61,11 @@ export class CommandShell {
   // };
   //
 
-  private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
   protected readonly kind = computed(() => 'KIND');
   protected readonly text = computed(() => "");
-  protected readonly query = computed(() => this.bar()?.nativeElement.value.trim() ?? '');
+
+
+  protected readonly query = signal('');
 
   protected readonly suggestions = computed(() => this.suggestionProvider.suggestionsFor(this.query()));
   protected readonly selectedIndex = computed(() => 0);
@@ -75,23 +76,10 @@ export class CommandShell {
 
   protected readonly busy = computed(() => false);
 
-
-  // protected readonly credentialMode = computed(() => Shell.credentialModeOf(this.state()));
-
   protected readonly commandField = COMMAND_FIELD;
 
-  // protected readonly credentialField = computed<FieldAttrs>(() => {
-  //   switch (this.parameter()?.credential) {
-  //     case 'password':
-  //       return { type: 'password', name: 'ib-credential-password', autocomplete: 'current-password' };
-  //     case 'username':
-  //       return { type: 'text', name: 'ib-credential-username', autocomplete: 'username' };
-  //     default:
-  //       return { type: 'text', name: 'ib-credential-field', autocomplete: 'off' };
-  //   }
-  // });
-  //
 
+  private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
   constructor() {
     effect(() => this.focus(this.bar()?.nativeElement));
 
@@ -102,11 +90,9 @@ export class CommandShell {
     });
   }
 
-  // ── DOM → UiInput ─────────────────────────────────────────────────────────
-
-  // protected onInput(event: Event): void {
-  //   this.send({ kind: 'text', value: (event.target as HTMLInputElement).value });
-  // }
+  protected onInput(event: Event): void {
+    this.query.set((event.target as HTMLInputElement).value);
+  }
 
   protected onKeydown(event: KeyboardEvent): void {
 
