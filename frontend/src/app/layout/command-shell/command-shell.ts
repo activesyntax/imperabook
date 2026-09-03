@@ -15,11 +15,12 @@ import { CommandRunner } from '@app/commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
 import { CommandRegistry } from '@app/commands/command-registry';
 import { WorkspaceStore } from '@app/state/workspace-store';
-import { resultOfError } from '@app/commands/command-error';
-import { UiInput } from './ui-input';
-import * as Shell from './shell';
-import * as ShellState from './shell-state';
-import * as Transition from './shell-transition';
+// import { resultOfError } from '@app/commands/command-error';
+// import * as Shell from './shell';
+// import * as ShellState from './shell-state';
+// import * as Transition from './shell-transition';
+// import { ShellStateMachine } from './shell-state-machine';
+import { SuggestionProvider } from './suggestion-provider';
 
 interface FieldAttrs {
   readonly type: 'text' | 'password';
@@ -44,63 +45,52 @@ export class CommandShell {
   private readonly registry = inject(CommandRegistry);
   private readonly runner = inject(CommandRunner);
   private readonly store = inject(WorkspaceStore);
+  // private readonly shell = inject(ShellStateMachine);
+  private readonly suggestionProvider = inject(SuggestionProvider);
 
-  private readonly deps: Shell.ShellDeps = {
-    suggestionsFor: (query) => this.commands.suggestionsFor(query, undefined),
 
-    forcedCommand: () => {
-      if (this.registry.authenticated()) return undefined;
+  // private readonly deps: Shell.ShellDeps = {
+  //   suggestionsFor: (query) => this.commands.suggestionsFor(query, undefined),
+  //
+  //   forcedCommand: () => {
+  //     if (this.registry.authenticated()) return undefined;
+  //
+  //     const available = this.registry.commands();
+  //     return available.length === 1 ? available[0] : undefined;
+  //   },
+  // };
+  //
 
-      const available = this.registry.commands();
-      return available.length === 1 ? available[0] : undefined;
-    },
-  };
+  private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
+  protected readonly kind = computed(() => 'KIND');
+  protected readonly text = computed(() => "");
+  protected readonly query = computed(() => this.bar()?.nativeElement.value.trim() ?? '');
 
-  private readonly state = signal<Shell.State>(ShellState.browsing());
+  protected readonly suggestions = computed(() => this.suggestionProvider.suggestionsFor(this.query()));
+  protected readonly selectedIndex = computed(() => 0);
 
-  protected readonly kind = computed(() => this.state().kind);
-  protected readonly text = computed(() => Shell.text(this.state()));
-  protected readonly query = computed(() => Shell.query(this.text()));
+  // protected readonly suggestions = computed(() => Transition.suggestionsOf(this.shell.state(), this.deps));
+  // protected readonly selectedIndex = computed(() => Transition.selectedIndexOf(this.shell.state(), this.deps));
+  // protected readonly activeCommand = computed(() => Transition.activeOf(this.shell.state(), this.deps));
 
-  protected readonly suggestions = computed(() => Transition.suggestionsOf(this.state(), this.deps));
-  protected readonly selectedIndex = computed(() => Transition.selectedIndexOf(this.state(), this.deps));
-  protected readonly activeCommand = computed(() => Transition.activeOf(this.state(), this.deps));
+  protected readonly busy = computed(() => false);
 
-  protected readonly parameter = computed(() => Shell.pendingParameter(this.state()));
-  protected readonly progress = computed(() => Shell.progressOf(this.state()));
-  protected readonly blocked = computed(() => Shell.blockedOf(this.state()));
-  protected readonly busy = computed(() => this.state().kind === 'running');
 
-  protected readonly hint = computed(() => {
-    const param = this.parameter();
-    return param === undefined ? undefined : (param.hint ?? param.prompt);
-  });
-
-  protected readonly placeholder = computed(() => {
-    const param = this.parameter();
-    if (param !== undefined) {
-      return param.example === undefined ? '' : `e.g. ${param.example}`;
-    }
-
-    return this.kind() === 'browsing' ? 'type a command or search your library' : '';
-  });
-
-  protected readonly credentialMode = computed(() => Shell.credentialModeOf(this.state()));
+  // protected readonly credentialMode = computed(() => Shell.credentialModeOf(this.state()));
 
   protected readonly commandField = COMMAND_FIELD;
 
-  protected readonly credentialField = computed<FieldAttrs>(() => {
-    switch (this.parameter()?.credential) {
-      case 'password':
-        return { type: 'password', name: 'ib-credential-password', autocomplete: 'current-password' };
-      case 'username':
-        return { type: 'text', name: 'ib-credential-username', autocomplete: 'username' };
-      default:
-        return { type: 'text', name: 'ib-credential-field', autocomplete: 'off' };
-    }
-  });
-
-  private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
+  // protected readonly credentialField = computed<FieldAttrs>(() => {
+  //   switch (this.parameter()?.credential) {
+  //     case 'password':
+  //       return { type: 'password', name: 'ib-credential-password', autocomplete: 'current-password' };
+  //     case 'username':
+  //       return { type: 'text', name: 'ib-credential-username', autocomplete: 'username' };
+  //     default:
+  //       return { type: 'text', name: 'ib-credential-field', autocomplete: 'off' };
+  //   }
+  // });
+  //
 
   constructor() {
     effect(() => this.focus(this.bar()?.nativeElement));
@@ -108,79 +98,26 @@ export class CommandShell {
     effect(() => {
       if (!this.registry.loaded()) return;
 
-      untracked(() => this.apply(Shell.initial(this.deps)));
+      // untracked(() => this.apply(Shell.initial(this.deps)));
     });
   }
 
   // ── DOM → UiInput ─────────────────────────────────────────────────────────
 
-  protected onInput(event: Event): void {
-    this.send({ kind: 'text', value: (event.target as HTMLInputElement).value });
-  }
+  // protected onInput(event: Event): void {
+  //   this.send({ kind: 'text', value: (event.target as HTMLInputElement).value });
+  // }
 
   protected onKeydown(event: KeyboardEvent): void {
-    switch (event.key) {
-      case 'Enter':
-        event.preventDefault();
-        return this.send({ kind: 'commit' });
 
-      case 'Escape':
-        event.preventDefault();
-        return this.send({ kind: 'cancel' });
 
-      case 'Tab':
-        event.preventDefault();
-        return this.send({ kind: 'move', dir: event.shiftKey ? 'prev' : 'next' });
-
-      default:
-        return;
-    }
+    // return this.shell.send(event);
   }
 
   protected submit(): void {
-    this.send({ kind: 'submit' });
+    // this.send({ kind: 'submit' });
   }
 
-  // ── STATE MACHINE  ────────────────────────────────────────────────────────────
-
-  private send(input: UiInput): void {
-
-    // console.log('STATE BEFORE:', this.state(), input);
-    this.apply(Transition.transition(this.state(), input, this.deps));
-    console.log('STATE: ', this.state(), input);
-
-  }
-
-  private apply({ state, effects }: Shell.Step): void {
-    this.state.set(state);
-
-    for (const effect of effects) void this.perform(effect);
-  }
-
-  private async perform(effect: Shell.Effect): Promise<void> {
-    if (effect.kind === 'open') {
-      try {
-        const view = await this.runner.open(effect.cmd);
-
-        if (view !== null) {
-          this.store.setResult(view);
-        }
-      } catch (error) {
-        this.store.setResult(resultOfError(error));
-      }
-      return;
-    }
-
-    try {
-      this.store.setResult(await this.runner.run(effect.cmd, effect.answers));
-    } catch (error) {
-      this.store.setResult(resultOfError(error));
-    } finally {
-      this.send({ kind: 'completed' });
-    }
-  }
-
-  // ── fókusz ────────────────────────────────────────────────────────────────
 
   @HostListener('document:keydown', ['$event'])
   protected onGlobalKeydown(event: KeyboardEvent): void {

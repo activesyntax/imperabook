@@ -1,8 +1,7 @@
 <section class="shell" role="region" aria-label="Command shell">
   <div class="main">
     <div class="suggestions" role="listbox" aria-label="Suggestions">
-      @if (kind() === 'browsing') {
-        @for (cmd of suggestions(); track cmd.command; let i = $index) {
+        @for (cmd of suggestions(); track cmd; let i = $index) {
           <button
             type="button"
             class="chip"
@@ -10,82 +9,42 @@
             [class.active]="i === selectedIndex()"
             [attr.aria-selected]="i === selectedIndex()"
             (mousedown)="$event.preventDefault()">
-            {{ cmd.command }}
+            {{ cmd }}
           </button>
         } @empty {
           <span class="fall">no commands</span>
         }
-      }
     </div>
 
-    <p class="desc">
-      @switch (kind()) {
-        @case ('collecting') {
-          <span class="say">
-            {{ hint() }}
-            @if (blocked()) {
-              <span class="blocked">(required — enter a value)</span>
-            } @else if (parameter()?.required) {
-              <span class="fall">(required)</span>
-            }
-          </span>
-
-          <span class="status">
-            <span class="cmd">{{ activeCommand()?.command }}</span>
-            @if (progress(); as p) {
-              · <span class="key">{{ p.index }}/{{ p.total }}</span>
-            }
-          </span>
-        }
-
-        @case ('running') {
-          <span class="say fall">running…</span>
-          <span class="status">
-            <span class="cmd">{{ activeCommand()?.command }}</span>
-          </span>
-        }
-
-        @default {
-          @if (activeCommand(); as sel) {
-            <span class="say">{{ sel.description }}</span>
-            <span class="status"><span class="cmd">{{ sel.command }}</span></span>
-          } @else if (query().length > 0) {
-            <span class="say">"{{ query() }}"</span>
-            <span class="status"><span class="cmd">search</span></span>
-          } @else {
-            <span class="say">Welcome to ImperaBook!</span>
-            <span class="status"></span>
-          }
-        }
-      }
-    </p>
-
+    <!-- <p class="desc"> -->
+    <!--   @switch (kind()) { -->
+    <!---->
+    <!--     @case ('running') { -->
+    <!--       <span class="say fall">running…</span> -->
+    <!--       <span class="status"> -->
+    <!--         <span class="cmd">{{ activeCommand()?.command }}</span> -->
+    <!--       </span> -->
+    <!--     } -->
+    <!---->
+    <!--     @default { -->
+    <!--       @if (activeCommand(); as sel) { -->
+    <!--         <span class="say">{{ sel.description }}</span> -->
+    <!--         <span class="status"><span class="cmd">{{ sel.command }}</span></span> -->
+    <!--       } @else if (query().length > 0) { -->
+    <!--         <span class="say">"{{ query() }}"</span> -->
+    <!--         <span class="status"><span class="cmd">search</span></span> -->
+    <!--       } @else { -->
+    <!--         <span class="say">Welcome to ImperaBook!</span> -->
+    <!--         <span class="status"></span> -->
+    <!--       } -->
+    <!--     } -->
+    <!--   } -->
+    <!-- </p> -->
+    <!---->
     <div class="entry">
       <div class="prompt">
         <img class="avatar" src="/static/imperabook-icon.svg" alt="" aria-hidden="true" />
 
-        @if (parameter(); as param) {
-          <span class="inputfield">{{ param.prompt }}:</span>
-        }
-
-        @if (credentialMode()) {
-          <input
-            #bar
-            class="bar"
-            [type]="credentialField().type"
-            [attr.name]="credentialField().name"
-            [attr.autocomplete]="credentialField().autocomplete"
-            autocapitalize="off"
-            spellcheck="false"
-            [placeholder]="placeholder()"
-            [attr.aria-label]="parameter()?.prompt"
-            [class.blocked]="blocked()"
-            [attr.aria-invalid]="blocked() ? 'true' : null"
-            [value]="text()"
-            [readOnly]="busy()"
-            (input)="onInput($event)"
-            (keydown)="onKeydown($event)" />
-        } @else {
           <input
             #bar
             class="bar"
@@ -94,16 +53,12 @@
             [attr.autocomplete]="commandField.autocomplete"
             autocapitalize="off"
             spellcheck="false"
-            [placeholder]="placeholder()"
             aria-label="Command input"
-            [class.blocked]="blocked()"
-            [attr.aria-invalid]="blocked() ? 'true' : null"
             [value]="text()"
             [readOnly]="busy()"
-            (input)="onInput($event)"
             (keydown)="onKeydown($event)" />
-        }
 
+            <!-- (input)="onInput($event)" -->
         <button
           type="button"
           class="send"
