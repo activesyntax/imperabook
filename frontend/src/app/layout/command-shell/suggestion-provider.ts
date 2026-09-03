@@ -8,20 +8,16 @@ export class SuggestionProvider {
   private readonly registry = inject(CommandRegistry);
 
   public suggestionsFor(query: string): readonly string[] {
-    console.log('suggestionsFor', query);
-
     if (query.length === 0) {
       return this.registry.commands()
         .filter(c => c.group === 'dynamic')
         .map((c) => c.command);
     }
 
-
     return this.registry.commands()
       .filter((c) => this.isRelatedCommand(query, c))
       .map((c) => c.command);
   }
-
 
   private isRelatedCommand(query: string, command: CommandSpec): boolean {
 
@@ -31,12 +27,10 @@ export class SuggestionProvider {
     return queryParts.every(q => commandParts.some(c => c.startsWith(q)));
   }
 
-
   private tokens(text: string): readonly string[] {
 
-    return text.split(' ')
+    return text.split(/\s+/)
       .map(p => p.trim().toLowerCase())
       .filter(p => p.length > 0);
-
   }
 }

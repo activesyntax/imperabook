@@ -1,7 +1,7 @@
 <section class="shell" role="region" aria-label="Command shell">
   <div class="main">
     <div class="suggestions" role="listbox" aria-label="Suggestions">
-        @for (cmd of suggestions(); track cmd; let i = $index) {
+        @for (cmd of suggestions().all; track cmd; let i = $index) {
           <button
             type="button"
             class="chip"

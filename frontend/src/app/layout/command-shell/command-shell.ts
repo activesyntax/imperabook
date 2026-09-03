@@ -6,9 +6,11 @@ import {
   ElementRef,
   HostListener,
   inject,
+  linkedSignal,
   signal,
   untracked,
   viewChild,
+  WritableSignal,
 } from '@angular/core';
 
 import { CommandRunner } from '@app/commands/command-runner';
@@ -21,6 +23,7 @@ import { WorkspaceStore } from '@app/state/workspace-store';
 // import * as Transition from './shell-transition';
 // import { ShellStateMachine } from './shell-state-machine';
 import { SuggestionProvider } from './suggestion-provider';
+import { Index, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 
 interface FieldAttrs {
   readonly type: 'text' | 'password';
@@ -33,6 +36,16 @@ const COMMAND_FIELD: FieldAttrs = {
   name: 'ib-command',
   autocomplete: 'off',
 };
+
+type SuggestionList = {
+
+  readonly all: readonly string[];
+  readonly range: IndexRange;
+}
+
+function suggestionList(suggestions: readonly string[]): SuggestionList {
+  return { all: suggestions, range: indexRange(suggestions.length) };
+}
 
 @Component({
   selector: 'app-command-shell',
@@ -67,8 +80,15 @@ export class CommandShell {
 
   protected readonly query = signal('');
 
-  protected readonly suggestions = computed(() => this.suggestionProvider.suggestionsFor(this.query()));
-  protected readonly selectedIndex = computed(() => 0);
+  protected readonly suggestions = computed<SuggestionList>(() => suggestionList(this.suggestionProvider.suggestionsFor(this.query())));
+  protected readonly selectedIndex = linkedSignal<SuggestionList, Index>({
+    source: this.suggestions,
+    computation: (newSuggestions) => {
+      return newSuggestions.all.length > 0 ? 0 : undefined;
+    }
+  });
+
+  // protected readonly activeSuggestion = computed(() => this.suggestions().all[1]);
 
   // protected readonly suggestions = computed(() => Transition.suggestionsOf(this.shell.state(), this.deps));
   // protected readonly selectedIndex = computed(() => Transition.selectedIndexOf(this.shell.state(), this.deps));
@@ -96,14 +116,18 @@ export class CommandShell {
 
   protected onKeydown(event: KeyboardEvent): void {
 
-
-    // return this.shell.send(event);
+    switch (event.key) {
+      case 'Tab':
+        event.preventDefault();
+        const index = event.shiftKey
+          ? prevCyclicIndex(this.suggestions().range, this.selectedIndex())
+          : nextCyclicIndex(this.suggestions().range, this.selectedIndex());
+        this.selectedIndex.set(index);
+    }
   }
 
   protected submit(): void {
-    // this.send({ kind: 'submit' });
   }
-
 
   @HostListener('document:keydown', ['$event'])
   protected onGlobalKeydown(event: KeyboardEvent): void {
