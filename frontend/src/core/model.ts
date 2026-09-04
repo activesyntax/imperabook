@@ -11,7 +11,7 @@ export interface CommandParameter {
   readonly hint?: string;
   readonly example?: string;
   readonly credential?: CredentialRole;
-  readonly connective?: string;
+  readonly connective: string;
 }
 
 export interface CommandSpec {

@@ -24,6 +24,7 @@ import { WorkspaceStore } from '@app/state/workspace-store';
 // import { ShellStateMachine } from './shell-state-machine';
 import { SuggestionProvider } from './suggestion-provider';
 import { Index, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
+import { NewLineKind } from 'typescript';
 
 interface FieldAttrs {
   readonly type: 'text' | 'password';
@@ -74,13 +75,11 @@ export class CommandShell {
   // };
   //
 
-  protected readonly kind = computed(() => 'KIND');
-  protected readonly text = computed(() => "");
+  protected readonly externalQueryInput = signal('');
+  protected readonly query = linkedSignal(() => this.externalQueryInput());
 
+  protected readonly suggestions = computed<SuggestionList>(() => suggestionList(this.suggestionProvider.suggestionsFor(this.query().trim())));
 
-  protected readonly query = signal('');
-
-  protected readonly suggestions = computed<SuggestionList>(() => suggestionList(this.suggestionProvider.suggestionsFor(this.query())));
   protected readonly selectedIndex = linkedSignal<SuggestionList, Index>({
     source: this.suggestions,
     computation: (newSuggestions) => {
@@ -105,8 +104,6 @@ export class CommandShell {
 
     effect(() => {
       if (!this.registry.loaded()) return;
-
-      // untracked(() => this.apply(Shell.initial(this.deps)));
     });
   }
 
@@ -123,7 +120,18 @@ export class CommandShell {
           ? prevCyclicIndex(this.suggestions().range, this.selectedIndex())
           : nextCyclicIndex(this.suggestions().range, this.selectedIndex());
         this.selectedIndex.set(index);
+
+        break;
+      case 'Enter':
+        event.preventDefault();
+        if (this.suggestions().all.length > 0 && this.selectedIndex() !== undefined) {
+          const command = this.suggestions().all[this.selectedIndex()!];
+          this.query.set(command);
+        }
+        break;
+
     }
+
   }
 
   protected submit(): void {

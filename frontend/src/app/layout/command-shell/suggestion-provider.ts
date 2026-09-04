@@ -14,10 +14,26 @@ export class SuggestionProvider {
         .map((c) => c.command);
     }
 
-    return this.registry.commands()
-      .filter((c) => this.isRelatedCommand(query, c))
-      .map((c) => c.command);
+    const exactCommand = this.exactCommand(query, this.registry.commands());
+    if (exactCommand !== undefined) {
+      console.log(`Exact command match found for query "${query}": ${exactCommand.parameters.map((p) => p.connective).join(', ')}`);
+      return exactCommand.parameters.map((p) => p.connective);
+    }
+    else {
+
+      console.log(`No exact command match found for query "${query}". Searching for related commands...`);
+      const suggestedCommands = this.registry.commands()
+        .filter((c) => this.isRelatedCommand(query, c))
+
+      return suggestedCommands.map((c) => c.command);
+    }
+
   }
+
+  private exactCommand(query: string, commands: readonly CommandSpec[]): CommandSpec | undefined {
+    return commands.find((c) => query.startsWith(c.command));
+  }
+
 
   private isRelatedCommand(query: string, command: CommandSpec): boolean {
 

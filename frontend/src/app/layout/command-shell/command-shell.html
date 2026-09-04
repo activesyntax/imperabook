@@ -56,7 +56,7 @@
             aria-label="Command input"
 
             (input)="onInput($event)"
-            [value]="text()"
+            [value]="query()"
             [readOnly]="busy()"
             (keydown)="onKeydown($event)" />
 
