@@ -18,9 +18,14 @@ export class SuggestionProvider {
     const queryTokens = Tokenizer.tokens(query);
     console.log('Query tokens:', queryTokens);
 
-    const registryTokens = this.registry.commands().map((c) => Tokenizer.commandTokens(c));
+    const firstCommand = this.registry.commands()[0];
 
-    console.log('Registry tokens:', registryTokens);
+    console.log('REGISTRY COMMANDS:', this.registry.commands());
+
+    for (const command of this.registry.commands()) {
+      const commandTokens = Tokenizer.commandTokens(command);
+      console.log('Command tokens:', commandTokens);
+    }
 
 
     return [];

@@ -43,7 +43,12 @@ public sealed record CommandDescriptor(
     public bool RefreshesSession { get; init; }
 }
 
-public sealed record CommandParameter(string Name, string Prompt, bool Required)
+public sealed record CommandParameter(
+    string Name,
+    string DisplayName,
+    string Connective,
+    bool Required
+)
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Hint { get; init; }
@@ -53,9 +58,6 @@ public sealed record CommandParameter(string Name, string Prompt, bool Required)
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public CredentialRole? Credential { get; init; }
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Connective { get; init; }
 }
 
 public static class CommandCatalog
@@ -78,17 +80,17 @@ public static class CommandCatalog
         "login",
         "Enter into your library",
         [
-            new("username", "Username", true)
-            {
-                Hint = "Please provide your username",
-                Example = "johndoe",
-                Credential = CredentialRole.Username,
-            },
-            new("password", "Password", true)
-            {
-                Hint = "Please provide your password",
-                Credential = CredentialRole.Password,
-            },
+            // new("username", "Username", true)
+            // {
+            //     Hint = "Please provide your username",
+            //     Example = "johndoe",
+            //     Credential = CredentialRole.Username,
+            // },
+            // new("password", "Password", true)
+            // {
+            //     Hint = "Please provide your password",
+            //     Credential = CredentialRole.Password,
+            // },
         ]
     )
     {
@@ -105,13 +107,13 @@ public static class CommandCatalog
             "add book",
             "Catalog a new book",
             [
-                new("title", "Title", true) { Connective = "with title" },
-                new("author", "Author", true) { Connective = "by author" },
-                new("subtitle", "Subtitle", false) { Connective = "subtitled" },
-                new("language", "Language", false) { Connective = "in language" },
-                new("publicationYear", "Publication year", false) { Connective = "published in" },
-                new("isbn", "ISBN", false) { Connective = "with isbn" },
-                new("summary", "Summary", false) { Connective = "with summary" },
+                new("title", "Title", "with title", true),
+                new("author", "Author", "by author", true),
+                new("subtitle", "Subtitle", "subtitled", false),
+                new("language", "Language", "in language", false),
+                new("publicationYear", "Publication year", "published in", false),
+                new("isbn", "ISBN", "with isbn", false),
+                new("summary", "Summary", "with summary", false),
             ]
         )
         {
@@ -121,7 +123,7 @@ public static class CommandCatalog
         new("remove book", "Delete a book", []) { Group = CommandGroup.Dynamic },
         new("show book", "Show full detail for one book", []),
         new("list books", "List all books", []),
-        new("add author", "Create an author record", [new("name", "Name", true)]),
+        new("add author", "Create an author record", []),
         new("update author", "Rename an author", []),
         new("remove author", "Delete an author", []),
         new("list authors", "List all authors", []),

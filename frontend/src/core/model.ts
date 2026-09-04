@@ -6,7 +6,7 @@ export type CredentialRole = 'username' | 'password';
 
 export interface CommandParameter {
   readonly name: string;
-  readonly prompt: string;
+  readonly displayName: string;
   readonly required: boolean;
   readonly hint?: string;
   readonly example?: string;
