@@ -1,6 +1,7 @@
 import { inject, Service } from "@angular/core";
 import { CommandRegistry } from "@app/commands/command-registry";
 import { CommandSpec } from "@core/model";
+import * as Tokenizer from "./tokenizer";
 
 @Service()
 export class SuggestionProvider {
@@ -14,19 +15,15 @@ export class SuggestionProvider {
         .map((c) => c.command);
     }
 
-    const exactCommand = this.exactCommand(query, this.registry.commands());
-    if (exactCommand !== undefined) {
-      console.log(`Exact command match found for query "${query}": ${exactCommand.parameters.map((p) => p.connective).join(', ')}`);
-      return exactCommand.parameters.map((p) => p.connective);
-    }
-    else {
+    const queryTokens = Tokenizer.tokens(query);
+    console.log('Query tokens:', queryTokens);
 
-      console.log(`No exact command match found for query "${query}". Searching for related commands...`);
-      const suggestedCommands = this.registry.commands()
-        .filter((c) => this.isRelatedCommand(query, c))
+    const registryTokens = this.registry.commands().map((c) => Tokenizer.commandTokens(c));
 
-      return suggestedCommands.map((c) => c.command);
-    }
+    console.log('Registry tokens:', registryTokens);
+
+
+    return [];
 
   }
 
@@ -37,16 +34,10 @@ export class SuggestionProvider {
 
   private isRelatedCommand(query: string, command: CommandSpec): boolean {
 
-    const queryParts = this.tokens(query);
-    const commandParts = this.tokens(command.command);
+    const queryParts = Tokenizer.tokens(query);
+    const commandParts = Tokenizer.tokens(command.command);
 
     return queryParts.every(q => commandParts.some(c => c.startsWith(q)));
   }
 
-  private tokens(text: string): readonly string[] {
-
-    return text.split(/\s+/)
-      .map(p => p.trim().toLowerCase())
-      .filter(p => p.length > 0);
-  }
 }
