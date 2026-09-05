@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using CSharpFunctionalExtensions;
+using ImperaBook.API.Data;
 using ImperaBook.API.Views;
 using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
@@ -13,10 +13,6 @@ public static class CommandEndpoints
 {
     public static IEndpointRouteBuilder MapCommandEndpoints(this IEndpointRouteBuilder app)
     {
-        // Behind the fallback policy. The catalog names every command a session may run,
-        // and a client with no session gets the one it may run from /api/auth/bootstrap
-        // instead. Filtering this list by principal is the move to make if a second
-        // anonymous command ever exists; today there is nothing to filter.
         app.MapGet("/api/commands", GetCommands)
             .WithName("GetCommands")
             .Produces<CommandCatalogResponse>(StatusCodes.Status200OK);
@@ -115,8 +111,6 @@ public static class CommandEndpoints
             extensions: new Dictionary<string, object?> { ["code"] = "command_not_implemented" }
         );
 
-    // ADR 26: the error shape carries a view too. Same producer as the bootstrap route and
-    // the rejection path, so the three cannot drift apart.
     private static Results<Ok<CommandResult>, ProblemHttpResult> NotAuthenticated(string command) =>
         TypedResults.Problem(
             statusCode: StatusCodes.Status401Unauthorized,

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ImperaBook.API.Endpoints;
+namespace ImperaBook.API.Data;
 
 public enum CommandGroup
 {

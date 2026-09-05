@@ -18,18 +18,23 @@ export class SuggestionProvider {
     const queryTokens = Tokenizer.tokens(query);
     console.log('Query tokens:', queryTokens);
 
-    const firstCommand = this.registry.commands()[0];
-
-    console.log('REGISTRY COMMANDS:', this.registry.commands());
-
     for (const command of this.registry.commands()) {
       const commandTokens = Tokenizer.commandTokens(command);
       console.log('Command tokens:', commandTokens);
     }
 
 
-    return [];
+    return this.registry.commands()
+      .map(c => Tokenizer.commandTokens(c))
+      // .filter(commandTokens => this.commandMatch(queryTokens, commandTokens[0]))
+      .map(commandTokens => commandTokens.join(' '));
 
+  }
+
+
+  private commandMatch(queryTokens: Tokenizer.TokenList, commandTokens: Tokenizer.TokenList): boolean {
+
+    return true;
   }
 
   private exactCommand(query: string, commands: readonly CommandSpec[]): CommandSpec | undefined {
