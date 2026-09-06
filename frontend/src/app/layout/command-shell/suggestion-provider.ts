@@ -1,13 +1,12 @@
 import { inject, Service } from "@angular/core";
 import { CommandRegistry } from "@app/commands/command-registry";
 import { TokenList, tokenListMatch, tokens } from "./tokenizer";
+import { CommandSpec } from "@core/model";
 
 export type SuggestionNode = {
   tokens: TokenList;
   children: SuggestionNode[];
 }
-
-export type SuggestionTree = Omit<SuggestionNode, 'tokens'>
 
 export function suggestionNode(tokens: TokenList, children: SuggestionNode[]): SuggestionNode {
   return { tokens, children };
@@ -30,12 +29,11 @@ export class SuggestionProvider {
     const queryTokens = tokens(query);
     console.log('Query tokens:', queryTokens);
 
-    const commandSuggestions: SuggestionNode[] = this.registry.commands().map(c => (
-      suggestionNode(tokens(c.command), [])));
+    const suggestionRootNode = createSuggestionTree(this.registry.commands());
 
-    const suggestionTree: SuggestionTree = { children: commandSuggestions };
+    console.log('Suggestion root node:', suggestionRootNode);
 
-    let matches = suggestionTree.children
+    let matches = suggestionRootNode.children
       .filter(c => tokenListMatch(queryTokens, c.tokens) !== 'none')
       .map(s => s.tokens.join(' '));
 
@@ -43,4 +41,17 @@ export class SuggestionProvider {
 
     return matches;
   }
+}
+
+function createSuggestionTree(commands: readonly CommandSpec[]) {
+
+  const commandSuggestions: SuggestionNode[] = commands
+    .map(c => {
+      const commandTokens = tokens(c.command);
+      const parameterNodes = c.parameters.map(p => suggestionNode(tokens(p.connective), []));
+      return suggestionNode(commandTokens, parameterNodes);
+    });
+
+  const suggestionRootNode = { tokens: [], children: commandSuggestions };
+  return suggestionRootNode;
 }
