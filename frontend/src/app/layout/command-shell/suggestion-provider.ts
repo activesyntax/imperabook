@@ -2,6 +2,7 @@ import { inject, Service } from "@angular/core";
 import { CommandRegistry } from "@app/commands/command-registry";
 import { TokenList, tokenListMatch, tokens } from "./tokenizer";
 import { CommandSpec } from "@core/model";
+import Queue from 'yocto-queue';
 
 export type SuggestionNode = {
   tokens: TokenList;
@@ -33,14 +34,21 @@ export class SuggestionProvider {
 
     console.log('Suggestion root node:', suggestionRootNode);
 
-    let matches = suggestionRootNode.children
+    let commandMatches = suggestionRootNode.children
       .filter(c => tokenListMatch(queryTokens, c.tokens) !== 'none')
-      .map(s => s.tokens.join(' '));
+
+    console.log('COMMAND MATCHES: ', commandMatches);
+
+    const matches = isParameterizedFullCommandMatch(queryTokens, commandMatches) ? commandMatches[0].children : commandMatches;
 
     console.log('MATCHES: ', matches);
 
-    return matches;
+    return matches.map(s => s.tokens.join(' '));
   }
+}
+
+function isParameterizedFullCommandMatch(queryTokens: TokenList, commandMatches: SuggestionNode[]): boolean {
+  return commandMatches.length == 1 && commandMatches[0].children.length > 0 && tokenListMatch(queryTokens, commandMatches[0].tokens) === 'exact';
 }
 
 function createSuggestionTree(commands: readonly CommandSpec[]) {
