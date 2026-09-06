@@ -7,15 +7,16 @@ export function tokens(text: string): TokenList {
     .filter(p => p.length > 0);
 }
 
-export type TokenMatch = 'exact' | 'prefix' | 'partial' | 'none';
+export type TokenMatch = 'equals' | 'exact' | 'prefix' | 'partial' | 'none';
 
 export function tokenListMatch(queryTokens: TokenList, commandTokens: TokenList): TokenMatch {
 
   const exactMatch = commandTokens.every((token: string, i) => token === queryTokens[i]);
 
   if (exactMatch) {
-    return 'exact';
+    return queryTokens.length === commandTokens.length ? 'equals' : 'exact';
   }
+
 
   const prefixMatch = commandTokens.join(' ').startsWith(queryTokens.join(' '));
 

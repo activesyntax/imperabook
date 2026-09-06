@@ -39,17 +39,46 @@ export class SuggestionProvider {
 
     console.log('COMMAND MATCHES: ', commandMatches);
 
-    const matches = isParameterizedFullCommandMatch(queryTokens, commandMatches) ? commandMatches[0].children : commandMatches;
+    if (!oneMatch(commandMatches)) {
+      return toString(commandMatches);
+    }
 
-    console.log('MATCHES: ', matches);
+    const commandMatch = commandMatches[0];
+    console.log('COMMAND MATCH: ', commandMatch);
+    console.log('TOKEN LIST MATCH: ', tokenListMatch(queryTokens, commandMatch.tokens));
 
-    return matches.map(s => s.tokens.join(' '));
+    switch (tokenListMatch(queryTokens, commandMatch.tokens)) {
+      case 'equals':
+        return toString(commandMatches[0].children);
+
+      case 'prefix':
+      case 'partial':
+        return toString(commandMatches);
+    };
+
+    return [];
   }
 }
 
-function isParameterizedFullCommandMatch(queryTokens: TokenList, commandMatches: SuggestionNode[]): boolean {
-  return commandMatches.length == 1 && commandMatches[0].children.length > 0 && tokenListMatch(queryTokens, commandMatches[0].tokens) === 'exact';
+function toString(suggestionNodes: SuggestionNode[]): string[] {
+  return suggestionNodes.map(s => s.tokens.join(' '));
 }
+
+function oneMatch(commandMatches: SuggestionNode[]) {
+  return commandMatches.length == 1;
+}
+
+function equalsCommandMatch(queryTokens: TokenList, commandMatch: SuggestionNode): boolean {
+  return tokenListMatch(queryTokens, commandMatch.tokens) === 'equals';
+}
+
+function hasParameters(commandMatches: SuggestionNode[]) {
+
+  return commandMatches[0].children.length > 0
+}
+
+
+
 
 function createSuggestionTree(commands: readonly CommandSpec[]) {
 
