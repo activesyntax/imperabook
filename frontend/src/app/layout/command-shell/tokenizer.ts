@@ -1,8 +1,4 @@
-import { CommandSpec } from "@core/model";
-
 export type TokenList = readonly string[];
-export type TokenGroup = readonly TokenList[];
-export type TokenGroups = readonly TokenGroup[];
 
 export function tokens(text: string): TokenList {
 
@@ -11,19 +7,26 @@ export function tokens(text: string): TokenList {
     .filter(p => p.length > 0);
 }
 
-export function tokenGroup(tokenList: TokenList): TokenGroup {
-  return [tokenList];
-}
+export type TokenMatch = 'exact' | 'prefix' | 'partial' | 'none';
 
-export function tokenGroups(tokenLists: TokenList[]): TokenGroups {
-  return tokenLists.map(tokenGroup);
-}
+export function tokenListMatch(queryTokens: TokenList, commandTokens: TokenList): TokenMatch {
 
-export function commandTokens(command: CommandSpec): TokenGroups {
+  const exactMatch = commandTokens.every((token: string, i) => token === queryTokens[i]);
 
-  const commandParts = tokens(command.command);
-  const parameterParts = command.parameters.map((p) => tokens(p.connective));
+  if (exactMatch) {
+    return 'exact';
+  }
 
-  return tokenGroups([commandParts, ...parameterParts]);
+  const prefixMatch = commandTokens.join(' ').startsWith(queryTokens.join(' '));
 
+  if (prefixMatch) {
+    return 'prefix';
+  }
+
+  const partialMatch = queryTokens.every(q => commandTokens.some(c => c.startsWith(q)));
+  if (partialMatch) {
+    return 'partial';
+  }
+
+  return 'none';
 }
