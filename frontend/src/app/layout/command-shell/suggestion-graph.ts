@@ -15,6 +15,7 @@ export function suggestionTokenNode(token: string, parent: SuggestionTokenNode |
   return { token, children: [], parent, type };
 }
 
+// TODO: logic is idetentical, refactor needed
 export function createSuggestionTokenTree(commands: readonly CommandSpec[]): SuggestionTokenNode {
   const rootNode = suggestionTokenNode('', undefined, 'root');
 
