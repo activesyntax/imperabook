@@ -45,7 +45,8 @@ export class SuggestionProvider {
 }
 
 type NodeSuggestions = {
-  value: readonly string[];
+  value: readonly SuggestionNode[];
+  consumendQueryTokens: TokenList;
   remainingQueryTokens: TokenList;
 }
 
@@ -55,15 +56,44 @@ function getSuggestions(suggestionTree: SuggestionNode, queryTokens: TokenList, 
     return defaultSuggestions;
   }
 
+
   let currentNode = suggestionTree;
 
   const nodeSuggestions = getNodeSuggestions(currentNode, queryTokens);
+  console.log("Node suggestions:", nodeSuggestions);
 
-  return nodeSuggestions.value;
+  switch (nodeSuggestions.value.length) {
+    case 0: return [];
+    case 1: {
+
+      if (tokenListMatch(nodeSuggestions.consumendQueryTokens, nodeSuggestions.value[0].tokens) === 'equals') {
+
+        console.log('Remaining query tokens:', nodeSuggestions.remainingQueryTokens);
+
+        currentNode = nodeSuggestions.value[0];
+        const nextNodeSuggestions = getNodeSuggestions(currentNode, nodeSuggestions.remainingQueryTokens);
+
+        console.log('Next node suggestions:', nextNodeSuggestions);
+        return nextNodeSuggestions.value.map(c => c.tokens.join(' '));
+
+      }
+      if (nodeSuggestions.remainingQueryTokens.length > 0) {
+      }
+      return nodeSuggestions.value.map(c => c.tokens.join(' '));
+    }
+
+    default:
+      return nodeSuggestions.value.map(c => c.tokens.join(' '));
+  }
 }
 
 function getNodeSuggestions(node: SuggestionNode, queryTokens: TokenList): NodeSuggestions {
 
+  if (queryTokens.length === 0) {
+    return { value: node.children, consumendQueryTokens: [], remainingQueryTokens: [] };
+  }
+
+  let consumendTokens = 0;
   const nodeSuggestions = node.children.filter(child => {
     const nodeTokens = child.tokens;
     const relatedQueryTokens = queryTokens.slice(0, nodeTokens.length);
@@ -84,19 +114,19 @@ function getNodeSuggestions(node: SuggestionNode, queryTokens: TokenList): NodeS
       const isWindowMatch = nodeWindow.every((token, windowIndex) => token.includes(relatedQueryTokens[windowIndex]));
 
       if (isWindowMatch) {
+        consumendTokens = compareWindow;
         return true;
       }
 
     }
     return false;
 
-  }
-
-  );
+  });
 
   return {
-    value: nodeSuggestions.map(c => c.tokens.join(' ')),
-    remainingQueryTokens: queryTokens.slice(node.tokens.length)
+    value: nodeSuggestions,
+    consumendQueryTokens: queryTokens.slice(0, consumendTokens),
+    remainingQueryTokens: queryTokens.slice(consumendTokens, queryTokens.length)
   }
 }
 
