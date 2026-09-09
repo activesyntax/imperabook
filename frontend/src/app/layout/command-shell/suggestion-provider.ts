@@ -23,7 +23,7 @@ export class SuggestionProvider {
 
     const defaultCommands = this.registry.commands().filter(c => c.group === 'dynamic').map(c => c.command);
 
-    const matches = getSuggestions(queryTokens, suggestionTree, defaultCommands);
+    const matches = getSuggestions(suggestionTree, queryTokens, defaultCommands);
     return matches;
 
     //
@@ -44,9 +44,60 @@ export class SuggestionProvider {
   }
 }
 
+type NodeSuggestions = {
+  value: readonly string[];
+  remainingQueryTokens: TokenList;
+}
 
-function getSuggestions(queryTokens: TokenList, suggestionTree: SuggestionNode, defaultSuggestions: string[]): string[] {
-  return defaultSuggestions;
+function getSuggestions(suggestionTree: SuggestionNode, queryTokens: TokenList, defaultSuggestions: string[]): readonly string[] {
+
+  if (queryTokens.length === 0) {
+    return defaultSuggestions;
+  }
+
+  let currentNode = suggestionTree;
+
+  const nodeSuggestions = getNodeSuggestions(currentNode, queryTokens);
+
+  return nodeSuggestions.value;
+}
+
+function getNodeSuggestions(node: SuggestionNode, queryTokens: TokenList): NodeSuggestions {
+
+  const nodeSuggestions = node.children.filter(child => {
+    const nodeTokens = child.tokens;
+    const relatedQueryTokens = queryTokens.slice(0, nodeTokens.length);
+
+    console.log('Node tokens:', nodeTokens);
+    console.log('Related query tokens:', relatedQueryTokens);
+
+    const compareWindow = relatedQueryTokens.length;
+
+    if (compareWindow === 0) return false;
+
+    const maxCompareIndex = Math.max(0, nodeTokens.length - compareWindow);
+
+    for (let i = 0; i <= maxCompareIndex; i++) {
+
+      const nodeWindow = nodeTokens.slice(i, i + compareWindow);
+
+      const isWindowMatch = nodeWindow.every((token, windowIndex) => token.includes(relatedQueryTokens[windowIndex]));
+
+      if (isWindowMatch) {
+        return true;
+      }
+
+    }
+    return false;
+
+  }
+
+  );
+
+  return {
+    value: nodeSuggestions.map(c => c.tokens.join(' ')),
+    remainingQueryTokens: queryTokens.slice(node.tokens.length)
+  }
 }
 
 
