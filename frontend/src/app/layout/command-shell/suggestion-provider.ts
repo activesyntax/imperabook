@@ -1,7 +1,7 @@
 import { inject, Service } from "@angular/core";
 import { CommandRegistry } from "@app/commands/command-registry";
 import { TokenList, tokenListMatch, TokenMatch, tokens } from "./tokenizer";
-import { CommandSpec } from "@core/model";
+import { CommandParameter, CommandSpec } from "@core/model";
 import Queue from 'yocto-queue';
 
 export type SuggestionNode = {
@@ -152,18 +152,44 @@ function createSuggestionTree(commands: readonly CommandSpec[]) {
 function createSuggestionTokenTree(commands: readonly CommandSpec[]): SuggestionTokenNode {
   const rootNode = suggestionTokenNode('', undefined);
 
-  commands.forEach(c => {
-    tokens(c.command).reduce((currentNode, token) => {
-      let existingTokenNode = currentNode.children.find(t => t.token === token);
+  commands.forEach(cmd => {
 
-      if (!existingTokenNode) {
-        existingTokenNode = suggestionTokenNode(token, currentNode);
-        currentNode.children.push(existingTokenNode);
+    const commandTokens = tokens(cmd.command).map((value: string, position: number) => ({ value, position }));
+    const commandTokenCount = commandTokens.length;
+
+    commandTokens.reduce((currentNode, token) => {
+      let commandTokenNode = currentNode.children.find(t => t.token === token.value);
+
+      if (!commandTokenNode) {
+        commandTokenNode = suggestionTokenNode(token.value, currentNode);
+        currentNode.children.push(commandTokenNode);
       }
 
-      return existingTokenNode;
+
+      if (token.position == commandTokenCount - 1) {
+        addParameterNodes(cmd.parameters, commandTokenNode)
+      }
+
+      return commandTokenNode;
     }, rootNode);
   });
 
   return rootNode;
+}
+
+function addParameterNodes(parameters: readonly CommandParameter[], commandTokenNode: SuggestionTokenNode) {
+
+  parameters.forEach(parameter => {
+    tokens(parameter.connective).reduce((currentNode, token) => {
+
+      let parameterTokenNode = currentNode.children.find(t => t.token === token);
+
+      if (!parameterTokenNode) {
+        parameterTokenNode = suggestionTokenNode(token, currentNode);
+        currentNode.children.push(parameterTokenNode);
+      }
+
+      return parameterTokenNode;
+    }, commandTokenNode);
+  });
 }
