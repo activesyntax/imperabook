@@ -3,7 +3,7 @@ import { TokenList, tokens } from "./tokenizer";
 
 
 type CommandInput = { kind: 'command' }
-type ParameterInput = { kind: 'parameter' }
+type ParameterInput = { kind: 'parameter', command: CommandSpec }
 
 type InputMode = CommandInput | ParameterInput;
 
@@ -13,9 +13,10 @@ function commandInput(): CommandInput {
   };
 }
 
-function parameterInput(): ParameterInput {
+function parameterInput(command: CommandSpec): ParameterInput {
   return {
     kind: 'parameter',
+    command
   };
 }
 
@@ -29,7 +30,7 @@ export function getSuggestions(query: string, commands: readonly CommandSpec[]):
     case 'command':
       return getCommandSuggestions(queryTokens, commands);
     case 'parameter':
-      return [];
+      return getParameterSuggestions(queryTokens, inputMode.command);
 
   }
 }
@@ -37,9 +38,26 @@ export function getSuggestions(query: string, commands: readonly CommandSpec[]):
 
 function getInputMode(queryTokens: TokenList, commands: readonly CommandSpec[]): InputMode {
 
-  const isCommandEntering = queryTokens.length <= Math.max(...commands.map(c => tokens(c.command).length));
+  // const isCommandEntering = queryTokens.length <= Math.max(...commands.map(c => tokens(c.command).length));
+  //
+  // if (isCommandEntering) return commandInput();
 
-  return isCommandEntering ? commandInput() : parameterInput();
+  const fullCommand = tryGetFullCommand(queryTokens, commands);
+
+  return fullCommand !== undefined ? parameterInput(fullCommand) : commandInput();
+
+}
+
+function tryGetFullCommand(queryTokens: TokenList, commands: readonly CommandSpec[]): CommandSpec | undefined {
+
+  const fullCommand = commands.find(c => {
+    const commandTokens = tokens(c.command);
+    const relatedQueryTokens = queryTokens.slice(0, commandTokens.length);
+    return commandTokens.every((token: string, i) => token === relatedQueryTokens[i]);
+  });
+
+  console.log('Full command:', fullCommand);
+  return fullCommand;
 }
 
 function getCommandSuggestions(queryTokens: TokenList, commands: readonly CommandSpec[]): string[] {
@@ -54,14 +72,18 @@ function getCommandSuggestions(queryTokens: TokenList, commands: readonly Comman
       const commandTokens = tokens(c.command);
       const relatedQueryTokens = queryTokens.slice(0, commandTokens.length);
 
-      console.log('Node tokens:', commandTokens);
-      console.log('Related query tokens:', relatedQueryTokens);
-
-      return isTokenMatch(commandTokens, queryTokens)
+      // console.log('Node tokens:', commandTokens);
+      // console.log('Related query tokens:', relatedQueryTokens);
+      //
+      return isTokenMatch(commandTokens, relatedQueryTokens)
     })
     .map(c => c.command);
 }
 
+
+function getParameterSuggestions(queryTokens: TokenList, command: CommandSpec): string[] {
+  return command.parameters.map(p => p.connective);
+}
 
 function isTokenMatch(sourceTokens: TokenList, queryTokens: TokenList): boolean {
 
