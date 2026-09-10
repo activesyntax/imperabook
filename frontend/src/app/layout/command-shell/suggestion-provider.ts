@@ -1,8 +1,8 @@
 import { inject, Service } from "@angular/core";
 import { CommandRegistry } from "@app/commands/command-registry";
 import { TokenList, tokenListMatch, tokens } from "./tokenizer";
-import { CommandParameter, CommandSpec } from "@core/model";
 import { createSuggestionTree, SuggestionNode } from "./suggestion-tree";
+import { getSuggestions } from "./suggestions";
 
 
 @Service()
@@ -17,13 +17,16 @@ export class SuggestionProvider {
     console.log('Query tokens:', queryTokens);
 
 
-    const suggestionTree = createSuggestionTree(this.registry.commands());
+    // const suggestionTree = createSuggestionTree(this.registry.commands());
 
-    console.log('Suggestion tree:', suggestionTree);
+    // console.log('Suggestion tree:', suggestionTree);
 
     const defaultCommands = this.registry.commands().filter(c => c.group === 'dynamic').map(c => c.command);
 
-    const matches = getSuggestions(suggestionTree, queryTokens, defaultCommands);
+    // const matches = getSuggestions(suggestionTree, queryTokens, defaultCommands);
+
+    const matches = getSuggestions(query, this.registry.commands());
+
     return matches;
 
     //
@@ -46,11 +49,11 @@ export class SuggestionProvider {
 
 type NodeSuggestions = {
   value: readonly SuggestionNode[];
-  consumendQueryTokens: TokenList;
+  consumedQueryTokens: TokenList;
   remainingQueryTokens: TokenList;
 }
 
-function getSuggestions(suggestionTree: SuggestionNode, queryTokens: TokenList, defaultSuggestions: string[]): readonly string[] {
+function getSuggestionsLegacy(suggestionTree: SuggestionNode, queryTokens: TokenList, defaultSuggestions: string[]): readonly string[] {
 
   if (queryTokens.length === 0) {
     return defaultSuggestions;
@@ -66,15 +69,15 @@ function getSuggestions(suggestionTree: SuggestionNode, queryTokens: TokenList, 
     case 0: return [];
     case 1: {
 
-      if (tokenListMatch(nodeSuggestions.consumendQueryTokens, nodeSuggestions.value[0].tokens) === 'equals') {
+      if (tokenListMatch(nodeSuggestions.consumedQueryTokens, nodeSuggestions.value[0].tokens) === 'equals') {
 
         console.log('Remaining query tokens:', nodeSuggestions.remainingQueryTokens);
 
         currentNode = nodeSuggestions.value[0];
-        const nextNodeSuggestions = getNodeSuggestions(currentNode, nodeSuggestions.remainingQueryTokens);
+        // const nextNodeSuggestions = getChildNodeSuggestions(currentNode, nodeSuggestions.remainingQueryTokens);
 
-        console.log('Next node suggestions:', nextNodeSuggestions);
-        return nextNodeSuggestions.value.map(c => c.tokens.join(' '));
+        // console.log('Next node suggestions:', nextNodeSuggestions);
+        // return nextNodeSuggestions.value.map(c => c.tokens.join(' '));
 
       }
       if (nodeSuggestions.remainingQueryTokens.length > 0) {
@@ -87,10 +90,11 @@ function getSuggestions(suggestionTree: SuggestionNode, queryTokens: TokenList, 
   }
 }
 
+
 function getNodeSuggestions(node: SuggestionNode, queryTokens: TokenList): NodeSuggestions {
 
   if (queryTokens.length === 0) {
-    return { value: node.children, consumendQueryTokens: [], remainingQueryTokens: [] };
+    return { value: node.children, consumedQueryTokens: [], remainingQueryTokens: [] };
   }
 
   let consumendTokens = 0;
@@ -125,7 +129,7 @@ function getNodeSuggestions(node: SuggestionNode, queryTokens: TokenList): NodeS
 
   return {
     value: nodeSuggestions,
-    consumendQueryTokens: queryTokens.slice(0, consumendTokens),
+    consumedQueryTokens: queryTokens.slice(0, consumendTokens),
     remainingQueryTokens: queryTokens.slice(consumendTokens, queryTokens.length)
   }
 }
