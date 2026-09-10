@@ -1,9 +1,9 @@
-import { CommandSpec } from "@core/model";
+import { CommandParameter, CommandSpec } from "@core/model";
 import { TokenList, tokens } from "./tokenizer";
 
 
 type CommandInput = { kind: 'command' }
-type ParameterInput = { kind: 'parameter', command: CommandSpec }
+type ParameterInput = { kind: 'parameter', command: CommandSpec, fullParameters: readonly CommandParameter[] }
 
 type InputMode = CommandInput | ParameterInput;
 
@@ -13,10 +13,11 @@ function commandInput(): CommandInput {
   };
 }
 
-function parameterInput(command: CommandSpec): ParameterInput {
+function parameterInput(command: CommandSpec, fullParameters: readonly CommandParameter[] = []): ParameterInput {
   return {
     kind: 'parameter',
-    command
+    command,
+    fullParameters
   };
 }
 
@@ -31,7 +32,6 @@ export function getSuggestions(query: string, commands: readonly CommandSpec[]):
       return getCommandSuggestions(queryTokens, commands);
     case 'parameter':
       return getParameterSuggestions(queryTokens, inputMode.command);
-
   }
 }
 
@@ -44,8 +44,25 @@ function getInputMode(queryTokens: TokenList, commands: readonly CommandSpec[]):
 
   const fullCommand = tryGetFullCommand(queryTokens, commands);
 
-  return fullCommand !== undefined ? parameterInput(fullCommand) : commandInput();
+  if (fullCommand !== undefined && fullCommand.parameters.length > 0) {
 
+    const fullParameters = getFullParameters(queryTokens, fullCommand);
+    console.log('Full parameters:', fullParameters);
+    return parameterInput(fullCommand, fullParameters);
+  }
+  return commandInput();
+}
+
+function getFullParameters(queryTokens: TokenList, command: CommandSpec): readonly CommandParameter[] {
+
+  const query = queryTokens.join(' ');
+  const fullParameters = command.parameters.filter(p => {
+    const connective = tokens(p.connective).join(' ');
+
+    return query.includes(connective);
+  });
+
+  return fullParameters;
 }
 
 function tryGetFullCommand(queryTokens: TokenList, commands: readonly CommandSpec[]): CommandSpec | undefined {
@@ -56,7 +73,6 @@ function tryGetFullCommand(queryTokens: TokenList, commands: readonly CommandSpe
     return commandTokens.every((token: string, i) => token === relatedQueryTokens[i]);
   });
 
-  console.log('Full command:', fullCommand);
   return fullCommand;
 }
 
