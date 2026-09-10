@@ -31,10 +31,9 @@ export function getSuggestions(query: string, commands: readonly CommandSpec[]):
     case 'command':
       return getCommandSuggestions(queryTokens, commands);
     case 'parameter':
-      return getParameterSuggestions(queryTokens, inputMode.command);
+      return getParameterSuggestions(queryTokens, inputMode);
   }
 }
-
 
 function getInputMode(queryTokens: TokenList, commands: readonly CommandSpec[]): InputMode {
 
@@ -97,8 +96,34 @@ function getCommandSuggestions(queryTokens: TokenList, commands: readonly Comman
 }
 
 
-function getParameterSuggestions(queryTokens: TokenList, command: CommandSpec): string[] {
-  return command.parameters.map(p => p.connective);
+function getParameterSuggestions(queryTokens: TokenList, parameterInput: ParameterInput): string[] {
+
+  const command = parameterInput.command;
+  const fullParameters = parameterInput.fullParameters;
+
+  const notUsedParameters = command.parameters.filter(p => !fullParameters.includes(p));
+
+  console.log('NOT USED PARAMETERS:', notUsedParameters);
+
+  const queryWithoutCommand = queryTokens.slice(tokens(command.command).length).join(' ');
+  console.log('Query without command', queryWithoutCommand);
+
+  let queryWithoutParameters = queryWithoutCommand;
+
+  // TODO: use reduce
+  fullParameters.forEach(p => {
+    console.log('CONNECTIVE: ', p.connective);
+    queryWithoutParameters = queryWithoutCommand.replace(p.connective, '');
+  });
+
+  console.log('Query without used parameters', queryWithoutCommand);
+
+  // const relatedQuery = queryTokens.join(' ').replaceAll(, replaceValue)
+  return command.parameters.filter(p => {
+    const connectiveTokens = tokens(p.connective);
+
+    return true;
+  }).map(p => p.connective);
 }
 
 function isTokenMatch(sourceTokens: TokenList, queryTokens: TokenList): boolean {
