@@ -27,7 +27,7 @@ export function getSuggestions(query: string, commands: readonly CommandSpec[]):
 
   switch (inputMode.kind) {
     case 'command':
-      return commands.map(c => c.command);
+      return getCommandSuggestions(queryTokens, commands);
     case 'parameter':
       return [];
 
@@ -40,4 +40,48 @@ function getInputMode(queryTokens: TokenList, commands: readonly CommandSpec[]):
   const isCommandEntering = queryTokens.length <= Math.max(...commands.map(c => tokens(c.command).length));
 
   return isCommandEntering ? commandInput() : parameterInput();
+}
+
+function getCommandSuggestions(queryTokens: TokenList, commands: readonly CommandSpec[]): string[] {
+
+  if (queryTokens.length === 0) {
+    return commands.filter(c => c.group === 'dynamic').map(c => c.command);
+  }
+
+  return commands
+    .filter(c => {
+
+      const commandTokens = tokens(c.command);
+      const relatedQueryTokens = queryTokens.slice(0, commandTokens.length);
+
+      console.log('Node tokens:', commandTokens);
+      console.log('Related query tokens:', relatedQueryTokens);
+
+      return isTokenMatch(commandTokens, queryTokens)
+    })
+    .map(c => c.command);
+}
+
+
+function isTokenMatch(sourceTokens: TokenList, queryTokens: TokenList): boolean {
+
+  let consumendTokens = 0;
+  const compareWindow = queryTokens.length;
+
+  if (compareWindow === 0) return false;
+
+  const maxCompareIndex = Math.max(0, sourceTokens.length - compareWindow);
+
+  for (let i = 0; i <= maxCompareIndex; i++) {
+
+    const nodeWindow = sourceTokens.slice(i, i + compareWindow);
+
+    const isWindowMatch = nodeWindow.every((token, windowIndex) => token.includes(queryTokens[windowIndex]));
+
+    if (isWindowMatch) {
+      consumendTokens = compareWindow;
+      return true;
+    }
+  }
+  return false;
 }
