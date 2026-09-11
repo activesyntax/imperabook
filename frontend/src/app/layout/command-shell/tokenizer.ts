@@ -31,3 +31,27 @@ export function tokenListMatch(queryTokens: TokenList, commandTokens: TokenList)
 
   return 'none';
 }
+
+
+export function isTokenMatch(sourceTokens: TokenList, queryTokens: TokenList): boolean {
+
+  let consumendTokens = 0;
+  const compareWindow = queryTokens.length;
+
+  if (compareWindow === 0) return false;
+
+  const maxCompareIndex = Math.max(0, sourceTokens.length - compareWindow);
+
+  for (let i = 0; i <= maxCompareIndex; i++) {
+
+    const nodeWindow = sourceTokens.slice(i, i + compareWindow);
+
+    const isWindowMatch = nodeWindow.every((token, windowIndex) => token.includes(queryTokens[windowIndex]));
+
+    if (isWindowMatch) {
+      consumendTokens = compareWindow;
+      return true;
+    }
+  }
+  return false;
+}

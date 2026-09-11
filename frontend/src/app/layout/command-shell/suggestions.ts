@@ -1,9 +1,8 @@
 import { CommandParameter, CommandSpec } from "@core/model";
-import { TokenList, tokens } from "./tokenizer";
-
+import { TokenList, tokens, isTokenMatch } from "./tokenizer";
 
 type CommandInput = { kind: 'command' }
-type ParameterInput = { kind: 'parameter', command: CommandSpec, fullParameters: readonly CommandParameter[] }
+type ParameterInput = { kind: 'parameter', command: CommandSpec, usedParameters: readonly CommandParameter[] }
 
 type InputMode = CommandInput | ParameterInput;
 
@@ -17,7 +16,7 @@ function parameterInput(command: CommandSpec, fullParameters: readonly CommandPa
   return {
     kind: 'parameter',
     command,
-    fullParameters
+    usedParameters: fullParameters
   };
 }
 
@@ -36,10 +35,6 @@ export function getSuggestions(query: string, commands: readonly CommandSpec[]):
 }
 
 function getInputMode(queryTokens: TokenList, commands: readonly CommandSpec[]): InputMode {
-
-  // const isCommandEntering = queryTokens.length <= Math.max(...commands.map(c => tokens(c.command).length));
-  //
-  // if (isCommandEntering) return commandInput();
 
   const fullCommand = tryGetFullCommand(queryTokens, commands);
 
@@ -87,9 +82,6 @@ function getCommandSuggestions(queryTokens: TokenList, commands: readonly Comman
       const commandTokens = tokens(c.command);
       const relatedQueryTokens = queryTokens.slice(0, commandTokens.length);
 
-      // console.log('Node tokens:', commandTokens);
-      // console.log('Related query tokens:', relatedQueryTokens);
-      //
       return isTokenMatch(commandTokens, relatedQueryTokens)
     })
     .map(c => c.command);
@@ -99,52 +91,33 @@ function getCommandSuggestions(queryTokens: TokenList, commands: readonly Comman
 function getParameterSuggestions(queryTokens: TokenList, parameterInput: ParameterInput): string[] {
 
   const command = parameterInput.command;
-  const fullParameters = parameterInput.fullParameters;
+  const usedParameters = parameterInput.usedParameters;
 
-  const notUsedParameters = command.parameters.filter(p => !fullParameters.includes(p));
+  const notUsedParameters = command.parameters.filter(p => !usedParameters.includes(p));
 
-  console.log('NOT USED PARAMETERS:', notUsedParameters);
+  const reducedQueryTokens = reduceQuery(queryTokens, parameterInput);
 
-  const queryWithoutCommand = queryTokens.slice(tokens(command.command).length).join(' ');
-  console.log('Query without command', queryWithoutCommand);
+  if (reducedQueryTokens.length === 0) {
+    return notUsedParameters.map(p => p.connective);
+  }
 
-  let queryWithoutParameters = queryWithoutCommand;
-
-  // TODO: use reduce
-  fullParameters.forEach(p => {
-    console.log('CONNECTIVE: ', p.connective);
-    queryWithoutParameters = queryWithoutCommand.replace(p.connective, '');
-  });
-
-  console.log('Query without used parameters', queryWithoutCommand);
-
-  // const relatedQuery = queryTokens.join(' ').replaceAll(, replaceValue)
-  return command.parameters.filter(p => {
+  return notUsedParameters.filter(p => {
     const connectiveTokens = tokens(p.connective);
+    const relatedQueryTokens = reducedQueryTokens;
 
-    return true;
+    return isTokenMatch(connectiveTokens, relatedQueryTokens);
   }).map(p => p.connective);
 }
 
-function isTokenMatch(sourceTokens: TokenList, queryTokens: TokenList): boolean {
+function reduceQuery(query: TokenList, parameterInput: ParameterInput): TokenList {
 
-  let consumendTokens = 0;
-  const compareWindow = queryTokens.length;
+  const command = parameterInput.command;
+  const usedParameters = parameterInput.usedParameters;
 
-  if (compareWindow === 0) return false;
+  const queryWithoutCommand = query.slice(tokens(command.command).length).join(' ');
 
-  const maxCompareIndex = Math.max(0, sourceTokens.length - compareWindow);
+  let queryWithoutParameters = usedParameters.reduce((acc, parameter) => acc.replaceAll(parameter.connective, ''), queryWithoutCommand);
 
-  for (let i = 0; i <= maxCompareIndex; i++) {
-
-    const nodeWindow = sourceTokens.slice(i, i + compareWindow);
-
-    const isWindowMatch = nodeWindow.every((token, windowIndex) => token.includes(queryTokens[windowIndex]));
-
-    if (isWindowMatch) {
-      consumendTokens = compareWindow;
-      return true;
-    }
-  }
-  return false;
+  return tokens(queryWithoutParameters);
 }
+
