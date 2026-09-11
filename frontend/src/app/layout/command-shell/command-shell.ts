@@ -8,23 +8,15 @@ import {
   inject,
   linkedSignal,
   signal,
-  untracked,
   viewChild,
-  WritableSignal,
 } from '@angular/core';
 
 import { CommandRunner } from '@app/commands/command-runner';
 import { CommandProvider } from '@app/commands/command-provider';
 import { CommandRegistry } from '@app/commands/command-registry';
 import { WorkspaceStore } from '@app/state/workspace-store';
-// import { resultOfError } from '@app/commands/command-error';
-// import * as Shell from './shell';
-// import * as ShellState from './shell-state';
-// import * as Transition from './shell-transition';
-// import { ShellStateMachine } from './shell-state-machine';
-import { SuggestionProvider } from './suggestion-provider';
+import { SuggestionService } from './suggestion-service';
 import { Index, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
-import { NewLineKind } from 'typescript';
 
 interface FieldAttrs {
   readonly type: 'text' | 'password';
@@ -60,7 +52,7 @@ export class CommandShell {
   private readonly runner = inject(CommandRunner);
   private readonly store = inject(WorkspaceStore);
   // private readonly shell = inject(ShellStateMachine);
-  private readonly suggestionProvider = inject(SuggestionProvider);
+  private readonly suggestionService = inject(SuggestionService);
 
 
   // private readonly deps: Shell.ShellDeps = {
@@ -78,7 +70,7 @@ export class CommandShell {
   protected readonly externalQueryInput = signal('');
   protected readonly query = linkedSignal(() => this.externalQueryInput());
 
-  protected readonly suggestions = computed<SuggestionList>(() => suggestionList(this.suggestionProvider.suggestionsFor(this.query().trim())));
+  protected readonly suggestions = computed<SuggestionList>(() => suggestionList(this.suggestionService.suggestionsFor(this.query().trim())));
 
   protected readonly selectedIndex = linkedSignal<SuggestionList, Index>({
     source: this.suggestions,
@@ -131,7 +123,6 @@ export class CommandShell {
         break;
 
     }
-
   }
 
   protected submit(): void {
