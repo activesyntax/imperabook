@@ -1,7 +1,6 @@
 import { inject, Service } from "@angular/core";
 import { CommandRegistry } from "@app/commands/command-registry";
-import { getSuggestions } from "./suggestions";
-
+import { getSuggestions } from "./suggestions/suggestions";
 
 @Service()
 export class SuggestionProvider {
@@ -15,4 +14,3 @@ export class SuggestionProvider {
     return matches;
   }
 }
-
