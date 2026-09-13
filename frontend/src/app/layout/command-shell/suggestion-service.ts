@@ -13,4 +13,50 @@ export class SuggestionService {
 
     return matches;
   }
+
+  public replaceWordAtPosition(query: string, cursorPosition: number, replacement: string): string {
+
+    const wordBoundaries = this.wordBoundariesAtPosition(query, cursorPosition);
+
+    if (wordBoundaries === undefined) return query;
+
+    const before = query.slice(0, wordBoundaries.start)
+    const after = query.slice(wordBoundaries.end, query.length);
+
+    return before + replacement + after;
+  }
+
+  private wordBoundariesAtPosition(query: string, cursorPosition: number): { start: number, end: number } | undefined {
+
+    if (query.length === 0) return undefined;
+
+    const isAttachedToTheWord =
+      !isWhiteSpace(query[Math.max(cursorPosition - 1, 0)])
+      || !isWhiteSpace(query[Math.min(cursorPosition + 1, query.length - 1)]);
+
+    console.log('isAttachedToTheWord: ', isAttachedToTheWord);
+
+    if (isAttachedToTheWord) {
+
+      let wordStart = cursorPosition;
+      while (wordStart > 0 && isWordChar(query[wordStart - 1])) wordStart--;
+
+      let wordEnd = cursorPosition;
+      while (wordEnd < query.length && isWordChar(query[wordEnd])) wordEnd++;
+
+      console.log('START,END: ', wordStart, wordEnd);
+      console.log('WORD BOUNDARY: ', query.substring(wordStart, wordEnd));
+      return { start: wordStart, end: wordEnd };
+    }
+
+    return undefined;
+  }
+}
+
+function isWhiteSpace(char: string): boolean {
+  return char.trim().length === 0;
+}
+
+function isWordChar(char: string): boolean {
+  return !isWhiteSpace(char);
 }

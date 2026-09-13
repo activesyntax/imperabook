@@ -108,20 +108,40 @@ export class CommandShell {
     switch (event.key) {
       case 'Tab':
         event.preventDefault();
-        const index = event.shiftKey
-          ? prevCyclicIndex(this.suggestions().range, this.selectedIndex())
-          : nextCyclicIndex(this.suggestions().range, this.selectedIndex());
-        this.selectedIndex.set(index);
+        this.selectSuggestion(event);
 
         break;
       case 'Enter':
         event.preventDefault();
-        if (this.suggestions().all.length > 0 && this.selectedIndex() !== undefined) {
-          const command = this.suggestions().all[this.selectedIndex()!];
-          this.query.set(command);
-        }
+        this.acceptSuggestion();
         break;
+    }
+  }
 
+  private selectSuggestion(event: KeyboardEvent) {
+    const index = event.shiftKey
+      ? prevCyclicIndex(this.suggestions().range, this.selectedIndex())
+      : nextCyclicIndex(this.suggestions().range, this.selectedIndex());
+    this.selectedIndex.set(index);
+  }
+
+  getCursorPosition(): number {
+    const position = this.bar()?.nativeElement?.selectionStart;
+
+    if (position !== null && position !== undefined) return position;
+    throw new Error('Cannot get cursor position from query input.');
+  }
+
+  acceptSuggestion() {
+
+    if (this.suggestions().all.length > 0 && this.selectedIndex() !== undefined) {
+      const suggestion = this.suggestions().all[this.selectedIndex()!];
+
+      const newQuery = this.suggestionService.replaceWordAtPosition(this.query(), this.getCursorPosition(), suggestion);
+
+      console.log('NEW QUERY', newQuery);
+      console.log('ACCEPTING SUGGESTION: ', suggestion);
+      this.query.set(newQuery);
     }
   }
 
