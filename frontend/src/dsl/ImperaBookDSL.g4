@@ -8,13 +8,11 @@ command        : addBookCmd
                | listBooksCmd
                | listAuthorsCmd
                ;
-
-addBookCmd     : ADD BOOK bookParam* ;
+addBookCmd     : ADD BOOK (authorParam titleParam | titleParam authorParam) ;
 addAuthorCmd   : ADD AUTHOR STRING ;
 listBooksCmd   : LIST BOOKS ;
 listAuthorsCmd : LIST AUTHORS ;
 
-bookParam      : authorParam | titleParam ;
 authorParam    : BY AUTHOR STRING ;
 titleParam     : WITH TITLE STRING ;
 

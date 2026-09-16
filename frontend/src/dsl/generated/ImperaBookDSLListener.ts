@@ -8,7 +8,6 @@ import { AddBookCmdContext } from "./ImperaBookDSLParser.js";
 import { AddAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { ListBooksCmdContext } from "./ImperaBookDSLParser.js";
 import { ListAuthorsCmdContext } from "./ImperaBookDSLParser.js";
-import { BookParamContext } from "./ImperaBookDSLParser.js";
 import { AuthorParamContext } from "./ImperaBookDSLParser.js";
 import { TitleParamContext } from "./ImperaBookDSLParser.js";
 
@@ -78,16 +77,6 @@ export class ImperaBookDSLListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitListAuthorsCmd?: (ctx: ListAuthorsCmdContext) => void;
-    /**
-     * Enter a parse tree produced by `ImperaBookDSLParser.bookParam`.
-     * @param ctx the parse tree
-     */
-    enterBookParam?: (ctx: BookParamContext) => void;
-    /**
-     * Exit a parse tree produced by `ImperaBookDSLParser.bookParam`.
-     * @param ctx the parse tree
-     */
-    exitBookParam?: (ctx: BookParamContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.authorParam`.
      * @param ctx the parse tree

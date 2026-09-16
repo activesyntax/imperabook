@@ -8,7 +8,6 @@ import { AddBookCmdContext } from "./ImperaBookDSLParser.js";
 import { AddAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { ListBooksCmdContext } from "./ImperaBookDSLParser.js";
 import { ListAuthorsCmdContext } from "./ImperaBookDSLParser.js";
-import { BookParamContext } from "./ImperaBookDSLParser.js";
 import { AuthorParamContext } from "./ImperaBookDSLParser.js";
 import { TitleParamContext } from "./ImperaBookDSLParser.js";
 
@@ -57,12 +56,6 @@ export class ImperaBookDSLVisitor<Result> extends AbstractParseTreeVisitor<Resul
      * @return the visitor result
      */
     visitListAuthorsCmd?: (ctx: ListAuthorsCmdContext) => Result;
-    /**
-     * Visit a parse tree produced by `ImperaBookDSLParser.bookParam`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitBookParam?: (ctx: BookParamContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.authorParam`.
      * @param ctx the parse tree

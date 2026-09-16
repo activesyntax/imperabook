@@ -26,25 +26,17 @@ export class CommandVisitor extends ImperaBookDSLVisitor<ParsedCommand | null> {
 
   // 3. Extract the addBookCmd parameters
   override visitAddBookCmd = (ctx: AddBookCmdContext): ParsedCommand => {
-    const params: Record<string, string> = {};
-
-    for (const paramCtx of ctx.bookParam()) {
-      const authorCtx = paramCtx.authorParam();
-      const titleCtx = paramCtx.titleParam();
-
-      if (authorCtx) {
-        params['author'] = this.cleanString(authorCtx.STRING().getText());
-      } else if (titleCtx) {
-        params['title'] = this.cleanString(titleCtx.STRING().getText());
-      }
-    }
+    const authorRaw = ctx.authorParam()?.STRING()?.getText() ?? '';
+    const titleRaw = ctx.titleParam()?.STRING()?.getText() ?? '';
 
     return {
       command: 'add book',
-      params,
+      params: {
+        author: this.cleanString(authorRaw),
+        title: this.cleanString(titleRaw),
+      },
     };
   };
-
   // Default value returned when visiting a node without an explicit result
   protected override defaultResult(): ParsedCommand | null {
     return null;
