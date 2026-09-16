@@ -17,6 +17,8 @@ import { CommandRegistry } from '@app/commands/command-registry';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { SuggestionService } from './suggestion-service';
 import { Index, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
+import { parseDSLCommand } from './command-parser';
+import { CommandVisitor } from './command-visitor';
 
 interface FieldAttrs {
   readonly type: 'text' | 'password';
@@ -134,6 +136,12 @@ export class CommandShell {
 
   acceptSuggestion() {
 
+    const parseTree = parseDSLCommand(this.query());
+    // parseDSLCommand('add book by author "George Orwell" with title "1984"');
+    const visitor = new CommandVisitor();
+    const result = visitor.visit(parseTree);
+    console.log('RESULT', result);
+
     if (this.suggestions().all.length > 0 && this.selectedIndex() !== undefined) {
       const suggestion = this.suggestions().all[this.selectedIndex()!];
 
@@ -150,6 +158,7 @@ export class CommandShell {
   }
 
   protected submit(): void {
+    console.log("SUBMIT");
   }
 
   @HostListener('document:keydown', ['$event'])

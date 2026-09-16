@@ -29,6 +29,9 @@
       "@command-shell/*": [
         "./src/app/layout/command-shell/*"
       ],
+      "@dsl/*": [
+        "./src/dsl/*"
+      ],
       "@testing/*": [
         "./src/testing/*"
       ],
