@@ -72,7 +72,8 @@ export class CommandShell {
   protected readonly externalQueryInput = signal('');
   protected readonly query = linkedSignal(() => this.externalQueryInput());
 
-  protected readonly suggestions = computed<SuggestionList>(() => suggestionList(this.suggestionService.suggestionsFor(this.query().trim())));
+  protected readonly suggestions = computed<SuggestionList>(
+    () => suggestionList(this.suggestionService.suggestionsFor(this.query(), this.getCursorPosition())));
 
   protected readonly selectedIndex = linkedSignal<SuggestionList, Index>({
     source: this.suggestions,

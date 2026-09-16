@@ -2,17 +2,21 @@ import { inject, Service } from "@angular/core";
 import { CommandRegistry } from "@app/commands/command-registry";
 import { getSuggestions } from "./suggestion-provider";
 import { tokens } from "@core/tokenizer";
+import { getDSLCompletions } from "./autocomplete";
 
 @Service()
 export class SuggestionService {
 
   private readonly registry = inject(CommandRegistry);
 
-  public suggestionsFor(query: string): readonly string[] {
+  public suggestionsFor(query: string, cursorPosition: number): readonly string[] {
 
-    const matches = getSuggestions(query, this.registry.commands());
+    // const matches = getSuggestions(query, this.registry.commands());
+    console.log('position:', cursorPosition);
+    const matches = getDSLCompletions(query, cursorPosition);
 
-    return matches;
+    console.log('SUGGESTIONS', matches);
+    return matches.map(m => m.insertText);
   }
 
   public replaceWordAtPosition(query: string, cursorPosition: number, replacement: string): string | 'not-found' {
