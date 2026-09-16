@@ -138,10 +138,14 @@ export class CommandShell {
       const suggestion = this.suggestions().all[this.selectedIndex()!];
 
       const newQuery = this.suggestionService.replaceWordAtPosition(this.query(), this.getCursorPosition(), suggestion);
-
-      console.log('NEW QUERY', newQuery);
-      console.log('ACCEPTING SUGGESTION: ', suggestion);
-      this.query.set(newQuery);
+      if (newQuery == 'not-found') {
+        this.query.set(this.query() + suggestion + ' ');
+      }
+      else {
+        console.log('NEW QUERY', newQuery);
+        console.log('ACCEPTING SUGGESTION: ', suggestion);
+        this.query.set(newQuery + ' ');
+      }
     }
   }
 

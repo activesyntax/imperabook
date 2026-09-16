@@ -1,6 +1,7 @@
 import { inject, Service } from "@angular/core";
 import { CommandRegistry } from "@app/commands/command-registry";
 import { getSuggestions } from "./suggestion-provider";
+import { tokens } from "@core/tokenizer";
 
 @Service()
 export class SuggestionService {
@@ -14,11 +15,15 @@ export class SuggestionService {
     return matches;
   }
 
-  public replaceWordAtPosition(query: string, cursorPosition: number, replacement: string): string {
+  public replaceWordAtPosition(query: string, cursorPosition: number, replacement: string): string | 'not-found' {
 
-    const wordBoundaries = this.wordBoundariesAtPosition(query, cursorPosition);
+    const replacementPosition = query.indexOf(tokens(replacement)[0]);
 
-    if (wordBoundaries === undefined) return query;
+    const wordBoundaries = replacementPosition !== -1
+      ? { start: replacementPosition, end: replacementPosition + replacement.length }
+      : this.wordBoundariesAtPosition(query, cursorPosition);
+
+    if (wordBoundaries === undefined) return 'not-found';
 
     const before = query.slice(0, wordBoundaries.start)
     const after = query.slice(wordBoundaries.end, query.length);
