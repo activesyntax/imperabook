@@ -26,11 +26,11 @@ interface Phrase {
  */
 const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_addBookCmd]: { label: 'add book', insertText: 'add book ' },
-  [ImperaBookDSLParser.RULE_addAuthorCmd]: { label: 'add author', insertText: 'add author "' },
+  [ImperaBookDSLParser.RULE_addAuthorCmd]: { label: 'add author', insertText: 'add author ' },
   [ImperaBookDSLParser.RULE_listBooksCmd]: { label: 'list books', insertText: 'list books' },
   [ImperaBookDSLParser.RULE_listAuthorsCmd]: { label: 'list authors', insertText: 'list authors' },
-  [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author "' },
-  [ImperaBookDSLParser.RULE_titleParam]: { label: 'with title', insertText: 'with title "' },
+  [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author ""' },
+  [ImperaBookDSLParser.RULE_titleParam]: { label: 'with title', insertText: 'with title ""' },
 };
 
 /**
