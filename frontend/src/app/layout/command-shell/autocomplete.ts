@@ -4,14 +4,58 @@ import {
   DefaultErrorStrategy,
   Token
 } from 'antlr4ng';
-import { CodeCompletionCore } from 'antlr4-c3';
+import { CandidatesCollection, CodeCompletionCore } from 'antlr4-c3';
 import { ImperaBookDSLLexer } from '@dsl/generated/ImperaBookDSLLexer';
 import { ImperaBookDSLParser } from '@dsl/generated/ImperaBookDSLParser';
 
 export interface CompletionItem {
   label: string;
   insertText: string;
+  /** Replace input[replaceStart, caretOffset) with insertText. */
+  replaceStart: number;
 }
+
+interface Phrase {
+  label: string;
+  insertText: string;
+}
+
+/**
+ * Phrase text for each "phrase rule" of the grammar. c3 reports these rules
+ * instead of the individual keywords inside them, so the text is supplied here.
+ */
+const RULE_PHRASES: Record<number, Phrase> = {
+  [ImperaBookDSLParser.RULE_addBookCmd]: { label: 'add book', insertText: 'add book ' },
+  [ImperaBookDSLParser.RULE_addAuthorCmd]: { label: 'add author', insertText: 'add author "' },
+  [ImperaBookDSLParser.RULE_listBooksCmd]: { label: 'list books', insertText: 'list books' },
+  [ImperaBookDSLParser.RULE_listAuthorsCmd]: { label: 'list authors', insertText: 'list authors' },
+  [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author "' },
+  [ImperaBookDSLParser.RULE_titleParam]: { label: 'with title', insertText: 'with title "' },
+};
+
+/**
+ * Preferred rules must not be nested inside each other: when the caret sits in
+ * several of them, c3 reports only the outermost one and stops descending.
+ * addBookCmd contains authorParam/titleParam, so the two levels are collected
+ * in separate passes.
+ */
+const COMMAND_RULES = [
+  ImperaBookDSLParser.RULE_addBookCmd,
+  ImperaBookDSLParser.RULE_addAuthorCmd,
+  ImperaBookDSLParser.RULE_listBooksCmd,
+  ImperaBookDSLParser.RULE_listAuthorsCmd,
+];
+
+const PARAM_RULES = [
+  ImperaBookDSLParser.RULE_authorParam,
+  ImperaBookDSLParser.RULE_titleParam,
+];
+
+const IGNORED_TOKENS = [
+  ImperaBookDSLParser.STRING,
+  ImperaBookDSLParser.EOF,
+  ImperaBookDSLParser.WS,
+];
 
 export function getDSLCompletions(input: string, caretOffset: number): CompletionItem[] {
   // 1. Setup Lexer and Token Stream
@@ -30,39 +74,111 @@ export function getDSLCompletions(input: string, caretOffset: number): Completio
   // Run parser to populate ATN state up to cursor
   parser.entry();
 
-  // 3. Configure ANTLR Code Completion Core (c3)
-  const core = new CodeCompletionCore(parser);
-
-  // Ignore tokens that shouldn't appear in auto-complete dropdowns
-  core.ignoredTokens = new Set([
-    ImperaBookDSLParser.STRING,
-    ImperaBookDSLParser.EOF,
-    ImperaBookDSLParser.WS,
-  ]);
-
-  // Preferred rules allow suggesting multi-token structures
-  core.preferredRules = new Set([
-  ]);
-
-  // 4. Find token index at the caret position
+  // 3. Find token index at the caret position
   const caretTokenIndex = findTokenIndexAtCaret(tokenStream, caretOffset);
 
-  // 5. Collect candidate token IDs from ATN graph
-  const candidates = core.collectCandidates(caretTokenIndex);
+  // Start of a half-typed word the lexer could not turn into a token ("wit").
+  // Equals caretOffset when there is no such word.
+  const partialStart = findPartialWordStart(input, tokenStream, caretOffset);
+
+  // 4. Two independent passes over the ATN graph
+  const passes = [
+    collectFor(parser, caretTokenIndex, COMMAND_RULES),
+    collectFor(parser, caretTokenIndex, PARAM_RULES),
+  ];
+
+  // 5. Turn candidate rules into phrase suggestions
+  const tokens = tokenStream.getTokens();
   const suggestions: CompletionItem[] = [];
 
-  for (const [tokenType] of candidates.tokens) {
-    const literalName = parser.vocabulary.getLiteralName(tokenType);
-    if (literalName) {
-      const cleanKeyword = literalName.replace(/'/g, '');
+  for (const candidates of passes) {
+    for (const [ruleIndex, rule] of candidates.rules) {
+      const phrase = RULE_PHRASES[ruleIndex];
+      if (!phrase || suggestions.some(s => s.label === phrase.label)) {
+        continue;
+      }
+
+      // Where the phrase begins in the text: either at the token the rule
+      // starts with, or at the half-typed word in front of the caret.
+      const startToken = tokens[rule.startTokenIndex];
+      const tokenStart = startToken && startToken.type !== Token.EOF
+        ? startToken.start
+        : caretOffset;
+      const replaceStart = Math.min(tokenStart, partialStart);
+
+      // What the user has already typed of this phrase.
+      const typed = normalize(input.slice(replaceStart, caretOffset));
+
+      // Drop the phrase if it is already complete, or if what is typed is not
+      // a prefix of it.
+      if (typed === phrase.label || !phrase.label.startsWith(typed)) {
+        continue;
+      }
+
+      // Keep words apart when inserting directly after a finished token.
+      const needsSpace = replaceStart === caretOffset
+        && caretOffset > 0
+        && !/\s/.test(input[caretOffset - 1]);
+
       suggestions.push({
-        label: cleanKeyword,
-        insertText: `${cleanKeyword} `,
+        label: phrase.label,
+        insertText: needsSpace ? ` ${phrase.insertText}` : phrase.insertText,
+        replaceStart,
       });
     }
   }
 
   return suggestions;
+}
+
+/**
+ * Runs one completion pass with the given set of preferred rules.
+ */
+function collectFor(
+  parser: ImperaBookDSLParser,
+  caretTokenIndex: number,
+  preferredRules: number[]
+): CandidatesCollection {
+  const core = new CodeCompletionCore(parser);
+  core.ignoredTokens = new Set(IGNORED_TOKENS);
+  core.preferredRules = new Set(preferredRules);
+
+  return core.collectCandidates(caretTokenIndex);
+}
+
+/**
+ * Collapses whitespace and lowercases, so "add   Book" compares equal to the
+ * phrase label "add book".
+ */
+function normalize(text: string): string {
+  return text.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+/**
+ * Finds the offset of a non-whitespace run directly before the caret that is
+ * not covered by any token — a word the lexer rejected, such as "wit".
+ * Returns caretOffset when there is none.
+ */
+function findPartialWordStart(
+  input: string,
+  tokenStream: CommonTokenStream,
+  caretOffset: number
+): number {
+  let consumedUpTo = 0;
+
+  for (const token of tokenStream.getTokens()) {
+    if (token.type === Token.EOF) {
+      break;
+    }
+    if (token.stop < caretOffset) {
+      consumedUpTo = token.stop + 1;
+    }
+  }
+
+  const trailing = input.slice(consumedUpTo, caretOffset);
+  const match = /\S+$/.exec(trailing);
+
+  return match ? consumedUpTo + match.index : caretOffset;
 }
 
 /**
