@@ -3,9 +3,7 @@ using ImperaBook.API.Data;
 using ImperaBook.API.Views;
 using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
-using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Identity;
 
 namespace ImperaBook.API.Endpoints;
 
@@ -17,18 +15,7 @@ public static class CommandEndpoints
             .WithName("GetCommands")
             .Produces<CommandCatalogResponse>(StatusCodes.Status200OK);
 
-        // todo: inject queries onto CommandHandler
-        app.MapPost(
-                "/api/command",
-                (
-                    CommandRequest request,
-                    ClaimsPrincipal principal,
-                    SignInManager<UserEntity> signIn,
-                    IBookQueries books,
-                    IAuthorQueries authors,
-                    CancellationToken ct
-                ) => Dispatch(request, principal, signIn, books, authors, ct)
-            )
+        app.MapPost("/api/command", Dispatch)
             .WithName("RunCommand")
             .Produces<CommandResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
@@ -37,13 +24,9 @@ public static class CommandEndpoints
         return app;
     }
 
-    private static async Task<Results<Ok<CommandResult>, ProblemHttpResult>> Dispatch(
+    private static Results<Ok<CommandResult>, ProblemHttpResult> Dispatch(
         CommandRequest request,
-        ClaimsPrincipal principal,
-        SignInManager<UserEntity> signIn,
-        IBookQueries books,
-        IAuthorQueries authors,
-        CancellationToken ct
+        ClaimsPrincipal principal
     )
     {
         var descriptor = CommandCatalog.All.SingleOrDefault(c => c.Command == request.Command);
@@ -58,18 +41,6 @@ public static class CommandEndpoints
 
         return request.Command switch
         {
-            "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
-            "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
-            // "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
-            // "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
-
-            "help" => TypedResults.Ok(new GeneralHelp().ToCommandResult()),
-            "about" => TypedResults.Ok(new About().ToCommandResult()),
-            "settings" => TypedResults.Ok(new Settings().ToCommandResult()),
-
-            "login" => TypedResults.Ok(CommandHandler.LoginScreen()),
-            "logout" => TypedResults.Ok(await CommandHandler.Logout(signIn)),
-
             "account"
             or "add book"
             or "update book"
@@ -110,7 +81,7 @@ public static class CommandEndpoints
             extensions: new Dictionary<string, object?>
             {
                 ["code"] = "not_authenticated",
-                ["views"] = CommandHandler.LoginScreen().Views,
+                ["views"] = AuthEndpoints.LoginScreen().Views,
             }
         );
 

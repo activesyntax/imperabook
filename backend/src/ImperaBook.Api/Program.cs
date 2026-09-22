@@ -57,7 +57,7 @@ app.UseExceptionHandler();
 // handler's 401 (a session that expired mid-session, or a request that never had one) and
 // the 403. Formatting them as a bare problem would leave the shell holding a status code
 // and no instruction — which is exactly the interpretation the client must not do. The
-// login screen is composed by the same CommandHandler.LoginScreen the auth channel uses,
+// login screen is composed by the same AuthEndpoints.LoginScreen the auth channel uses,
 // so there is still one producer per view.
 app.UseStatusCodePages(async context =>
 {
@@ -88,7 +88,7 @@ app.UseStatusCodePages(async context =>
 
     if (response.StatusCode == StatusCodes.Status401Unauthorized)
     {
-        IReadOnlyList<ViewNode> views = CommandHandler.LoginScreen().Views;
+        IReadOnlyList<ViewNode> views = AuthEndpoints.LoginScreen().Views;
         problem.Extensions["views"] = views;
     }
 
@@ -144,6 +144,11 @@ app.MapAuthEndpoints();
 app.MapCommandEndpoints();
 app.MapLibraryEndpoints();
 app.MapDashboardEndpoints();
+app.MapBookEndpoints();
+app.MapAuthorEndpoints();
+app.MapHelpEndpoints();
+app.MapAboutEndpoints();
+app.MapSettingsEndpoints();
 app.MapImageEndpoints();
 
 // The SPA shell is an endpoint, so the fallback policy applies to it. Left as-is, an
