@@ -27,9 +27,8 @@ public static class CommandEndpoints
                     IDashboardQueries dashboard,
                     IBookQueries books,
                     IAuthorQueries authors,
-                    ILibraryQueries libraries,
                     CancellationToken ct
-                ) => Dispatch(request, principal, signIn, dashboard, books, authors, libraries, ct)
+                ) => Dispatch(request, principal, signIn, dashboard, books, authors, ct)
             )
             .WithName("RunCommand")
             .Produces<CommandResult>(StatusCodes.Status200OK)
@@ -46,7 +45,6 @@ public static class CommandEndpoints
         IDashboardQueries dashboard,
         IBookQueries books,
         IAuthorQueries authors,
-        ILibraryQueries libraries,
         CancellationToken ct
     )
     {
@@ -62,13 +60,9 @@ public static class CommandEndpoints
 
         return request.Command switch
         {
-            "library" => TypedResults.Ok(await CommandHandler.Library(libraries, ct)),
             "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
             "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
             "dashboard" => TypedResults.Ok(await CommandHandler.Dashboard(dashboard, ct)),
-            // "library" => libraryId.TryGetValue(out var id)
-            //     ? TypedResults.Ok(await CommandHandler.Library(libraries, id, ct))
-            //     : NoLibrary(),
             // "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
             // "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
 
