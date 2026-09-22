@@ -52,13 +52,6 @@ if (!app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 
-// ADR 26: any ProblemDetails may carry `views`, and when it does, that array is the view
-// the client renders. Two producers reach this point with no body at all: the cookie
-// handler's 401 (a session that expired mid-session, or a request that never had one) and
-// the 403. Formatting them as a bare problem would leave the shell holding a status code
-// and no instruction — which is exactly the interpretation the client must not do. The
-// login screen is composed by the same AuthEndpoints.LoginScreen the auth channel uses,
-// so there is still one producer per view.
 app.UseStatusCodePages(async context =>
 {
     var response = context.HttpContext.Response;
@@ -105,8 +98,6 @@ app.UseStaticFiles(
     }
 );
 
-// The SPA bundle at the root. Both calls read wwwroot; the prefixed one runs first, so a
-// /static request is answered there and never reaches this one.
 app.UseStaticFiles();
 
 if (app.Configuration.GetValue("RunMigrationsOnStartup", false))
@@ -128,20 +119,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 
-// Order between these two is not stylistic. UseAuthentication reads the cookie and
-// populates HttpContext.User; UseAuthorization decides whether that user may proceed.
-// Reversed, every request is evaluated as anonymous and the FallbackPolicy denies
-// everything — including a valid session.
 app.UseAuthentication();
 app.UseAuthorization();
 
-// The bootstrap surface: what a browser needs before it can prove who it is. Two routes
-// inside — the login descriptor plus its view, and the sign-in itself — both marked
-// AllowAnonymous in AuthEndpoints. Everything else is behind the default-deny fallback
-// policy, including the control channel.
 app.MapAuthEndpoints();
 
-app.MapCommandEndpoints();
 app.MapLibraryEndpoints();
 app.MapDashboardEndpoints();
 app.MapBookEndpoints();
@@ -151,9 +133,6 @@ app.MapAboutEndpoints();
 app.MapSettingsEndpoints();
 app.MapImageEndpoints();
 
-// The SPA shell is an endpoint, so the fallback policy applies to it. Left as-is, an
-// anonymous browser gets a 401 for the very document that would let it sign in. The shell
-// is public; what it can *do* is decided per command inside the dispatcher (ADR 24).
 app.MapFallbackToFile("index.html").AllowAnonymous();
 
 app.Run();
