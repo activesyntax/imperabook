@@ -24,11 +24,10 @@ public static class CommandEndpoints
                     CommandRequest request,
                     ClaimsPrincipal principal,
                     SignInManager<UserEntity> signIn,
-                    IDashboardQueries dashboard,
                     IBookQueries books,
                     IAuthorQueries authors,
                     CancellationToken ct
-                ) => Dispatch(request, principal, signIn, dashboard, books, authors, ct)
+                ) => Dispatch(request, principal, signIn, books, authors, ct)
             )
             .WithName("RunCommand")
             .Produces<CommandResult>(StatusCodes.Status200OK)
@@ -42,7 +41,6 @@ public static class CommandEndpoints
         CommandRequest request,
         ClaimsPrincipal principal,
         SignInManager<UserEntity> signIn,
-        IDashboardQueries dashboard,
         IBookQueries books,
         IAuthorQueries authors,
         CancellationToken ct
@@ -62,7 +60,6 @@ public static class CommandEndpoints
         {
             "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
             "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
-            "dashboard" => TypedResults.Ok(await CommandHandler.Dashboard(dashboard, ct)),
             // "list books" => TypedResults.Ok(await CommandHandler.ListBooks(books, ct)),
             // "list authors" => TypedResults.Ok(await CommandHandler.ListAuthors(authors, ct)),
 

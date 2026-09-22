@@ -143,6 +143,7 @@ app.MapAuthEndpoints();
 
 app.MapCommandEndpoints();
 app.MapLibraryEndpoints();
+app.MapDashboardEndpoints();
 app.MapImageEndpoints();
 
 // The SPA shell is an endpoint, so the fallback policy applies to it. Left as-is, an

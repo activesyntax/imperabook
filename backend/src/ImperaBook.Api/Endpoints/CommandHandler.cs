@@ -36,11 +36,6 @@ public static class CommandHandler
         );
     }
 
-    internal static async Task<CommandResult> Dashboard(
-        IDashboardQueries dashboard,
-        CancellationToken ct
-    ) => (await dashboard.GetSummaryAsync(ct)).ToCommandResult();
-
     /// <summary>
     /// The login screen. <paramref name="error"/> is non-null only when a sign-in attempt was
     /// rejected — the same surface comes back, carrying the reason.
@@ -68,7 +63,7 @@ public static class CommandHandler
         CancellationToken ct
     )
     {
-        var summary = await Dashboard(dashboard, ct);
+        var summary = await DashboardEndpoints.Summary(dashboard, ct);
 
         ViewNode[] views =
         [
