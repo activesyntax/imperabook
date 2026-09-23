@@ -122,6 +122,33 @@ export function getDSLCompletions(input: string, caretOffset: number): Completio
   // Equals caretOffset when there is no such word.
   const partialStart = findPartialWordStart(input, tokenStream, caretOffset);
 
+  const suggestions: CompletionItem[] = [];
+  collectSuggestions(input, caretOffset, parser, tokenStream, caretTokenIndex, partialStart, suggestions);
+
+  // A keyword the caret touches may itself be the prefix of a longer phrase
+  // ("list book" → "list books"), so it is also completed as a half-typed word.
+  const touchedIndex = findKeywordTokenEndingAtCaret(tokenStream, caretOffset);
+  if (touchedIndex !== undefined) {
+    const touchedStart = tokenStream.get(touchedIndex).start;
+    collectSuggestions(input, caretOffset, parser, tokenStream, touchedIndex, touchedStart, suggestions);
+  }
+
+  return suggestions;
+}
+
+/**
+ * Collects the phrase suggestions valid at caretTokenIndex into suggestions,
+ * skipping labels already present.
+ */
+function collectSuggestions(
+  input: string,
+  caretOffset: number,
+  parser: ImperaBookDSLParser,
+  tokenStream: CommonTokenStream,
+  caretTokenIndex: number,
+  partialStart: number,
+  suggestions: CompletionItem[]
+): void {
   // 4. Two independent passes over the ATN graph
   const passes = [
     collectFor(parser, caretTokenIndex, COMMAND_RULES),
@@ -130,7 +157,6 @@ export function getDSLCompletions(input: string, caretOffset: number): Completio
 
   // 5. Turn candidate rules into phrase suggestions
   const tokens = tokenStream.getTokens();
-  const suggestions: CompletionItem[] = [];
 
   for (const candidates of passes) {
     for (const [ruleIndex, rule] of candidates.rules) {
@@ -168,8 +194,22 @@ export function getDSLCompletions(input: string, caretOffset: number): Completio
       });
     }
   }
+}
 
-  return suggestions;
+/**
+ * Index of the keyword token that ends exactly at the caret, if any.
+ * Strings and numbers are values, not phrase prefixes, so they don't count.
+ */
+function findKeywordTokenEndingAtCaret(
+  tokenStream: CommonTokenStream,
+  caretOffset: number
+): number | undefined {
+  const token = tokenStream.getTokens().find(t => t.type !== Token.EOF && t.stop === caretOffset - 1);
+
+  if (token === undefined || IGNORED_TOKENS.includes(token.type)) {
+    return undefined;
+  }
+  return token.tokenIndex;
 }
 
 /**

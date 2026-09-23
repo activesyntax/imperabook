@@ -1,70 +1,61 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
 
-import { CommandRegistry } from '@app/commands/command-registry';
 import { CommandRunner } from '@app/commands/command-runner';
-import { CommandSpec } from '@core/model';
+import { WorkspaceStore } from '@app/state/workspace-store';
+import type { CommandResult } from '@workspace/views/view-node';
 import { CommandShell } from './command-shell';
 
-const LOGIN = {
-  command: 'login',
-  parameters: [
-    { name: 'username', prompt: 'Username', required: true, credential: 'username' },
-    { name: 'password', prompt: 'Password', required: true, credential: 'password' },
-  ],
-} as unknown as CommandSpec;
-/**
- * A shell reads the registry as signals and never loads it — ShellStartup does that.
- * Faking the signals keeps this spec off HTTP and lets it set the one state the
- * component actually reacts to: a registry that has answered.
- */
-function fakeRegistry(commands: readonly CommandSpec[], authenticated: boolean) {
-  return {
-    loaded: signal(true).asReadonly(),
-    commands: signal(commands).asReadonly(),
-    authenticated: signal(authenticated).asReadonly(),
-    session: signal(null).asReadonly(),
-    startupViews: signal([]).asReadonly(),
-    openedView: () => null,
-    ready: () => Promise.resolve(),
-    refresh: () => Promise.resolve(),
-  };
-}
+const DASHBOARD_RESULT: CommandResult = {
+  views: [{ type: 'message', text: 'dashboard', kind: 'info' }],
+};
 
 describe('CommandShell', () => {
   let component: CommandShell;
   let fixture: ComponentFixture<CommandShell>;
+  let runner: { run: ReturnType<typeof vi.fn> };
 
-  async function build(commands: readonly CommandSpec[], authenticated: boolean): Promise<void> {
+  beforeEach(async () => {
+    runner = { run: vi.fn(() => Promise.resolve(DASHBOARD_RESULT)) };
+
     await TestBed.configureTestingModule({
       imports: [CommandShell],
-      providers: [
-        { provide: CommandRegistry, useValue: fakeRegistry(commands, authenticated) },
-        { provide: CommandRunner, useValue: { open: () => Promise.resolve(null), run: () => Promise.resolve({ views: [] }) } },
-      ],
+      providers: [{ provide: CommandRunner, useValue: runner }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CommandShell);
     component = fixture.componentInstance;
     fixture.detectChanges();
     await fixture.whenStable();
+  });
+
+  function type(text: string): HTMLInputElement {
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input');
+    input.value = text;
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    return input;
   }
 
-  it('should create', async () => {
-    await build([], true);
+  function submit(input: HTMLInputElement): Promise<void> {
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true }));
+    return fixture.whenStable();
+  }
 
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  // it('starts the only available command when there is no session', async () => {
-  //   await build([LOGIN], false);
-  //
-  //   expect(fixture.nativeElement.textContent).toContain('');
-  // });
-  //
-  // it('stays idle when a session exists', async () => {
-  //   await build([LOGIN], true);
-  //
-  //   expect(fixture.nativeElement.textContent).not.toContain('login');
-  // });
+  it('runs the parsed command and shows its result', async () => {
+    await submit(type('dashboard'));
+
+    expect(runner.run).toHaveBeenCalledWith({ command: 'dashboard', params: {} });
+    expect(TestBed.inject(WorkspaceStore).views()).toEqual(DASHBOARD_RESULT.views);
+  });
+
+  it('does not run unrecognized input', async () => {
+    await submit(type('xyz'));
+
+    expect(runner.run).not.toHaveBeenCalled();
+    expect(TestBed.inject(WorkspaceStore).views()[0]).toMatchObject({ type: 'message', kind: 'error' });
+  });
 });

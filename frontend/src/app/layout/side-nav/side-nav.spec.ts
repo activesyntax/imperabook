@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpTesting } from '@testing/http';
 import { SideNav } from './side-nav';
 
 describe('SideNav', () => {
@@ -9,7 +8,6 @@ describe('SideNav', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SideNav],
-      providers: [provideHttpTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(SideNav);
@@ -17,7 +15,7 @@ describe('SideNav', () => {
     fixture.componentRef.setInput('library', 'My Library');
     fixture.componentRef.setInput('avatarUrl', null);
     component = fixture.componentInstance;
-    fixture.detectChanges();      // dispatches the resource request
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 
