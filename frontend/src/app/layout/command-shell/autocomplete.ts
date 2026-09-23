@@ -26,11 +26,29 @@ interface Phrase {
  */
 const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_addBookCmd]: { label: 'add book', insertText: 'add book ' },
-  [ImperaBookDSLParser.RULE_addAuthorCmd]: { label: 'add author', insertText: 'add author ' },
+  [ImperaBookDSLParser.RULE_updateBookCmd]: { label: 'update book', insertText: 'update book' },
+  [ImperaBookDSLParser.RULE_removeBookCmd]: { label: 'remove book', insertText: 'remove book' },
+  [ImperaBookDSLParser.RULE_showBookCmd]: { label: 'show book', insertText: 'show book' },
   [ImperaBookDSLParser.RULE_listBooksCmd]: { label: 'list books', insertText: 'list books' },
+  [ImperaBookDSLParser.RULE_addAuthorCmd]: { label: 'add author', insertText: 'add author ' },
+  [ImperaBookDSLParser.RULE_updateAuthorCmd]: { label: 'update author', insertText: 'update author' },
+  [ImperaBookDSLParser.RULE_removeAuthorCmd]: { label: 'remove author', insertText: 'remove author' },
   [ImperaBookDSLParser.RULE_listAuthorsCmd]: { label: 'list authors', insertText: 'list authors' },
+  [ImperaBookDSLParser.RULE_dashboardCmd]: { label: 'dashboard', insertText: 'dashboard' },
+  [ImperaBookDSLParser.RULE_libraryCmd]: { label: 'library', insertText: 'library' },
+  [ImperaBookDSLParser.RULE_settingsCmd]: { label: 'settings', insertText: 'settings' },
+  [ImperaBookDSLParser.RULE_aboutCmd]: { label: 'about', insertText: 'about' },
+  [ImperaBookDSLParser.RULE_helpCmd]: { label: 'help', insertText: 'help' },
+  [ImperaBookDSLParser.RULE_accountCmd]: { label: 'account', insertText: 'account' },
+  [ImperaBookDSLParser.RULE_loginCmd]: { label: 'login', insertText: 'login' },
+  [ImperaBookDSLParser.RULE_logoutCmd]: { label: 'logout', insertText: 'logout' },
   [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author ""' },
   [ImperaBookDSLParser.RULE_titleParam]: { label: 'with title', insertText: 'with title ""' },
+  [ImperaBookDSLParser.RULE_subtitleParam]: { label: 'subtitled', insertText: 'subtitled ""' },
+  [ImperaBookDSLParser.RULE_languageParam]: { label: 'in language', insertText: 'in language ""' },
+  [ImperaBookDSLParser.RULE_publicationYearParam]: { label: 'published in', insertText: 'published in ' },
+  [ImperaBookDSLParser.RULE_isbnParam]: { label: 'with isbn', insertText: 'with isbn ""' },
+  [ImperaBookDSLParser.RULE_summaryParam]: { label: 'with summary', insertText: 'with summary ""' },
 };
 
 /**
@@ -41,18 +59,41 @@ const RULE_PHRASES: Record<number, Phrase> = {
  */
 const COMMAND_RULES = [
   ImperaBookDSLParser.RULE_addBookCmd,
-  ImperaBookDSLParser.RULE_addAuthorCmd,
+  ImperaBookDSLParser.RULE_updateBookCmd,
+  ImperaBookDSLParser.RULE_removeBookCmd,
+  ImperaBookDSLParser.RULE_showBookCmd,
   ImperaBookDSLParser.RULE_listBooksCmd,
+  ImperaBookDSLParser.RULE_addAuthorCmd,
+  ImperaBookDSLParser.RULE_updateAuthorCmd,
+  ImperaBookDSLParser.RULE_removeAuthorCmd,
   ImperaBookDSLParser.RULE_listAuthorsCmd,
+  ImperaBookDSLParser.RULE_dashboardCmd,
+  ImperaBookDSLParser.RULE_libraryCmd,
+  ImperaBookDSLParser.RULE_settingsCmd,
+  ImperaBookDSLParser.RULE_aboutCmd,
+  ImperaBookDSLParser.RULE_helpCmd,
+  ImperaBookDSLParser.RULE_accountCmd,
+  ImperaBookDSLParser.RULE_loginCmd,
+  ImperaBookDSLParser.RULE_logoutCmd,
 ];
 
+/**
+ * bookDetailParam is left out on purpose: it only groups the optional detail
+ * params, and preferring it would hide the individual phrases inside it.
+ */
 const PARAM_RULES = [
   ImperaBookDSLParser.RULE_authorParam,
   ImperaBookDSLParser.RULE_titleParam,
+  ImperaBookDSLParser.RULE_subtitleParam,
+  ImperaBookDSLParser.RULE_languageParam,
+  ImperaBookDSLParser.RULE_publicationYearParam,
+  ImperaBookDSLParser.RULE_isbnParam,
+  ImperaBookDSLParser.RULE_summaryParam,
 ];
 
 const IGNORED_TOKENS = [
   ImperaBookDSLParser.STRING,
+  ImperaBookDSLParser.NUMBER,
   ImperaBookDSLParser.EOF,
   ImperaBookDSLParser.WS,
 ];
