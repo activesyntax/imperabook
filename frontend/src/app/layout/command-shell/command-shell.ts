@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 
 import { CommandRunner } from '@app/commands/command-runner';
+import { resultOfUnrecognized } from '@app/commands/command-error';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { SuggestionService } from './suggestion-service';
 import { Index, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
@@ -128,17 +129,13 @@ export class CommandShell {
     }
   }
 
-  protected submit(): void {
+  protected async submit(): Promise<void> {
+    const text = this.query();
+    const parsedCommand = new CommandVisitor().visit(parseDSLCommand(text));
 
-    const parseTree = parseDSLCommand(this.query());
-    // parseDSLCommand('add book by author "George Orwell" with title "1984"');
-    const visitor = new CommandVisitor();
-    const parsedCommand = visitor.visit(parseTree);
-
-    console.log('PARSED COMMAND', parsedCommand);
-    console.log("SUBMIT");
-    console.log(this.query());
-    const commandResult = this.runner.run(parsedCommand);
+    const commandResult = parsedCommand === null
+      ? resultOfUnrecognized(text)
+      : await this.runner.run(parsedCommand);
     this.store.setResult(commandResult);
   }
 

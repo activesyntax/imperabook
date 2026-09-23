@@ -1,11 +1,10 @@
 <nav class="nav" aria-label="Commands">
-@if (session(); as owner) {
-    <app-user-badge
-      class="nav__identity"
-      [name]="owner.displayName"
-      [library]="owner.libraryName"
-    />
-  }
+  <app-user-badge
+    class="nav__identity"
+    [name]="name()"
+    [library]="library()"
+    [avatarUrl]="avatarUrl()"
+  />
 
   @if (account().length > 0) {
   <ul class="nav__list" aria-label="Account commands">
@@ -18,7 +17,7 @@
   }
 
   <p class="nav__title">Application</p>
-  @if (account().length > 0) {
+  @if (application().length > 0) {
   <ul class="nav__list" aria-label="Application commands">
     @for (cmd of application(); track cmd.command) {
     <li>

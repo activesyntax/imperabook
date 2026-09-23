@@ -34,6 +34,16 @@ export function resultOfError(error: unknown): CommandResult {
   return { views: [errorView(problem?.detail ?? problem?.title ?? error.statusText)] };
 }
 
+/** A parancs érvényes, de még nincs mögötte végpont — a szerverig el sem megy. */
+export function resultOfUnsupported(command: string): CommandResult {
+  return { views: [{ type: 'message', text: `'${command}' is not available yet.`, kind: 'warning' }] };
+}
+
+/** A beírt szöveg nem értelmezhető parancsként — nincs mit a szervernek küldeni. */
+export function resultOfUnrecognized(text: string): CommandResult {
+  return { views: [errorView(`Unrecognized command: ${text}`)] };
+}
+
 /**
  * Az egyetlen hely, ahol a frontend maga állít elő nézetet — pontosan azért,
  * mert egy le sem érkezett válasz nem tud magáról nyilatkozni.
