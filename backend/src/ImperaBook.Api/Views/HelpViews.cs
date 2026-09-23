@@ -30,7 +30,9 @@ public static class HelpViews
                     ),
                     TextNode.Hint(["Ctrl + K"], "focus the command bar"),
                     TextNode.Hint(["book"], "surfaces every book command"),
-                    TextNode.Hint(["Tab", "Enter"], "accept the highlighted one"),
+                    TextNode.Hint(["Ctrl + Space", "Ctrl + Shift + Space"], "highlight the next or previous suggestion"),
+                    TextNode.Hint(["Tab"], "accept the highlighted one"),
+                    TextNode.Hint(["Enter"], "run the typed command"),
                     TextNode.H2("Moving around"),
                     TextNode.Para(
                         "The command bar always holds focus, so plain letters are typing, "

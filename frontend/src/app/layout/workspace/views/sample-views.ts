@@ -14,7 +14,7 @@ const welcomeGuidance: GuidanceView = {
     `Type a command to add, find, and organize your books — anything that isn't a command runs as a search.`,
   hints: [
     { keys: ['Enter'], label: 'run the typed command' },
-    { keys: ['Tab', 'Enter'], label: 'pick a suggestion, then accept' },
+    { keys: ['Ctrl + Space', 'Tab'], label: 'pick a suggestion, then accept' },
     { keys: ['Ctrl + K'], label: 'focus the command bar' },
   ],
 };

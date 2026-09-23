@@ -15,7 +15,7 @@ import { CommandRunner } from '@app/commands/command-runner';
 import { resultOfUnrecognized } from '@app/commands/command-error';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { SuggestionService } from './suggestion-service';
-import { Index, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
+import { Index, IndexMove, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 import { parseDSLCommand } from './command-parser';
 import { CommandVisitor } from './command-visitor';
 
@@ -87,21 +87,23 @@ export class CommandShell {
     switch (event.key) {
       case 'Tab':
         event.preventDefault();
-        this.selectSuggestion(event);
-
+        this.acceptSuggestion();
+        break;
+      case ' ':
+        // Ctrl + Space highlights the next suggestion, Ctrl + Shift + Space the previous one.
+        if (!event.ctrlKey || this.suggestions().all.length === 0) return;
+        event.preventDefault();
+        this.selectSuggestion(event.shiftKey ? prevCyclicIndex : nextCyclicIndex);
         break;
       case 'Enter':
         event.preventDefault();
-        event.ctrlKey.valueOf() ? this.submit() : this.acceptSuggestion();
+        void this.submit();
         break;
     }
   }
 
-  private selectSuggestion(event: KeyboardEvent) {
-    const index = event.shiftKey
-      ? prevCyclicIndex(this.suggestions().range, this.selectedIndex())
-      : nextCyclicIndex(this.suggestions().range, this.selectedIndex());
-    this.selectedIndex.set(index);
+  private selectSuggestion(move: IndexMove) {
+    this.selectedIndex.set(move(this.suggestions().range, this.selectedIndex()));
   }
 
   getCursorPosition(): number {

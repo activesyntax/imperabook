@@ -36,9 +36,20 @@ describe('CommandShell', () => {
     return input;
   }
 
+  function press(input: HTMLInputElement, key: string, init: KeyboardEventInit = {}): KeyboardEvent {
+    const event = new KeyboardEvent('keydown', { key, cancelable: true, ...init });
+    input.dispatchEvent(event);
+    fixture.detectChanges();
+    return event;
+  }
+
   function submit(input: HTMLInputElement): Promise<void> {
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true }));
+    press(input, 'Enter');
     return fixture.whenStable();
+  }
+
+  function activeChip(): string {
+    return fixture.nativeElement.querySelector('.chip.active')?.textContent.trim();
   }
 
   it('should create', () => {
@@ -57,5 +68,37 @@ describe('CommandShell', () => {
 
     expect(runner.run).not.toHaveBeenCalled();
     expect(TestBed.inject(WorkspaceStore).views()[0]).toMatchObject({ type: 'message', kind: 'error' });
+  });
+
+  it('accepts the highlighted suggestion with Tab', () => {
+    const input = type('list boo');
+
+    press(input, 'Tab');
+
+    expect(input.value).toBe('list books ');
+    expect(runner.run).not.toHaveBeenCalled();
+  });
+
+  it('moves the highlight with Ctrl + Space, wrapping around', () => {
+    const input = type('log');
+    expect(activeChip()).toBe('login');
+
+    press(input, ' ', { ctrlKey: true });
+    expect(activeChip()).toBe('logout');
+
+    press(input, ' ', { ctrlKey: true });
+    expect(activeChip()).toBe('login');
+
+    press(input, ' ', { ctrlKey: true, shiftKey: true });
+    expect(activeChip()).toBe('logout');
+  });
+
+  it('leaves the arrows to the workspace', () => {
+    const input = type('log');
+
+    const event = press(input, 'ArrowDown');
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(activeChip()).toBe('login');
   });
 });
