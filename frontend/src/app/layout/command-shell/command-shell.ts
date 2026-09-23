@@ -12,8 +12,6 @@ import {
 } from '@angular/core';
 
 import { CommandRunner } from '@app/commands/command-runner';
-import { CommandProvider } from '@app/commands/command-provider';
-import { CommandRegistry } from '@app/commands/command-registry';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { SuggestionService } from './suggestion-service';
 import { Index, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
@@ -49,25 +47,11 @@ function suggestionList(suggestions: readonly string[]): SuggestionList {
   styleUrl: './command-shell.scss',
 })
 export class CommandShell {
-  private readonly commands = inject(CommandProvider);
-  private readonly registry = inject(CommandRegistry);
   private readonly runner = inject(CommandRunner);
   private readonly store = inject(WorkspaceStore);
   // private readonly shell = inject(ShellStateMachine);
   private readonly suggestionService = inject(SuggestionService);
 
-
-  // private readonly deps: Shell.ShellDeps = {
-  //   suggestionsFor: (query) => this.commands.suggestionsFor(query, undefined),
-  //
-  //   forcedCommand: () => {
-  //     if (this.registry.authenticated()) return undefined;
-  //
-  //     const available = this.registry.commands();
-  //     return available.length === 1 ? available[0] : undefined;
-  //   },
-  // };
-  //
 
   protected readonly externalQueryInput = signal('');
   protected readonly query = linkedSignal(() => this.externalQueryInput());
@@ -82,11 +66,6 @@ export class CommandShell {
     }
   });
 
-  // protected readonly activeSuggestion = computed(() => this.suggestions().all[1]);
-
-  // protected readonly suggestions = computed(() => Transition.suggestionsOf(this.shell.state(), this.deps));
-  // protected readonly selectedIndex = computed(() => Transition.selectedIndexOf(this.shell.state(), this.deps));
-  // protected readonly activeCommand = computed(() => Transition.activeOf(this.shell.state(), this.deps));
 
   protected readonly busy = computed(() => false);
 
@@ -96,10 +75,6 @@ export class CommandShell {
   private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
   constructor() {
     effect(() => this.focus(this.bar()?.nativeElement));
-
-    effect(() => {
-      if (!this.registry.loaded()) return;
-    });
   }
 
   protected onInput(event: Event): void {
@@ -116,7 +91,7 @@ export class CommandShell {
         break;
       case 'Enter':
         event.preventDefault();
-        this.acceptSuggestion();
+        event.ctrlKey.valueOf() ? this.submit() : this.acceptSuggestion();
         break;
     }
   }
@@ -137,11 +112,6 @@ export class CommandShell {
 
   acceptSuggestion() {
 
-    const parseTree = parseDSLCommand(this.query());
-    // parseDSLCommand('add book by author "George Orwell" with title "1984"');
-    const visitor = new CommandVisitor();
-    const result = visitor.visit(parseTree);
-    console.log('RESULT', result);
 
     if (this.suggestions().all.length > 0 && this.selectedIndex() !== undefined) {
       const suggestion = this.suggestions().all[this.selectedIndex()!];
@@ -159,7 +129,17 @@ export class CommandShell {
   }
 
   protected submit(): void {
+
+    const parseTree = parseDSLCommand(this.query());
+    // parseDSLCommand('add book by author "George Orwell" with title "1984"');
+    const visitor = new CommandVisitor();
+    const parsedCommand = visitor.visit(parseTree);
+
+    console.log('PARSED COMMAND', parsedCommand);
     console.log("SUBMIT");
+    console.log(this.query());
+    const commandResult = this.runner.run(parsedCommand);
+    this.store.setResult(commandResult);
   }
 
   @HostListener('document:keydown', ['$event'])

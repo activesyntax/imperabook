@@ -1,13 +1,10 @@
 import { inject, Service } from "@angular/core";
-import { CommandRegistry } from "@app/commands/command-registry";
-import { getSuggestions } from "./suggestion-provider";
 import { tokens } from "@core/tokenizer";
 import { getDSLCompletions } from "./autocomplete";
 
 @Service()
 export class SuggestionService {
 
-  private readonly registry = inject(CommandRegistry);
 
   public suggestionsFor(query: string, cursorPosition: number): readonly string[] {
 
