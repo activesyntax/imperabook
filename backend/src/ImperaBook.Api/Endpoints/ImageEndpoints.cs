@@ -10,8 +10,6 @@ public static class ImageEndpoints
     {
         app.MapPost(ImageRoutes.Collection, Upload)
             .WithName("UploadImage")
-            // A JSON command body cannot carry a file, so this is the one point where the client
-            // touches the backend outside the command channel before a command runs.
             .DisableAntiforgery()
             .Produces<UploadedImage>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
@@ -65,9 +63,6 @@ public static class ImageEndpoints
 
         var hash = stored.Value.Value;
 
-        // 201 even when the bytes were already present: content-addressing makes a re-upload a
-        // no-op that ends in the same state, and reporting it differently would tell the caller
-        // something about other callers' uploads.
         return TypedResults.Created($"/api/images/{hash}", new UploadedImage(hash));
     }
 
@@ -78,8 +73,6 @@ public static class ImageEndpoints
         CancellationToken ct
     )
     {
-        // A malformed address names nothing, which is what 404 says. Distinguishing it from an
-        // unknown-but-well-formed one would only tell a prober how to spell a hash.
         if (!ContentHash.Create(hash).TryGetValue(out var contentHash))
             return NotFound();
 
@@ -87,9 +80,6 @@ public static class ImageEndpoints
         if (content is null)
             return NotFound();
 
-        // The URL *is* the content, so it can never go stale: different bytes are a different
-        // address. This is the one place `immutable` is honest — static assets under /static keep
-        // their names across deploys and must revalidate instead.
         http.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
 
         return Results.Stream(content.Bytes, content.MediaType, enableRangeProcessing: true);

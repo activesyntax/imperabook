@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using ImperaBook.API.Data;
 using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
 using ImperaBook.Infrastructure.Data.Entities;
@@ -20,11 +19,6 @@ public static class AuthEndpoints
 
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/auth/bootstrap", Bootstrap)
-            .WithName("Bootstrap")
-            .AllowAnonymous()
-            .Produces<BootstrapResponse>(StatusCodes.Status200OK);
-
         app.MapPost("/api/auth/login", Login)
             .WithName("Login")
             .AllowAnonymous()
@@ -42,15 +36,6 @@ public static class AuthEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         return app;
-    }
-
-    private static Ok<BootstrapResponse> Bootstrap(HttpContext http)
-    {
-        http.Response.Headers.CacheControl = "no-store";
-
-        return TypedResults.Ok(
-            new BootstrapResponse(CommandCatalog.Login, LoginScreen().Views)
-        );
     }
 
     private static async Task<Results<Ok<CommandResult>, ProblemHttpResult>> Login(
@@ -88,8 +73,6 @@ public static class AuthEndpoints
         return TypedResults.Ok(await LoggedIn(dashboard, user.FirstName, ct));
     }
 
-    // ADR 26: the error shape carries a view too. The client renders the login screen with
-    // the reason on it rather than deciding for itself what a 401 should look like.
     private static ProblemHttpResult Rejected() =>
         TypedResults.Problem(
             detail: RejectedMessage,
@@ -114,10 +97,6 @@ public static class AuthEndpoints
         );
     }
 
-    /// <summary>
-    /// The login screen. <paramref name="error"/> is non-null only when a sign-in attempt was
-    /// rejected — the same surface comes back, carrying the reason.
-    /// </summary>
     internal static CommandResult LoginScreen(string? error = null) =>
         new(
             error is null
@@ -154,5 +133,3 @@ public static class AuthEndpoints
 }
 
 public sealed record LoginRequest(string Username, string Password);
-
-public sealed record BootstrapResponse(CommandDescriptor Command, IReadOnlyList<ViewNode> Views);
