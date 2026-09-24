@@ -86,6 +86,12 @@ export class CommandShell {
     this.cursorPosition.set(input.selectionStart ?? input.value.length);
   }
 
+  // Caret moves without typing (arrow keys, mouse clicks) don't fire `input`.
+  protected onSelectionChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.cursorPosition.set(input.selectionStart ?? input.value.length);
+  }
+
   protected onKeydown(event: KeyboardEvent): void {
 
     switch (event.key) {
