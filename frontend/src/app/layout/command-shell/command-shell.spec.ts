@@ -79,6 +79,24 @@ describe('CommandShell', () => {
     expect(runner.run).not.toHaveBeenCalled();
   });
 
+  it('puts the caret inside the quotes after accepting a string param', () => {
+    const input = type('add book with t');
+
+    press(input, 'Tab');
+
+    expect(input.value).toBe('add book with title ""');
+    expect(input.selectionStart).toBe('add book with title "'.length);
+  });
+
+  it('recomputes the suggestions after accepting one', () => {
+    const input = type('add bo');
+
+    press(input, 'Tab');
+
+    expect(input.value).toBe('add book ');
+    expect(activeChip()).toBe('with title');
+  });
+
   it('moves the highlight with Ctrl + Space, wrapping around', () => {
     const input = type('log');
     expect(activeChip()).toBe('login');

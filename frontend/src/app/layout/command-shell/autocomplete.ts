@@ -11,14 +11,20 @@ import { ImperaBookDSLParser } from '@dsl/generated/ImperaBookDSLParser';
 export interface CompletionItem {
   label: string;
   insertText: string;
-  /** Replace input[replaceStart, caretOffset) with insertText. */
+  /** Replace input[replaceStart, replaceEnd) with insertText. */
   replaceStart: number;
+  replaceEnd: number;
+  /** Caret offset within insertText once the completion is accepted. */
+  caret: number;
 }
 
 interface Phrase {
   label: string;
+  /** Text to insert; "$0" marks where the caret lands (default: at the end). */
   insertText: string;
 }
+
+const CARET_MARKER = '$0';
 
 /**
  * Phrase text for each "phrase rule" of the grammar. c3 reports these rules
@@ -26,29 +32,29 @@ interface Phrase {
  */
 const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_addBookCmd]: { label: 'add book', insertText: 'add book ' },
-  [ImperaBookDSLParser.RULE_updateBookCmd]: { label: 'update book', insertText: 'update book' },
-  [ImperaBookDSLParser.RULE_removeBookCmd]: { label: 'remove book', insertText: 'remove book' },
-  [ImperaBookDSLParser.RULE_showBookCmd]: { label: 'show book', insertText: 'show book' },
-  [ImperaBookDSLParser.RULE_listBooksCmd]: { label: 'list books', insertText: 'list books' },
+  [ImperaBookDSLParser.RULE_updateBookCmd]: { label: 'update book', insertText: 'update book ' },
+  [ImperaBookDSLParser.RULE_removeBookCmd]: { label: 'remove book', insertText: 'remove book ' },
+  [ImperaBookDSLParser.RULE_showBookCmd]: { label: 'show book', insertText: 'show book ' },
+  [ImperaBookDSLParser.RULE_listBooksCmd]: { label: 'list books', insertText: 'list books ' },
   [ImperaBookDSLParser.RULE_addAuthorCmd]: { label: 'add author', insertText: 'add author ' },
-  [ImperaBookDSLParser.RULE_updateAuthorCmd]: { label: 'update author', insertText: 'update author' },
-  [ImperaBookDSLParser.RULE_removeAuthorCmd]: { label: 'remove author', insertText: 'remove author' },
-  [ImperaBookDSLParser.RULE_listAuthorsCmd]: { label: 'list authors', insertText: 'list authors' },
-  [ImperaBookDSLParser.RULE_dashboardCmd]: { label: 'dashboard', insertText: 'dashboard' },
-  [ImperaBookDSLParser.RULE_libraryCmd]: { label: 'library', insertText: 'library' },
-  [ImperaBookDSLParser.RULE_settingsCmd]: { label: 'settings', insertText: 'settings' },
-  [ImperaBookDSLParser.RULE_aboutCmd]: { label: 'about', insertText: 'about' },
-  [ImperaBookDSLParser.RULE_helpCmd]: { label: 'help', insertText: 'help' },
-  [ImperaBookDSLParser.RULE_accountCmd]: { label: 'account', insertText: 'account' },
-  [ImperaBookDSLParser.RULE_loginCmd]: { label: 'login', insertText: 'login' },
-  [ImperaBookDSLParser.RULE_logoutCmd]: { label: 'logout', insertText: 'logout' },
-  [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author ""' },
-  [ImperaBookDSLParser.RULE_titleParam]: { label: 'with title', insertText: 'with title ""' },
-  [ImperaBookDSLParser.RULE_subtitleParam]: { label: 'subtitled', insertText: 'subtitled ""' },
-  [ImperaBookDSLParser.RULE_languageParam]: { label: 'in language', insertText: 'in language ""' },
+  [ImperaBookDSLParser.RULE_updateAuthorCmd]: { label: 'update author', insertText: 'update author ' },
+  [ImperaBookDSLParser.RULE_removeAuthorCmd]: { label: 'remove author', insertText: 'remove author ' },
+  [ImperaBookDSLParser.RULE_listAuthorsCmd]: { label: 'list authors', insertText: 'list authors ' },
+  [ImperaBookDSLParser.RULE_dashboardCmd]: { label: 'dashboard', insertText: 'dashboard ' },
+  [ImperaBookDSLParser.RULE_libraryCmd]: { label: 'library', insertText: 'library ' },
+  [ImperaBookDSLParser.RULE_settingsCmd]: { label: 'settings', insertText: 'settings ' },
+  [ImperaBookDSLParser.RULE_aboutCmd]: { label: 'about', insertText: 'about ' },
+  [ImperaBookDSLParser.RULE_helpCmd]: { label: 'help', insertText: 'help ' },
+  [ImperaBookDSLParser.RULE_accountCmd]: { label: 'account', insertText: 'account ' },
+  [ImperaBookDSLParser.RULE_loginCmd]: { label: 'login', insertText: 'login ' },
+  [ImperaBookDSLParser.RULE_logoutCmd]: { label: 'logout', insertText: 'logout ' },
+  [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author "$0"' },
+  [ImperaBookDSLParser.RULE_titleParam]: { label: 'with title', insertText: 'with title "$0"' },
+  [ImperaBookDSLParser.RULE_subtitleParam]: { label: 'subtitled', insertText: 'subtitled "$0"' },
+  [ImperaBookDSLParser.RULE_languageParam]: { label: 'in language', insertText: 'in language "$0"' },
   [ImperaBookDSLParser.RULE_publicationYearParam]: { label: 'published in', insertText: 'published in ' },
-  [ImperaBookDSLParser.RULE_isbnParam]: { label: 'with isbn', insertText: 'with isbn ""' },
-  [ImperaBookDSLParser.RULE_summaryParam]: { label: 'with summary', insertText: 'with summary ""' },
+  [ImperaBookDSLParser.RULE_isbnParam]: { label: 'with isbn', insertText: 'with isbn "$0"' },
+  [ImperaBookDSLParser.RULE_summaryParam]: { label: 'with summary', insertText: 'with summary "$0"' },
 };
 
 /**
@@ -187,13 +193,38 @@ function collectSuggestions(
         && caretOffset > 0
         && !/\s/.test(input[caretOffset - 1]);
 
+      const text = needsSpace ? ` ${phrase.insertText}` : phrase.insertText;
+      const marker = text.indexOf(CARET_MARKER);
+      const insertText = marker === -1 ? text : text.replace(CARET_MARKER, '');
+
       suggestions.push({
         label: phrase.label,
-        insertText: needsSpace ? ` ${phrase.insertText}` : phrase.insertText,
+        insertText,
         replaceStart,
+        replaceEnd: findReplaceEnd(input, caretOffset, replaceStart < caretOffset, insertText),
+        caret: marker === -1 ? insertText.length : marker,
       });
     }
   }
+}
+
+/**
+ * End of the text a completion replaces. When the caret sits inside the word
+ * being completed ("boo|ks"), the rest of that word goes too; a following space
+ * is absorbed when the inserted text brings its own.
+ */
+function findReplaceEnd(
+  input: string,
+  caretOffset: number,
+  completesTypedWord: boolean,
+  insertText: string
+): number {
+  let end = caretOffset;
+  if (completesTypedWord) {
+    while (end < input.length && !/[\s"]/.test(input[end])) end++;
+  }
+  if (insertText.endsWith(' ') && end < input.length && /\s/.test(input[end])) end++;
+  return end;
 }
 
 /**

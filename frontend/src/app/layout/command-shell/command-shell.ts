@@ -1,4 +1,5 @@
 import {
+  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -14,7 +15,8 @@ import {
 import { CommandRunner } from '@app/commands/command-runner';
 import { resultOfUnrecognized } from '@app/commands/command-error';
 import { WorkspaceStore } from '@app/state/workspace-store';
-import { SuggestionService } from './suggestion-service';
+import { applyCompletion, SuggestionService } from './suggestion-service';
+import { CompletionItem } from './autocomplete';
 import { Index, IndexMove, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 import { parseDSLCommand } from './command-parser';
 import { CommandVisitor } from './command-visitor';
@@ -33,11 +35,11 @@ const COMMAND_FIELD: FieldAttrs = {
 
 type SuggestionList = {
 
-  readonly all: readonly string[];
+  readonly all: readonly CompletionItem[];
   readonly range: IndexRange;
 }
 
-function suggestionList(suggestions: readonly string[]): SuggestionList {
+function suggestionList(suggestions: readonly CompletionItem[]): SuggestionList {
   return { all: suggestions, range: indexRange(suggestions.length) };
 }
 
@@ -78,6 +80,16 @@ export class CommandShell {
   private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
   constructor() {
     effect(() => this.focus(this.bar()?.nativeElement));
+
+    // Writing [value] leaves the caret at the end; move it where the query says.
+    // Skipped when already there, so a user's selection range is not collapsed.
+    afterRenderEffect(() => {
+      const position = this.cursorPosition();
+      const input = this.bar()?.nativeElement;
+      if (input !== undefined && input.selectionStart !== position) {
+        input.setSelectionRange(position, position);
+      }
+    });
   }
 
   protected onInput(event: Event): void {
@@ -117,21 +129,13 @@ export class CommandShell {
   }
 
   acceptSuggestion() {
+    const index = this.selectedIndex();
+    if (index === undefined) return;
 
-
-    if (this.suggestions().all.length > 0 && this.selectedIndex() !== undefined) {
-      const suggestion = this.suggestions().all[this.selectedIndex()!];
-
-      const newQuery = this.suggestionService.replaceWordAtPosition(this.query(), this.cursorPosition(), suggestion);
-      if (newQuery == 'not-found') {
-        this.query.set(this.query() + suggestion + ' ');
-      }
-      else {
-        console.log('NEW QUERY', newQuery);
-        console.log('ACCEPTING SUGGESTION: ', suggestion);
-        this.query.set(newQuery);
-      }
-    }
+    const { text, caret } = applyCompletion(this.query(), this.suggestions().all[index]);
+    this.query.set(text);
+    // After query.set, since the cursor position is linked to the query.
+    this.cursorPosition.set(caret);
   }
 
   protected async submit(): Promise<void> {

@@ -9,7 +9,7 @@
             [class.active]="i === selectedIndex()"
             [attr.aria-selected]="i === selectedIndex()"
             (mousedown)="$event.preventDefault()">
-            {{ cmd }}
+            {{ cmd.label }}
           </button>
         } @empty {
           <span class="fall">no commands</span>
