@@ -56,9 +56,11 @@ export class CommandShell {
 
   protected readonly externalQueryInput = signal('');
   protected readonly query = linkedSignal(() => this.externalQueryInput());
+  // Caret position in the query. Defaults to the end whenever the query is replaced programmatically.
+  private readonly cursorPosition = linkedSignal(() => this.query().length);
 
   protected readonly suggestions = computed<SuggestionList>(
-    () => suggestionList(this.suggestionService.suggestionsFor(this.query(), this.getCursorPosition())));
+    () => suggestionList(this.suggestionService.suggestionsFor(this.query(), this.cursorPosition())));
 
   protected readonly selectedIndex = linkedSignal<SuggestionList, Index>({
     source: this.suggestions,
@@ -79,7 +81,9 @@ export class CommandShell {
   }
 
   protected onInput(event: Event): void {
-    this.query.set((event.target as HTMLInputElement).value);
+    const input = event.target as HTMLInputElement;
+    this.query.set(input.value);
+    this.cursorPosition.set(input.selectionStart ?? input.value.length);
   }
 
   protected onKeydown(event: KeyboardEvent): void {
@@ -106,27 +110,20 @@ export class CommandShell {
     this.selectedIndex.set(move(this.suggestions().range, this.selectedIndex()));
   }
 
-  getCursorPosition(): number {
-    const position = this.bar()?.nativeElement?.selectionStart;
-
-    if (position !== null && position !== undefined) return position;
-    throw new Error('Cannot get cursor position from query input.');
-  }
-
   acceptSuggestion() {
 
 
     if (this.suggestions().all.length > 0 && this.selectedIndex() !== undefined) {
       const suggestion = this.suggestions().all[this.selectedIndex()!];
 
-      const newQuery = this.suggestionService.replaceWordAtPosition(this.query(), this.getCursorPosition(), suggestion);
+      const newQuery = this.suggestionService.replaceWordAtPosition(this.query(), this.cursorPosition(), suggestion);
       if (newQuery == 'not-found') {
         this.query.set(this.query() + suggestion + ' ');
       }
       else {
         console.log('NEW QUERY', newQuery);
         console.log('ACCEPTING SUGGESTION: ', suggestion);
-        this.query.set(newQuery + ' ');
+        this.query.set(newQuery);
       }
     }
   }
