@@ -15,7 +15,7 @@ import {
 import { CommandRunner } from '@app/commands/command-runner';
 import { resultOfUnrecognized } from '@app/commands/command-error';
 import { WorkspaceStore } from '@app/state/workspace-store';
-import { applyCompletion, SuggestionService } from './suggestion-service';
+import { AppliedCompletion, applyCompletion, SuggestionService } from './suggestion-service';
 import { CompletionItem } from './autocomplete';
 import { Index, IndexMove, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 import { parseDSLCommand } from './command-parser';
@@ -43,6 +43,18 @@ function suggestionList(suggestions: readonly CompletionItem[]): SuggestionList 
   return { all: suggestions, range: indexRange(suggestions.length) };
 }
 
+/**
+ * Repeated Tabs swap the completion just inserted for the next one, as in
+ * zsh's menu-complete. Every step is applied to the query from before the
+ * first Tab, using the suggestions offered at that moment.
+ */
+type CompletionCycle = {
+  readonly original: string;
+  readonly list: SuggestionList;
+  readonly index: number;
+  readonly applied: AppliedCompletion;
+}
+
 @Component({
   selector: 'app-command-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,11 +76,26 @@ export class CommandShell {
   protected readonly suggestions = computed<SuggestionList>(
     () => suggestionList(this.suggestionService.suggestionsFor(this.query(), this.cursorPosition())));
 
-  protected readonly selectedIndex = linkedSignal<SuggestionList, Index>({
-    source: this.suggestions,
-    computation: (newSuggestions) => {
-      return newSuggestions.all.length > 0 ? 0 : undefined;
-    }
+  private readonly cycle = signal<CompletionCycle | undefined>(undefined);
+
+  // The cycle lasts only while the query and caret are exactly as its last Tab
+  // left them; typing or moving the caret ends it.
+  private readonly activeCycle = computed(() => {
+    const cycle = this.cycle();
+    return cycle !== undefined
+      && cycle.applied.text === this.query()
+      && cycle.applied.caret === this.cursorPosition()
+      ? cycle
+      : undefined;
+  });
+
+  // While cycling, the list the cycle walks through stays on screen.
+  protected readonly shownSuggestions = computed(() => this.activeCycle()?.list ?? this.suggestions());
+
+  protected readonly selectedIndex = computed<Index>(() => {
+    const cycle = this.activeCycle();
+    if (cycle !== undefined) return cycle.index;
+    return this.suggestions().all.length > 0 ? 0 : undefined;
   });
 
 
@@ -108,14 +135,16 @@ export class CommandShell {
 
     switch (event.key) {
       case 'Tab':
+        // Tab accepts the next suggestion, Shift + Tab the previous one.
         event.preventDefault();
-        this.acceptSuggestion();
+        this.cycleSuggestion(event.shiftKey ? prevCyclicIndex : nextCyclicIndex);
         break;
       case ' ':
-        // Ctrl + Space highlights the next suggestion, Ctrl + Shift + Space the previous one.
-        if (!event.ctrlKey || this.suggestions().all.length === 0) return;
+        // Space right after a cycled completion ends the cycle, which shows the
+        // next suggestions. The completion already brought its own space.
+        if (this.activeCycle() === undefined || this.query()[this.cursorPosition() - 1] !== ' ') return;
         event.preventDefault();
-        this.selectSuggestion(event.shiftKey ? prevCyclicIndex : nextCyclicIndex);
+        this.cycle.set(undefined);
         break;
       case 'Enter':
         event.preventDefault();
@@ -124,18 +153,20 @@ export class CommandShell {
     }
   }
 
-  private selectSuggestion(move: IndexMove) {
-    this.selectedIndex.set(move(this.suggestions().range, this.selectedIndex()));
-  }
+  private cycleSuggestion(move: IndexMove): void {
+    const cycle = this.activeCycle();
+    const original = cycle?.original ?? this.query();
+    const list = cycle?.list ?? this.suggestions();
 
-  acceptSuggestion() {
-    const index = this.selectedIndex();
-    if (index === undefined) return;
+    const index = move(list.range, cycle?.index);
+    if (index === undefined || list.all.length === 0) return;
 
-    const { text, caret } = applyCompletion(this.query(), this.suggestions().all[index]);
-    this.query.set(text);
+    const applied = applyCompletion(original, list.all[index]);
+    // A lone suggestion has nothing to cycle to, so the next ones show at once.
+    this.cycle.set(list.all.length > 1 ? { original, list, index, applied } : undefined);
+    this.query.set(applied.text);
     // After query.set, since the cursor position is linked to the query.
-    this.cursorPosition.set(caret);
+    this.cursorPosition.set(applied.caret);
   }
 
   protected async submit(): Promise<void> {

@@ -88,7 +88,7 @@ describe('CommandShell', () => {
     expect(input.selectionStart).toBe('add book with title "'.length);
   });
 
-  it('recomputes the suggestions after accepting one', () => {
+  it('shows the next suggestions at once after accepting the only one', () => {
     const input = type('add bo');
 
     press(input, 'Tab');
@@ -97,18 +97,69 @@ describe('CommandShell', () => {
     expect(activeChip()).toBe('with title');
   });
 
-  it('moves the highlight with Ctrl + Space, wrapping around', () => {
+  it('cycles through the suggestions with repeated Tab, wrapping around', () => {
     const input = type('log');
+
+    press(input, 'Tab');
+    expect(input.value).toBe('login ');
     expect(activeChip()).toBe('login');
 
-    press(input, ' ', { ctrlKey: true });
+    press(input, 'Tab');
+    expect(input.value).toBe('logout ');
     expect(activeChip()).toBe('logout');
 
-    press(input, ' ', { ctrlKey: true });
-    expect(activeChip()).toBe('login');
+    press(input, 'Tab');
+    expect(input.value).toBe('login ');
+  });
 
-    press(input, ' ', { ctrlKey: true, shiftKey: true });
-    expect(activeChip()).toBe('logout');
+  it('cycles backwards with Shift + Tab', () => {
+    const input = type('log');
+
+    press(input, 'Tab', { shiftKey: true });
+    expect(input.value).toBe('logout ');
+
+    press(input, 'Tab', { shiftKey: true });
+    expect(input.value).toBe('login ');
+  });
+
+  it('ends the cycle when the user types', () => {
+    const input = type('log');
+    press(input, 'Tab');
+
+    type('login x');
+
+    expect(activeChip()).toBeUndefined();
+  });
+
+  it('ends the cycle with Space without doubling the space', () => {
+    const input = type('add');
+    press(input, 'Tab');
+    press(input, 'Tab');
+    expect(input.value).toBe('add book ');
+
+    const event = press(input, ' ');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(input.value).toBe('add book ');
+    expect(activeChip()).toBe('with title');
+  });
+
+  it('types Space normally inside the quotes of a cycled param', () => {
+    const input = type('add book with t');
+    press(input, 'Tab');
+
+    const event = press(input, ' ');
+
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('keeps the cycled list on screen until the cycle ends', () => {
+    const input = type('log');
+
+    press(input, 'Tab');
+
+    const chips = [...fixture.nativeElement.querySelectorAll('.chip')].map((c: Element) => c.textContent!.trim());
+    expect(chips).toEqual(['login', 'logout']);
   });
 
   it('leaves the arrows to the workspace', () => {
