@@ -76,9 +76,28 @@ export class LoginForm {
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Enter') return;
-    event.preventDefault();
-    void this.submit();
+    switch (event.key) {
+      case 'Enter':
+        event.preventDefault();
+        void this.submit();
+        break;
+      case 'Escape':
+        event.preventDefault();
+        void this.cancel();
+        break;
+    }
+  }
+
+  /**
+   * Back to the dashboard. The server decides whether that is possible: with no
+   * session it answers with a new login screen, which restarts the form.
+   */
+  private async cancel(): Promise<void> {
+    if (this.busy()) return;
+    this.busy.set(true);
+    const result = await this.runner.run({ command: 'dashboard', params: {} });
+    this.busy.set(false);
+    this.store.setResult(result);
   }
 
   protected async submit(): Promise<void> {

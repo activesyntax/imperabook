@@ -25,7 +25,7 @@ public static class AuthEndpoints
             .Produces<CommandResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        app.MapGet("/api/auth/login", GetLoginScreen)
+        app.MapGet("/api/auth/login", () => TypedResults.Ok(LoginScreen()))
             .WithName("GetLoginScreen")
             .AllowAnonymous()
             .Produces<CommandResult>(StatusCodes.Status200OK);
@@ -72,13 +72,6 @@ public static class AuthEndpoints
 
         return TypedResults.Ok(await LoggedIn(dashboard, user.FirstName, ct));
     }
-
-    private static Ok<CommandResult> GetLoginScreen(ClaimsPrincipal principal) =>
-        TypedResults.Ok(
-            principal.Identity?.IsAuthenticated == true
-                ? AlreadySignedIn(principal.Identity.Name)
-                : LoginScreen()
-        );
 
     private static ProblemHttpResult Rejected() =>
         TypedResults.Problem(
