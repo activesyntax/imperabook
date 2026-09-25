@@ -31,6 +31,10 @@
     <app-text-view [view]="asTextView(node())" />
   }
 
+  @case ('loginForm') {
+    <app-login-form [view]="asLoginForm(node())" />
+  }
+
   @default {
     <app-unknown-view [nodeType]="node().type" />
   }

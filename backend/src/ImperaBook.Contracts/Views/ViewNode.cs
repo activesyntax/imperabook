@@ -10,6 +10,7 @@ namespace ImperaBook.Contracts.Views;
 [JsonDerivedType(typeof(GuidanceView), "guidance")]
 [JsonDerivedType(typeof(ItemCollectionView), "itemCollection")]
 [JsonDerivedType(typeof(TextView), "textView")]
+[JsonDerivedType(typeof(LoginFormView), "loginForm")]
 public abstract record ViewNode;
 
 public sealed record HeadingView(string Text, PageInfo? Page = null) : ViewNode;
@@ -40,6 +41,10 @@ public enum MessageKind
 }
 
 public sealed record MessageView(string Text, MessageKind Kind) : ViewNode;
+
+// Asks for credentials in place of the command bar. Carries no data: the form is the same
+// every time, and a new instance of it restarts the sign-in from the username.
+public sealed record LoginFormView : ViewNode;
 
 public sealed record GuidanceView(string Title, string Intro, IReadOnlyList<GuidanceHint> Hints)
     : ViewNode;

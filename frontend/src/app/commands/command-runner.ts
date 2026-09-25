@@ -13,6 +13,11 @@ interface CommandEndpoint {
   readonly url: string;
 }
 
+export interface Credentials {
+  readonly username: string;
+  readonly password: string;
+}
+
 const get = (url: string): CommandEndpoint => ({ method: 'GET', url });
 const post = (url: string): CommandEndpoint => ({ method: 'POST', url });
 
@@ -42,8 +47,17 @@ export class CommandRunner {
       return resultOfUnsupported(cmd.command);
     }
 
+    return this.send(endpoint.method, endpoint.url);
+  }
+
+  /** Not a parsed command: credentials never pass through the command bar. */
+  login(credentials: Credentials): Promise<CommandResult> {
+    return this.send('POST', '/api/auth/login', credentials);
+  }
+
+  private async send(method: HttpMethod, url: string, body?: unknown): Promise<CommandResult> {
     try {
-      return await firstValueFrom(this.http.request<CommandResult>(endpoint.method, endpoint.url));
+      return await firstValueFrom(this.http.request<CommandResult>(method, url, { body }));
     } catch (error) {
       return resultOfError(error);
     }

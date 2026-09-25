@@ -1,0 +1,78 @@
+// Mirrors the command shell's entry row, so the field reads as the bar it replaces.
+:host {
+  display: block;
+  font-size: 2.2rem;
+}
+
+.prompt {
+  min-width: 0;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 7px 0 14px;
+  border: 0.5px solid color-mix(in srgb, var(--ib-accent) 55%, transparent);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.022);
+  transition: border-color 90ms ease;
+
+  &:focus-within {
+    border-color: var(--ib-accent);
+  }
+}
+
+.avatar {
+  flex: none;
+  display: block;
+  width: 50px;
+  height: 50px;
+  margin-right: 20px;
+}
+
+.bar {
+  flex: 1;
+  min-width: 40px;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 2rem;
+  line-height: 1;
+  caret-color: var(--ib-accent-bright);
+
+  &::placeholder {
+    color: color-mix(in srgb, var(--ib-dim) 60%, transparent);
+  }
+}
+
+.send {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--ib-on-accent);
+  background: var(--ib-accent);
+  transition: background 90ms ease, color 90ms ease;
+
+  &:hover  { background: var(--ib-accent-bright); }
+  &:active { background: var(--ib-accent-dim); }
+
+  svg {
+    display: block;
+    width: 26px;
+    height: 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prompt,
+  .send {
+    transition: none;
+  }
+}

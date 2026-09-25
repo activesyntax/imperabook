@@ -80,7 +80,12 @@ export interface ItemCollectionView {
   readonly page?: PageInfo;
 }
 
-export type ViewNode = ImageView | CardView | CardCollectionView | MessageView | GuidanceView | ItemCollectionView | TextView | HeadingView;
+/** Asks for credentials in place of the command bar. */
+export interface LoginFormView {
+  readonly type: 'loginForm';
+}
+
+export type ViewNode = ImageView | CardView | CardCollectionView | MessageView | GuidanceView | ItemCollectionView | TextView | HeadingView | LoginFormView;
 
 export type CommandResult = {
   views: ViewNode[];

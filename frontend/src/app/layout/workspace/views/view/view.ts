@@ -9,6 +9,7 @@ import { GuidanceView } from '../guidance-view/guidance-view';
 import { ItemCollectionView } from '../item-collection-view/item-collection-view';
 import { TextView } from '../text-view/text-view';
 import { UnknownView } from '../unknown-view/unknown-view';
+import { LoginForm } from '../login-form/login-form';
 
 @Component({
   selector: 'app-view',
@@ -22,6 +23,7 @@ import { UnknownView } from '../unknown-view/unknown-view';
     ItemCollectionView,
     TextView,
     UnknownView,
+    LoginForm,
     forwardRef(() => View),
   ],
   templateUrl: './view.html',
@@ -37,4 +39,5 @@ export class View {
   asGuidance = (n: ViewNode.ViewNode) => n as ViewNode.GuidanceView;
   asItemCollection = (n: ViewNode.ViewNode) => n as ViewNode.ItemCollectionView;
   asTextView = (n: ViewNode.ViewNode) => n as ViewNode.TextView;
+  asLoginForm = (n: ViewNode.ViewNode) => n as ViewNode.LoginFormView;
 }

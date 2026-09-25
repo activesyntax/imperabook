@@ -25,7 +25,7 @@ public static class AuthEndpoints
             .Produces<CommandResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        app.MapGet("/api/auth/login", () => TypedResults.Ok(LoginScreen()))
+        app.MapGet("/api/auth/login", GetLoginScreen)
             .WithName("GetLoginScreen")
             .AllowAnonymous()
             .Produces<CommandResult>(StatusCodes.Status200OK);
@@ -73,6 +73,13 @@ public static class AuthEndpoints
         return TypedResults.Ok(await LoggedIn(dashboard, user.FirstName, ct));
     }
 
+    private static Ok<CommandResult> GetLoginScreen(ClaimsPrincipal principal) =>
+        TypedResults.Ok(
+            principal.Identity?.IsAuthenticated == true
+                ? AlreadySignedIn(principal.Identity.Name)
+                : LoginScreen()
+        );
+
     private static ProblemHttpResult Rejected() =>
         TypedResults.Problem(
             detail: RejectedMessage,
@@ -100,8 +107,8 @@ public static class AuthEndpoints
     internal static CommandResult LoginScreen(string? error = null) =>
         new(
             error is null
-                ? [LoginIllustration]
-                : [LoginIllustration, new MessageView(error, MessageKind.Error)]
+                ? [LoginIllustration, new LoginFormView()]
+                : [LoginIllustration, new MessageView(error, MessageKind.Error), new LoginFormView()]
         );
 
     private static CommandResult AlreadySignedIn(string? username) =>

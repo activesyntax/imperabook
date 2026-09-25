@@ -1,6 +1,8 @@
 <section class="main">
   <app-workspace class="workspace" />
-  <app-command-shell class="shell" />
+  @if (!store.loginRequested()) {
+    <app-command-shell class="shell" />
+  }
 
   <app-side-nav class="side-nav" [name]="session.userName()" [library]="session.libraryName()"
     [avatarUrl]="session.avatarUrl()" />
