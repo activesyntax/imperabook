@@ -135,13 +135,10 @@ export class CommandShell {
 
     switch (event.key) {
       case 'Tab':
-        // Tab accepts the next suggestion, Shift + Tab the previous one.
         event.preventDefault();
         this.cycleSuggestion(event.shiftKey ? prevCyclicIndex : nextCyclicIndex);
         break;
       case ' ':
-        // Space right after a cycled completion ends the cycle, which shows the
-        // next suggestions. The completion already brought its own space.
         if (this.activeCycle() === undefined || this.query()[this.cursorPosition() - 1] !== ' ') return;
         event.preventDefault();
         this.cycle.set(undefined);
@@ -149,6 +146,10 @@ export class CommandShell {
       case 'Enter':
         event.preventDefault();
         void this.submit();
+        break;
+      case 'Escape':
+        event.preventDefault();
+        this.query.set('');
         break;
     }
   }
