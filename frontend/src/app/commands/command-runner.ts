@@ -18,7 +18,7 @@ const post = (url: string): CommandEndpoint => ({ method: 'POST', url });
 
 /**
  * Which backend endpoint serves each command. A command missing here has no
- * endpoint yet ('add book' and 'login' are deliberately left for later).
+ * endpoint yet ('add book' is deliberately left for later).
  */
 const ENDPOINTS: Partial<Record<CommandName, CommandEndpoint>> = {
   'dashboard': get('/api/dashboard'),
@@ -28,6 +28,7 @@ const ENDPOINTS: Partial<Record<CommandName, CommandEndpoint>> = {
   'settings': get('/api/settings'),
   'about': get('/api/about'),
   'help': get('/api/help'),
+  'login': get('/api/auth/login'),
   'logout': post('/api/auth/logout'),
 };
 

@@ -172,6 +172,7 @@ export class CommandShell {
 
   protected async submit(): Promise<void> {
     const text = this.query();
+    this.query.set('');
     const parsedCommand = new CommandVisitor().visit(parseDSLCommand(text));
 
     const commandResult = parsedCommand === null
