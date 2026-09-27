@@ -8,9 +8,13 @@ import { resultOfError, resultOfUnsupported } from '@app/commands/command-error'
 
 type HttpMethod = 'GET' | 'POST';
 
+type CommandParams = ParsedCommand['params'];
+
 interface CommandEndpoint {
   readonly method: HttpMethod;
   readonly url: string;
+  /** Builds the request body from the command's params; absent means no body. */
+  readonly body?: (params: CommandParams) => unknown;
 }
 
 export interface Credentials {
@@ -19,7 +23,25 @@ export interface Credentials {
 }
 
 const get = (url: string): CommandEndpoint => ({ method: 'GET', url });
-const post = (url: string): CommandEndpoint => ({ method: 'POST', url });
+const post = (url: string, body?: (params: CommandParams) => unknown): CommandEndpoint =>
+  ({ method: 'POST', url, body });
+
+export interface AuthorNameBody {
+  readonly firstName?: string;
+  readonly lastName: string;
+}
+
+/**
+ * "Ursula K. Le Guin" → first "Ursula K. Le", last "Guin": the last word is the
+ * last name, everything before it the first name. Compound last names split
+ * wrongly; an empty name is sent as-is for the server to reject.
+ */
+export function splitAuthorName(name: string): AuthorNameBody {
+  const words = name.trim().split(/\s+/).filter(w => w.length > 0);
+  const lastName = words.pop() ?? '';
+
+  return words.length > 0 ? { firstName: words.join(' '), lastName } : { lastName };
+}
 
 /**
  * Which backend endpoint serves each command. A command missing here has no
@@ -30,6 +52,7 @@ const ENDPOINTS: Partial<Record<CommandName, CommandEndpoint>> = {
   'library': get('/api/library'),
   'list books': get('/api/books'),
   'list authors': get('/api/authors'),
+  'add author': post('/api/authors', ({ name }) => splitAuthorName(name ?? '')),
   'settings': get('/api/settings'),
   'about': get('/api/about'),
   'help': get('/api/help'),
@@ -47,7 +70,7 @@ export class CommandRunner {
       return resultOfUnsupported(cmd.command);
     }
 
-    return this.send(endpoint.method, endpoint.url);
+    return this.send(endpoint.method, endpoint.url, endpoint.body?.(cmd.params));
   }
 
   /** Not a parsed command: credentials never pass through the command bar. */

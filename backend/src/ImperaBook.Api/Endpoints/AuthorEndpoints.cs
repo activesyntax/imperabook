@@ -17,7 +17,7 @@ public static class AuthorEndpoints
 
         app.MapPost("/api/authors", AddAuthor)
             .WithName("AddAuthor")
-            .Produces<AddedAuthor>(StatusCodes.Status201Created)
+            .Produces<CommandResult>(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
@@ -49,9 +49,14 @@ public static class AuthorEndpoints
         var result = await handler.Handle(command, ct);
 
         return result.IsSuccess
-            ? TypedResults.Created($"/api/authors/{result.Value}", new AddedAuthor(result.Value))
+            ? TypedResults.Created($"/api/authors/{result.Value}", Added(command))
             : result.Error.ToProblem();
     }
-}
 
-public sealed record AddedAuthor(Guid Id);
+    private static CommandResult Added(AddAuthorCommand command)
+    {
+        var name = $"{command.FirstName?.Trim()} {command.LastName.Trim()}".Trim();
+
+        return new CommandResult([new MessageView($"Added author {name}.", MessageKind.Success)]);
+    }
+}

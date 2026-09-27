@@ -10,6 +10,8 @@ internal static class ApplicationErrorResults
             ApplicationError.Validation validation => Results.ValidationProblem(
                 errors: new Dictionary<string, string[]>(),
                 title: "One or more validation errors occurred.",
+                // The command bar shows detail, so it carries the messages themselves.
+                detail: string.Join(" ", validation.Errors.Select(e => e.ToFailure().Message)),
                 statusCode: StatusCodes.Status400BadRequest,
                 extensions: new Dictionary<string, object?>
                 {
