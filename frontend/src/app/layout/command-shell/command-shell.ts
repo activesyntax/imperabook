@@ -179,6 +179,11 @@ export class CommandShell {
       ? resultOfUnrecognized(text)
       : await this.runner.run(parsedCommand);
     this.store.setResult(commandResult);
+
+    // Only if the bar is still empty: the user may have started the next command meanwhile.
+    if (commandResult.keepQuery === true && this.query() === '') {
+      this.query.set(text);
+    }
   }
 
   @HostListener('document:keydown', ['$event'])

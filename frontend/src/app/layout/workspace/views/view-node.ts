@@ -89,6 +89,8 @@ export type ViewNode = ImageView | CardView | CardCollectionView | MessageView |
 
 export type CommandResult = {
   views: ViewNode[];
+  /** The command was not carried out and needs a tweak: give the typed text back. */
+  keepQuery?: boolean;
 };
 
 // TEXT VIEW

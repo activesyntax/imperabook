@@ -13,5 +13,6 @@ public abstract record ApplicationError
 
     public sealed record ImageNotFound(ContentHash Hash) : ApplicationError;
 
-    public sealed record AuthorsNotFound(IReadOnlyList<Guid> Ids) : ApplicationError;
+    public sealed record AmbiguousAuthor(string Search, IReadOnlyList<AuthorListItem> Matches)
+        : ApplicationError;
 }

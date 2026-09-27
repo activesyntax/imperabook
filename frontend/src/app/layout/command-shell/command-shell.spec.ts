@@ -63,6 +63,34 @@ describe('CommandShell', () => {
     expect(TestBed.inject(WorkspaceStore).views()).toEqual(DASHBOARD_RESULT.views);
   });
 
+  it('clears the query after running a command', async () => {
+    const input = type('dashboard');
+
+    await submit(input);
+    fixture.detectChanges();
+
+    expect(input.value).toBe('');
+  });
+
+  it('gives the query back when the result asks to keep it', async () => {
+    runner.run.mockResolvedValueOnce({ ...DASHBOARD_RESULT, keepQuery: true });
+    const input = type('add book "x" by author "smith"');
+
+    await submit(input);
+    fixture.detectChanges();
+
+    expect(input.value).toBe('add book "x" by author "smith"');
+  });
+
+  it('sends every typed book detail, not just title and author', async () => {
+    await submit(type('add book "Dune" in language "en" by author "herbert" published in 1965 with isbn "x"'));
+
+    expect(runner.run).toHaveBeenCalledWith({
+      command: 'add book',
+      params: { title: 'Dune', language: 'en', author: 'herbert', published: '1965', isbn: 'x' },
+    });
+  });
+
   it('does not run unrecognized input', async () => {
     await submit(type('xyz'));
 

@@ -56,4 +56,31 @@ describe('CommandRunner', () => {
 
     expect(await result).toEqual({ views: [{ type: 'message', text: 'Name is required.', kind: 'error' }] });
   });
+
+  it('posts add book with the typed params, author as search text', async () => {
+    const result = runner.run({ command: 'add book', params: { title: '1984', author: 'orwell', published: '1949' } });
+
+    const req = http.expectOne('/api/books');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ title: '1984', author: 'orwell', published: '1949' });
+    req.flush({ views: [] }, { status: 201, statusText: 'Created' });
+
+    await result;
+  });
+
+  it('shows the choices and keeps the query when the author is ambiguous', async () => {
+    const views = [
+      { type: 'message', text: '"smith" matches 2 authors.', kind: 'warning' },
+      { type: 'textView', blocks: [] },
+    ];
+
+    const result = runner.run({ command: 'add book', params: { title: 'x', author: 'smith' } });
+
+    http.expectOne('/api/books').flush(
+      { title: 'Ambiguous author', code: 'author_ambiguous', keepQuery: true, views },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    expect(await result).toEqual({ views, keepQuery: true });
+  });
 });

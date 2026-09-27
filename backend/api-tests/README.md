@@ -44,8 +44,8 @@ hurl --variables-file vars.env --variable host=https://api.example.com --test *.
 | `get-all-books.hurl`        | `GET /books`                                  |
 | `search-books.hurl`         | `GET /books/search` (library and/or title)    |
 | `get-library-books.hurl`    | `GET /libraries/{id}/books`                    |
-| `add-book.hurl`             | `POST /api/books` (minimal + all fields)       |
-| `add-book-errors.hurl`      | `POST /api/books` validation / 422 / 400s      |
+| `add-book.hurl`             | `POST /api/books` author search: unknown / new / existing / ambiguous |
+| `add-book-errors.hurl`      | `POST /api/books` validation / 422 / 400s, no stray author |
 
 ## Notes
 

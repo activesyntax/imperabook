@@ -44,21 +44,27 @@ export class CommandVisitor extends ImperaBookDSLVisitor<ParsedCommand | null> {
     return this.visitChildren(ctx);
   };
 
-  // 3. Extract the addBookCmd parameters. The author is optional: absent means unknown.
+  // 3. Extract the addBookCmd parameters. Only the title is required; a detail
+  // that was not typed is left out rather than sent empty. The first of a
+  // repeated detail wins. Param names are the backend's AddBookCommand fields.
   override visitAddBookCmd = (ctx: AddBookCmdContext): ParsedCommand => {
-    const titleRaw = ctx.bookTitle()?.STRING()?.getText() ?? '';
-    const authorRaw = ctx
-      .bookDetailParam()
-      .map((p) => p.authorParam()?.STRING()?.getText())
-      .find((a) => a !== undefined);
-
-    return {
-      command: 'add book',
-      params: {
-        title: this.cleanString(titleRaw),
-        ...(authorRaw !== undefined && { author: this.cleanString(authorRaw) }),
-      },
+    const params: Record<string, string> = {
+      title: this.cleanString(ctx.bookTitle()?.STRING()?.getText() ?? ''),
     };
+
+    for (const p of ctx.bookDetailParam()) {
+      const [name, token] =
+        p.authorParam() ? ['author', p.authorParam()?.STRING()]
+        : p.subtitleParam() ? ['subtitle', p.subtitleParam()?.STRING()]
+        : p.languageParam() ? ['language', p.languageParam()?.STRING()]
+        : p.publicationYearParam() ? ['published', p.publicationYearParam()?.NUMBER()]
+        : p.isbnParam() ? ['isbn', p.isbnParam()?.STRING()]
+        : ['summary', p.summaryParam()?.STRING()];
+
+      if (token && !(name in params)) params[name] = this.cleanString(token.getText());
+    }
+
+    return { command: 'add book', params };
   };
 
   override visitAddAuthorCmd = (ctx: AddAuthorCmdContext): ParsedCommand => ({

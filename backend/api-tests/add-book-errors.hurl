@@ -2,24 +2,17 @@
 #   Validation     -> 400 (validation problem, codes under "failures")
 #   NoLibrary      -> 409 (not reachable with the dev seed: john owns a library)
 #   ImageNotFound  -> 422
-#   AuthorsNotFound -> 422
+#   AmbiguousAuthor -> 409 (covered in add-book.hurl, where the matching authors are set up)
 
 POST {{host}}/api/auth/login
 { "username": "john", "password": "{{password}}" }
 HTTP 200
-
-GET {{host}}/api/authors
-HTTP 200
-[Captures]
-author_id: jsonpath "$.views[1].items[0].ref"
-
 
 # --- Blank title, bad pages: every failure is reported at once ----------------
 POST {{host}}/api/books
 Content-Type: application/json
 {
   "title": "",
-  "authorIds": [],
   "pages": "0"
 }
 HTTP 400
@@ -34,7 +27,6 @@ POST {{host}}/api/books
 Content-Type: application/json
 {
   "title": "Pages Are Words",
-  "authorIds": ["{{author_id}}"],
   "pages": "many"
 }
 HTTP 400
@@ -48,7 +40,6 @@ POST {{host}}/api/books
 Content-Type: application/json
 {
   "title": "Bad Cover",
-  "authorIds": ["{{author_id}}"],
   "coverHash": "not-a-hash"
 }
 HTTP 400
@@ -62,7 +53,6 @@ POST {{host}}/api/books
 Content-Type: application/json
 {
   "title": "Missing Cover",
-  "authorIds": ["{{author_id}}"],
   "coverHash": "0000000000000000000000000000000000000000000000000000000000000000"
 }
 HTTP 422
@@ -70,19 +60,19 @@ HTTP 422
 jsonpath "$.code" == "image_not_found"
 
 
-# --- Author id that isn't in this user's catalog ------------------------------
-# Only the unknown id is reported back; the real one is fine.
+# --- A rejected book does not leave its new author behind ---------------------
 POST {{host}}/api/books
 Content-Type: application/json
 {
-  "title": "Ghost Written",
-  "authorIds": ["{{author_id}}", "99999999-9999-9999-9999-999999999999"]
+  "title": "",
+  "author": "Never Created"
 }
-HTTP 422
+HTTP 400
+
+GET {{host}}/api/authors
+HTTP 200
 [Asserts]
-jsonpath "$.code" == "author_not_found"
-jsonpath "$.authorIds" count == 1
-jsonpath "$.authorIds[0]" == "99999999-9999-9999-9999-999999999999"
+jsonpath "$.views[1].items[*].properties[0].value" not includes "Never Created"
 
 
 # --- Missing required member ('title') ----------------------------------------
@@ -90,7 +80,7 @@ jsonpath "$.authorIds[0]" == "99999999-9999-9999-9999-999999999999"
 POST {{host}}/api/books
 Content-Type: application/json
 {
-  "authorIds": []
+  "author": "someone"
 }
 HTTP 400
 

@@ -1,4 +1,6 @@
+using ImperaBook.API.Views;
 using ImperaBook.Application;
+using ImperaBook.Contracts.Views;
 
 namespace ImperaBook.Api.Errors;
 
@@ -33,14 +35,17 @@ internal static class ApplicationErrorResults
                 "image_not_found"
             ),
 
-            ApplicationError.AuthorsNotFound e => Results.Problem(
-                statusCode: StatusCodes.Status422UnprocessableEntity,
-                title: "Author not found",
-                detail: "One or more authors do not exist in your catalog. Add them first.",
+            // Nothing was added. The views say which authors matched; keepQuery hands the typed
+            // command back so the user can narrow "by author" instead of retyping everything.
+            ApplicationError.AmbiguousAuthor e => Results.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Ambiguous author",
+                detail: $"\"{e.Search}\" matches {e.Matches.Count} authors.",
                 extensions: new Dictionary<string, object?>
                 {
-                    ["code"] = "author_not_found",
-                    ["authorIds"] = e.Ids,
+                    ["code"] = "author_ambiguous",
+                    ["keepQuery"] = true,
+                    ["views"] = AuthorViews.Choices(e.Search, e.Matches),
                 }
             ),
 

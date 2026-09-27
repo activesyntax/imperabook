@@ -43,14 +43,13 @@ export function splitAuthorName(name: string): AuthorNameBody {
   return words.length > 0 ? { firstName: words.join(' '), lastName } : { lastName };
 }
 
-/**
- * Which backend endpoint serves each command. A command missing here has no
- * endpoint yet ('add book' is deliberately left for later).
- */
+/** Which backend endpoint serves each command. A command missing here has no endpoint yet. */
 const ENDPOINTS: Partial<Record<CommandName, CommandEndpoint>> = {
   'dashboard': get('/api/dashboard'),
   'library': get('/api/library'),
   'list books': get('/api/books'),
+  // The params are already the request's fields; "author" is search text the server resolves.
+  'add book': post('/api/books', params => params),
   'list authors': get('/api/authors'),
   'add author': post('/api/authors', ({ name }) => splitAuthorName(name ?? '')),
   'settings': get('/api/settings'),

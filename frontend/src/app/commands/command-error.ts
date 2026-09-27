@@ -10,6 +10,7 @@ interface CommandProblem {
   readonly title?: string;
   readonly detail?: string;
   readonly views?: readonly ViewNode[];
+  readonly keepQuery?: boolean;
 }
 
 export function resultOfError(error: unknown): CommandResult {
@@ -28,7 +29,7 @@ export function resultOfError(error: unknown): CommandResult {
   // Másolat, nem az eredeti tömb: a válaszból olvasott adat a hálózaté,
   // a store-ba kerülő állapot a miénk.
   if (problem?.views !== undefined && problem.views.length > 0) {
-    return { views: [...problem.views] };
+    return { views: [...problem.views], ...(problem.keepQuery === true && { keepQuery: true }) };
   }
 
   return { views: [errorView(problem?.detail ?? problem?.title ?? error.statusText)] };

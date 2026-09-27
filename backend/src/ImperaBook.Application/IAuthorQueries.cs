@@ -23,6 +23,8 @@ public interface IAuthorQueries
 {
     Task<AuthorListItem[]> List(CancellationToken ct);
 
-    /// <summary>The subset of <paramref name="ids"/> that are authors owned by the current user.</summary>
-    Task<IReadOnlySet<Guid>> Owned(IReadOnlyCollection<Guid> ids, CancellationToken ct);
+    /// <summary>
+    /// The current user's authors whose full name contains <paramref name="term"/>, ignoring case.
+    /// </summary>
+    Task<AuthorListItem[]> Search(string term, CancellationToken ct);
 }

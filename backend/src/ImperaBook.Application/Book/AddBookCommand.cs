@@ -9,7 +9,12 @@ namespace ImperaBook.Application;
 public sealed record AddBookCommand
 {
     public required string Title { get; init; }
-    public required IReadOnlyList<Guid> AuthorIds { get; init; }
+
+    /// <summary>
+    /// Search text for the author, not an exact name. Blank means the author is unknown; no match
+    /// adds the author; one match attaches it; several are ambiguous and nothing is added.
+    /// </summary>
+    public string? Author { get; init; }
 
     public string? Subtitle { get; init; }
     public string? Summary { get; init; }
@@ -21,15 +26,30 @@ public sealed record AddBookCommand
     public string? Pages { get; init; }
 }
 
+/// <summary>How the book's author was settled, so the reply can say so.</summary>
+public abstract record AuthorResolution
+{
+    private AuthorResolution() { }
+
+    public sealed record Unknown : AuthorResolution;
+
+    public sealed record Existing(Guid Id, string Name) : AuthorResolution;
+
+    public sealed record Created(Guid Id, string Name) : AuthorResolution;
+}
+
+public sealed record BookAdded(Guid Id, string Title, AuthorResolution Author);
+
 public sealed class AddBookCommandHandler(
     IBookCommands books,
     ILibraryQueries libraries,
     IAuthorQueries authors,
+    AddAuthorCommandHandler addAuthor,
     IImageStore images,
     IArtwork artwork
 )
 {
-    public async Task<Result<Guid, ApplicationError>> Handle(
+    public async Task<Result<BookAdded, ApplicationError>> Handle(
         AddBookCommand command,
         CancellationToken ct
     )
@@ -42,16 +62,26 @@ public sealed class AddBookCommandHandler(
         if (book.IsFailure)
             return book.Error;
 
-        var attribution = await VerifyAuthors(book.Value.Attribution, ct);
-        if (attribution.IsFailure)
-            return attribution.Error;
-
-        var cover = await ResolveCover(book.Value, ct);
+        // Checked before the author is settled: a book that cannot be added must not leave a
+        // freshly created author behind.
+        var cover = await VerifyCover(book.Value.Cover, ct);
         if (cover.IsFailure)
             return cover.Error;
 
-        await books.Add(book.Value with { Cover = cover.Value }, ct);
-        return book.Value.Id.Value;
+        var author = await ResolveAuthor(command.Author, ct);
+        if (author.IsFailure)
+            return author.Error;
+
+        var finished = book.Value with
+        {
+            Attribution = Attribution.Of(AuthorsOf(author.Value)),
+            Cover = book.Value.Cover.HasValue
+                ? book.Value.Cover
+                : await artwork.Cover(book.Value.Title, ct),
+        };
+
+        await books.Add(finished, ct);
+        return new BookAdded(finished.Id.Value, finished.Title.Value, author.Value);
     }
 
     private async Task<Result<Id<Library>, ApplicationError>> ResolveLibrary(CancellationToken ct)
@@ -64,38 +94,79 @@ public sealed class AddBookCommandHandler(
         );
     }
 
-    private async Task<UnitResult<ApplicationError>> VerifyAuthors(
-        Attribution attribution,
+    private async Task<UnitResult<ApplicationError>> VerifyCover(
+        Maybe<ContentHash> cover,
         CancellationToken ct
     )
     {
-        var ids = attribution.AuthorIds().Select(id => id.Value).ToList();
-        if (ids.Count == 0)
+        if (!cover.TryGetValue(out var hash))
             return UnitResult.Success<ApplicationError>();
 
-        var owned = await authors.Owned(ids, ct);
-        var missing = ids.Where(id => !owned.Contains(id)).ToList();
-
-        return missing.Count == 0
+        return await images.Exists(hash, ct)
             ? UnitResult.Success<ApplicationError>()
-            : UnitResult.Failure<ApplicationError>(new ApplicationError.AuthorsNotFound(missing));
+            : UnitResult.Failure<ApplicationError>(new ApplicationError.ImageNotFound(hash));
+    }
+
+    private async Task<Result<AuthorResolution, ApplicationError>> ResolveAuthor(
+        string? search,
+        CancellationToken ct
+    )
+    {
+        var term = Normalize(search);
+        if (term.Length == 0)
+            return new AuthorResolution.Unknown();
+
+        var matches = await authors.Search(term, ct);
+
+        // Contains-matching alone could never single out "John Smith" next to "John Smithson",
+        // so a whole-name match wins when there is exactly one.
+        var exact = matches
+            .Where(a => string.Equals(FullName(a), term, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return (matches.Length, exact.Count) switch
+        {
+            (0, _) => await CreateAuthor(term, ct),
+            (1, _) => new AuthorResolution.Existing(matches[0].Id, FullName(matches[0])),
+            (_, 1) => new AuthorResolution.Existing(exact[0].Id, FullName(exact[0])),
+            _ => new ApplicationError.AmbiguousAuthor(term, matches),
+        };
     }
 
     /// <summary>
-    /// A given cover must already be uploaded; a book added without one gets generated artwork.
+    /// The search text becomes the new author's name: the last word is the last name, anything
+    /// before it the first name. Compound last names ("Le Guin") split wrongly.
     /// </summary>
-    private async Task<Result<ContentHash, ApplicationError>> ResolveCover(
-        Book book,
+    private async Task<Result<AuthorResolution, ApplicationError>> CreateAuthor(
+        string name,
         CancellationToken ct
     )
     {
-        if (!book.Cover.TryGetValue(out var hash))
-            return await artwork.Cover(book.Title, ct);
+        var split = name.LastIndexOf(' ');
+        var command = new AddAuthorCommand
+        {
+            FirstName = split < 0 ? null : name[..split],
+            LastName = name[(split + 1)..],
+        };
 
-        return await images.Exists(hash, ct)
-            ? hash
-            : new ApplicationError.ImageNotFound(hash);
+        var created = await addAuthor.Handle(command, ct);
+
+        return created.Map(id => (AuthorResolution)new AuthorResolution.Created(id, name));
     }
+
+    private static Maybe<Authors> AuthorsOf(AuthorResolution author) =>
+        author switch
+        {
+            AuthorResolution.Existing e => Authors.Create([Id<Author>.From(e.Id)]),
+            AuthorResolution.Created c => Authors.Create([Id<Author>.From(c.Id)]),
+            _ => Maybe<Authors>.None,
+        };
+
+    private static string Normalize(string? search) =>
+        string.Join(' ', (search ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+    private static string FullName(AuthorListItem a) =>
+        string.IsNullOrWhiteSpace(a.FirstName) ? a.LastName : $"{a.FirstName} {a.LastName}";
 
     private static Result<Book, ApplicationError> BuildBook(
         AddBookCommand command,
@@ -104,8 +175,6 @@ public sealed class AddBookCommandHandler(
     )
     {
         var title = Title.Create(command.Title);
-        // An empty list is a legitimate answer: nobody knows who wrote it.
-        var authors = Authors.Create(command.AuthorIds.Select(Id<Author>.From));
 
         var subtitle = Subtitle.Create(command.Subtitle);
         var summary = Summary.Create(command.Summary);
@@ -139,7 +208,6 @@ public sealed class AddBookCommandHandler(
             Library = library,
             Title = title.Value,
             Subtitle = subtitle.Value,
-            Attribution = Attribution.Of(authors),
             Summary = summary.Value,
             Cover = cover.Value,
             Isbn = isbn.Value,

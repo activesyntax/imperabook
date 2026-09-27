@@ -17,7 +17,7 @@ public static class BookEndpoints
 
         app.MapPost("/api/books", AddBook)
             .WithName("AddBook")
-            .Produces<AddedBook>(StatusCodes.Status201Created)
+            .Produces<CommandResult>(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status409Conflict)
@@ -47,9 +47,21 @@ public static class BookEndpoints
         var result = await handler.Handle(command, ct);
 
         return result.IsSuccess
-            ? TypedResults.Created($"/api/books/{result.Value}", new AddedBook(result.Value))
+            ? TypedResults.Created($"/api/books/{result.Value.Id}", Added(result.Value))
             : result.Error.ToProblem();
     }
-}
 
-public sealed record AddedBook(Guid Id);
+    private static CommandResult Added(BookAdded book)
+    {
+        var author = book.Author switch
+        {
+            AuthorResolution.Existing e => $" by {e.Name}",
+            AuthorResolution.Created c => $" by {c.Name} (new author)",
+            _ => ", author unknown",
+        };
+
+        return new CommandResult(
+            [new MessageView($"Added \"{book.Title}\"{author}.", MessageKind.Success)]
+        );
+    }
+}
