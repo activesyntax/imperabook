@@ -98,6 +98,10 @@ describe('CommandShell', () => {
     expect(TestBed.inject(WorkspaceStore).views()[0]).toMatchObject({ type: 'message', kind: 'error' });
   });
 
+  function chips(): string[] {
+    return [...fixture.nativeElement.querySelectorAll('.chip')].map((c: Element) => c.textContent!.trim());
+  }
+
   it('accepts the highlighted suggestion with Tab', () => {
     const input = type('list boo');
 
@@ -116,109 +120,96 @@ describe('CommandShell', () => {
     expect(input.selectionStart).toBe('add book "x" with isbn "'.length);
   });
 
-  it('shows the next suggestions at once after accepting the only one', () => {
-    const input = type('add bo');
-
-    press(input, 'Tab');
-
-    expect(input.value).toBe('add book ');
-    expect(activeChip()).toBe('"title"');
-  });
-
-  it('cycles through the suggestions with repeated Tab, wrapping around', () => {
-    const input = type('log');
-
-    press(input, 'Tab');
-    expect(input.value).toBe('login ');
-    expect(activeChip()).toBe('login');
-
-    press(input, 'Tab');
-    expect(input.value).toBe('logout ');
-    expect(activeChip()).toBe('logout');
-
-    press(input, 'Tab');
-    expect(input.value).toBe('login ');
-  });
-
-  it('cycles backwards with Shift + Tab', () => {
-    const input = type('log');
-
-    press(input, 'Tab', { shiftKey: true });
-    expect(input.value).toBe('logout ');
-
-    press(input, 'Tab', { shiftKey: true });
-    expect(input.value).toBe('login ');
-  });
-
-  it('ends the cycle when the user types', () => {
-    const input = type('log');
-    press(input, 'Tab');
-
-    type('login x');
-
-    expect(activeChip()).toBeUndefined();
-  });
-
-  it('ends the cycle with Space without doubling the space', () => {
-    const input = type('log');
-    press(input, 'Tab');
-    expect(input.value).toBe('login ');
-
-    const event = press(input, ' ');
-
-    expect(event.defaultPrevented).toBe(true);
-    expect(input.value).toBe('login ');
-    expect(activeChip()).toBeUndefined();
-  });
-
-  it('shows the parameters at once when the accepted command takes them', () => {
+  it('shows the parameters at once after accepting a command', () => {
     const input = type('ad');
 
     press(input, 'Tab');
-
     expect(input.value).toBe('add book ');
     expect(activeChip()).toBe('"title"');
 
     press(input, 'Tab');
-
     expect(input.value).toBe('add book ""');
   });
 
-  it('shows the author name parameter after accepting add author', () => {
-    const input = type('add a');
+  it('moves the highlight with Alt+Right without touching the query, wrapping around', () => {
+    const input = type('log');
+    expect(activeChip()).toBe('login');
 
+    press(input, 'ArrowRight', { altKey: true });
+    expect(activeChip()).toBe('logout');
+    expect(input.value).toBe('log');
+
+    press(input, 'ArrowRight', { altKey: true });
+    expect(activeChip()).toBe('login');
+  });
+
+  it('moves the highlight backwards with Alt+Left, wrapping around', () => {
+    const input = type('log');
+
+    press(input, 'ArrowLeft', { altKey: true });
+
+    expect(activeChip()).toBe('logout');
+  });
+
+  it('accepts the suggestion Alt+Right moved to', () => {
+    const input = type('ad');
+
+    press(input, 'ArrowRight', { altKey: true });
     press(input, 'Tab');
 
     expect(input.value).toBe('add author ');
     expect(activeChip()).toBe('"first and last name"');
   });
 
-  it('does not double the space after a completion that ended no cycle', () => {
-    const input = type('ad');
+  it('starts the highlight over at the first suggestion when the user types', () => {
+    const input = type('log');
+    press(input, 'ArrowRight', { altKey: true });
+
+    type('lo');
+
+    expect(activeChip()).toBe('login');
+  });
+
+  it('claims Alt+Left/Right even with no suggestions, so the browser does not navigate', () => {
+    const input = type('dashboard xyz');
+
+    expect(press(input, 'ArrowLeft', { altKey: true }).defaultPrevented).toBe(true);
+    expect(press(input, 'ArrowRight', { altKey: true }).defaultPrevented).toBe(true);
+  });
+
+  it('leaves plain Left/Right to move the caret', () => {
+    const input = type('log');
+
+    expect(press(input, 'ArrowLeft').defaultPrevented).toBe(false);
+    expect(activeChip()).toBe('login');
+  });
+
+  it('lets Tab move focus when there is nothing to accept, and never traps Shift+Tab', () => {
+    const input = type('dashboard xyz');
+    expect(chips()).toEqual([]);
+
+    expect(press(input, 'Tab').defaultPrevented).toBe(false);
+    expect(press(type('log'), 'Tab', { shiftKey: true }).defaultPrevented).toBe(false);
+  });
+
+  it('does not double the space after accepting a completion', () => {
+    const input = type('log');
     press(input, 'Tab');
+    expect(input.value).toBe('login ');
 
     const event = press(input, ' ');
 
     expect(event.defaultPrevented).toBe(true);
-    expect(input.value).toBe('add book ');
+    expect(input.value).toBe('login ');
   });
 
-  it('types Space normally inside the quotes of a cycled param', () => {
+  it('types Space normally inside the quotes of an accepted param', () => {
     const input = type('add book "x" with i');
     press(input, 'Tab');
 
     const event = press(input, ' ');
 
     expect(event.defaultPrevented).toBe(false);
-  });
-
-  it('keeps the cycled list on screen until the cycle ends', () => {
-    const input = type('log');
-
-    press(input, 'Tab');
-
-    const chips = [...fixture.nativeElement.querySelectorAll('.chip')].map((c: Element) => c.textContent!.trim());
-    expect(chips).toEqual(['login', 'logout']);
   });
 
   it('leaves the arrows to the workspace', () => {

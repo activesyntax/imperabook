@@ -43,18 +43,6 @@ function suggestionList(suggestions: readonly CompletionItem[]): SuggestionList 
   return { all: suggestions, range: indexRange(suggestions.length) };
 }
 
-/**
- * Repeated Tabs swap the completion just inserted for the next one, as in
- * zsh's menu-complete. Every step is applied to the query from before the
- * first Tab, using the suggestions offered at that moment.
- */
-type CompletionCycle = {
-  readonly original: string;
-  readonly list: SuggestionList;
-  readonly index: number;
-  readonly applied: AppliedCompletion;
-}
-
 @Component({
   selector: 'app-command-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -76,9 +64,14 @@ export class CommandShell {
   protected readonly suggestions = computed<SuggestionList>(
     () => suggestionList(this.suggestionService.suggestionsFor(this.query(), this.cursorPosition())));
 
-  private readonly cycle = signal<CompletionCycle | undefined>(undefined);
+  // Alt+Left/Right move the highlight; Tab accepts it. Any change to the
+  // suggestions (typing, moving the caret, accepting) starts again at the first.
+  protected readonly selectedIndex = linkedSignal<SuggestionList, Index>({
+    source: this.suggestions,
+    computation: list => (list.all.length > 0 ? 0 : undefined),
+  });
 
-  // The completion the last Tab inserted, cycling or not.
+  // The completion the last Tab inserted.
   private readonly lastApplied = signal<AppliedCompletion | undefined>(undefined);
 
   // True while the query and caret are exactly as the last Tab left them.
@@ -87,26 +80,6 @@ export class CommandShell {
     return applied !== undefined
       && applied.text === this.query()
       && applied.caret === this.cursorPosition();
-  });
-
-  // The cycle lasts only while the query and caret are exactly as its last Tab
-  // left them; typing or moving the caret ends it.
-  private readonly activeCycle = computed(() => {
-    const cycle = this.cycle();
-    return cycle !== undefined
-      && cycle.applied.text === this.query()
-      && cycle.applied.caret === this.cursorPosition()
-      ? cycle
-      : undefined;
-  });
-
-  // While cycling, the list the cycle walks through stays on screen.
-  protected readonly shownSuggestions = computed(() => this.activeCycle()?.list ?? this.suggestions());
-
-  protected readonly selectedIndex = computed<Index>(() => {
-    const cycle = this.activeCycle();
-    if (cycle !== undefined) return cycle.index;
-    return this.suggestions().all.length > 0 ? 0 : undefined;
   });
 
 
@@ -146,14 +119,25 @@ export class CommandShell {
 
     switch (event.key) {
       case 'Tab':
+        // Only claimed when there is something to accept: otherwise Tab and
+        // Shift+Tab move focus as usual, so the bar is no keyboard trap.
+        if (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
+        if (this.selectedIndex() === undefined) return;
         event.preventDefault();
-        this.cycleSuggestion(event.shiftKey ? prevCyclicIndex : nextCyclicIndex);
+        this.acceptSelected();
+        break;
+      case 'ArrowLeft':
+      case 'ArrowRight':
+        if (!event.altKey) return;
+        // Always claimed, even with nothing to move through: Alt+Left/Right is
+        // the browser's Back/Forward, which would leave the app.
+        event.preventDefault();
+        this.moveSelection(event.key === 'ArrowRight' ? nextCyclicIndex : prevCyclicIndex);
         break;
       case ' ':
         // A completion already ends in a space; Space after it just confirms it.
         if (!this.justCompleted() || this.query()[this.cursorPosition() - 1] !== ' ') return;
         event.preventDefault();
-        this.cycle.set(undefined);
         this.lastApplied.set(undefined);
         break;
       case 'Enter':
@@ -167,20 +151,18 @@ export class CommandShell {
     }
   }
 
-  private cycleSuggestion(move: IndexMove): void {
-    const cycle = this.activeCycle();
-    const original = cycle?.original ?? this.query();
-    const list = cycle?.list ?? this.suggestions();
+  private moveSelection(move: IndexMove): void {
+    const list = this.suggestions();
+    if (list.all.length === 0) return;
 
-    const index = move(list.range, cycle?.index);
-    if (index === undefined || list.all.length === 0) return;
+    this.selectedIndex.set(move(list.range, this.selectedIndex()));
+  }
 
-    const applied = applyCompletion(original, list.all[index]);
-    // The next suggestions show at once when there is nothing to cycle to, or
-    // when the completion has parameters to fill in ("add book" → "title"):
-    // those matter more than switching to a sibling, which more typing reaches.
-    const hasFollowUps = this.suggestionService.suggestionsFor(applied.text, applied.caret).length > 0;
-    this.cycle.set(list.all.length > 1 && !hasFollowUps ? { original, list, index, applied } : undefined);
+  private acceptSelected(): void {
+    const index = this.selectedIndex();
+    if (index === undefined) return;
+
+    const applied = applyCompletion(this.query(), this.suggestions().all[index]);
     this.lastApplied.set(applied);
     this.query.set(applied.text);
     // After query.set, since the cursor position is linked to the query.
