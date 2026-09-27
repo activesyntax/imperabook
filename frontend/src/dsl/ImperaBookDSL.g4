@@ -6,7 +6,6 @@ entry          : command EOF ;
 command        : addBookCmd
                | updateBookCmd
                | removeBookCmd
-               | showBookCmd
                | listBooksCmd
                | addAuthorCmd
                | updateAuthorCmd
@@ -22,19 +21,14 @@ command        : addBookCmd
                | logoutCmd
                ;
 
-// Title and author are required exactly once each; the optional details may
-// appear in any order around them.
-addBookCmd     : ADD BOOK bookDetailParam*
-                 ( authorParam bookDetailParam* titleParam
-                 | titleParam bookDetailParam* authorParam
-                 )
-                 bookDetailParam* ;
+// Title is required exactly once; the optional details, author included, may
+// appear in any order around it. No author means the author is unknown.
+addBookCmd     : ADD BOOK bookDetailParam* titleParam bookDetailParam* ;
 updateBookCmd  : UPDATE BOOK ;
 removeBookCmd  : REMOVE BOOK ;
-showBookCmd    : SHOW BOOK ;
 listBooksCmd   : LIST BOOKS ;
 
-addAuthorCmd   : ADD AUTHOR STRING ;
+addAuthorCmd   : ADD AUTHOR authorName ;
 updateAuthorCmd: UPDATE AUTHOR ;
 removeAuthorCmd: REMOVE AUTHOR ;
 listAuthorsCmd : LIST AUTHORS ;
@@ -48,11 +42,15 @@ accountCmd     : ACCOUNT ;
 loginCmd       : LOGIN ;
 logoutCmd      : LOGOUT ;
 
+// The author's full name as typed, first name(s) then last name: "Ursula K. Le Guin".
+authorName     : STRING ;
+
 authorParam    : BY AUTHOR STRING ;
 titleParam     : WITH TITLE STRING ;
 
 bookDetailParam
-               : subtitleParam
+               : authorParam
+               | subtitleParam
                | languageParam
                | publicationYearParam
                | isbnParam
@@ -69,7 +67,6 @@ summaryParam   : WITH SUMMARY STRING ;
 ADD            : 'add' ;
 UPDATE         : 'update' ;
 REMOVE         : 'remove' ;
-SHOW           : 'show' ;
 LIST           : 'list' ;
 BOOK           : 'book' ;
 BOOKS          : 'books' ;

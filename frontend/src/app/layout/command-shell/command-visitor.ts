@@ -10,7 +10,6 @@ export type CommandName =
   | 'add book'
   | 'update book'
   | 'remove book'
-  | 'show book'
   | 'list books'
   | 'add author'
   | 'update author'
@@ -45,29 +44,31 @@ export class CommandVisitor extends ImperaBookDSLVisitor<ParsedCommand | null> {
     return this.visitChildren(ctx);
   };
 
-  // 3. Extract the addBookCmd parameters
+  // 3. Extract the addBookCmd parameters. The author is optional: absent means unknown.
   override visitAddBookCmd = (ctx: AddBookCmdContext): ParsedCommand => {
-    const authorRaw = ctx.authorParam()?.STRING()?.getText() ?? '';
     const titleRaw = ctx.titleParam()?.STRING()?.getText() ?? '';
+    const authorRaw = ctx
+      .bookDetailParam()
+      .map((p) => p.authorParam()?.STRING()?.getText())
+      .find((a) => a !== undefined);
 
     return {
       command: 'add book',
       params: {
-        author: this.cleanString(authorRaw),
         title: this.cleanString(titleRaw),
+        ...(authorRaw !== undefined && { author: this.cleanString(authorRaw) }),
       },
     };
   };
 
   override visitAddAuthorCmd = (ctx: AddAuthorCmdContext): ParsedCommand => ({
     command: 'add author',
-    params: { name: this.cleanString(ctx.STRING()?.getText() ?? '') },
+    params: { name: this.cleanString(ctx.authorName()?.STRING()?.getText() ?? '') },
   });
 
   // Commands without parameters
   override visitUpdateBookCmd = noParams('update book');
   override visitRemoveBookCmd = noParams('remove book');
-  override visitShowBookCmd = noParams('show book');
   override visitListBooksCmd = noParams('list books');
   override visitUpdateAuthorCmd = noParams('update author');
   override visitRemoveAuthorCmd = noParams('remove author');

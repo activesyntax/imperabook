@@ -7,7 +7,6 @@ import { CommandContext } from "./ImperaBookDSLParser.js";
 import { AddBookCmdContext } from "./ImperaBookDSLParser.js";
 import { UpdateBookCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveBookCmdContext } from "./ImperaBookDSLParser.js";
-import { ShowBookCmdContext } from "./ImperaBookDSLParser.js";
 import { ListBooksCmdContext } from "./ImperaBookDSLParser.js";
 import { AddAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { UpdateAuthorCmdContext } from "./ImperaBookDSLParser.js";
@@ -21,6 +20,7 @@ import { HelpCmdContext } from "./ImperaBookDSLParser.js";
 import { AccountCmdContext } from "./ImperaBookDSLParser.js";
 import { LoginCmdContext } from "./ImperaBookDSLParser.js";
 import { LogoutCmdContext } from "./ImperaBookDSLParser.js";
+import { AuthorNameContext } from "./ImperaBookDSLParser.js";
 import { AuthorParamContext } from "./ImperaBookDSLParser.js";
 import { TitleParamContext } from "./ImperaBookDSLParser.js";
 import { BookDetailParamContext } from "./ImperaBookDSLParser.js";
@@ -86,16 +86,6 @@ export class ImperaBookDSLListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitRemoveBookCmd?: (ctx: RemoveBookCmdContext) => void;
-    /**
-     * Enter a parse tree produced by `ImperaBookDSLParser.showBookCmd`.
-     * @param ctx the parse tree
-     */
-    enterShowBookCmd?: (ctx: ShowBookCmdContext) => void;
-    /**
-     * Exit a parse tree produced by `ImperaBookDSLParser.showBookCmd`.
-     * @param ctx the parse tree
-     */
-    exitShowBookCmd?: (ctx: ShowBookCmdContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.listBooksCmd`.
      * @param ctx the parse tree
@@ -226,6 +216,16 @@ export class ImperaBookDSLListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitLogoutCmd?: (ctx: LogoutCmdContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.authorName`.
+     * @param ctx the parse tree
+     */
+    enterAuthorName?: (ctx: AuthorNameContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.authorName`.
+     * @param ctx the parse tree
+     */
+    exitAuthorName?: (ctx: AuthorNameContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.authorParam`.
      * @param ctx the parse tree

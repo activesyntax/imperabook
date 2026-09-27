@@ -108,7 +108,7 @@ public static class CommandCatalog
             "Catalog a new book",
             [
                 new("title", "Title", "with title", true),
-                new("author", "Author", "by author", true),
+                new("author", "Author", "by author", false),
                 new("subtitle", "Subtitle", "subtitled", false),
                 new("language", "Language", "in language", false),
                 new("publicationYear", "Publication year", "published in", false),
@@ -121,7 +121,6 @@ public static class CommandCatalog
         },
         new("update book", "Edit an existing book", []) { Group = CommandGroup.Dynamic },
         new("remove book", "Delete a book", []) { Group = CommandGroup.Dynamic },
-        new("show book", "Show full detail for one book", []),
         new("list books", "List all books", []),
         new("add author", "Create an author record", []),
         new("update author", "Rename an author", []),

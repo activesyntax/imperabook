@@ -34,7 +34,6 @@ const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_addBookCmd]: { label: 'add book', insertText: 'add book ' },
   [ImperaBookDSLParser.RULE_updateBookCmd]: { label: 'update book', insertText: 'update book ' },
   [ImperaBookDSLParser.RULE_removeBookCmd]: { label: 'remove book', insertText: 'remove book ' },
-  [ImperaBookDSLParser.RULE_showBookCmd]: { label: 'show book', insertText: 'show book ' },
   [ImperaBookDSLParser.RULE_listBooksCmd]: { label: 'list books', insertText: 'list books ' },
   [ImperaBookDSLParser.RULE_addAuthorCmd]: { label: 'add author', insertText: 'add author ' },
   [ImperaBookDSLParser.RULE_updateAuthorCmd]: { label: 'update author', insertText: 'update author ' },
@@ -48,6 +47,7 @@ const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_accountCmd]: { label: 'account', insertText: 'account ' },
   [ImperaBookDSLParser.RULE_loginCmd]: { label: 'login', insertText: 'login ' },
   [ImperaBookDSLParser.RULE_logoutCmd]: { label: 'logout', insertText: 'logout ' },
+  [ImperaBookDSLParser.RULE_authorName]: { label: '"first and last name"', insertText: '"$0"' },
   [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author "$0"' },
   [ImperaBookDSLParser.RULE_titleParam]: { label: 'with title', insertText: 'with title "$0"' },
   [ImperaBookDSLParser.RULE_subtitleParam]: { label: 'subtitled', insertText: 'subtitled "$0"' },
@@ -60,14 +60,13 @@ const RULE_PHRASES: Record<number, Phrase> = {
 /**
  * Preferred rules must not be nested inside each other: when the caret sits in
  * several of them, c3 reports only the outermost one and stops descending.
- * addBookCmd contains authorParam/titleParam, so the two levels are collected
+ * addBookCmd contains titleParam/authorParam, so the two levels are collected
  * in separate passes.
  */
 const COMMAND_RULES = [
   ImperaBookDSLParser.RULE_addBookCmd,
   ImperaBookDSLParser.RULE_updateBookCmd,
   ImperaBookDSLParser.RULE_removeBookCmd,
-  ImperaBookDSLParser.RULE_showBookCmd,
   ImperaBookDSLParser.RULE_listBooksCmd,
   ImperaBookDSLParser.RULE_addAuthorCmd,
   ImperaBookDSLParser.RULE_updateAuthorCmd,
@@ -88,6 +87,7 @@ const COMMAND_RULES = [
  * params, and preferring it would hide the individual phrases inside it.
  */
 const PARAM_RULES = [
+  ImperaBookDSLParser.RULE_authorName,
   ImperaBookDSLParser.RULE_authorParam,
   ImperaBookDSLParser.RULE_titleParam,
   ImperaBookDSLParser.RULE_subtitleParam,
