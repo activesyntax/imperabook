@@ -80,12 +80,12 @@ describe('CommandShell', () => {
   });
 
   it('puts the caret inside the quotes after accepting a string param', () => {
-    const input = type('add book with t');
+    const input = type('add book "x" with i');
 
     press(input, 'Tab');
 
-    expect(input.value).toBe('add book with title ""');
-    expect(input.selectionStart).toBe('add book with title "'.length);
+    expect(input.value).toBe('add book "x" with isbn ""');
+    expect(input.selectionStart).toBe('add book "x" with isbn "'.length);
   });
 
   it('shows the next suggestions at once after accepting the only one', () => {
@@ -94,7 +94,7 @@ describe('CommandShell', () => {
     press(input, 'Tab');
 
     expect(input.value).toBe('add book ');
-    expect(activeChip()).toBe('with title');
+    expect(activeChip()).toBe('"title"');
   });
 
   it('cycles through the suggestions with repeated Tab, wrapping around', () => {
@@ -141,11 +141,11 @@ describe('CommandShell', () => {
 
     expect(event.defaultPrevented).toBe(true);
     expect(input.value).toBe('add book ');
-    expect(activeChip()).toBe('with title');
+    expect(activeChip()).toBe('"title"');
   });
 
   it('types Space normally inside the quotes of a cycled param', () => {
-    const input = type('add book with t');
+    const input = type('add book "x" with i');
     press(input, 'Tab');
 
     const event = press(input, ' ');

@@ -21,8 +21,8 @@ import { AccountCmdContext } from "./ImperaBookDSLParser.js";
 import { LoginCmdContext } from "./ImperaBookDSLParser.js";
 import { LogoutCmdContext } from "./ImperaBookDSLParser.js";
 import { AuthorNameContext } from "./ImperaBookDSLParser.js";
+import { BookTitleContext } from "./ImperaBookDSLParser.js";
 import { AuthorParamContext } from "./ImperaBookDSLParser.js";
-import { TitleParamContext } from "./ImperaBookDSLParser.js";
 import { BookDetailParamContext } from "./ImperaBookDSLParser.js";
 import { SubtitleParamContext } from "./ImperaBookDSLParser.js";
 import { LanguageParamContext } from "./ImperaBookDSLParser.js";
@@ -227,6 +227,16 @@ export class ImperaBookDSLListener implements ParseTreeListener {
      */
     exitAuthorName?: (ctx: AuthorNameContext) => void;
     /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.bookTitle`.
+     * @param ctx the parse tree
+     */
+    enterBookTitle?: (ctx: BookTitleContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.bookTitle`.
+     * @param ctx the parse tree
+     */
+    exitBookTitle?: (ctx: BookTitleContext) => void;
+    /**
      * Enter a parse tree produced by `ImperaBookDSLParser.authorParam`.
      * @param ctx the parse tree
      */
@@ -236,16 +246,6 @@ export class ImperaBookDSLListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitAuthorParam?: (ctx: AuthorParamContext) => void;
-    /**
-     * Enter a parse tree produced by `ImperaBookDSLParser.titleParam`.
-     * @param ctx the parse tree
-     */
-    enterTitleParam?: (ctx: TitleParamContext) => void;
-    /**
-     * Exit a parse tree produced by `ImperaBookDSLParser.titleParam`.
-     * @param ctx the parse tree
-     */
-    exitTitleParam?: (ctx: TitleParamContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.bookDetailParam`.
      * @param ctx the parse tree

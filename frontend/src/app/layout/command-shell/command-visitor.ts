@@ -46,7 +46,7 @@ export class CommandVisitor extends ImperaBookDSLVisitor<ParsedCommand | null> {
 
   // 3. Extract the addBookCmd parameters. The author is optional: absent means unknown.
   override visitAddBookCmd = (ctx: AddBookCmdContext): ParsedCommand => {
-    const titleRaw = ctx.titleParam()?.STRING()?.getText() ?? '';
+    const titleRaw = ctx.bookTitle()?.STRING()?.getText() ?? '';
     const authorRaw = ctx
       .bookDetailParam()
       .map((p) => p.authorParam()?.STRING()?.getText())

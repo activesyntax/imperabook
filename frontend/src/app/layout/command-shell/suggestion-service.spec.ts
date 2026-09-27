@@ -30,20 +30,20 @@ describe('applyCompletion', () => {
   });
 
   it('puts the caret inside the quotes of a string param', () => {
-    expect(accept('add book wi|', 'with title')).toBe('add book with title "|"');
+    expect(accept('add book "x" wi|', 'with isbn')).toBe('add book "x" with isbn "|"');
   });
 
   it('edits at the caret, not at an earlier copy of the same word', () => {
-    expect(accept('add book with title "with" wi|', 'with isbn'))
-      .toBe('add book with title "with" with isbn "|"');
+    expect(accept('add book "with" wi|', 'with isbn'))
+      .toBe('add book "with" with isbn "|"');
   });
 
   it('inserts after a finished word without gluing them together', () => {
-    expect(accept('add book|', 'with title')).toBe('add book with title "|"');
+    expect(accept('add book|', '"title"')).toBe('add book "|"');
   });
 
   it('keeps the text after the caret', () => {
-    expect(accept('add book wi| by author "x"', 'with title'))
-      .toBe('add book with title "|" by author "x"');
+    expect(accept('add book "x" su| by author "y"', 'subtitled'))
+      .toBe('add book "x" subtitled "|" by author "y"');
   });
 });

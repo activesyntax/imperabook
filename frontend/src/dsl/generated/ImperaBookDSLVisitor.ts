@@ -21,8 +21,8 @@ import { AccountCmdContext } from "./ImperaBookDSLParser.js";
 import { LoginCmdContext } from "./ImperaBookDSLParser.js";
 import { LogoutCmdContext } from "./ImperaBookDSLParser.js";
 import { AuthorNameContext } from "./ImperaBookDSLParser.js";
+import { BookTitleContext } from "./ImperaBookDSLParser.js";
 import { AuthorParamContext } from "./ImperaBookDSLParser.js";
-import { TitleParamContext } from "./ImperaBookDSLParser.js";
 import { BookDetailParamContext } from "./ImperaBookDSLParser.js";
 import { SubtitleParamContext } from "./ImperaBookDSLParser.js";
 import { LanguageParamContext } from "./ImperaBookDSLParser.js";
@@ -154,17 +154,17 @@ export class ImperaBookDSLVisitor<Result> extends AbstractParseTreeVisitor<Resul
      */
     visitAuthorName?: (ctx: AuthorNameContext) => Result;
     /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.bookTitle`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitBookTitle?: (ctx: BookTitleContext) => Result;
+    /**
      * Visit a parse tree produced by `ImperaBookDSLParser.authorParam`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitAuthorParam?: (ctx: AuthorParamContext) => Result;
-    /**
-     * Visit a parse tree produced by `ImperaBookDSLParser.titleParam`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitTitleParam?: (ctx: TitleParamContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.bookDetailParam`.
      * @param ctx the parse tree

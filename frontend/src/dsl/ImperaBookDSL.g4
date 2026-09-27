@@ -21,9 +21,9 @@ command        : addBookCmd
                | logoutCmd
                ;
 
-// Title is required exactly once; the optional details, author included, may
-// appear in any order around it. No author means the author is unknown.
-addBookCmd     : ADD BOOK bookDetailParam* titleParam bookDetailParam* ;
+// The title comes first, right after the command; the optional details, author
+// included, follow in any order. No author means the author is unknown.
+addBookCmd     : ADD BOOK bookTitle bookDetailParam* ;
 updateBookCmd  : UPDATE BOOK ;
 removeBookCmd  : REMOVE BOOK ;
 listBooksCmd   : LIST BOOKS ;
@@ -45,8 +45,10 @@ logoutCmd      : LOGOUT ;
 // The author's full name as typed, first name(s) then last name: "Ursula K. Le Guin".
 authorName     : STRING ;
 
+// The book's title as typed: add book "Dune".
+bookTitle      : STRING ;
+
 authorParam    : BY AUTHOR STRING ;
-titleParam     : WITH TITLE STRING ;
 
 bookDetailParam
                : authorParam
@@ -82,7 +84,6 @@ LOGIN          : 'login' ;
 LOGOUT         : 'logout' ;
 BY             : 'by' ;
 WITH           : 'with' ;
-TITLE          : 'title' ;
 SUBTITLED      : 'subtitled' ;
 IN             : 'in' ;
 LANGUAGE       : 'language' ;

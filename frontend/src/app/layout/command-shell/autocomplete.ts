@@ -47,9 +47,9 @@ const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_accountCmd]: { label: 'account', insertText: 'account ' },
   [ImperaBookDSLParser.RULE_loginCmd]: { label: 'login', insertText: 'login ' },
   [ImperaBookDSLParser.RULE_logoutCmd]: { label: 'logout', insertText: 'logout ' },
+  [ImperaBookDSLParser.RULE_bookTitle]: { label: '"title"', insertText: '"$0"' },
   [ImperaBookDSLParser.RULE_authorName]: { label: '"first and last name"', insertText: '"$0"' },
   [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author "$0"' },
-  [ImperaBookDSLParser.RULE_titleParam]: { label: 'with title', insertText: 'with title "$0"' },
   [ImperaBookDSLParser.RULE_subtitleParam]: { label: 'subtitled', insertText: 'subtitled "$0"' },
   [ImperaBookDSLParser.RULE_languageParam]: { label: 'in language', insertText: 'in language "$0"' },
   [ImperaBookDSLParser.RULE_publicationYearParam]: { label: 'published in', insertText: 'published in ' },
@@ -60,7 +60,7 @@ const RULE_PHRASES: Record<number, Phrase> = {
 /**
  * Preferred rules must not be nested inside each other: when the caret sits in
  * several of them, c3 reports only the outermost one and stops descending.
- * addBookCmd contains titleParam/authorParam, so the two levels are collected
+ * addBookCmd contains bookTitle/authorParam, so the two levels are collected
  * in separate passes.
  */
 const COMMAND_RULES = [
@@ -87,9 +87,9 @@ const COMMAND_RULES = [
  * params, and preferring it would hide the individual phrases inside it.
  */
 const PARAM_RULES = [
+  ImperaBookDSLParser.RULE_bookTitle,
   ImperaBookDSLParser.RULE_authorName,
   ImperaBookDSLParser.RULE_authorParam,
-  ImperaBookDSLParser.RULE_titleParam,
   ImperaBookDSLParser.RULE_subtitleParam,
   ImperaBookDSLParser.RULE_languageParam,
   ImperaBookDSLParser.RULE_publicationYearParam,

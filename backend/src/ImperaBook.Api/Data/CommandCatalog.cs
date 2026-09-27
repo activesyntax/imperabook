@@ -107,7 +107,7 @@ public static class CommandCatalog
             "add book",
             "Catalog a new book",
             [
-                new("title", "Title", "with title", true),
+                new("title", "Title", "", true),
                 new("author", "Author", "by author", false),
                 new("subtitle", "Subtitle", "subtitled", false),
                 new("language", "Language", "in language", false),
