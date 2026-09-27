@@ -91,6 +91,18 @@ describe('CommandShell', () => {
     });
   });
 
+  it('sends a typed empty title and author, for the server to reject', async () => {
+    await submit(type('add book "" by author ""'));
+
+    expect(runner.run).toHaveBeenCalledWith({ command: 'add book', params: { title: '', author: '' } });
+  });
+
+  it('leaves a book author out when it was not typed', async () => {
+    await submit(type('add book "Beowulf"'));
+
+    expect(runner.run).toHaveBeenCalledWith({ command: 'add book', params: { title: 'Beowulf' } });
+  });
+
   it('does not run unrecognized input', async () => {
     await submit(type('xyz'));
 

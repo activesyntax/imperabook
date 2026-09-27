@@ -40,7 +40,7 @@ internal static class DomainValidationErrorMapper
 
             CatalogValidationError.AuthorRequired => new(
                 "author_required",
-                "At least one author is required."
+                "Author must not be empty. Leave it out if the author is unknown."
             ),
             CatalogValidationError.ContentHashRequired => new(
                 "content_hash_required",

@@ -11,8 +11,9 @@ public sealed record AddBookCommand
     public required string Title { get; init; }
 
     /// <summary>
-    /// Search text for the author, not an exact name. Blank means the author is unknown; no match
-    /// adds the author; one match attaches it; several are ambiguous and nothing is added.
+    /// Search text for the author, not an exact name. Absent means the author is unknown; given
+    /// but blank is invalid; no match adds the author; one match attaches it; several are
+    /// ambiguous and nothing is added.
     /// </summary>
     public string? Author { get; init; }
 
@@ -176,6 +177,9 @@ public sealed class AddBookCommandHandler(
     {
         var title = Title.Create(command.Title);
 
+        // Leaving the author out says "unknown"; typing an empty one is a mistake.
+        var blankAuthor = command.Author is not null && string.IsNullOrWhiteSpace(command.Author);
+
         var subtitle = Subtitle.Create(command.Subtitle);
         var summary = Summary.Create(command.Summary);
         var isbn = Isbn.Create(command.Isbn);
@@ -188,6 +192,7 @@ public sealed class AddBookCommandHandler(
         CatalogValidationError?[] errors =
         [
             title.IsFailure ? title.Error : null,
+            blankAuthor ? new CatalogValidationError.AuthorRequired() : null,
             subtitle.IsFailure ? subtitle.Error : null,
             summary.IsFailure ? summary.Error : null,
             cover.IsFailure ? cover.Error : null,

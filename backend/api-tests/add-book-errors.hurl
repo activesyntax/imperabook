@@ -60,6 +60,43 @@ HTTP 422
 jsonpath "$.code" == "image_not_found"
 
 
+# --- Typed but empty author: rejected, unlike a left-out author (unknown) -----
+POST {{host}}/api/books
+Content-Type: application/json
+{
+  "title": "Empty Author",
+  "author": ""
+}
+HTTP 400
+[Asserts]
+jsonpath "$.failures" count == 1
+jsonpath "$.failures[0].code" == "author_required"
+
+POST {{host}}/api/books
+Content-Type: application/json
+{
+  "title": "Blank Author",
+  "author": "   "
+}
+HTTP 400
+[Asserts]
+jsonpath "$.failures[0].code" == "author_required"
+
+
+# --- Empty title and empty author are reported together ----------------------
+POST {{host}}/api/books
+Content-Type: application/json
+{
+  "title": "  ",
+  "author": ""
+}
+HTTP 400
+[Asserts]
+jsonpath "$.failures" count == 2
+jsonpath "$.failures[*].code" includes "title_required"
+jsonpath "$.failures[*].code" includes "author_required"
+
+
 # --- A rejected book does not leave its new author behind ---------------------
 POST {{host}}/api/books
 Content-Type: application/json
