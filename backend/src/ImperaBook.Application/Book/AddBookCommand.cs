@@ -24,7 +24,9 @@ public sealed record AddBookCommand
 public sealed class AddBookCommandHandler(
     IBookCommands books,
     ILibraryQueries libraries,
-    IImageStore images
+    IAuthorQueries authors,
+    IImageStore images,
+    IArtwork artwork
 )
 {
     public async Task<Result<Guid, ApplicationError>> Handle(
@@ -40,11 +42,15 @@ public sealed class AddBookCommandHandler(
         if (book.IsFailure)
             return book.Error;
 
-        var cover = await VerifyCover(book.Value.Cover, ct);
+        var attribution = await VerifyAuthors(book.Value.Attribution, ct);
+        if (attribution.IsFailure)
+            return attribution.Error;
+
+        var cover = await ResolveCover(book.Value, ct);
         if (cover.IsFailure)
             return cover.Error;
 
-        await books.Add(book.Value, ct);
+        await books.Add(book.Value with { Cover = cover.Value }, ct);
         return book.Value.Id.Value;
     }
 
@@ -58,17 +64,37 @@ public sealed class AddBookCommandHandler(
         );
     }
 
-    private async Task<UnitResult<ApplicationError>> VerifyCover(
-        Maybe<ContentHash> cover,
+    private async Task<UnitResult<ApplicationError>> VerifyAuthors(
+        Attribution attribution,
         CancellationToken ct
     )
     {
-        if (!cover.TryGetValue(out var hash))
+        var ids = attribution.AuthorIds().Select(id => id.Value).ToList();
+        if (ids.Count == 0)
             return UnitResult.Success<ApplicationError>();
 
-        return await images.Exists(hash, ct)
+        var owned = await authors.Owned(ids, ct);
+        var missing = ids.Where(id => !owned.Contains(id)).ToList();
+
+        return missing.Count == 0
             ? UnitResult.Success<ApplicationError>()
-            : UnitResult.Failure<ApplicationError>(new ApplicationError.ImageNotFound(hash));
+            : UnitResult.Failure<ApplicationError>(new ApplicationError.AuthorsNotFound(missing));
+    }
+
+    /// <summary>
+    /// A given cover must already be uploaded; a book added without one gets generated artwork.
+    /// </summary>
+    private async Task<Result<ContentHash, ApplicationError>> ResolveCover(
+        Book book,
+        CancellationToken ct
+    )
+    {
+        if (!book.Cover.TryGetValue(out var hash))
+            return await artwork.Cover(book.Title, ct);
+
+        return await images.Exists(hash, ct)
+            ? hash
+            : new ApplicationError.ImageNotFound(hash);
     }
 
     private static Result<Book, ApplicationError> BuildBook(
@@ -78,6 +104,7 @@ public sealed class AddBookCommandHandler(
     )
     {
         var title = Title.Create(command.Title);
+        // An empty list is a legitimate answer: nobody knows who wrote it.
         var authors = Authors.Create(command.AuthorIds.Select(Id<Author>.From));
 
         var subtitle = Subtitle.Create(command.Subtitle);
@@ -92,7 +119,6 @@ public sealed class AddBookCommandHandler(
         CatalogValidationError?[] errors =
         [
             title.IsFailure ? title.Error : null,
-            authors.HasNoValue ? new CatalogValidationError.AuthorRequired() : null,
             subtitle.IsFailure ? subtitle.Error : null,
             summary.IsFailure ? summary.Error : null,
             cover.IsFailure ? cover.Error : null,

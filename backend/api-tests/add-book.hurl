@@ -41,10 +41,29 @@ book_id: jsonpath "$.id"
 jsonpath "$.id" matches /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 header "Location" == "/api/books/{{book_id}}"
 
+# No cover was given, so one was generated.
 GET {{host}}/api/books
 HTTP 200
 [Asserts]
 jsonpath "$.views[1].items[*].ref" includes "{{book_id}}"
+jsonpath "$.views[1].items[?(@.ref=='{{book_id}}')].imageSrc" startsWith "/api/images/"
+
+
+# --- No authors: the book is attributed to an unknown author -----------------
+POST {{host}}/api/books
+Content-Type: application/json
+{
+  "title": "Beowulf",
+  "authorIds": []
+}
+HTTP 201
+[Captures]
+anonymous_id: jsonpath "$.id"
+
+GET {{host}}/api/books
+HTTP 200
+[Asserts]
+jsonpath "$.views[1].items[*].ref" includes "{{anonymous_id}}"
 
 
 # --- Every optional field filled in -------------------------------------------

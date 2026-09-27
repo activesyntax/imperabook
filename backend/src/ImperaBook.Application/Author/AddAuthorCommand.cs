@@ -19,7 +19,8 @@ public sealed record AddAuthorCommand
 public sealed class AddAuthorCommandHandler(
     IAuthorCommands authors,
     ICurrentUser user,
-    IImageStore images
+    IImageStore images,
+    IArtwork artwork
 )
 {
     public async Task<Result<Guid, ApplicationError>> Handle(
@@ -31,25 +32,33 @@ public sealed class AddAuthorCommandHandler(
         if (author.IsFailure)
             return author.Error;
 
-        var portrait = await VerifyPortrait(author.Value.Portrait, ct);
+        var portrait = await ResolvePortrait(author.Value, ct);
         if (portrait.IsFailure)
             return portrait.Error;
 
-        await authors.Add(author.Value, ct);
-        return author.Value.Id.Value;
+        var a = author.Value;
+        await authors.Add(
+            Author.Create(a.Id, a.Owner, a.FirstName, a.LastName, a.LifeRange, portrait.Value),
+            ct
+        );
+        return a.Id.Value;
     }
 
-    private async Task<UnitResult<ApplicationError>> VerifyPortrait(
-        Maybe<ContentHash> portrait,
+    /// <summary>
+    /// A given portrait must already be uploaded; an author added without one gets generated
+    /// artwork.
+    /// </summary>
+    private async Task<Result<ContentHash, ApplicationError>> ResolvePortrait(
+        Author author,
         CancellationToken ct
     )
     {
-        if (!portrait.TryGetValue(out var hash))
-            return UnitResult.Success<ApplicationError>();
+        if (!author.Portrait.TryGetValue(out var hash))
+            return await artwork.Portrait(author.FirstName, author.LastName, ct);
 
         return await images.Exists(hash, ct)
-            ? UnitResult.Success<ApplicationError>()
-            : UnitResult.Failure<ApplicationError>(new ApplicationError.ImageNotFound(hash));
+            ? hash
+            : new ApplicationError.ImageNotFound(hash);
     }
 
     private static Result<Author, ApplicationError> BuildAuthor(

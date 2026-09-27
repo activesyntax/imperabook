@@ -31,6 +31,17 @@ internal static class ApplicationErrorResults
                 "image_not_found"
             ),
 
+            ApplicationError.AuthorsNotFound e => Results.Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Author not found",
+                detail: "One or more authors do not exist in your catalog. Add them first.",
+                extensions: new Dictionary<string, object?>
+                {
+                    ["code"] = "author_not_found",
+                    ["authorIds"] = e.Ids,
+                }
+            ),
+
             _ => throw new InvalidOperationException(
                 $"Unhandled ApplicationError: {error.GetType().Name}"
             ),

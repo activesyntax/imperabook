@@ -22,4 +22,7 @@ public sealed record AuthorListItem(
 public interface IAuthorQueries
 {
     Task<AuthorListItem[]> List(CancellationToken ct);
+
+    /// <summary>The subset of <paramref name="ids"/> that are authors owned by the current user.</summary>
+    Task<IReadOnlySet<Guid>> Owned(IReadOnlyCollection<Guid> ids, CancellationToken ct);
 }

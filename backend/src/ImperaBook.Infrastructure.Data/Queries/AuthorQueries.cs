@@ -23,6 +23,16 @@ public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : I
                 a.DeathYear
             ))
             .ToArrayAsync(ct);
+
+    public async Task<IReadOnlySet<Guid>> Owned(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken ct
+    ) =>
+        await db
+            .Authors.AsNoTracking()
+            .Where(a => a.OwnerId == user.Id && ids.Contains(a.Id))
+            .Select(a => a.Id)
+            .ToHashSetAsync(ct);
 }
 
 public static class AuthorQueriesExtensions

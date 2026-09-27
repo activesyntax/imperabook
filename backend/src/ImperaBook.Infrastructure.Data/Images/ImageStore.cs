@@ -47,7 +47,19 @@ public sealed class ImageStore(ImperaBookDbContext db, IOptions<ImageStoreOption
         if (buffered.IsFailure)
             return buffered.Error;
 
-        var data = buffered.Value;
+        return await Save(buffered.Value, mediaType, ct);
+    }
+
+    /// <summary>
+    /// Stores artwork the application generated itself. It bypasses the upload allowlist on
+    /// purpose: SVG is refused from clients (script can ride inside it) but is what
+    /// <see cref="ArtworkSvg"/> produces, and those bytes never came from outside.
+    /// </summary>
+    internal Task<ContentHash> StoreGenerated(byte[] data, string mediaType, CancellationToken ct) =>
+        Save(data, mediaType, ct);
+
+    private async Task<ContentHash> Save(byte[] data, string mediaType, CancellationToken ct)
+    {
         var hash = ContentHash.Create(Convert.ToHexStringLower(SHA256.HashData(data))).Value;
 
         // Re-uploading the same file is a no-op by definition: same bytes, same address, same row.

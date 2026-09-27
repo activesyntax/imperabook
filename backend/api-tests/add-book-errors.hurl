@@ -2,6 +2,7 @@
 #   Validation     -> 400 (validation problem, codes under "failures")
 #   NoLibrary      -> 409 (not reachable with the dev seed: john owns a library)
 #   ImageNotFound  -> 422
+#   AuthorsNotFound -> 422
 
 POST {{host}}/api/auth/login
 { "username": "john", "password": "{{password}}" }
@@ -13,18 +14,19 @@ HTTP 200
 author_id: jsonpath "$.views[1].items[0].ref"
 
 
-# --- Blank title and no authors: every failure is reported at once ------------
+# --- Blank title, bad pages: every failure is reported at once ----------------
 POST {{host}}/api/books
 Content-Type: application/json
 {
   "title": "",
-  "authorIds": []
+  "authorIds": [],
+  "pages": "0"
 }
 HTTP 400
 [Asserts]
 jsonpath "$.failures" count == 2
 jsonpath "$.failures[*].code" includes "title_required"
-jsonpath "$.failures[*].code" includes "author_required"
+jsonpath "$.failures[*].code" includes "page_count_out_of_range"
 
 
 # --- Non-numeric pages --------------------------------------------------------
@@ -66,6 +68,21 @@ Content-Type: application/json
 HTTP 422
 [Asserts]
 jsonpath "$.code" == "image_not_found"
+
+
+# --- Author id that isn't in this user's catalog ------------------------------
+# Only the unknown id is reported back; the real one is fine.
+POST {{host}}/api/books
+Content-Type: application/json
+{
+  "title": "Ghost Written",
+  "authorIds": ["{{author_id}}", "99999999-9999-9999-9999-999999999999"]
+}
+HTTP 422
+[Asserts]
+jsonpath "$.code" == "author_not_found"
+jsonpath "$.authorIds" count == 1
+jsonpath "$.authorIds[0]" == "99999999-9999-9999-9999-999999999999"
 
 
 # --- Missing required member ('title') ----------------------------------------
