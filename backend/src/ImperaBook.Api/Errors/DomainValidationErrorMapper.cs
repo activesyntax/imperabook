@@ -38,6 +38,47 @@ internal static class DomainValidationErrorMapper
                 $"Library name must be at most {e.MaxLength} characters."
             ),
 
+            CatalogValidationError.AuthorRequired => new(
+                "author_required",
+                "At least one author is required."
+            ),
+            CatalogValidationError.ContentHashRequired => new(
+                "content_hash_required",
+                "Image hash is required."
+            ),
+            CatalogValidationError.ContentHashMalformed e => new(
+                "content_hash_malformed",
+                $"Image hash must be {e.ExpectedLength} hexadecimal characters."
+            ),
+            CatalogValidationError.YearOutOfRange e => new(
+                "year_out_of_range",
+                $"Year must be between {e.Min} and {e.Max}."
+            ),
+            CatalogValidationError.DeathBeforeBirth e => new(
+                "death_before_birth",
+                $"Death year ({e.Death}) must not be before birth year ({e.Birth})."
+            ),
+            CatalogValidationError.IsbnInvalid => new("isbn_invalid", "ISBN is not valid."),
+            CatalogValidationError.LanguageCodeInvalid => new(
+                "language_code_invalid",
+                "Language must be a two-letter ISO 639-1 code."
+            ),
+            CatalogValidationError.PublisherTooLong e => new(
+                "publisher_too_long",
+                $"Publisher must be at most {e.Max} characters."
+            ),
+            CatalogValidationError.PageCountInvalid => new(
+                "page_count_invalid",
+                "Page count is not valid."
+            ),
+            CatalogValidationError.PageCountOutOfRange e => new(
+                "page_count_out_of_range",
+                $"Page count must be between {e.Min} and {e.Max}."
+            ),
+            CatalogValidationError.NotANumber e => new(
+                "not_a_number",
+                $"\"{e.s}\" is not a number."
+            ),
             _ => throw new InvalidOperationException(
                 $"Unmapped DomainValidationError: {error.GetType().Name}"
             ),

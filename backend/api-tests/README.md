@@ -44,13 +44,13 @@ hurl --variables-file vars.env --variable host=https://api.example.com --test *.
 | `get-all-books.hurl`        | `GET /books`                                  |
 | `search-books.hurl`         | `GET /books/search` (library and/or title)    |
 | `get-library-books.hurl`    | `GET /libraries/{id}/books`                    |
-| `add-book.hurl`             | `POST /books` (shelved + unshelved)            |
-| `add-book-errors.hurl`      | `POST /books` validation / not-found / 400s    |
+| `add-book.hurl`             | `POST /api/books` (minimal + all fields)       |
+| `add-book-errors.hurl`      | `POST /api/books` validation / 422 / 400s      |
 
 ## Notes
 
 - `add-book.hurl` mutates state. Re-running accumulates "Clean Architecture"
-  rows; assertions use the captured returned id, so they stay correct, but a
+  and "Refactoring" rows; assertions use the captured returned id, so they stay correct, but a
   clean run starts from a fresh DB (drop the Docker volume to reset).
 - Title filtering is case-sensitive (Postgres `LIKE`); the substrings here match
   the seeded casing.

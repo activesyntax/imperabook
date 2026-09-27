@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using ImperaBook.Api.Authentication;
 using ImperaBook.API.Endpoints;
 using ImperaBook.API.Endpoints.Data;
+using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
 using ImperaBook.Infrastructure.Data;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -19,6 +20,7 @@ var connectionString =
 
 builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddImperaBookAuthentication(builder.Environment);
+builder.Services.AddScoped<AddBookCommandHandler>();
 
 builder.Services.AddProblemDetails();
 builder.Services.ConfigureHttpJsonOptions(options =>

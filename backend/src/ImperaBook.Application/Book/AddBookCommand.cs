@@ -85,7 +85,7 @@ public sealed class AddBookCommandHandler(
         var isbn = Isbn.Create(command.Isbn);
         var publisher = Publisher.Create(command.Publisher);
         var language = LanguageCode.Create(command.Language);
-        var cover = ContentHash.Create(command.CoverHash);
+        var cover = ParseCover(command.CoverHash);
         var published = ParseYear(command.Published);
         var pages = ParsePageCount(command.Pages);
 
@@ -123,6 +123,11 @@ public sealed class AddBookCommandHandler(
             Pages = pages.Value,
         };
     }
+
+    private static Result<Maybe<ContentHash>, CatalogValidationError> ParseCover(string? raw) =>
+        string.IsNullOrWhiteSpace(raw)
+            ? Maybe<ContentHash>.None
+            : ContentHash.Create(raw).Map(Maybe<ContentHash>.From);
 
     private static Result<Maybe<Year>, CatalogValidationError> ParseYear(string? raw)
     {

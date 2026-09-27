@@ -1,3 +1,4 @@
+using ImperaBook.Api.Errors;
 using ImperaBook.API.Views;
 using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
@@ -14,6 +15,14 @@ public static class BookEndpoints
             .Produces<CommandResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
+        app.MapPost("/api/books", AddBook)
+            .WithName("AddBook")
+            .Produces<AddedBook>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
         return app;
     }
 
@@ -28,4 +37,19 @@ public static class BookEndpoints
             )
         );
     }
+
+    private static async Task<IResult> AddBook(
+        AddBookCommand command,
+        AddBookCommandHandler handler,
+        CancellationToken ct
+    )
+    {
+        var result = await handler.Handle(command, ct);
+
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/books/{result.Value}", new AddedBook(result.Value))
+            : result.Error.ToProblem();
+    }
 }
+
+public sealed record AddedBook(Guid Id);
