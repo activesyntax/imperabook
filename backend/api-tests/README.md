@@ -28,7 +28,7 @@ hurl --variables-file vars.env --test *.hurl
 A single file, with full request/response output:
 
 ```sh
-hurl --variables-file vars.env --verbose get-all-books.hurl
+hurl --variables-file vars.env --verbose auth.hurl
 ```
 
 Override the host without editing the file (e.g. a deployed environment):
@@ -41,9 +41,13 @@ hurl --variables-file vars.env --variable host=https://api.example.com --test *.
 
 | File                        | Use case                                      |
 |-----------------------------|-----------------------------------------------|
-| `get-all-books.hurl`        | `GET /books`                                  |
+| `public/dashboard-public.hurl` | anonymous `GET /api/dashboard` → 401 with the login screen |
+| `public/get-all-books-public.hurl` | anonymous book/author endpoints → 401 |
+| `dashboard.hurl`            | signed-in dashboard shape                      |
 | `search-books.hurl`         | `GET /books/search` (library and/or title)    |
 | `get-library-books.hurl`    | `GET /libraries/{id}/books`                    |
+| `get-book.hurl`             | `GET /api/books/{id}` detail, list items link to it via `open` |
+| `public/routing-public.hurl` | unknown `/api` paths → JSON 404, not the SPA |
 | `add-book.hurl`             | `POST /api/books` author search: unknown / new / existing / ambiguous |
 | `add-book-errors.hurl`      | `POST /api/books` validation / 422 / 400s, no stray author |
 

@@ -15,6 +15,12 @@ public static class BookEndpoints
             .Produces<CommandResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
+        app.MapGet("/api/books/{id:guid}", GetBook)
+            .WithName("GetBook")
+            .Produces<CommandResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         app.MapPost("/api/books", AddBook)
             .WithName("AddBook")
             .Produces<CommandResult>(StatusCodes.Status201Created)
@@ -38,6 +44,29 @@ public static class BookEndpoints
         );
     }
 
+    /// <summary>Where a single book is shown; list items link here through Open.</summary>
+    internal static string DetailPath(Guid id) => $"/api/books/{id}";
+
+    // Scoped to the current user by the query, so another user's book is indistinguishable from
+    // one that does not exist.
+    private static async Task<Results<Ok<CommandResult>, ProblemHttpResult>> GetBook(
+        Guid id,
+        IBookQueries books,
+        CancellationToken ct
+    )
+    {
+        var book = await books.Get(id, ct);
+
+        return book.HasValue
+            ? TypedResults.Ok(book.Value.ToCommandResult())
+            : TypedResults.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Book not found",
+                detail: "That book is not in your library.",
+                extensions: new Dictionary<string, object?> { ["code"] = "book_not_found" }
+            );
+    }
+
     private static async Task<IResult> AddBook(
         AddBookCommand command,
         AddBookCommandHandler handler,
@@ -47,7 +76,7 @@ public static class BookEndpoints
         var result = await handler.Handle(command, ct);
 
         return result.IsSuccess
-            ? TypedResults.Created($"/api/books/{result.Value.Id}", Added(result.Value))
+            ? TypedResults.Created(DetailPath(result.Value.Id), Added(result.Value))
             : result.Error.ToProblem();
     }
 

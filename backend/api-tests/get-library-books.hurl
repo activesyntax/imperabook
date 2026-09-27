@@ -6,10 +6,10 @@ GET {{host}}/libraries/{{libraryId}}/books
 HTTP 200
 [Asserts]
 jsonpath "$" isCollection
-jsonpath "$[*].title" includes "The Pragmatic Programmer"
-jsonpath "$[*].title" includes "Domain-Driven Design"
-jsonpath "$[*].title" not includes "Orphan Book"
-jsonpath "$[*].libraryId" not includes null
+jsonpath "$[*].title" contains "The Pragmatic Programmer"
+jsonpath "$[*].title" contains "Domain-Driven Design"
+jsonpath "$[*].title" not contains "Orphan Book"
+jsonpath "$[*].libraryId" not contains null
 
 
 # --- Unknown library: empty result, not an error ------------------------------

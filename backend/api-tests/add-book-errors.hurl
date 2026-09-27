@@ -18,8 +18,8 @@ Content-Type: application/json
 HTTP 400
 [Asserts]
 jsonpath "$.failures" count == 2
-jsonpath "$.failures[*].code" includes "title_required"
-jsonpath "$.failures[*].code" includes "page_count_out_of_range"
+jsonpath "$.failures[*].code" contains "title_required"
+jsonpath "$.failures[*].code" contains "page_count_out_of_range"
 
 
 # --- Non-numeric pages --------------------------------------------------------
@@ -93,8 +93,8 @@ Content-Type: application/json
 HTTP 400
 [Asserts]
 jsonpath "$.failures" count == 2
-jsonpath "$.failures[*].code" includes "title_required"
-jsonpath "$.failures[*].code" includes "author_required"
+jsonpath "$.failures[*].code" contains "title_required"
+jsonpath "$.failures[*].code" contains "author_required"
 
 
 # --- A rejected book does not leave its new author behind ---------------------
@@ -109,7 +109,7 @@ HTTP 400
 GET {{host}}/api/authors
 HTTP 200
 [Asserts]
-jsonpath "$.views[1].items[*].properties[0].value" not includes "Never Created"
+jsonpath "$.views[1].items[*].properties[0].value" not contains "Never Created"
 
 
 # --- Missing required member ('title') ----------------------------------------

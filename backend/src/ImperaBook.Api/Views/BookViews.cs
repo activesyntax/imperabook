@@ -1,4 +1,5 @@
 using System.Globalization;
+using ImperaBook.API.Endpoints;
 using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
 
@@ -64,7 +65,8 @@ public static class BookViews
         return new ItemView(
             Ref: b.Id.ToString(),
             Properties: properties,
-            ImageSrc: ImageSrcOf(b.CoverHash)
+            ImageSrc: ImageSrcOf(b.CoverHash),
+            Open: BookEndpoints.DetailPath(b.Id)
         );
     }
 

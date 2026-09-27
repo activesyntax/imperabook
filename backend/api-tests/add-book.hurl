@@ -35,7 +35,7 @@ jsonpath "$.views[0].text" == "Added \"Beowulf\", author unknown."
 GET {{host}}/api/books
 HTTP 200
 [Asserts]
-jsonpath "$.views[1].items[*].ref" includes "{{beowulf_id}}"
+jsonpath "$.views[1].items[*].ref" contains "{{beowulf_id}}"
 jsonpath "$.views[1].items[?(@.ref=='{{beowulf_id}}')].imageSrc" startsWith "/api/images/"
 
 
@@ -55,7 +55,7 @@ jsonpath "$.views[0].text" contains "(new author)"
 GET {{host}}/api/authors
 HTTP 200
 [Asserts]
-jsonpath "$.views[1].items[*].properties[0].value" includes "{{new_author}}"
+jsonpath "$.views[1].items[*].properties[0].value" contains "{{new_author}}"
 
 
 # --- Same author again: the one match is attached, no second author created ---

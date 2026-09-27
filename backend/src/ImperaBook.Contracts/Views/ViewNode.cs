@@ -57,10 +57,13 @@ public sealed record ItemCollectionView(IReadOnlyList<ItemView> Items, string Em
     : ViewNode;
 
 // ========== ITEM VIEW =================
+// Open is the endpoint that shows this item in full (GET, answers with a CommandResult). The
+// client follows it without knowing what kind of item it is; null means there is nothing to open.
 public sealed record ItemView(
     string Ref,
     IReadOnlyList<ItemProperty> Properties,
-    string? ImageSrc = null
+    string? ImageSrc = null,
+    string? Open = null
 );
 
 public sealed record ItemProperty(string Name, string Value, PropertyRole Role);

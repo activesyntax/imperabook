@@ -58,6 +58,8 @@ export interface ItemView {
   readonly ref: string;
   readonly properties: readonly ItemProperty[];
   readonly imageSrc?: string;
+  /** Endpoint showing this item in full (GET → CommandResult); absent when there is nothing to open. */
+  readonly open?: string;
 }
 
 

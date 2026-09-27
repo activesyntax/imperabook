@@ -7,6 +7,7 @@ using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
 using ImperaBook.Infrastructure.Data;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -64,23 +65,35 @@ app.UseStatusCodePages(async context =>
         return;
     }
 
+    // Only bodiless errors reach here; each status says what it actually means.
+    var (title, detail, code) = response.StatusCode switch
+    {
+        StatusCodes.Status401Unauthorized => (
+            "Not signed in",
+            "This command requires a session. Sign in to continue.",
+            "not_authenticated"
+        ),
+        StatusCodes.Status403Forbidden => (
+            "Forbidden",
+            "This session is not permitted to perform that action.",
+            "forbidden"
+        ),
+        StatusCodes.Status404NotFound => ("Not found", "Nothing is at this address.", "not_found"),
+        var status => (
+            ReasonPhrases.GetReasonPhrase(status),
+            (string?)null,
+            status >= 500 ? "server_error" : "request_error"
+        ),
+    };
+
     var problem = new ProblemDetails
     {
         Status = response.StatusCode,
-        Title =
-            response.StatusCode == StatusCodes.Status401Unauthorized
-                ? "Not signed in"
-                : "Forbidden",
-        Detail =
-            response.StatusCode == StatusCodes.Status401Unauthorized
-                ? "This command requires a session. Sign in to continue."
-                : "This session is not permitted to perform that action.",
+        Title = title,
+        Detail = detail,
     };
 
-    problem.Extensions["code"] =
-        response.StatusCode == StatusCodes.Status401Unauthorized
-            ? "not_authenticated"
-            : "forbidden";
+    problem.Extensions["code"] = code;
 
     if (response.StatusCode == StatusCodes.Status401Unauthorized)
     {
@@ -88,8 +101,13 @@ app.UseStatusCodePages(async context =>
         problem.Extensions["views"] = views;
     }
 
-    response.ContentType = "application/problem+json";
-    await response.WriteAsJsonAsync(problem);
+    // Passed explicitly: WriteAsJsonAsync would otherwise replace it with application/json.
+    await response.WriteAsJsonAsync(
+        problem,
+        options: null,
+        contentType: "application/problem+json",
+        cancellationToken: context.HttpContext.RequestAborted
+    );
 });
 
 app.UseStaticFiles(
@@ -135,6 +153,21 @@ app.MapHelpEndpoints();
 app.MapAboutEndpoints();
 app.MapSettingsEndpoints();
 app.MapImageEndpoints();
+
+// Unknown /api paths answer 404 as a problem instead of falling through to the SPA shell, which
+// would be a 200 of HTML to a client expecting JSON. The literal "api" segment outranks the SPA
+// fallback's catch-all, so this wins for every /api path no endpoint claims.
+app.MapFallback(
+        "/api/{**path}",
+        (HttpContext http) =>
+            Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Not found",
+                detail: $"There is no API endpoint at {http.Request.Path}.",
+                extensions: new Dictionary<string, object?> { ["code"] = "not_found" }
+            )
+    )
+    .AllowAnonymous();
 
 app.MapFallbackToFile("index.html").AllowAnonymous();
 
