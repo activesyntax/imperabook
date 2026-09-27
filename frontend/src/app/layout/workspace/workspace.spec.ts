@@ -29,4 +29,36 @@ describe('Workspace', () => {
       { type: 'message', kind: 'info', text: 'hello' },
     ]);
   });
+
+  function isCentered(): boolean {
+    return fixture.nativeElement.querySelector('.workspace').classList.contains('centered');
+  }
+
+  it('centers a result made only of messages', () => {
+    store.setResult({
+      views: [
+        { type: 'message', kind: 'success', text: 'Added author Homer.' },
+        { type: 'message', kind: 'warning', text: 'Heads up.' },
+      ],
+    });
+    fixture.detectChanges();
+
+    expect(isCentered()).toBe(true);
+  });
+
+  it('keeps a result with other views at the top', () => {
+    store.setResult({
+      views: [
+        { type: 'message', kind: 'warning', text: '"smith" matches 2 authors.' },
+        { type: 'textView', blocks: [] },
+      ],
+    });
+    fixture.detectChanges();
+
+    expect(isCentered()).toBe(false);
+  });
+
+  it('does not center an empty workspace', () => {
+    expect(isCentered()).toBe(false);
+  });
 });

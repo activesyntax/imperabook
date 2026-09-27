@@ -1,5 +1,5 @@
 <div class="workspace-frame">
-  <section class="workspace" #scrollContainer>
+  <section class="workspace" [class.centered]="onlyMessages()" #scrollContainer>
     @for (view of result().views; track $index) {
       <app-view [node]="view" />
     }

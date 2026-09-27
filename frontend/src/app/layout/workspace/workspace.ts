@@ -23,6 +23,13 @@ export class Workspace {
 
   readonly result = computed<CommandResult>(() => ({ views: [...this.store.views()] }));
 
+  // A reply made only of messages ("Added author …", errors, warnings) has no
+  // content to anchor to the top, so it sits in the middle of the workspace.
+  protected readonly onlyMessages = computed(() => {
+    const views = this.result().views;
+    return views.length > 0 && views.every(view => view.type === 'message');
+  });
+
   private readonly scrollContainer = viewChild<ElementRef<HTMLElement>>('scrollContainer');
   private readonly scrollElement = computed(() => this.scrollContainer()?.nativeElement);
 

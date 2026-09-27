@@ -31,6 +31,14 @@
   scrollbar-width: thin;
   scrollbar-color: var(--ib-border-faint) transparent;
 
+  // Centered on the container, not with auto margins on the children: app-view
+  // is display: contents (styles.scss), so it has no box to take a margin.
+  // `safe` falls back to the top when the column outgrows the workspace, which
+  // plain `center` would push out of scroll reach.
+  &.centered {
+    justify-content: safe center;
+  }
+
   &::-webkit-scrollbar { width: 10px; }
   &::-webkit-scrollbar-track { background: transparent; }
 
