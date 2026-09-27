@@ -1,3 +1,4 @@
+using ImperaBook.Api.Errors;
 using ImperaBook.API.Views;
 using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
@@ -13,6 +14,13 @@ public static class AuthorEndpoints
             .WithName("ListAuthors")
             .Produces<CommandResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        app.MapPost("/api/authors", AddAuthor)
+            .WithName("AddAuthor")
+            .Produces<AddedAuthor>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
         return app;
     }
@@ -31,4 +39,19 @@ public static class AuthorEndpoints
             )
         );
     }
+
+    private static async Task<IResult> AddAuthor(
+        AddAuthorCommand command,
+        AddAuthorCommandHandler handler,
+        CancellationToken ct
+    )
+    {
+        var result = await handler.Handle(command, ct);
+
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/authors/{result.Value}", new AddedAuthor(result.Value))
+            : result.Error.ToProblem();
+    }
 }
+
+public sealed record AddedAuthor(Guid Id);

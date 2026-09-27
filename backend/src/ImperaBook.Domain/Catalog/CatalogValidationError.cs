@@ -32,6 +32,8 @@ public abstract record CatalogValidationError
 
     public sealed record DeathBeforeBirth(int Birth, int Death) : CatalogValidationError;
 
+    public sealed record DeathYearRequiresDeceased : CatalogValidationError;
+
     public sealed record IsbnInvalid : CatalogValidationError;
 
     public sealed record LanguageCodeInvalid : CatalogValidationError;

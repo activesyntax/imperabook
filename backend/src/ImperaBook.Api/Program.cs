@@ -21,6 +21,7 @@ var connectionString =
 builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddImperaBookAuthentication(builder.Environment);
 builder.Services.AddScoped<AddBookCommandHandler>();
+builder.Services.AddScoped<AddAuthorCommandHandler>();
 
 builder.Services.AddProblemDetails();
 builder.Services.ConfigureHttpJsonOptions(options =>

@@ -58,6 +58,10 @@ internal static class DomainValidationErrorMapper
                 "death_before_birth",
                 $"Death year ({e.Death}) must not be before birth year ({e.Birth})."
             ),
+            CatalogValidationError.DeathYearRequiresDeceased => new(
+                "death_year_requires_deceased",
+                "A death year can only be given for a deceased author."
+            ),
             CatalogValidationError.IsbnInvalid => new("isbn_invalid", "ISBN is not valid."),
             CatalogValidationError.LanguageCodeInvalid => new(
                 "language_code_invalid",
