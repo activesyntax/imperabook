@@ -1,4 +1,15 @@
-<article class="item-view" [attr.data-ref]="view().ref">
+<!-- The command bar keeps focus (mousedown is swallowed); Enter there opens the
+     selected item, so a click is the pointer path to the same action. -->
+<article
+  class="item-view"
+  role="option"
+  [attr.data-ref]="view().ref"
+  [attr.aria-selected]="selected()"
+  [attr.aria-disabled]="!openable()"
+  [class.item-view--openable]="openable()"
+  [class.item-view--selected]="selected()"
+  (mousedown)="$event.preventDefault()"
+  (click)="open()">
   <div class="item-view__cover">
     @if (view().imageSrc; as src) {
     <img class="item-view__cover-image" [src]="src" [alt]="coverAlt()" loading="lazy" />

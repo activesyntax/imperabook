@@ -7,6 +7,18 @@
   flex-direction: column;
   gap: 0.75rem;
 
+  &--openable { cursor: pointer; }
+
+  &--openable:hover &__cover {
+    border-color: var(--ib-border);
+  }
+
+  // Enter on an empty command bar opens this one.
+  &--selected &__cover {
+    border-color: var(--ib-accent);
+    outline: 1px solid var(--ib-accent);
+  }
+
   &__cover {
     aspect-ratio: 2 / 3;
     position: relative;

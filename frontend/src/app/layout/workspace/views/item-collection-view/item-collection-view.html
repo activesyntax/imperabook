@@ -1,9 +1,12 @@
 <div class="item-collection">
-  <div class="item-collection__grid">
+  <!-- A listbox may only hold options, so the empty message sits outside it. -->
+  @if (view().items.length > 0) {
+  <div class="item-collection__grid" role="listbox" aria-label="Items">
     @for (item of view().items; track item.ref) {
     <app-item-view [view]="item" />
-    } @empty {
-    <p class="item-collection__empty">{{ view().emptyMessage }}</p>
     }
   </div>
+  } @else {
+  <p class="item-collection__empty">{{ view().emptyMessage }}</p>
+  }
 </div>

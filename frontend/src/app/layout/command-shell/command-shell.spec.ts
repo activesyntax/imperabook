@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CommandRunner } from '@app/commands/command-runner';
+import { ItemOpener } from '@app/commands/item-opener';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import type { CommandResult } from '@workspace/views/view-node';
 import { CommandShell } from './command-shell';
@@ -13,13 +14,18 @@ describe('CommandShell', () => {
   let component: CommandShell;
   let fixture: ComponentFixture<CommandShell>;
   let runner: { run: ReturnType<typeof vi.fn> };
+  let opener: { openSelected: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     runner = { run: vi.fn(() => Promise.resolve(DASHBOARD_RESULT)) };
+    opener = { openSelected: vi.fn(() => true) };
 
     await TestBed.configureTestingModule({
       imports: [CommandShell],
-      providers: [{ provide: CommandRunner, useValue: runner }],
+      providers: [
+        { provide: CommandRunner, useValue: runner },
+        { provide: ItemOpener, useValue: opener },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CommandShell);
@@ -101,6 +107,19 @@ describe('CommandShell', () => {
     await submit(type('add book "Beowulf"'));
 
     expect(runner.run).toHaveBeenCalledWith({ command: 'add book', params: { title: 'Beowulf' } });
+  });
+
+  it('opens the selected item on Enter when the bar is empty', async () => {
+    await submit(type('   '));
+
+    expect(opener.openSelected).toHaveBeenCalled();
+    expect(runner.run).not.toHaveBeenCalled();
+  });
+
+  it('runs the typed command on Enter rather than opening an item', async () => {
+    await submit(type('dashboard'));
+
+    expect(opener.openSelected).not.toHaveBeenCalled();
   });
 
   it('does not run unrecognized input', async () => {

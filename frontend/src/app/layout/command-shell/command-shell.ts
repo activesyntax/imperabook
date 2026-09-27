@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 
 import { CommandRunner } from '@app/commands/command-runner';
+import { ItemOpener } from '@app/commands/item-opener';
 import { resultOfUnrecognized } from '@app/commands/command-error';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { AppliedCompletion, applyCompletion, SuggestionService } from './suggestion-service';
@@ -52,6 +53,7 @@ function suggestionList(suggestions: readonly CompletionItem[]): SuggestionList 
 export class CommandShell {
   private readonly runner = inject(CommandRunner);
   private readonly store = inject(WorkspaceStore);
+  private readonly opener = inject(ItemOpener);
   // private readonly shell = inject(ShellStateMachine);
   private readonly suggestionService = inject(SuggestionService);
 
@@ -142,6 +144,11 @@ export class CommandShell {
         break;
       case 'Enter':
         event.preventDefault();
+        // An empty bar has no command to run; Enter opens the selected item instead.
+        if (this.query().trim() === '') {
+          this.opener.openSelected();
+          return;
+        }
         void this.submit();
         break;
       case 'Escape':

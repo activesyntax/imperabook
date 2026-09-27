@@ -83,4 +83,23 @@ describe('CommandRunner', () => {
 
     expect(await result).toEqual({ views, keepQuery: true });
   });
+
+  it('opens an item by following its API link', async () => {
+    const detail: CommandResult = { views: [] };
+
+    const result = runner.open('/api/books/42');
+
+    const req = http.expectOne('/api/books/42');
+    expect(req.request.method).toBe('GET');
+    req.flush(detail);
+
+    expect(await result).toEqual(detail);
+  });
+
+  it('refuses to follow a link outside the API', async () => {
+    const result = await runner.open('https://example.com/steal');
+
+    http.expectNone(() => true);
+    expect(result.views[0]).toMatchObject({ type: 'message', kind: 'error' });
+  });
 });

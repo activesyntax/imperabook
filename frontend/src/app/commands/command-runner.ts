@@ -72,6 +72,19 @@ export class CommandRunner {
     return this.send(endpoint.method, endpoint.url, endpoint.body?.(cmd.params));
   }
 
+  /**
+   * Follows a link the server put on a view (an item's `open`). Only same-origin
+   * API paths are followed: the link is data from a response, not a place to
+   * send the session cookie anywhere else.
+   */
+  open(url: string): Promise<CommandResult> {
+    if (!url.startsWith('/api/')) {
+      return Promise.resolve(resultOfError(new Error(`Refusing to open ${url}`)));
+    }
+
+    return this.send('GET', url);
+  }
+
   /** Not a parsed command: credentials never pass through the command bar. */
   login(credentials: Credentials): Promise<CommandResult> {
     return this.send('POST', '/api/auth/login', credentials);
