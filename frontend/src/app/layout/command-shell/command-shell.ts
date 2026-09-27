@@ -78,6 +78,17 @@ export class CommandShell {
 
   private readonly cycle = signal<CompletionCycle | undefined>(undefined);
 
+  // The completion the last Tab inserted, cycling or not.
+  private readonly lastApplied = signal<AppliedCompletion | undefined>(undefined);
+
+  // True while the query and caret are exactly as the last Tab left them.
+  private readonly justCompleted = computed(() => {
+    const applied = this.lastApplied();
+    return applied !== undefined
+      && applied.text === this.query()
+      && applied.caret === this.cursorPosition();
+  });
+
   // The cycle lasts only while the query and caret are exactly as its last Tab
   // left them; typing or moving the caret ends it.
   private readonly activeCycle = computed(() => {
@@ -139,9 +150,11 @@ export class CommandShell {
         this.cycleSuggestion(event.shiftKey ? prevCyclicIndex : nextCyclicIndex);
         break;
       case ' ':
-        if (this.activeCycle() === undefined || this.query()[this.cursorPosition() - 1] !== ' ') return;
+        // A completion already ends in a space; Space after it just confirms it.
+        if (!this.justCompleted() || this.query()[this.cursorPosition() - 1] !== ' ') return;
         event.preventDefault();
         this.cycle.set(undefined);
+        this.lastApplied.set(undefined);
         break;
       case 'Enter':
         event.preventDefault();
@@ -163,8 +176,12 @@ export class CommandShell {
     if (index === undefined || list.all.length === 0) return;
 
     const applied = applyCompletion(original, list.all[index]);
-    // A lone suggestion has nothing to cycle to, so the next ones show at once.
-    this.cycle.set(list.all.length > 1 ? { original, list, index, applied } : undefined);
+    // The next suggestions show at once when there is nothing to cycle to, or
+    // when the completion has parameters to fill in ("add book" → "title"):
+    // those matter more than switching to a sibling, which more typing reaches.
+    const hasFollowUps = this.suggestionService.suggestionsFor(applied.text, applied.caret).length > 0;
+    this.cycle.set(list.all.length > 1 && !hasFollowUps ? { original, list, index, applied } : undefined);
+    this.lastApplied.set(applied);
     this.query.set(applied.text);
     // After query.set, since the cursor position is linked to the query.
     this.cursorPosition.set(applied.caret);

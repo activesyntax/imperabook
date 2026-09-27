@@ -160,16 +160,47 @@ describe('CommandShell', () => {
   });
 
   it('ends the cycle with Space without doubling the space', () => {
-    const input = type('add');
+    const input = type('log');
     press(input, 'Tab');
+    expect(input.value).toBe('login ');
+
+    const event = press(input, ' ');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(input.value).toBe('login ');
+    expect(activeChip()).toBeUndefined();
+  });
+
+  it('shows the parameters at once when the accepted command takes them', () => {
+    const input = type('ad');
+
     press(input, 'Tab');
+
     expect(input.value).toBe('add book ');
+    expect(activeChip()).toBe('"title"');
+
+    press(input, 'Tab');
+
+    expect(input.value).toBe('add book ""');
+  });
+
+  it('shows the author name parameter after accepting add author', () => {
+    const input = type('add a');
+
+    press(input, 'Tab');
+
+    expect(input.value).toBe('add author ');
+    expect(activeChip()).toBe('"first and last name"');
+  });
+
+  it('does not double the space after a completion that ended no cycle', () => {
+    const input = type('ad');
+    press(input, 'Tab');
 
     const event = press(input, ' ');
 
     expect(event.defaultPrevented).toBe(true);
     expect(input.value).toBe('add book ');
-    expect(activeChip()).toBe('"title"');
   });
 
   it('types Space normally inside the quotes of a cycled param', () => {
