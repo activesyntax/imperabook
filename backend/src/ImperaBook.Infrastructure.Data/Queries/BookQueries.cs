@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using CSharpFunctionalExtensions;
 using ImperaBook.Application;
 using ImperaBook.Infrastructure.Data.Entities;
@@ -8,26 +9,26 @@ namespace ImperaBook.Infrastructure.Data.Queries;
 public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBookQueries
 {
     public Task<BookListItem[]> List(CancellationToken ct) =>
-        Owned()
-            .OrderBy(b => b.Title)
-            .ThenBy(b => b.Id)
-            .Select(b => new BookListItem
-            {
-                Id = b.Id,
-                Title = b.Title,
-                Subtitle = b.Subtitle,
-                Authors = b
-                    .Authors.OrderBy(ba => ba.Ordinal)
-                    .Select(ba => new BookAuthor
-                    {
-                        Id = ba.AuthorId,
-                        FirstName = ba.Author.FirstName,
-                        LastName = ba.Author.LastName,
-                    })
-                    .ToList(),
-                CoverHash = b.CoverHash,
-            })
-            .ToArrayAsync(ct);
+        Owned().OrderBy(b => b.Title).ThenBy(b => b.Id).Select(ToListItem).ToArrayAsync(ct);
+
+    /// <summary>The list-row projection, shared with queries that list a subset of books.</summary>
+    internal static readonly Expression<Func<BookEntity, BookListItem>> ToListItem =
+        b => new BookListItem
+        {
+            Id = b.Id,
+            Title = b.Title,
+            Subtitle = b.Subtitle,
+            Authors = b
+                .Authors.OrderBy(ba => ba.Ordinal)
+                .Select(ba => new BookAuthor
+                {
+                    Id = ba.AuthorId,
+                    FirstName = ba.Author.FirstName,
+                    LastName = ba.Author.LastName,
+                })
+                .ToList(),
+            CoverHash = b.CoverHash,
+        };
 
     public async Task<Maybe<BookDetail>> Get(Guid id, CancellationToken ct)
     {
@@ -66,7 +67,16 @@ public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBo
     /// Every read starts here. The scope is not a parameter any caller could forget or get wrong
     /// (ADR 31), and a book reaches its owner through its library rather than directly.
     /// </summary>
-    private IQueryable<BookEntity> Owned() =>
+    private IQueryable<BookEntity> Owned() => db.OwnedBooks(user);
+}
+
+public static class OwnedBooksExtensions
+{
+    /// <summary>
+    /// The one definition of which books a user may read: a book reaches its owner through its
+    /// library rather than directly. Every book read, in any query class, starts here.
+    /// </summary>
+    internal static IQueryable<BookEntity> OwnedBooks(this ImperaBookDbContext db, ICurrentUser user) =>
         db
             .Books.AsNoTracking()
             .Join(

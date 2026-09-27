@@ -25,6 +25,11 @@ HTTP 401
 [Asserts]
 jsonpath "$.code" == "not_authenticated"
 
+GET {{host}}/api/authors/00000000-0000-0000-0000-000000000000
+HTTP 401
+[Asserts]
+jsonpath "$.code" == "not_authenticated"
+
 POST {{host}}/api/authors
 Content-Type: application/json
 { "lastName": "Anonymous" }

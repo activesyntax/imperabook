@@ -46,6 +46,7 @@ hurl --variables-file vars.env --variable host=https://api.example.com --test *.
 | `dashboard.hurl`            | signed-in dashboard shape                      |
 | `search-books.hurl`         | `GET /books/search` (library and/or title)    |
 | `get-library-books.hurl`    | `GET /libraries/{id}/books`                    |
+| `get-author.hurl`           | `GET /api/authors/{id}` detail with the author's books; list items link via `open` |
 | `get-book.hurl`             | `GET /api/books/{id}` detail, list items link to it via `open` |
 | `public/routing-public.hurl` | unknown `/api` paths → JSON 404, not the SPA |
 | `add-book.hurl`             | `POST /api/books` author search: unknown / new / existing / ambiguous |

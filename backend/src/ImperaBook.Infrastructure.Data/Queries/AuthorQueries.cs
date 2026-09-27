@@ -1,3 +1,4 @@
+using CSharpFunctionalExtensions;
 using ImperaBook.Application;
 using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,35 @@ public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : I
                 a.DeathYear
             ))
             .ToArrayAsync(ct);
+
+    public async Task<Maybe<AuthorDetail>> Get(Guid id, CancellationToken ct)
+    {
+        var author = await db
+            .Authors.AsNoTracking()
+            .Where(a => a.OwnerId == user.Id && a.Id == id)
+            .Select(a => new AuthorListItem(
+                a.Id,
+                a.FirstName,
+                a.LastName,
+                a.PortraitHash,
+                a.BirthYear,
+                a.Vitality,
+                a.DeathYear
+            ))
+            .SingleOrDefaultAsync(ct);
+
+        if (author is null)
+            return Maybe<AuthorDetail>.None;
+
+        var books = await db.OwnedBooks(user)
+            .Where(b => b.Authors.Any(ba => ba.AuthorId == id))
+            .OrderBy(b => b.Title)
+            .ThenBy(b => b.Id)
+            .Select(BookQueries.ToListItem)
+            .ToArrayAsync(ct);
+
+        return new AuthorDetail(author, books);
+    }
 
     public Task<AuthorListItem[]> Search(string term, CancellationToken ct)
     {

@@ -1,3 +1,4 @@
+using ImperaBook.API.Endpoints;
 using ImperaBook.Application;
 using ImperaBook.Contracts.Views;
 
@@ -17,6 +18,32 @@ public static class AuthorViews
                 new ItemCollectionView(authors.Select(ToItem).ToArray(), emptyMessage),
             }
         );
+
+    /// <summary>
+    /// One author: name, portrait, life range, then their books as items that open like any
+    /// book in the catalog.
+    /// </summary>
+    public static CommandResult ToCommandResult(this AuthorDetail d)
+    {
+        var a = d.Author;
+        var name = a.DisplayName();
+        var nodes = new List<ViewNode> { new HeadingView(name) };
+
+        if (a.ImageSrc() is { } src)
+            nodes.Add(new ImageView(src, $"Portrait of {name}", ImageRole.Illustration));
+
+        if (a.LifeRange() is { Length: > 0 } lifeRange)
+            nodes.Add(new TextView([new Paragraph([new StrongRun(["Life"]), $" {lifeRange}"])]));
+
+        nodes.Add(
+            new ItemCollectionView(
+                d.Books.Select(BookViews.ToItem).ToArray(),
+                $"No books by {name} yet."
+            )
+        );
+
+        return new CommandResult(nodes);
+    }
 
     /// <summary>
     /// Several authors match a book's "by author" text: a warning, then one line per candidate
@@ -52,7 +79,12 @@ public static class AuthorViews
             new("LifeRange", a.LifeRange(), PropertyRole.Secondary),
         };
 
-        return new ItemView(Ref: a.Id.ToString(), Properties: properties, ImageSrc: a.ImageSrc());
+        return new ItemView(
+            Ref: a.Id.ToString(),
+            Properties: properties,
+            ImageSrc: a.ImageSrc(),
+            Open: AuthorEndpoints.DetailPath(a.Id)
+        );
     }
 
     internal static string DisplayName(this AuthorListItem a) =>

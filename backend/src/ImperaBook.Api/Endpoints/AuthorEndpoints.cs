@@ -15,6 +15,12 @@ public static class AuthorEndpoints
             .Produces<CommandResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
+        app.MapGet("/api/authors/{id:guid}", GetAuthor)
+            .WithName("GetAuthor")
+            .Produces<CommandResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         app.MapPost("/api/authors", AddAuthor)
             .WithName("AddAuthor")
             .Produces<CommandResult>(StatusCodes.Status201Created)
@@ -40,6 +46,29 @@ public static class AuthorEndpoints
         );
     }
 
+    /// <summary>Where a single author is shown; list items link here through Open.</summary>
+    internal static string DetailPath(Guid id) => $"/api/authors/{id}";
+
+    // Scoped to the current user by the query, so another user's author is indistinguishable
+    // from one that does not exist.
+    private static async Task<Results<Ok<CommandResult>, ProblemHttpResult>> GetAuthor(
+        Guid id,
+        IAuthorQueries authors,
+        CancellationToken ct
+    )
+    {
+        var author = await authors.Get(id, ct);
+
+        return author.HasValue
+            ? TypedResults.Ok(author.Value.ToCommandResult())
+            : TypedResults.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Author not found",
+                detail: "That author is not in your catalog.",
+                extensions: new Dictionary<string, object?> { ["code"] = "author_not_found" }
+            );
+    }
+
     private static async Task<IResult> AddAuthor(
         AddAuthorCommand command,
         AddAuthorCommandHandler handler,
@@ -49,7 +78,7 @@ public static class AuthorEndpoints
         var result = await handler.Handle(command, ct);
 
         return result.IsSuccess
-            ? TypedResults.Created($"/api/authors/{result.Value}", Added(command))
+            ? TypedResults.Created(DetailPath(result.Value), Added(command))
             : result.Error.ToProblem();
     }
 

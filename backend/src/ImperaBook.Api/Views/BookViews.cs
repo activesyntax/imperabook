@@ -50,7 +50,7 @@ public static class BookViews
         return new CommandResult(nodes);
     }
 
-    private static ItemView ToItem(BookListItem b)
+    internal static ItemView ToItem(BookListItem b)
     {
         var properties = new List<ItemProperty>
         {
