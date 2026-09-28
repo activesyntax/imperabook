@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { AuthorLookup } from '@app/commands/author-lookup';
 import { CommandRunner } from '@app/commands/command-runner';
 import { ItemOpener } from '@app/commands/item-opener';
 import { WorkspaceStore } from '@app/state/workspace-store';
@@ -15,6 +16,7 @@ describe('CommandShell', () => {
   let component: CommandShell;
   let fixture: ComponentFixture<CommandShell>;
   let runner: { run: ReturnType<typeof vi.fn> };
+  let authors: { search: ReturnType<typeof vi.fn> };
   let opener: {
     openSelected: ReturnType<typeof vi.fn>;
     back: ReturnType<typeof vi.fn>;
@@ -24,6 +26,7 @@ describe('CommandShell', () => {
 
   beforeEach(async () => {
     runner = { run: vi.fn(() => Promise.resolve(DASHBOARD_RESULT)) };
+    authors = { search: vi.fn(() => Promise.resolve([])) };
     opener = {
       openSelected: vi.fn(() => true),
       back: vi.fn(() => true),
@@ -36,6 +39,7 @@ describe('CommandShell', () => {
       providers: [
         { provide: CommandRunner, useValue: runner },
         { provide: ItemOpener, useValue: opener },
+        { provide: AuthorLookup, useValue: authors },
       ],
     }).compileComponents();
 
@@ -189,6 +193,88 @@ describe('CommandShell', () => {
       command: 'add book',
       params: { title: 'Dune', language: 'en', author: 'herbert', published: '1965', isbn: 'x' },
     });
+  });
+
+  it('accepts a parameter with Tab straight from the end of the value line', () => {
+    const input = type('add book Dune');
+    expect(activeChip()).toBe('by author');
+
+    press(input, 'Tab');
+
+    expect(input.value).toBe('add book Dune\nby author ');
+    expect(input.selectionStart).toBe(input.value.length);
+  });
+
+  describe('author suggestions', () => {
+    const HERBERT = { id: '1', name: 'Frank Herbert' };
+    const HERRIOT = { id: '2', name: 'James Herriot' };
+
+    async function typeAndSettle(text: string): Promise<HTMLTextAreaElement> {
+      const input = type(text);
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return input;
+    }
+
+    it('offers catalog authors matching the name being typed', async () => {
+      authors.search.mockResolvedValue([HERBERT, HERRIOT]);
+
+      await typeAndSettle('add book Dune\nby author her');
+
+      expect(authors.search).toHaveBeenCalledWith('her', expect.anything());
+      expect(chips().slice(0, 2)).toEqual(['Frank Herbert', 'James Herriot']);
+      expect(activeChip()).toBe('Frank Herbert');
+    });
+
+    it('replaces the typed name with the one accepted', async () => {
+      authors.search.mockResolvedValue([HERBERT]);
+      const input = await typeAndSettle('add book Dune\nby author her');
+
+      press(input, 'Tab');
+
+      expect(input.value).toBe('add book Dune\nby author Frank Herbert');
+      expect(input.selectionStart).toBe(input.value.length);
+    });
+
+    it('offers existing authors while adding one, too', async () => {
+      authors.search.mockResolvedValue([HERBERT]);
+
+      await typeAndSettle('add author her');
+
+      expect(chips()).toEqual(['Frank Herbert']);
+    });
+
+    it('does not offer the name already typed exactly', async () => {
+      authors.search.mockResolvedValue([HERBERT]);
+
+      await typeAndSettle('add book Dune\nby author Frank Herbert');
+
+      expect(chips()).not.toContain('Frank Herbert');
+    });
+
+    it('does not look anything up outside an author name', async () => {
+      await typeAndSettle('add book Dune\nwith isbn 12');
+      await typeAndSettle('add book Dune\nby author ');
+
+      expect(authors.search).not.toHaveBeenCalled();
+    });
+  });
+
+  it('moves within the line with bare Home/End instead of scrolling the workspace', () => {
+    const reached = vi.fn();
+    document.addEventListener('keydown', reached);
+    try {
+      const input = type('add book Dune\nby author Frank Herbert');
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
+      expect(reached).not.toHaveBeenCalled();
+
+      const single = type('dashboard');
+      single.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }));
+      expect(reached).toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('keydown', reached);
+    }
   });
 
   it('moves between lines with bare Up/Down instead of scrolling the workspace', () => {

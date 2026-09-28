@@ -15,6 +15,11 @@ public static class AuthorEndpoints
             .Produces<CommandResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
+        app.MapGet("/api/authors/search", SearchAuthors)
+            .WithName("SearchAuthors")
+            .Produces<AuthorMatch[]>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+
         app.MapGet("/api/authors/{id:guid}", GetAuthor)
             .WithName("GetAuthor")
             .Produces<CommandResult>(StatusCodes.Status200OK)
@@ -26,6 +31,7 @@ public static class AuthorEndpoints
             .Produces<CommandResult>(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
         return app;
@@ -43,6 +49,29 @@ public static class AuthorEndpoints
                 "No authors yet.",
                 new PageInfo(1, 1, authorList.Count(), "authors")
             )
+        );
+    }
+
+    /// <summary>How many matches the command bar can use as suggestion chips.</summary>
+    private const int SuggestionLimit = 8;
+
+    // Feeds the command bar's author suggestions. Plain data rather than a view:
+    // it fills in text the user is typing instead of showing anything. Matching
+    // is the same as "by author" resolution, so a suggestion always resolves.
+    private static async Task<Ok<AuthorMatch[]>> SearchAuthors(
+        string? q,
+        IAuthorQueries authors,
+        CancellationToken ct
+    )
+    {
+        var term = string.Join(' ', (q ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        if (term.Length == 0)
+            return TypedResults.Ok(Array.Empty<AuthorMatch>());
+
+        var matches = await authors.Search(term, ct);
+
+        return TypedResults.Ok(
+            matches.Take(SuggestionLimit).Select(a => new AuthorMatch(a.Id, a.DisplayName())).ToArray()
         );
     }
 
@@ -89,3 +118,5 @@ public static class AuthorEndpoints
         return new CommandResult([new MessageView($"Added author {name}.", MessageKind.Success)]);
     }
 }
+
+public sealed record AuthorMatch(Guid Id, string Name);

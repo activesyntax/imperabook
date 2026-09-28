@@ -6,12 +6,6 @@ function parse(text: string): ParsedCommand | null {
 }
 
 describe('CommandVisitor', () => {
-  beforeEach(() => {
-    // The parser logs its tree and reports syntax errors to the console.
-    vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
-  });
-
   it('reads a command without parameters', () => {
     expect(parse('list books')).toEqual({ command: 'list books', params: {} });
   });

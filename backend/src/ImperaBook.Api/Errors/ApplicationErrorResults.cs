@@ -35,6 +35,20 @@ internal static class ApplicationErrorResults
                 "image_not_found"
             ),
 
+            // Nothing was added. The views show the author who is already there; keepQuery hands
+            // the typed command back in case a different name was meant.
+            ApplicationError.DuplicateAuthor e => Results.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Author already exists",
+                detail: $"{e.Existing.DisplayName()} is already in your catalog.",
+                extensions: new Dictionary<string, object?>
+                {
+                    ["code"] = "author_exists",
+                    ["keepQuery"] = true,
+                    ["views"] = AuthorViews.AlreadyInCatalog(e.Existing),
+                }
+            ),
+
             // Nothing was added. The views say which authors matched; keepQuery hands the typed
             // command back so the user can narrow "by author" instead of retyping everything.
             ApplicationError.AmbiguousAuthor e => Results.Problem(

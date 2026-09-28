@@ -7,6 +7,8 @@ import {
 import { CandidatesCollection, CodeCompletionCore } from 'antlr4-c3';
 import { ImperaBookDSLLexer } from '@dsl/generated/ImperaBookDSLLexer';
 import { ImperaBookDSLParser } from '@dsl/generated/ImperaBookDSLParser';
+import { parseDSLCommand } from './command-parser';
+import { CommandVisitor } from './command-visitor';
 
 export interface CompletionItem {
   label: string;
@@ -107,7 +109,58 @@ const IGNORED_TOKENS = [
   ImperaBookDSLParser.WS,
 ];
 
+/**
+ * Suggestions at the caret. At the end of a line that holds a value, nothing
+ * but a line break can follow there, so the suggestions are the next line's
+ * instead — each inserting the line break too: "add book Dune" + Tab gives
+ * "add book Dune" / "by author ".
+ */
 export function getDSLCompletions(input: string, caretOffset: number): CompletionItem[] {
+  const here = completionsAt(input, caretOffset);
+  if (here.length > 0 || !atLineEnd(input, caretOffset)) return here;
+
+  return nextLineCompletions(input, caretOffset);
+}
+
+/**
+ * Whether the text is a recognized command that could take another parameter
+ * line. Recognized first: after a line break the grammar would also accept the
+ * start of any command, so unrecognized text ("xyz") would otherwise always
+ * look like it could continue.
+ */
+export function canContinueOnNewLine(text: string): boolean {
+  if (!isRecognized(text)) return false;
+
+  const next = `${text}\n`;
+  return completionsAt(next, next.length).length > 0;
+}
+
+function nextLineCompletions(input: string, caretOffset: number): CompletionItem[] {
+  if (input.slice(0, caretOffset).trim() === '' || !isRecognized(input)) return [];
+
+  // Blanks left at the end of the value line go with the line break.
+  let lineEnd = caretOffset;
+  while (lineEnd > 0 && /[ \t]/.test(input[lineEnd - 1])) lineEnd--;
+
+  const shifted = `${input.slice(0, caretOffset)}\n${input.slice(caretOffset)}`;
+  return completionsAt(shifted, caretOffset + 1).map(item => ({
+    ...item,
+    insertText: `\n${item.insertText}`,
+    replaceStart: lineEnd,
+    replaceEnd: item.replaceEnd - 1,
+    caret: item.caret + 1,
+  }));
+}
+
+function atLineEnd(input: string, caretOffset: number): boolean {
+  return caretOffset === input.length || input[caretOffset] === '\n' || input[caretOffset] === '\r';
+}
+
+function isRecognized(text: string): boolean {
+  return new CommandVisitor().visit(parseDSLCommand(text)) !== null;
+}
+
+function completionsAt(input: string, caretOffset: number): CompletionItem[] {
   // 1. Setup Lexer and Token Stream
   const charStream = CharStream.fromString(input);
   const lexer = new ImperaBookDSLLexer(charStream);
@@ -314,4 +367,39 @@ function findTokenIndexAtCaret(tokenStream: CommonTokenStream, caretOffset: numb
   }
 
   return tokens.length - 1;
+}
+
+/** The value on one line: its text and where it sits in the input. */
+export interface ValueSpan {
+  readonly start: number;
+  readonly end: number;
+  readonly text: string;
+}
+
+/**
+ * The author name the caret is in, if any: the value of a "by author" or an
+ * "add author" line, empty while nothing is typed after the phrase. Read from
+ * the lexer's tokens, so a value that merely contains "by author" never counts.
+ */
+export function authorValueAt(input: string, caretOffset: number): ValueSpan | undefined {
+  const lineStart = input.lastIndexOf('\n', caretOffset - 1) + 1;
+  const newline = input.indexOf('\n', caretOffset);
+  const lineEnd = newline < 0 ? input.length : newline;
+
+  const lexer = new ImperaBookDSLLexer(CharStream.fromString(input));
+  lexer.removeErrorListeners();
+  const tokens = lexer
+    .getAllTokens()
+    .filter(t => t.start >= lineStart && t.stop < lineEnd && t.type !== ImperaBookDSLLexer.NL);
+
+  const [first, second, value] = tokens;
+  const isAuthorPhrase =
+    (first?.type === ImperaBookDSLLexer.BY || first?.type === ImperaBookDSLLexer.ADD)
+    && second?.type === ImperaBookDSLLexer.AUTHOR;
+  if (!isAuthorPhrase || caretOffset <= second.stop + 1) return undefined;
+
+  if (value?.type !== ImperaBookDSLLexer.VALUE) {
+    return { start: caretOffset, end: caretOffset, text: '' };
+  }
+  return { start: value.start, end: value.stop + 1, text: value.text ?? '' };
 }

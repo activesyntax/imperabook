@@ -18,6 +18,7 @@ public sealed record AddAuthorCommand
 
 public sealed class AddAuthorCommandHandler(
     IAuthorCommands authors,
+    IAuthorQueries catalog,
     ICurrentUser user,
     IImageStore images,
     IArtwork artwork
@@ -32,6 +33,11 @@ public sealed class AddAuthorCommandHandler(
         if (author.IsFailure)
             return author.Error;
 
+        // Before the portrait: a rejected author must not leave generated artwork behind.
+        var unique = await EnsureNotInCatalog(author.Value, ct);
+        if (unique.IsFailure)
+            return unique.Error;
+
         var portrait = await ResolvePortrait(author.Value, ct);
         if (portrait.IsFailure)
             return portrait.Error;
@@ -43,6 +49,29 @@ public sealed class AddAuthorCommandHandler(
         );
         return a.Id.Value;
     }
+
+    /// <summary>
+    /// The same full name — ignoring case and extra blanks — is the same author: adding it again
+    /// would split their books across two entries. Namesakes are rare enough in a personal
+    /// catalog that refusing is the better default.
+    /// </summary>
+    private async Task<UnitResult<ApplicationError>> EnsureNotInCatalog(
+        Author author,
+        CancellationToken ct
+    )
+    {
+        var name = FullName(author.FirstName.Map(f => f.Value).GetValueOrDefault(), author.LastName.Value);
+        var existing = (await catalog.Search(name, ct)).FirstOrDefault(a =>
+            string.Equals(FullName(a.FirstName, a.LastName), name, StringComparison.OrdinalIgnoreCase)
+        );
+
+        return existing is null
+            ? UnitResult.Success<ApplicationError>()
+            : UnitResult.Failure<ApplicationError>(new ApplicationError.DuplicateAuthor(existing));
+    }
+
+    private static string FullName(string? first, string last) =>
+        string.Join(' ', $"{first} {last}".Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
     /// <summary>
     /// A given portrait must already be uploaded; an author added without one gets generated

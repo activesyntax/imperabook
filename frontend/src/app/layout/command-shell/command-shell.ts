@@ -8,16 +8,18 @@ import {
   HostListener,
   inject,
   linkedSignal,
+  resource,
   signal,
   viewChild,
 } from '@angular/core';
 
+import { AuthorLookup } from '@app/commands/author-lookup';
 import { CommandRunner } from '@app/commands/command-runner';
 import { GridDirection, ItemOpener } from '@app/commands/item-opener';
 import { resultOfUnrecognized } from '@app/commands/command-error';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { AppliedCompletion, applyCompletion, SuggestionService } from './suggestion-service';
-import { CompletionItem, getDSLCompletions } from './autocomplete';
+import { authorValueAt, canContinueOnNewLine, CompletionItem } from './autocomplete';
 import { Index, IndexMove, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 import { parseDSLCommand } from './command-parser';
 import { CommandVisitor } from './command-visitor';
@@ -59,6 +61,7 @@ export class CommandShell {
   private readonly runner = inject(CommandRunner);
   private readonly store = inject(WorkspaceStore);
   private readonly opener = inject(ItemOpener);
+  private readonly authors = inject(AuthorLookup);
 
   /** Screen readers announce the highlighted item while focus stays in the bar. */
   protected readonly activeItemId = computed(() => this.opener.selectedElementId() ?? null);
@@ -71,8 +74,38 @@ export class CommandShell {
   // Caret position in the query. Defaults to the end whenever the query is replaced programmatically.
   private readonly cursorPosition = linkedSignal(() => this.query().length);
 
-  protected readonly suggestions = computed<SuggestionList>(
-    () => suggestionList(this.suggestionService.suggestionsFor(this.query(), this.cursorPosition())));
+  // The author name being typed ("by author her", "add author her"), if any.
+  private readonly authorValue = computed(() => authorValueAt(this.query(), this.cursorPosition()));
+  private readonly authorTerm = computed(() => this.authorValue()?.text.trim() || undefined);
+
+  // Catalog authors matching it; idle while no name is being typed.
+  private readonly authorMatches = resource({
+    params: () => this.authorTerm(),
+    loader: ({ params, abortSignal }) => this.authors.search(params, abortSignal),
+  });
+
+  // Each match replaces the whole name typed so far. One already typed exactly
+  // is not offered again.
+  private readonly authorChips = computed<CompletionItem[]>(() => {
+    const span = this.authorValue();
+    if (span === undefined || this.authorTerm() === undefined || !this.authorMatches.hasValue()) return [];
+
+    return this.authorMatches.value()
+      .filter(match => match.name !== span.text.trim())
+      .map(match => ({
+        label: match.name,
+        insertText: match.name,
+        replaceStart: span.start,
+        replaceEnd: span.end,
+        caret: match.name.length,
+      }));
+  });
+
+  // Catalog names first: while one is being typed, they are what Tab should take.
+  protected readonly suggestions = computed<SuggestionList>(() => suggestionList([
+    ...this.authorChips(),
+    ...this.suggestionService.suggestionsFor(this.query(), this.cursorPosition()),
+  ]));
 
   // Ctrl+` / Ctrl+~ move the highlight; Tab accepts it. Any change to the
   // suggestions (typing, moving the caret, accepting) starts again at the first.
@@ -177,6 +210,14 @@ export class CommandShell {
         if (!this.justCompleted() || this.query()[this.cursorPosition() - 1] !== ' ') return;
         event.preventDefault();
         this.lastApplied.set(undefined);
+        break;
+      case 'Home':
+      case 'End':
+        // Bare Home/End scroll the workspace; once the command spans lines they
+        // move within the line instead and must not reach it.
+        if (!event.ctrlKey && !event.altKey && !event.metaKey && this.query().includes('\n')) {
+          event.stopPropagation();
+        }
         break;
       case 'Enter': {
         const action = this.enterAction(event);
@@ -290,15 +331,3 @@ export class CommandShell {
   }
 }
 
-/**
- * Whether the text is a recognized command that could take another parameter
- * line. Recognized first: after a line break the grammar would also accept the
- * start of any command, so unrecognized text ("xyz") would otherwise always
- * look like it could continue.
- */
-function canContinueOnNewLine(text: string): boolean {
-  if (new CommandVisitor().visit(parseDSLCommand(text)) === null) return false;
-
-  const next = `${text}\n`;
-  return getDSLCompletions(next, next.length).length > 0;
-}

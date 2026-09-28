@@ -71,6 +71,19 @@ public static class AuthorViews
             : new Paragraph([new StrongRun([a.DisplayName()]), $" ({lifeRange})"]);
     }
 
+    /// <summary>
+    /// Adding an author already in the catalog: a warning, then the existing author as an item,
+    /// so they are one Enter or click away.
+    /// </summary>
+    public static IReadOnlyList<ViewNode> AlreadyInCatalog(AuthorListItem existing) =>
+        [
+            new MessageView(
+                $"{existing.DisplayName()} is already in your catalog. Nothing was added.",
+                MessageKind.Warning
+            ),
+            new ItemCollectionView([ToItem(existing)], ""),
+        ];
+
     private static ItemView ToItem(AuthorListItem a)
     {
         var properties = new List<ItemProperty>

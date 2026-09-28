@@ -1,4 +1,4 @@
-import { getDSLCompletions } from './autocomplete';
+import { authorValueAt, getDSLCompletions } from './autocomplete';
 import { applyCompletion } from './suggestion-service';
 
 /** Accepts the completion labelled `label` with the caret at `|` in `query`. */
@@ -37,13 +37,69 @@ describe('applyCompletion', () => {
     expect(accept('add book with\nwi|', 'with isbn')).toBe('add book with\nwith isbn |');
   });
 
-  it('offers no keywords inside a value', () => {
+  it('never completes a word inside a value as a keyword', () => {
     const text = 'add book Gone wi';
-    expect(getDSLCompletions(text, text.length)).toEqual([]);
+    const items = getDSLCompletions(text, text.length);
+
+    // What is offered belongs on the next line; "wi" stays part of the title.
+    expect(items.length).toBeGreaterThan(0);
+    expect(items.every(i => i.insertText.startsWith('\n') && i.replaceStart === text.length)).toBe(true);
+  });
+
+  it('offers the next line from the end of a value, line break included', () => {
+    expect(accept('add book Dune|', 'by author')).toBe('add book Dune\nby author |');
+  });
+
+  it('drops blanks left at the end of the value line', () => {
+    expect(accept('add book Dune  |', 'with isbn')).toBe('add book Dune\nwith isbn |');
+  });
+
+  it('continues after the last line even when parameters are already there', () => {
+    expect(accept('add book Dune\nby author Herbert|', 'published in'))
+      .toBe('add book Dune\nby author Herbert\npublished in |');
+  });
+
+  it('offers nothing in the middle of a value', () => {
+    expect(getDSLCompletions('add book Dune', 'add book Du'.length)).toEqual([]);
+  });
+
+  it('offers no next line when nothing more can follow, or the text is not a command', () => {
+    expect(getDSLCompletions('add author Homer', 'add author Homer'.length)).toEqual([]);
+    expect(getDSLCompletions('xyz', 3)).toEqual([]);
   });
 
   it('keeps the text after the caret', () => {
     expect(accept('add book x\nsu|\nby author y', 'subtitled'))
       .toBe('add book x\nsubtitled |\nby author y');
+  });
+});
+
+describe('authorValueAt', () => {
+  function at(query: string) {
+    const caret = query.indexOf('|');
+    return authorValueAt(query.replace('|', ''), caret);
+  }
+
+  it('finds the name on a "by author" line', () => {
+    expect(at('add book Dune\nby author her|')).toEqual({ start: 24, end: 27, text: 'her' });
+  });
+
+  it('finds the name after "add author"', () => {
+    expect(at('add author Ursula K|')).toEqual({ start: 11, end: 19, text: 'Ursula K' });
+  });
+
+  it('spans the whole name wherever the caret is in it', () => {
+    expect(at('add book Dune\nby author Fr|ank')).toEqual({ start: 24, end: 29, text: 'Frank' });
+  });
+
+  it('is empty right after the phrase, before a name is typed', () => {
+    expect(at('add book Dune\nby author |')).toEqual({ start: 24, end: 24, text: '' });
+  });
+
+  it('is nothing on other lines, in other values, or inside the phrase', () => {
+    expect(at('add book Dune\nwith isbn 12|')).toBeUndefined();
+    expect(at('add book by author her|')).toBeUndefined();
+    expect(at('add book Dune\nby auth|or')).toBeUndefined();
+    expect(at('add book Dune|\nby author Herbert')).toBeUndefined();
   });
 });
