@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "antlr": "antlr-ng -Dlanguage=TypeScript --generate-visitor --output-directory src/dsl/generated src/dsl/ImperaBookDSL.g4"
+    "antlr": "antlr-ng -Dlanguage=TypeScript --generate-visitor --output-directory src/dsl/generated src/dsl/ImperaBookDSLLexer.g4 src/dsl/ImperaBookDSLParser.g4"
   },
   "private": true,
   "packageManager": "npm@11.16.0",

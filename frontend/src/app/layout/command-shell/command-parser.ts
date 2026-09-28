@@ -25,4 +25,4 @@ export function parseDSLCommand(input: string): ParseTree {
 }
 
 // Example Execution
-// parseDSLCommand('add book "1984" by author "George Orwell"');
+// parseDSLCommand('add book 1984\nby author George Orwell');

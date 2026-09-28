@@ -29,21 +29,21 @@ describe('applyCompletion', () => {
     expect(accept('list boo| ', 'list books')).toBe('list books |');
   });
 
-  it('puts the caret inside the quotes of a string param', () => {
-    expect(accept('add book "x" wi|', 'with isbn')).toBe('add book "x" with isbn "|"');
+  it('completes a parameter phrase at the start of a line, ready for its value', () => {
+    expect(accept('add book x\nwi|', 'with isbn')).toBe('add book x\nwith isbn |');
   });
 
   it('edits at the caret, not at an earlier copy of the same word', () => {
-    expect(accept('add book "with" wi|', 'with isbn'))
-      .toBe('add book "with" with isbn "|"');
+    expect(accept('add book with\nwi|', 'with isbn')).toBe('add book with\nwith isbn |');
   });
 
-  it('inserts after a finished word without gluing them together', () => {
-    expect(accept('add book|', '"title"')).toBe('add book "|"');
+  it('offers no keywords inside a value', () => {
+    const text = 'add book Gone wi';
+    expect(getDSLCompletions(text, text.length)).toEqual([]);
   });
 
   it('keeps the text after the caret', () => {
-    expect(accept('add book "x" su| by author "y"', 'subtitled'))
-      .toBe('add book "x" subtitled "|" by author "y"');
+    expect(accept('add book x\nsu|\nby author y', 'subtitled'))
+      .toBe('add book x\nsubtitled |\nby author y');
   });
 });

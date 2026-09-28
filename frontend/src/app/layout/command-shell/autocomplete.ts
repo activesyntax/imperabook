@@ -47,14 +47,16 @@ const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_accountCmd]: { label: 'account', insertText: 'account ' },
   [ImperaBookDSLParser.RULE_loginCmd]: { label: 'login', insertText: 'login ' },
   [ImperaBookDSLParser.RULE_logoutCmd]: { label: 'logout', insertText: 'logout ' },
-  [ImperaBookDSLParser.RULE_bookTitle]: { label: '"title"', insertText: '"$0"' },
-  [ImperaBookDSLParser.RULE_authorName]: { label: '"first and last name"', insertText: '"$0"' },
-  [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author "$0"' },
-  [ImperaBookDSLParser.RULE_subtitleParam]: { label: 'subtitled', insertText: 'subtitled "$0"' },
-  [ImperaBookDSLParser.RULE_languageParam]: { label: 'in language', insertText: 'in language "$0"' },
+  // Values are typed as-is to the end of the line, so these two only name what
+  // goes there; accepting them inserts nothing.
+  [ImperaBookDSLParser.RULE_bookTitle]: { label: 'title', insertText: '' },
+  [ImperaBookDSLParser.RULE_authorName]: { label: 'first and last name', insertText: '' },
+  [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author ' },
+  [ImperaBookDSLParser.RULE_subtitleParam]: { label: 'subtitled', insertText: 'subtitled ' },
+  [ImperaBookDSLParser.RULE_languageParam]: { label: 'in language', insertText: 'in language ' },
   [ImperaBookDSLParser.RULE_publicationYearParam]: { label: 'published in', insertText: 'published in ' },
-  [ImperaBookDSLParser.RULE_isbnParam]: { label: 'with isbn', insertText: 'with isbn "$0"' },
-  [ImperaBookDSLParser.RULE_summaryParam]: { label: 'with summary', insertText: 'with summary "$0"' },
+  [ImperaBookDSLParser.RULE_isbnParam]: { label: 'with isbn', insertText: 'with isbn ' },
+  [ImperaBookDSLParser.RULE_summaryParam]: { label: 'with summary', insertText: 'with summary ' },
 };
 
 /**
@@ -97,9 +99,10 @@ const PARAM_RULES = [
   ImperaBookDSLParser.RULE_summaryParam,
 ];
 
+// Free text and line breaks are typed, not suggested.
 const IGNORED_TOKENS = [
-  ImperaBookDSLParser.STRING,
-  ImperaBookDSLParser.NUMBER,
+  ImperaBookDSLParser.VALUE,
+  ImperaBookDSLParser.NL,
   ImperaBookDSLParser.EOF,
   ImperaBookDSLParser.WS,
 ];
@@ -221,9 +224,11 @@ function findReplaceEnd(
 ): number {
   let end = caretOffset;
   if (completesTypedWord) {
-    while (end < input.length && !/[\s"]/.test(input[end])) end++;
+    while (end < input.length && !/\s/.test(input[end])) end++;
   }
-  if (insertText.endsWith(' ') && end < input.length && /\s/.test(input[end])) end++;
+  // Only a following blank is merged with the completion's own trailing space;
+  // a line break is structure and must survive.
+  if (insertText.endsWith(' ') && end < input.length && /[ \t]/.test(input[end])) end++;
   return end;
 }
 

@@ -20,22 +20,23 @@ import { HelpCmdContext } from "./ImperaBookDSLParser.js";
 import { AccountCmdContext } from "./ImperaBookDSLParser.js";
 import { LoginCmdContext } from "./ImperaBookDSLParser.js";
 import { LogoutCmdContext } from "./ImperaBookDSLParser.js";
-import { AuthorNameContext } from "./ImperaBookDSLParser.js";
 import { BookTitleContext } from "./ImperaBookDSLParser.js";
-import { AuthorParamContext } from "./ImperaBookDSLParser.js";
+import { AuthorNameContext } from "./ImperaBookDSLParser.js";
 import { BookDetailParamContext } from "./ImperaBookDSLParser.js";
+import { AuthorParamContext } from "./ImperaBookDSLParser.js";
 import { SubtitleParamContext } from "./ImperaBookDSLParser.js";
 import { LanguageParamContext } from "./ImperaBookDSLParser.js";
 import { PublicationYearParamContext } from "./ImperaBookDSLParser.js";
 import { IsbnParamContext } from "./ImperaBookDSLParser.js";
 import { SummaryParamContext } from "./ImperaBookDSLParser.js";
+import { ValueContext } from "./ImperaBookDSLParser.js";
 
 
 /**
  * This interface defines a complete listener for a parse tree produced by
  * `ImperaBookDSLParser`.
  */
-export class ImperaBookDSLListener implements ParseTreeListener {
+export class ImperaBookDSLParserListener implements ParseTreeListener {
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.entry`.
      * @param ctx the parse tree
@@ -217,16 +218,6 @@ export class ImperaBookDSLListener implements ParseTreeListener {
      */
     exitLogoutCmd?: (ctx: LogoutCmdContext) => void;
     /**
-     * Enter a parse tree produced by `ImperaBookDSLParser.authorName`.
-     * @param ctx the parse tree
-     */
-    enterAuthorName?: (ctx: AuthorNameContext) => void;
-    /**
-     * Exit a parse tree produced by `ImperaBookDSLParser.authorName`.
-     * @param ctx the parse tree
-     */
-    exitAuthorName?: (ctx: AuthorNameContext) => void;
-    /**
      * Enter a parse tree produced by `ImperaBookDSLParser.bookTitle`.
      * @param ctx the parse tree
      */
@@ -237,15 +228,15 @@ export class ImperaBookDSLListener implements ParseTreeListener {
      */
     exitBookTitle?: (ctx: BookTitleContext) => void;
     /**
-     * Enter a parse tree produced by `ImperaBookDSLParser.authorParam`.
+     * Enter a parse tree produced by `ImperaBookDSLParser.authorName`.
      * @param ctx the parse tree
      */
-    enterAuthorParam?: (ctx: AuthorParamContext) => void;
+    enterAuthorName?: (ctx: AuthorNameContext) => void;
     /**
-     * Exit a parse tree produced by `ImperaBookDSLParser.authorParam`.
+     * Exit a parse tree produced by `ImperaBookDSLParser.authorName`.
      * @param ctx the parse tree
      */
-    exitAuthorParam?: (ctx: AuthorParamContext) => void;
+    exitAuthorName?: (ctx: AuthorNameContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.bookDetailParam`.
      * @param ctx the parse tree
@@ -256,6 +247,16 @@ export class ImperaBookDSLListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitBookDetailParam?: (ctx: BookDetailParamContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.authorParam`.
+     * @param ctx the parse tree
+     */
+    enterAuthorParam?: (ctx: AuthorParamContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.authorParam`.
+     * @param ctx the parse tree
+     */
+    exitAuthorParam?: (ctx: AuthorParamContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.subtitleParam`.
      * @param ctx the parse tree
@@ -306,6 +307,16 @@ export class ImperaBookDSLListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitSummaryParam?: (ctx: SummaryParamContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.value`.
+     * @param ctx the parse tree
+     */
+    enterValue?: (ctx: ValueContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.value`.
+     * @param ctx the parse tree
+     */
+    exitValue?: (ctx: ValueContext) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}

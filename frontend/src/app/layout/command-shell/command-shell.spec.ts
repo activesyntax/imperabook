@@ -99,23 +99,8 @@ describe('CommandShell', () => {
     expect(input.value).toBe('add book "x" by author "smith"');
   });
 
-  it('sends every typed book detail, not just title and author', async () => {
-    await submit(type('add book "Dune" in language "en" by author "herbert" published in 1965 with isbn "x"'));
-
-    expect(runner.run).toHaveBeenCalledWith({
-      command: 'add book',
-      params: { title: 'Dune', language: 'en', author: 'herbert', published: '1965', isbn: 'x' },
-    });
-  });
-
-  it('sends a typed empty title and author, for the server to reject', async () => {
-    await submit(type('add book "" by author ""'));
-
-    expect(runner.run).toHaveBeenCalledWith({ command: 'add book', params: { title: '', author: '' } });
-  });
-
-  it('leaves a book author out when it was not typed', async () => {
-    await submit(type('add book "Beowulf"'));
+  it('sends the typed title without quotes', async () => {
+    await submit(type('add book Beowulf'));
 
     expect(runner.run).toHaveBeenCalledWith({ command: 'add book', params: { title: 'Beowulf' } });
   });
@@ -170,24 +155,12 @@ describe('CommandShell', () => {
     expect(runner.run).not.toHaveBeenCalled();
   });
 
-  it('puts the caret inside the quotes after accepting a string param', () => {
-    const input = type('add book "x" with i');
-
-    press(input, 'Tab');
-
-    expect(input.value).toBe('add book "x" with isbn ""');
-    expect(input.selectionStart).toBe('add book "x" with isbn "'.length);
-  });
-
   it('shows the parameters at once after accepting a command', () => {
     const input = type('ad');
 
     press(input, 'Tab');
     expect(input.value).toBe('add book ');
-    expect(activeChip()).toBe('"title"');
-
-    press(input, 'Tab');
-    expect(input.value).toBe('add book ""');
+    expect(activeChip()).toBe('title');
   });
 
   it('moves the suggestion highlight with Ctrl+` without touching the query, wrapping around', () => {
@@ -226,7 +199,7 @@ describe('CommandShell', () => {
     press(input, 'Tab');
 
     expect(input.value).toBe('add author ');
-    expect(activeChip()).toBe('"first and last name"');
+    expect(activeChip()).toBe('first and last name');
   });
 
   it('starts the highlight over at the first suggestion when the user types', () => {
@@ -277,15 +250,6 @@ describe('CommandShell', () => {
 
     expect(event.defaultPrevented).toBe(true);
     expect(input.value).toBe('login ');
-  });
-
-  it('types Space normally inside the quotes of an accepted param', () => {
-    const input = type('add book "x" with i');
-    press(input, 'Tab');
-
-    const event = press(input, ' ');
-
-    expect(event.defaultPrevented).toBe(false);
   });
 
   it('moves the item selection through the grid with Alt+arrows', () => {

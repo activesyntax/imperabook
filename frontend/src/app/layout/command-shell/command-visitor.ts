@@ -1,9 +1,10 @@
-import { ImperaBookDSLVisitor } from '@dsl/generated/ImperaBookDSLVisitor';
+import { ImperaBookDSLParserVisitor } from '@dsl/generated/ImperaBookDSLParserVisitor';
 import {
   AddAuthorCmdContext,
   AddBookCmdContext,
   CommandContext,
   EntryContext,
+  ValueContext,
 } from '@dsl/generated/ImperaBookDSLParser';
 
 export type CommandName =
@@ -32,11 +33,13 @@ export interface ParsedCommand {
 const noParams = (command: CommandName) => (): ParsedCommand => ({ command, params: {} });
 
 // Extend the generated ImperaBookDSLVisitor class directly
-export class CommandVisitor extends ImperaBookDSLVisitor<ParsedCommand | null> {
+export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | null> {
 
   // 1. Traverse root entry node to command
   override visitEntry = (ctx: EntryContext): ParsedCommand | null => {
-    return this.visit(ctx.command());
+    // Error recovery can leave no command at all ("xyz"): that is unrecognized, not a crash.
+    const command = ctx.command();
+    return command === null ? null : this.visit(command);
   };
 
   // 2. Traverse command wrapper to specific rule
@@ -44,24 +47,26 @@ export class CommandVisitor extends ImperaBookDSLVisitor<ParsedCommand | null> {
     return this.visitChildren(ctx);
   };
 
-  // 3. Extract the addBookCmd parameters. Only the title is required; a detail
-  // that was not typed is left out rather than sent empty. The first of a
-  // repeated detail wins. Param names are the backend's AddBookCommand fields.
+  // 3. Extract the addBookCmd parameters. The title is the rest of the first
+  // line; each detail is the rest of its own line. A detail that was not typed
+  // is left out; one typed with nothing after it is sent empty, for the server
+  // to reject. The first of a repeated detail wins. Param names are the
+  // backend's AddBookCommand fields.
   override visitAddBookCmd = (ctx: AddBookCmdContext): ParsedCommand => {
     const params: Record<string, string> = {
-      title: this.cleanString(ctx.bookTitle()?.STRING()?.getText() ?? ''),
+      title: this.text(ctx.bookTitle()?.VALUE()?.getText()),
     };
 
     for (const p of ctx.bookDetailParam()) {
-      const [name, token] =
-        p.authorParam() ? ['author', p.authorParam()?.STRING()]
-        : p.subtitleParam() ? ['subtitle', p.subtitleParam()?.STRING()]
-        : p.languageParam() ? ['language', p.languageParam()?.STRING()]
-        : p.publicationYearParam() ? ['published', p.publicationYearParam()?.NUMBER()]
-        : p.isbnParam() ? ['isbn', p.isbnParam()?.STRING()]
-        : ['summary', p.summaryParam()?.STRING()];
+      const [name, value] =
+        p.authorParam() ? ['author', p.authorParam()?.value()]
+        : p.subtitleParam() ? ['subtitle', p.subtitleParam()?.value()]
+        : p.languageParam() ? ['language', p.languageParam()?.value()]
+        : p.publicationYearParam() ? ['published', p.publicationYearParam()?.value()]
+        : p.isbnParam() ? ['isbn', p.isbnParam()?.value()]
+        : ['summary', p.summaryParam()?.value()];
 
-      if (token && !(name in params)) params[name] = this.cleanString(token.getText());
+      if (!(name in params)) params[name] = this.valueText(value);
     }
 
     return { command: 'add book', params };
@@ -69,7 +74,7 @@ export class CommandVisitor extends ImperaBookDSLVisitor<ParsedCommand | null> {
 
   override visitAddAuthorCmd = (ctx: AddAuthorCmdContext): ParsedCommand => ({
     command: 'add author',
-    params: { name: this.cleanString(ctx.authorName()?.STRING()?.getText() ?? '') },
+    params: { name: this.text(ctx.authorName()?.VALUE()?.getText()) },
   });
 
   // Commands without parameters
@@ -101,7 +106,13 @@ export class CommandVisitor extends ImperaBookDSLVisitor<ParsedCommand | null> {
     return nextResult ?? aggregate;
   }
 
-  private cleanString(raw: string): string {
-    return raw.replace(/^"|"$/g, '');
+  private valueText(value: ValueContext | null | undefined): string {
+    return this.text(value?.VALUE()?.getText());
+  }
+
+  // A value runs to the end of its line, so the blanks before a line break are
+  // kept by the lexer and dropped here.
+  private text(raw: string | undefined): string {
+    return (raw ?? '').trim();
   }
 }
