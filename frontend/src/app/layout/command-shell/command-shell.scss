@@ -117,9 +117,9 @@
 .prompt {
   flex: 1;
   min-width: 0;
-  height: 80px;                  // matches the avatar
+  min-height: 80px;              // matches the avatar; grows with a multi-line command
   display: flex;
-  align-items: center;           // input text on the vertical centre line
+  align-items: center;           // a single line sits on the vertical centre line
   gap: 10px;
   padding: 0 7px 0 14px;
   border: 0.5px solid color-mix(in srgb, var(--ib-accent) 55%, transparent);
@@ -150,13 +150,22 @@
 .bar {
   flex: 1;
   min-width: 40px;
+  margin: 12px 0;
   padding: 0;
   border: none;
   outline: none;
   background: transparent;
   font-size: 2rem;
-  line-height: 1;
+  line-height: 1.25;
   caret-color: var(--ib-accent-bright);
+
+  // A textarea that grows with its lines, up to a cap, then scrolls. The
+  // height is set from scrollHeight in the component; field-sizing does the
+  // same natively where supported.
+  resize: none;
+  overflow-y: auto;
+  max-height: 40vh;
+  field-sizing: content;
 
   &::placeholder {
     color: color-mix(in srgb, var(--ib-dim) 60%, transparent);

@@ -32,7 +32,10 @@ public static class HelpViews
                     TextNode.Hint(["book"], "surfaces every book command"),
                     TextNode.Hint(["Ctrl + `", "Ctrl + ~"], "highlight the next or previous suggestion"),
                     TextNode.Hint(["Tab"], "accept the highlighted one"),
-                    TextNode.Hint(["Enter"], "run the typed command"),
+                    TextNode.Hint(["Enter"], "run the command, or start a new line for the next parameter"),
+                    TextNode.Hint(["Enter", "Enter"], "run once the last parameter is typed"),
+                    TextNode.Hint(["Ctrl + Enter"], "run now, whatever is typed"),
+                    TextNode.Hint(["Shift + Enter"], "start a new line"),
                     TextNode.H2("Moving around"),
                     TextNode.Para(
                         "The command bar always holds focus, so plain letters are typing, "

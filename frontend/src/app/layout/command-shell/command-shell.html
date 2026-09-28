@@ -45,10 +45,13 @@
       <div class="prompt">
         <img class="avatar" src="/static/imperabook-icon.svg" alt="" aria-hidden="true" />
 
-          <input
+          <!-- Multi-line: a value runs to the end of its line, and each parameter
+               goes on a line of its own. Enter decides between a new line and
+               running the command; see onKeydown. -->
+          <textarea
             #bar
             class="bar"
-            [type]="commandField.type"
+            rows="1"
             [attr.name]="commandField.name"
             [attr.autocomplete]="commandField.autocomplete"
             autocapitalize="off"
@@ -60,7 +63,7 @@
             (selectionchange)="onSelectionChange($event)"
             [value]="query()"
             [readOnly]="busy()"
-            (keydown)="onKeydown($event)" />
+            (keydown)="onKeydown($event)"></textarea>
 
         <button
           type="button"

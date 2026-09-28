@@ -45,23 +45,24 @@ describe('CommandShell', () => {
     await fixture.whenStable();
   });
 
-  function type(text: string): HTMLInputElement {
-    const input: HTMLInputElement = fixture.nativeElement.querySelector('input');
+  function type(text: string): HTMLTextAreaElement {
+    const input: HTMLTextAreaElement = fixture.nativeElement.querySelector('textarea');
     input.value = text;
     input.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     return input;
   }
 
-  function press(input: HTMLInputElement, key: string, init: KeyboardEventInit = {}): KeyboardEvent {
+  function press(input: HTMLTextAreaElement, key: string, init: KeyboardEventInit = {}): KeyboardEvent {
     const event = new KeyboardEvent('keydown', { key, cancelable: true, ...init });
     input.dispatchEvent(event);
     fixture.detectChanges();
     return event;
   }
 
-  function submit(input: HTMLInputElement): Promise<void> {
-    press(input, 'Enter');
+  /** Ctrl+Enter: runs whatever is typed, whether or not another line could follow. */
+  function submit(input: HTMLTextAreaElement): Promise<void> {
+    press(input, 'Enter', { ctrlKey: true });
     return fixture.whenStable();
   }
 
@@ -91,12 +92,12 @@ describe('CommandShell', () => {
 
   it('gives the query back when the result asks to keep it', async () => {
     runner.run.mockResolvedValueOnce({ ...DASHBOARD_RESULT, keepQuery: true });
-    const input = type('add book "x" by author "smith"');
+    const input = type('add book x\nby author smith');
 
     await submit(input);
     fixture.detectChanges();
 
-    expect(input.value).toBe('add book "x" by author "smith"');
+    expect(input.value).toBe('add book x\nby author smith');
   });
 
   it('sends the typed title without quotes', async () => {
@@ -133,6 +134,77 @@ describe('CommandShell', () => {
     press(input, 'Escape');
 
     expect(opener.back).toHaveBeenCalled();
+  });
+
+  describe('Enter', () => {
+    it('runs a command that takes nothing more', async () => {
+      const event = press(type('dashboard'), 'Enter');
+      await fixture.whenStable();
+
+      expect(event.defaultPrevented).toBe(true);
+      expect(runner.run).toHaveBeenCalledWith({ command: 'dashboard', params: {} });
+    });
+
+    it('starts a new line when the command could take another parameter', () => {
+      const event = press(type('add book Dune'), 'Enter');
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(runner.run).not.toHaveBeenCalled();
+    });
+
+    it('runs on a blank line, the second Enter after the last parameter', async () => {
+      const event = press(type('add book Dune\nby author Frank Herbert\n'), 'Enter');
+      await fixture.whenStable();
+
+      expect(event.defaultPrevented).toBe(true);
+      expect(runner.run).toHaveBeenCalledWith({
+        command: 'add book',
+        params: { title: 'Dune', author: 'Frank Herbert' },
+      });
+    });
+
+    it('runs text it cannot continue, so an unrecognized command is reported', async () => {
+      press(type('xyz'), 'Enter');
+      await fixture.whenStable();
+
+      expect(TestBed.inject(WorkspaceStore).views()[0]).toMatchObject({ type: 'message', kind: 'error' });
+    });
+
+    it('always starts a new line with Shift', () => {
+      expect(press(type('dashboard'), 'Enter', { shiftKey: true }).defaultPrevented).toBe(false);
+      expect(runner.run).not.toHaveBeenCalled();
+    });
+
+    it('always runs with Ctrl', async () => {
+      await submit(type('add book Dune'));
+
+      expect(runner.run).toHaveBeenCalledWith({ command: 'add book', params: { title: 'Dune' } });
+    });
+  });
+
+  it('sends every detail typed on its own line', async () => {
+    await submit(type('add book Dune\nin language en\nby author herbert\npublished in 1965\nwith isbn x'));
+
+    expect(runner.run).toHaveBeenCalledWith({
+      command: 'add book',
+      params: { title: 'Dune', language: 'en', author: 'herbert', published: '1965', isbn: 'x' },
+    });
+  });
+
+  it('moves between lines with bare Up/Down instead of scrolling the workspace', () => {
+    const reached = vi.fn();
+    document.addEventListener('keydown', reached);
+    try {
+      const input = type('add book Dune\nby author Frank Herbert');
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+      expect(reached).not.toHaveBeenCalled();
+
+      const single = type('dashboard');
+      single.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+      expect(reached).toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('keydown', reached);
+    }
   });
 
   it('does not run unrecognized input', async () => {

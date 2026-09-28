@@ -17,19 +17,17 @@ import { GridDirection, ItemOpener } from '@app/commands/item-opener';
 import { resultOfUnrecognized } from '@app/commands/command-error';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { AppliedCompletion, applyCompletion, SuggestionService } from './suggestion-service';
-import { CompletionItem } from './autocomplete';
+import { CompletionItem, getDSLCompletions } from './autocomplete';
 import { Index, IndexMove, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 import { parseDSLCommand } from './command-parser';
 import { CommandVisitor } from './command-visitor';
 
 interface FieldAttrs {
-  readonly type: 'text' | 'password';
   readonly name: string;
   readonly autocomplete: string;
 }
 
 const COMMAND_FIELD: FieldAttrs = {
-  type: 'text',
   name: 'ib-command',
   autocomplete: 'off',
 };
@@ -100,9 +98,18 @@ export class CommandShell {
   protected readonly commandField = COMMAND_FIELD;
 
 
-  private readonly bar = viewChild<ElementRef<HTMLInputElement>>('bar');
+  private readonly bar = viewChild<ElementRef<HTMLTextAreaElement>>('bar');
   constructor() {
     effect(() => this.focus(this.bar()?.nativeElement));
+
+    // Grow with the lines typed (up to the CSS max-height, then scroll).
+    afterRenderEffect(() => {
+      this.query();
+      const bar = this.bar()?.nativeElement;
+      if (bar === undefined) return;
+      bar.style.height = 'auto';
+      bar.style.height = `${bar.scrollHeight}px`;
+    });
 
     // Writing [value] leaves the caret at the end; move it where the query says.
     // Skipped when already there, so a user's selection range is not collapsed.
@@ -116,14 +123,14 @@ export class CommandShell {
   }
 
   protected onInput(event: Event): void {
-    const input = event.target as HTMLInputElement;
+    const input = event.target as HTMLTextAreaElement;
     this.query.set(input.value);
     this.cursorPosition.set(input.selectionStart ?? input.value.length);
   }
 
   // Caret moves without typing (arrow keys, mouse clicks) don't fire `input`.
   protected onSelectionChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
+    const input = event.target as HTMLTextAreaElement;
     this.cursorPosition.set(input.selectionStart ?? input.value.length);
   }
 
@@ -145,7 +152,14 @@ export class CommandShell {
         // Bare arrows scroll the workspace or move the caret; Alt moves the item
         // selection through the grid. Always claimed, even with nothing to move
         // through: Alt+Left/Right is the browser's Back/Forward.
-        if (!event.altKey) return;
+        if (!event.altKey) {
+          // Once the command spans lines, bare Up/Down move between them and
+          // must not reach the workspace, which scrolls on them.
+          if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && this.query().includes('\n')) {
+            event.stopPropagation();
+          }
+          return;
+        }
         event.preventDefault();
         this.opener.moveInGrid(ARROW_DIRECTION[event.key]);
         break;
@@ -164,15 +178,15 @@ export class CommandShell {
         event.preventDefault();
         this.lastApplied.set(undefined);
         break;
-      case 'Enter':
+      case 'Enter': {
+        const action = this.enterAction(event);
+        // A new line is the textarea's own Enter; everything else is ours.
+        if (action === 'newline') return;
         event.preventDefault();
-        // An empty bar has no command to run; Enter opens the selected item instead.
-        if (this.query().trim() === '') {
-          this.opener.openSelected();
-          return;
-        }
-        void this.submit();
+        if (action === 'open') this.opener.openSelected();
+        else void this.submit();
         break;
+      }
       case 'Escape':
         event.preventDefault();
         // Text first: Escape clears it. An empty bar goes back to where the
@@ -184,6 +198,32 @@ export class CommandShell {
         this.opener.back();
         break;
     }
+  }
+
+  /**
+   * What Enter does with the text as it stands:
+   * - an empty bar has no command, so Enter opens the selected item;
+   * - Shift+Enter always starts a new line, Ctrl/Cmd+Enter always runs;
+   * - on a blank line — the second Enter after a parameter — it runs;
+   * - otherwise it starts a new line when the command could take another
+   *   parameter ("add book Dune"), and runs when nothing more can follow
+   *   ("dashboard", "add author Homer", or unrecognized text).
+   */
+  private enterAction(event: KeyboardEvent): 'open' | 'run' | 'newline' {
+    const text = this.query();
+    if (text.trim() === '') return 'open';
+    if (event.shiftKey) return 'newline';
+    if (event.ctrlKey || event.metaKey) return 'run';
+    if (this.onBlankLine()) return 'run';
+    return canContinueOnNewLine(text) ? 'newline' : 'run';
+  }
+
+  private onBlankLine(): boolean {
+    const text = this.query();
+    const caret = this.cursorPosition();
+    const start = text.lastIndexOf('\n', caret - 1) + 1;
+    const end = text.indexOf('\n', caret);
+    return text.slice(start, end < 0 ? text.length : end).trim() === '';
   }
 
   private moveSelection(move: IndexMove): void {
@@ -244,8 +284,21 @@ export class CommandShell {
     this.focus(this.bar()?.nativeElement);
   }
 
-  private focus(input: HTMLInputElement | undefined): void {
+  private focus(input: HTMLTextAreaElement | undefined): void {
     input?.focus();
     input?.select();
   }
+}
+
+/**
+ * Whether the text is a recognized command that could take another parameter
+ * line. Recognized first: after a line break the grammar would also accept the
+ * start of any command, so unrecognized text ("xyz") would otherwise always
+ * look like it could continue.
+ */
+function canContinueOnNewLine(text: string): boolean {
+  if (new CommandVisitor().visit(parseDSLCommand(text)) === null) return false;
+
+  const next = `${text}\n`;
+  return getDSLCompletions(next, next.length).length > 0;
 }
