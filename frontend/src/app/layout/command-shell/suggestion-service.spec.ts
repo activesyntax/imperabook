@@ -84,8 +84,8 @@ describe('authorValueAt', () => {
     expect(at('add book Dune\nby author her|')).toEqual({ start: 24, end: 27, text: 'her' });
   });
 
-  it('finds the name after "add author"', () => {
-    expect(at('add author Ursula K|')).toEqual({ start: 11, end: 19, text: 'Ursula K' });
+  it('is nothing after "add author", which names a new author', () => {
+    expect(at('add author Ursula K|')).toBeUndefined();
   });
 
   it('spans the whole name wherever the caret is in it', () => {

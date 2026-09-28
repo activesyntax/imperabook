@@ -377,9 +377,13 @@ export interface ValueSpan {
 }
 
 /**
- * The author name the caret is in, if any: the value of a "by author" or an
- * "add author" line, empty while nothing is typed after the phrase. Read from
- * the lexer's tokens, so a value that merely contains "by author" never counts.
+ * The author name the caret is in, if any: the value of a "by author" line,
+ * empty while nothing is typed after the phrase. Read from the lexer's tokens,
+ * so a value that merely contains "by author" never counts.
+ *
+ * Only "by author" picks an existing author. "add author" names a new one, so
+ * catalog names there would suggest the opposite of what the command does —
+ * the server refuses a duplicate instead.
  */
 export function authorValueAt(input: string, caretOffset: number): ValueSpan | undefined {
   const lineStart = input.lastIndexOf('\n', caretOffset - 1) + 1;
@@ -394,8 +398,7 @@ export function authorValueAt(input: string, caretOffset: number): ValueSpan | u
 
   const [first, second, value] = tokens;
   const isAuthorPhrase =
-    (first?.type === ImperaBookDSLLexer.BY || first?.type === ImperaBookDSLLexer.ADD)
-    && second?.type === ImperaBookDSLLexer.AUTHOR;
+    first?.type === ImperaBookDSLLexer.BY && second?.type === ImperaBookDSLLexer.AUTHOR;
   if (!isAuthorPhrase || caretOffset <= second.stop + 1) return undefined;
 
   if (value?.type !== ImperaBookDSLLexer.VALUE) {

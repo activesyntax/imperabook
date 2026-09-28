@@ -74,7 +74,7 @@ export class CommandShell {
   // Caret position in the query. Defaults to the end whenever the query is replaced programmatically.
   private readonly cursorPosition = linkedSignal(() => this.query().length);
 
-  // The author name being typed ("by author her", "add author her"), if any.
+  // The existing author being picked ("by author her"), if any.
   private readonly authorValue = computed(() => authorValueAt(this.query(), this.cursorPosition()));
   private readonly authorTerm = computed(() => this.authorValue()?.text.trim() || undefined);
 

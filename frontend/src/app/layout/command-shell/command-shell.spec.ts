@@ -236,12 +236,13 @@ describe('CommandShell', () => {
       expect(input.selectionStart).toBe(input.value.length);
     });
 
-    it('offers existing authors while adding one, too', async () => {
+    it('does not offer existing authors while adding a new one', async () => {
       authors.search.mockResolvedValue([HERBERT]);
 
       await typeAndSettle('add author her');
 
-      expect(chips()).toEqual(['Frank Herbert']);
+      expect(authors.search).not.toHaveBeenCalled();
+      expect(chips()).not.toContain('Frank Herbert');
     });
 
     it('does not offer the name already typed exactly', async () => {
