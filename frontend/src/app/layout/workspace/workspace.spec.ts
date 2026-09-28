@@ -61,4 +61,65 @@ describe('Workspace', () => {
   it('does not center an empty workspace', () => {
     expect(isCentered()).toBe(false);
   });
+
+  /** jsdom has no layout, so scrollTop is watched rather than measured. */
+  function watchScrollTop(start: number): { value: number } {
+    const section: HTMLElement = fixture.nativeElement.querySelector('.workspace');
+    const state = { value: start };
+    Object.defineProperty(section, 'scrollTop', {
+      configurable: true,
+      get: () => state.value,
+      set: (v: number) => (state.value = v),
+    });
+    return state;
+  }
+
+  const list = { views: [{ type: 'message' as const, kind: 'info' as const, text: 'list' }] };
+  const detail = { views: [{ type: 'message' as const, kind: 'info' as const, text: 'detail' }] };
+
+  it('starts new content at the top', () => {
+    const scroll = watchScrollTop(800);
+
+    store.setResult(list);
+    fixture.detectChanges();
+
+    expect(scroll.value).toBe(0);
+  });
+
+  it('starts an opened item at the top', () => {
+    store.setResult(list);
+    fixture.detectChanges();
+    const scroll = watchScrollTop(800);
+
+    store.showOpened(detail, { views: list.views, selectedRef: 'b' });
+    fixture.detectChanges();
+
+    expect(scroll.value).toBe(0);
+  });
+
+  it('leaves the scroll alone when going back', () => {
+    store.setResult(list);
+    store.showOpened(detail, { views: list.views, selectedRef: 'b' });
+    fixture.detectChanges();
+    const scroll = watchScrollTop(800);
+
+    store.back();
+    fixture.detectChanges();
+
+    expect(scroll.value).toBe(800);
+  });
+
+  it('scrolls on bare arrows but leaves Alt-arrows to the selection', () => {
+    const section: HTMLElement = fixture.nativeElement.querySelector('.workspace');
+    const scrollBy = vi.fn();
+    section.scrollBy = scrollBy;
+
+    const alt = new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, cancelable: true });
+    document.dispatchEvent(alt);
+    expect(scrollBy).not.toHaveBeenCalled();
+    expect(alt.defaultPrevented).toBe(false);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', cancelable: true }));
+    expect(scrollBy).toHaveBeenCalled();
+  });
 });

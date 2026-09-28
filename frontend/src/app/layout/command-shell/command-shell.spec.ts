@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CommandRunner } from '@app/commands/command-runner';
@@ -14,11 +15,21 @@ describe('CommandShell', () => {
   let component: CommandShell;
   let fixture: ComponentFixture<CommandShell>;
   let runner: { run: ReturnType<typeof vi.fn> };
-  let opener: { openSelected: ReturnType<typeof vi.fn> };
+  let opener: {
+    openSelected: ReturnType<typeof vi.fn>;
+    back: ReturnType<typeof vi.fn>;
+    move: ReturnType<typeof vi.fn>;
+    selectedElementId: ReturnType<typeof signal<string | undefined>>;
+  };
 
   beforeEach(async () => {
     runner = { run: vi.fn(() => Promise.resolve(DASHBOARD_RESULT)) };
-    opener = { openSelected: vi.fn(() => true) };
+    opener = {
+      openSelected: vi.fn(() => true),
+      back: vi.fn(() => true),
+      move: vi.fn(),
+      selectedElementId: signal<string | undefined>(undefined),
+    };
 
     await TestBed.configureTestingModule({
       imports: [CommandShell],
@@ -120,6 +131,23 @@ describe('CommandShell', () => {
     await submit(type('dashboard'));
 
     expect(opener.openSelected).not.toHaveBeenCalled();
+  });
+
+  it('clears typed text on Escape without going back', () => {
+    const input = type('list bo');
+
+    press(input, 'Escape');
+
+    expect(input.value).toBe('');
+    expect(opener.back).not.toHaveBeenCalled();
+  });
+
+  it('goes back on Escape when the bar is empty', () => {
+    const input = type('');
+
+    press(input, 'Escape');
+
+    expect(opener.back).toHaveBeenCalled();
   });
 
   it('does not run unrecognized input', async () => {
@@ -241,6 +269,25 @@ describe('CommandShell', () => {
     const event = press(input, ' ');
 
     expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('moves the item selection with Alt+Down and Alt+Up', () => {
+    const input = type('');
+
+    expect(press(input, 'ArrowDown', { altKey: true }).defaultPrevented).toBe(true);
+    expect(press(input, 'ArrowUp', { altKey: true }).defaultPrevented).toBe(true);
+
+    expect(opener.move.mock.calls).toEqual([[1], [-1]]);
+  });
+
+  it('points the bar at the selected item for screen readers', () => {
+    const input = type('');
+    expect(input.getAttribute('aria-activedescendant')).toBeNull();
+
+    opener.selectedElementId.set('item-b');
+    fixture.detectChanges();
+
+    expect(input.getAttribute('aria-activedescendant')).toBe('item-b');
   });
 
   it('leaves the arrows to the workspace', () => {

@@ -54,6 +54,9 @@ export class CommandShell {
   private readonly runner = inject(CommandRunner);
   private readonly store = inject(WorkspaceStore);
   private readonly opener = inject(ItemOpener);
+
+  /** Screen readers announce the highlighted item while focus stays in the bar. */
+  protected readonly activeItemId = computed(() => this.opener.selectedElementId() ?? null);
   // private readonly shell = inject(ShellStateMachine);
   private readonly suggestionService = inject(SuggestionService);
 
@@ -128,6 +131,13 @@ export class CommandShell {
         event.preventDefault();
         this.acceptSelected();
         break;
+      case 'ArrowUp':
+      case 'ArrowDown':
+        // Bare arrows scroll the workspace; Alt moves the item selection.
+        if (!event.altKey) return;
+        event.preventDefault();
+        this.opener.move(event.key === 'ArrowDown' ? 1 : -1);
+        break;
       case 'ArrowLeft':
       case 'ArrowRight':
         if (!event.altKey) return;
@@ -153,7 +163,13 @@ export class CommandShell {
         break;
       case 'Escape':
         event.preventDefault();
-        this.query.set('');
+        // Text first: Escape clears it. An empty bar goes back to where the
+        // current item was opened from.
+        if (this.query() !== '') {
+          this.query.set('');
+          return;
+        }
+        this.opener.back();
         break;
     }
   }

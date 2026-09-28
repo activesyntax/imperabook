@@ -1,4 +1,5 @@
 import {
+  afterRenderEffect,
   Component,
   computed,
   ElementRef,
@@ -33,6 +34,17 @@ export class Workspace {
   private readonly scrollContainer = viewChild<ElementRef<HTMLElement>>('scrollContainer');
   private readonly scrollElement = computed(() => this.scrollContainer()?.nativeElement);
 
+  constructor() {
+    // New content starts at the top, instantly — the old scroll offset belongs to
+    // what was there before. Going back is left alone: the item returned to
+    // scrolls itself into view.
+    afterRenderEffect(() => {
+      this.store.views();
+      const el = this.scrollElement();
+      if (el !== undefined && !this.store.returned()) el.scrollTop = 0;
+    });
+  }
+
   private readonly scrollActions: KeyboardActions = {
     PageDown: (e) => scrollByPage(this.scrollElement(), 1),
     PageUp: (e) => scrollByPage(this.scrollElement(), -1),
@@ -44,6 +56,9 @@ export class Workspace {
 
   @HostListener('document:keydown', ['$event'])
   protected onScrollKeydown(event: KeyboardEvent): void {
+    // Only bare keys scroll: Alt moves the selection and Ctrl pages, so a
+    // modified arrow must not also move the view.
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
     handleKeyboardEvent(event, this.scrollActions);
   }
 }

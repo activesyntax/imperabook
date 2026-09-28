@@ -54,6 +54,7 @@
             autocapitalize="off"
             spellcheck="false"
             aria-label="Command input"
+            [attr.aria-activedescendant]="activeItemId()"
 
             (input)="onInput($event)"
             (selectionchange)="onSelectionChange($event)"

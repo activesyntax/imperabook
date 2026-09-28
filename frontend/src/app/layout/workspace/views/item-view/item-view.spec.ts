@@ -18,10 +18,18 @@ describe('ItemView', () => {
     ],
   }
 
-  let opener: { open: ReturnType<typeof vi.fn>; selectedRef: ReturnType<typeof signal<string | undefined>> };
+  let opener: {
+    open: ReturnType<typeof vi.fn>;
+    selectedRef: ReturnType<typeof signal<string | undefined>>;
+    revealRef: ReturnType<typeof signal<string | undefined>>;
+  };
 
   beforeEach(async () => {
-    opener = { open: vi.fn(), selectedRef: signal<string | undefined>(undefined) };
+    opener = {
+      open: vi.fn(),
+      selectedRef: signal<string | undefined>(undefined),
+      revealRef: signal<string | undefined>(undefined),
+    };
 
     await TestBed.configureTestingModule({
       imports: [ItemView],
@@ -65,5 +73,23 @@ describe('ItemView', () => {
 
     expect(article().getAttribute('aria-selected')).toBe('false');
     expect(article().getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('scrolls itself into view when going back reveals it, once', () => {
+    const scroll = vi.fn();
+    fixture.nativeElement.scrollIntoView = scroll;
+    fixture.componentRef.setInput('view', { ...itemView, open: '/api/books/item1' });
+    opener.selectedRef.set('item1');
+    opener.revealRef.set('item1');
+
+    article();
+    fixture.detectChanges();
+
+    expect(scroll).toHaveBeenCalledTimes(1);
+    expect(opener.revealRef()).toBeUndefined();
+  });
+
+  it('carries the id the command bar points at', () => {
+    expect(article().id).toBe('item-item1');
   });
 });
