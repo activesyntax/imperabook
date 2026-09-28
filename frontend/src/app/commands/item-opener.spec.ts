@@ -101,25 +101,104 @@ describe('ItemOpener', () => {
     expect(store.views()).toEqual([]);
   });
 
-  it('moves the selection through openable items, stopping at the ends', () => {
+  it('moves left and right in reading order through openable items, stopping at the ends', () => {
     show(item('a', '/api/books/a'), item('x'), item('b', '/api/books/b'), item('c', '/api/books/c'));
 
-    opener.move(1);
+    opener.moveInGrid('right');
     expect(opener.selectedRef()).toBe('b');
-    opener.move(1);
-    opener.move(1);
+    opener.moveInGrid('right');
+    opener.moveInGrid('right');
     expect(opener.selectedRef()).toBe('c');
 
-    opener.move(-1);
-    opener.move(-1);
-    opener.move(-1);
+    opener.moveInGrid('left');
+    opener.moveInGrid('left');
+    opener.moveInGrid('left');
     expect(opener.selectedRef()).toBe('a');
+  });
+
+  describe('up and down', () => {
+    const CARD = { width: 100, height: 150 };
+    let placed: HTMLElement[] = [];
+
+    /** Draws items at grid cells; jsdom has no layout, so each rect is stubbed. */
+    function layout(cells: Record<string, [row: number, col: number]>): void {
+      for (const [ref, [row, col]] of Object.entries(cells)) {
+        const el = document.createElement('div');
+        el.id = `item-${ref}`;
+        const rect = { top: row * 200, left: col * 120, ...CARD };
+        el.getBoundingClientRect = () => ({ ...rect, bottom: rect.top + CARD.height, right: rect.left + CARD.width }) as DOMRect;
+        document.body.appendChild(el);
+        placed.push(el);
+      }
+      show(...Object.keys(cells).map(ref => item(ref, `/api/books/${ref}`)));
+    }
+
+    afterEach(() => {
+      placed.forEach(el => el.remove());
+      placed = [];
+    });
+
+    // a b c
+    // d e f
+    // g
+    const GRID: Record<string, [number, number]> = {
+      a: [0, 0], b: [0, 1], c: [0, 2],
+      d: [1, 0], e: [1, 1], f: [1, 2],
+      g: [2, 0],
+    };
+
+    it('goes to the item below in the same column', () => {
+      layout(GRID);
+      opener.selectedRef.set('b');
+
+      opener.moveInGrid('down');
+
+      expect(opener.selectedRef()).toBe('e');
+    });
+
+    it('goes to the item above in the same column', () => {
+      layout(GRID);
+      opener.selectedRef.set('f');
+
+      opener.moveInGrid('up');
+
+      expect(opener.selectedRef()).toBe('c');
+    });
+
+    it('lands on the nearest item when the row below is short', () => {
+      layout(GRID);
+      opener.selectedRef.set('f');
+
+      opener.moveInGrid('down');
+
+      expect(opener.selectedRef()).toBe('g');
+    });
+
+    it('stays put at the top and bottom edges', () => {
+      layout(GRID);
+      opener.selectedRef.set('b');
+      opener.moveInGrid('up');
+      expect(opener.selectedRef()).toBe('b');
+
+      opener.selectedRef.set('g');
+      opener.moveInGrid('down');
+      expect(opener.selectedRef()).toBe('g');
+    });
+
+    it('wraps right from the end of a row onto the next row', () => {
+      layout(GRID);
+      opener.selectedRef.set('c');
+
+      opener.moveInGrid('right');
+
+      expect(opener.selectedRef()).toBe('d');
+    });
   });
 
   it('asks for the newly selected item to be scrolled into view', () => {
     show(item('a', '/api/books/a'), item('b', '/api/books/b'));
 
-    opener.move(1);
+    opener.moveInGrid('right');
 
     expect(opener.revealRef()).toBe('b');
     expect(opener.selectedElementId()).toBe('item-b');
@@ -128,7 +207,8 @@ describe('ItemOpener', () => {
   it('does nothing when there is nothing to select', () => {
     show(item('x'));
 
-    opener.move(1);
+    opener.moveInGrid('right');
+    opener.moveInGrid('down');
 
     expect(opener.selectedRef()).toBeUndefined();
   });

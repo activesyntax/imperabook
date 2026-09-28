@@ -18,7 +18,7 @@ describe('CommandShell', () => {
   let opener: {
     openSelected: ReturnType<typeof vi.fn>;
     back: ReturnType<typeof vi.fn>;
-    move: ReturnType<typeof vi.fn>;
+    moveInGrid: ReturnType<typeof vi.fn>;
     selectedElementId: ReturnType<typeof signal<string | undefined>>;
   };
 
@@ -27,7 +27,7 @@ describe('CommandShell', () => {
     opener = {
       openSelected: vi.fn(() => true),
       back: vi.fn(() => true),
-      move: vi.fn(),
+      moveInGrid: vi.fn(),
       selectedElementId: signal<string | undefined>(undefined),
     };
 
@@ -190,30 +190,39 @@ describe('CommandShell', () => {
     expect(input.value).toBe('add book ""');
   });
 
-  it('moves the highlight with Alt+Right without touching the query, wrapping around', () => {
+  it('moves the suggestion highlight with Ctrl+` without touching the query, wrapping around', () => {
     const input = type('log');
     expect(activeChip()).toBe('login');
 
-    press(input, 'ArrowRight', { altKey: true });
+    press(input, '`', { ctrlKey: true });
     expect(activeChip()).toBe('logout');
     expect(input.value).toBe('log');
 
-    press(input, 'ArrowRight', { altKey: true });
+    press(input, '`', { ctrlKey: true });
     expect(activeChip()).toBe('login');
   });
 
-  it('moves the highlight backwards with Alt+Left, wrapping around', () => {
+  it('moves the suggestion highlight backwards with Ctrl+~, wrapping around', () => {
     const input = type('log');
 
-    press(input, 'ArrowLeft', { altKey: true });
+    const event = press(input, '~', { ctrlKey: true, shiftKey: true });
 
+    expect(event.defaultPrevented).toBe(true);
     expect(activeChip()).toBe('logout');
   });
 
-  it('accepts the suggestion Alt+Right moved to', () => {
+  it('types ` and ~ normally without Ctrl', () => {
+    const input = type('log');
+
+    expect(press(input, '`').defaultPrevented).toBe(false);
+    expect(press(input, '~', { shiftKey: true }).defaultPrevented).toBe(false);
+    expect(activeChip()).toBe('login');
+  });
+
+  it('accepts the suggestion Ctrl+` moved to', () => {
     const input = type('ad');
 
-    press(input, 'ArrowRight', { altKey: true });
+    press(input, '`', { ctrlKey: true });
     press(input, 'Tab');
 
     expect(input.value).toBe('add author ');
@@ -222,18 +231,26 @@ describe('CommandShell', () => {
 
   it('starts the highlight over at the first suggestion when the user types', () => {
     const input = type('log');
-    press(input, 'ArrowRight', { altKey: true });
+    press(input, '`', { ctrlKey: true });
 
     type('lo');
 
     expect(activeChip()).toBe('login');
   });
 
-  it('claims Alt+Left/Right even with no suggestions, so the browser does not navigate', () => {
+  it('claims Alt+Left/Right even with nothing to select, so the browser does not navigate', () => {
     const input = type('dashboard xyz');
 
     expect(press(input, 'ArrowLeft', { altKey: true }).defaultPrevented).toBe(true);
     expect(press(input, 'ArrowRight', { altKey: true }).defaultPrevented).toBe(true);
+  });
+
+  it('leaves the suggestion highlight alone on Alt+arrows', () => {
+    const input = type('log');
+
+    press(input, 'ArrowRight', { altKey: true });
+
+    expect(activeChip()).toBe('login');
   });
 
   it('leaves plain Left/Right to move the caret', () => {
@@ -271,13 +288,14 @@ describe('CommandShell', () => {
     expect(event.defaultPrevented).toBe(false);
   });
 
-  it('moves the item selection with Alt+Down and Alt+Up', () => {
+  it('moves the item selection through the grid with Alt+arrows', () => {
     const input = type('');
 
-    expect(press(input, 'ArrowDown', { altKey: true }).defaultPrevented).toBe(true);
-    expect(press(input, 'ArrowUp', { altKey: true }).defaultPrevented).toBe(true);
+    for (const key of ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight']) {
+      expect(press(input, key, { altKey: true }).defaultPrevented).toBe(true);
+    }
 
-    expect(opener.move.mock.calls).toEqual([[1], [-1]]);
+    expect(opener.moveInGrid.mock.calls).toEqual([['down'], ['up'], ['left'], ['right']]);
   });
 
   it('points the bar at the selected item for screen readers', () => {

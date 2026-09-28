@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 
 import { CommandRunner } from '@app/commands/command-runner';
-import { ItemOpener } from '@app/commands/item-opener';
+import { GridDirection, ItemOpener } from '@app/commands/item-opener';
 import { resultOfUnrecognized } from '@app/commands/command-error';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { AppliedCompletion, applyCompletion, SuggestionService } from './suggestion-service';
@@ -32,6 +32,13 @@ const COMMAND_FIELD: FieldAttrs = {
   type: 'text',
   name: 'ib-command',
   autocomplete: 'off',
+};
+
+const ARROW_DIRECTION: Record<string, GridDirection> = {
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
 };
 
 type SuggestionList = {
@@ -69,7 +76,7 @@ export class CommandShell {
   protected readonly suggestions = computed<SuggestionList>(
     () => suggestionList(this.suggestionService.suggestionsFor(this.query(), this.cursorPosition())));
 
-  // Alt+Left/Right move the highlight; Tab accepts it. Any change to the
+  // Ctrl+` / Ctrl+~ move the highlight; Tab accepts it. Any change to the
   // suggestions (typing, moving the caret, accepting) starts again at the first.
   protected readonly selectedIndex = linkedSignal<SuggestionList, Index>({
     source: this.suggestions,
@@ -133,18 +140,23 @@ export class CommandShell {
         break;
       case 'ArrowUp':
       case 'ArrowDown':
-        // Bare arrows scroll the workspace; Alt moves the item selection.
-        if (!event.altKey) return;
-        event.preventDefault();
-        this.opener.move(event.key === 'ArrowDown' ? 1 : -1);
-        break;
       case 'ArrowLeft':
       case 'ArrowRight':
+        // Bare arrows scroll the workspace or move the caret; Alt moves the item
+        // selection through the grid. Always claimed, even with nothing to move
+        // through: Alt+Left/Right is the browser's Back/Forward.
         if (!event.altKey) return;
-        // Always claimed, even with nothing to move through: Alt+Left/Right is
-        // the browser's Back/Forward, which would leave the app.
         event.preventDefault();
-        this.moveSelection(event.key === 'ArrowRight' ? nextCyclicIndex : prevCyclicIndex);
+        this.opener.moveInGrid(ARROW_DIRECTION[event.key]);
+        break;
+      case '`':
+      case '~':
+        // Ctrl+` / Ctrl+~ (Shift+`) move the suggestion highlight. Matched on the
+        // typed character, not the key position, so no layout turns this into
+        // another shortcut (where ` is not on that key, e.g. Ctrl+0 zoom reset).
+        if (!event.ctrlKey || event.altKey || event.metaKey) return;
+        event.preventDefault();
+        this.moveSelection(event.key === '`' ? nextCyclicIndex : prevCyclicIndex);
         break;
       case ' ':
         // A completion already ends in a space; Space after it just confirms it.

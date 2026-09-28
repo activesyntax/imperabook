@@ -1,8 +1,11 @@
+import { DOCUMENT } from '@angular/common';
 import { computed, inject, Injectable, linkedSignal, signal } from '@angular/core';
 
 import { CommandRunner } from '@app/commands/command-runner';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import type { ItemView } from '@workspace/views/view-node';
+
+export type GridDirection = 'up' | 'down' | 'left' | 'right';
 
 /**
  * Opens list items in full. The server says where each item opens (`open`);
@@ -17,6 +20,7 @@ import type { ItemView } from '@workspace/views/view-node';
 export class ItemOpener {
   private readonly store = inject(WorkspaceStore);
   private readonly runner = inject(CommandRunner);
+  private readonly document = inject(DOCUMENT);
 
   /** Items on screen that have somewhere to open, in display order. */
   readonly openable = computed<readonly ItemView[]>(() =>
@@ -55,19 +59,62 @@ export class ItemOpener {
   }
 
   /**
-   * Moves the highlight to the next (+1) or previous (-1) openable item. Stops
-   * at the ends rather than wrapping: in a long list, the last item jumping to
-   * the first is a surprise, not a shortcut.
+   * Moves the highlight the way the arrow points on screen. Left/right step
+   * through reading order, so right at the end of a row continues on the next.
+   * Up/down go to the row above/below, to the item nearest the current one
+   * horizontally. The column count follows the window width, so rows are
+   * measured from where the items are drawn rather than computed. Movement
+   * stops at the edges instead of wrapping.
    */
-  move(step: 1 | -1): void {
+  moveInGrid(direction: GridDirection): void {
+    if (direction === 'left' || direction === 'right') {
+      this.step(direction === 'right' ? 1 : -1);
+      return;
+    }
+
+    const items = this.openable();
+    const current = this.selectedRef();
+    if (items.length === 0) return;
+    if (current === undefined) return this.select(items[0].ref);
+
+    const from = this.rectOf(current);
+    if (from === undefined) return;
+
+    // Items in one row share their top edge; half a card's height tells rows apart.
+    const tolerance = from.height / 2;
+    const down = direction === 'down';
+    const beyond = items
+      .map(item => ({ ref: item.ref, rect: this.rectOf(item.ref) }))
+      .filter((c): c is { ref: string; rect: DOMRect } => c.rect !== undefined)
+      .filter(c => (down ? c.rect.top > from.top + tolerance : c.rect.top < from.top - tolerance));
+    if (beyond.length === 0) return;
+
+    const rowTop = (down ? Math.min : Math.max)(...beyond.map(c => c.rect.top));
+    const centre = (r: DOMRect) => r.left + r.width / 2;
+    const [nearest] = beyond
+      .filter(c => Math.abs(c.rect.top - rowTop) <= tolerance)
+      .sort((a, b) => Math.abs(centre(a.rect) - centre(from)) - Math.abs(centre(b.rect) - centre(from)));
+
+    this.select(nearest.ref);
+  }
+
+  /** One item forward (+1) or back (-1) in reading order, stopping at the ends. */
+  private step(step: 1 | -1): void {
     const items = this.openable();
     if (items.length === 0) return;
 
     const current = items.findIndex(i => i.ref === this.selectedRef());
     const next = current < 0 ? 0 : Math.min(Math.max(current + step, 0), items.length - 1);
+    this.select(items[next].ref);
+  }
 
-    this.selectedRef.set(items[next].ref);
-    this.revealRef.set(items[next].ref);
+  private select(ref: string): void {
+    this.selectedRef.set(ref);
+    this.revealRef.set(ref);
+  }
+
+  private rectOf(ref: string): DOMRect | undefined {
+    return this.document.getElementById(itemElementId(ref))?.getBoundingClientRect();
   }
 
   /** Returns to where the current item was opened from; false when there is nowhere to go. */

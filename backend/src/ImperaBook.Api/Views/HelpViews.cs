@@ -30,7 +30,7 @@ public static class HelpViews
                     ),
                     TextNode.Hint(["Ctrl + K"], "focus the command bar"),
                     TextNode.Hint(["book"], "surfaces every book command"),
-                    TextNode.Hint(["Alt + →", "Alt + ←"], "highlight the next or previous suggestion"),
+                    TextNode.Hint(["Ctrl + `", "Ctrl + ~"], "highlight the next or previous suggestion"),
                     TextNode.Hint(["Tab"], "accept the highlighted one"),
                     TextNode.Hint(["Enter"], "run the typed command"),
                     TextNode.H2("Moving around"),
@@ -41,7 +41,7 @@ public static class HelpViews
                             + "more results."
                     ),
                     TextNode.Hint(["↑", "↓"], "scroll the workspace"),
-                    TextNode.Hint(["Alt + ↑ ↓"], "move the selection"),
+                    TextNode.Hint(["Alt + ↑ ↓ ← →"], "move the selection through the grid"),
                     TextNode.Hint(["Ctrl + ←", "Ctrl + →"], "previous or next page"),
                     TextNode.Hint(["Enter", "Esc"], "open the selection, or go back"),
                     TextNode.H2("All commands"),
