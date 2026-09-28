@@ -41,9 +41,17 @@ export class ItemOpener {
     if (item.open === undefined) return;
 
     this.selectedRef.set(item.ref);
-    // Captured before the request: the screen the user opened the item from.
-    const from = { views: this.store.views(), selectedRef: item.ref };
-    this.store.showOpened(await this.runner.open(item.open), from);
+    await this.follow(item.open);
+  }
+
+  /**
+   * Opens any in-app link the server put on a view — an item's `open`, or a
+   * link in text such as a book's author. Escape comes back here.
+   */
+  async follow(href: string): Promise<void> {
+    // Captured before the request: the screen the user left, and what was selected on it.
+    const from = { views: this.store.views(), selectedRef: this.selectedRef() };
+    this.store.showOpened(await this.runner.open(href), from);
   }
 
   /**

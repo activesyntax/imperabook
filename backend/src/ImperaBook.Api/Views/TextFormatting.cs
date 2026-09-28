@@ -10,9 +10,6 @@ internal static class TextFormatting
     internal static string AsText(this IReadOnlyList<BookAuthor> authors) =>
         authors.Count == 0 ? "Unknown" : string.Join(", ", authors.Select(FullName));
 
-    public static string AsText(this IEnumerable<AuthorName> authors) =>
-         authors.Any() ? "empty" : string.Join(", ", authors.Select(a => $"{a.FirstName} {a.LastName}"));
-
     internal static string FullName(this BookAuthor a) =>
         string.IsNullOrWhiteSpace(a.FirstName) ? a.LastName : $"{a.FirstName} {a.LastName}";
 }

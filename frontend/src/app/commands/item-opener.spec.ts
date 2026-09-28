@@ -132,4 +132,16 @@ describe('ItemOpener', () => {
 
     expect(opener.selectedRef()).toBeUndefined();
   });
+
+  it('follows a link in text, and going back returns to the page it was on', async () => {
+    const bookDetail: CommandResult = { views: [{ type: 'message', kind: 'info', text: 'book' }] };
+    store.setResult(bookDetail);
+
+    await opener.follow('/api/authors/a');
+    expect(runner.open).toHaveBeenCalledWith('/api/authors/a');
+    expect(store.views()).toEqual(DETAIL.views);
+
+    opener.back();
+    expect(store.views()).toEqual(bookDetail.views);
+  });
 });

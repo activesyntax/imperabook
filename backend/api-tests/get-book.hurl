@@ -45,6 +45,31 @@ jsonpath "$.views[1].src" startsWith "/api/images/"
 jsonpath "$.views[2].type" == "textView"
 
 
+# --- A book's author links to the author's page, and back to the book --------
+POST {{host}}/api/books
+Content-Type: application/json
+{
+  "title": "Linked {{newUuid}}",
+  "author": "Linked Author{{newUuid}}"
+}
+HTTP 201
+[Captures]
+linked_book_url: header "Location"
+
+GET {{host}}{{linked_book_url}}
+HTTP 200
+[Captures]
+author_link: jsonpath "$.views[2].blocks[?(@.type=='paragraph')].content[?(@.type=='link')].href" nth 0
+[Asserts]
+jsonpath "$.views[2].blocks[?(@.type=='paragraph')].content[?(@.type=='link')].href" nth 0 startsWith "/api/authors/"
+
+GET {{host}}{{author_link}}
+HTTP 200
+[Asserts]
+jsonpath "$.views[0].text" startsWith "Linked Author"
+jsonpath "$.views[3].items[*].open" contains "{{linked_book_url}}"
+
+
 # --- Not in this user's library -----------------------------------------------
 GET {{host}}/api/books/99999999-9999-9999-9999-999999999999
 HTTP 404

@@ -32,7 +32,7 @@ public static class BookViews
         if (!string.IsNullOrWhiteSpace(b.Subtitle))
             blocks.Add(new Paragraph([new EmphasisRun([b.Subtitle])]));
 
-        blocks.Add(Field(b.Authors.Count > 1 ? "Authors" : "Author", b.Authors.AsText()));
+        blocks.Add(AuthorsField(b.Authors));
 
         AddField(blocks, "ISBN", b.Isbn);
         AddField(blocks, "Published", b.Published?.ToString(CultureInfo.InvariantCulture));
@@ -74,6 +74,25 @@ public static class BookViews
     {
         if (!string.IsNullOrWhiteSpace(value))
             blocks.Add(Field(label, value));
+    }
+
+    // Each author links to their own page; an unknown author is plain text, since there is
+    // nowhere to go.
+    private static Paragraph AuthorsField(IReadOnlyList<BookAuthor> authors)
+    {
+        var label = authors.Count > 1 ? "Authors" : "Author";
+        if (authors.Count == 0)
+            return Field(label, authors.AsText());
+
+        var content = new List<Inline> { new StrongRun([label]), " " };
+        foreach (var (author, i) in authors.Select((a, i) => (a, i)))
+        {
+            if (i > 0)
+                content.Add(", ");
+            content.Add(new LinkRun(AuthorEndpoints.DetailPath(author.Id), [author.FullName()]));
+        }
+
+        return new Paragraph(content);
     }
 
     // A labelled fact is a paragraph whose label is emphasised — the closest the current block set
