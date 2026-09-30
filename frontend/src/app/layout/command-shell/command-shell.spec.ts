@@ -149,11 +149,26 @@ describe('CommandShell', () => {
       expect(runner.run).toHaveBeenCalledWith({ command: 'dashboard', params: {} });
     });
 
-    it('starts a new line when the command could take another parameter', () => {
-      const event = press(type('add book Dune'), 'Enter');
+    it('starts an indented new line when the command could take another parameter', () => {
+      const input = type('add book Dune');
 
-      expect(event.defaultPrevented).toBe(false);
+      press(input, 'Enter');
+
+      expect(input.value).toBe('add book Dune\n    ');
+      expect(input.selectionStart).toBe(input.value.length);
       expect(runner.run).not.toHaveBeenCalled();
+    });
+
+    it('lays out the whole command when a line is broken in the middle', () => {
+      const input = type('add book Dune\nby author Frank Herbert');
+      input.setSelectionRange(8, 8);
+      input.dispatchEvent(new Event('selectionchange'));
+
+      press(input, 'Enter', { shiftKey: true });
+
+      // The text after the break becomes a line of its own, indented like the rest.
+      expect(input.value).toBe('add book\n    Dune\n    by author Frank Herbert');
+      expect(input.selectionStart).toBe('add book\n    '.length);
     });
 
     it('runs on a blank line, the second Enter after the last parameter', async () => {
@@ -175,7 +190,11 @@ describe('CommandShell', () => {
     });
 
     it('always starts a new line with Shift', () => {
-      expect(press(type('dashboard'), 'Enter', { shiftKey: true }).defaultPrevented).toBe(false);
+      const input = type('dashboard');
+
+      press(input, 'Enter', { shiftKey: true });
+
+      expect(input.value).toBe('dashboard\n    ');
       expect(runner.run).not.toHaveBeenCalled();
     });
 
@@ -201,7 +220,7 @@ describe('CommandShell', () => {
 
     press(input, 'Tab');
 
-    expect(input.value).toBe('add book Dune\nby author ');
+    expect(input.value).toBe('add book Dune\n    by author ');
     expect(input.selectionStart).toBe(input.value.length);
   });
 
@@ -285,6 +304,41 @@ describe('CommandShell', () => {
       expect(press(input, 'ArrowDown').defaultPrevented).toBe(false);
     }
     expect(opener.moveInGrid).not.toHaveBeenCalled();
+  });
+
+  describe('paste', () => {
+    function paste(input: HTMLTextAreaElement, text: string): Event {
+      const event = new Event('paste', { cancelable: true });
+      Object.defineProperty(event, 'clipboardData', { value: { getData: () => text } });
+      input.dispatchEvent(event);
+      fixture.detectChanges();
+      return event;
+    }
+
+    it('lays out a pasted command with its parameters indented', () => {
+      const input = type('');
+
+      paste(input, '\r\n  add book Sapiens\r\nby author Y.N. Harari\r\n\t with isbn 451218521');
+
+      expect(input.value).toBe('add book Sapiens\n    by author Y.N. Harari\n    with isbn 451218521');
+      expect(input.selectionStart).toBe(input.value.length);
+    });
+
+    it('pastes into what is already typed, at the caret', () => {
+      const input = type('add book Dune');
+
+      paste(input, '\nby author Frank Herbert');
+
+      expect(input.value).toBe('add book Dune\n    by author Frank Herbert');
+    });
+
+    it('leaves a plain single-line paste as it is', () => {
+      const input = type('add book ');
+
+      paste(input, 'Dune');
+
+      expect(input.value).toBe('add book Dune');
+    });
   });
 
   it('does not run unrecognized input', async () => {

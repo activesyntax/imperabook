@@ -63,7 +63,8 @@
             (selectionchange)="onSelectionChange($event)"
             [value]="query()"
             [readOnly]="busy()"
-            (keydown)="onKeydown($event)"></textarea>
+            (keydown)="onKeydown($event)"
+            (paste)="onPaste($event)"></textarea>
 
         <button
           type="button"

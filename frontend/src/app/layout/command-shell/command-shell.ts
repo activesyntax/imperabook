@@ -23,6 +23,7 @@ import { authorValueAt, canContinueOnNewLine, CompletionItem } from './autocompl
 import { Index, IndexMove, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 import { parseDSLCommand } from './command-parser';
 import { CommandVisitor } from './command-visitor';
+import { formatAround } from './command-format';
 
 interface FieldAttrs {
   readonly name: string;
@@ -214,10 +215,9 @@ export class CommandShell {
         break;
       case 'Enter': {
         const action = this.enterAction(event);
-        // A new line is the textarea's own Enter; everything else is ours.
-        if (action === 'newline') return;
         event.preventDefault();
-        if (action === 'open') this.opener.openSelected();
+        if (action === 'newline') this.insertAtCaret('\n');
+        else if (action === 'open') this.opener.openSelected();
         else void this.submit();
         break;
       }
@@ -260,6 +260,31 @@ export class CommandShell {
     return text.slice(start, end < 0 ? text.length : end).trim() === '';
   }
 
+  // A pasted command is laid out like a typed one: parameters indented under it.
+  protected onPaste(event: ClipboardEvent): void {
+    const pasted = event.clipboardData?.getData('text/plain');
+    if (!pasted) return;
+    event.preventDefault();
+    this.insertAtCaret(pasted);
+  }
+
+  /** Inserts text at the caret, replacing any selection, and lays the result out. */
+  private insertAtCaret(inserted: string): void {
+    const bar = this.bar()?.nativeElement;
+    const text = this.query();
+    const start = bar?.selectionStart ?? this.cursorPosition();
+    const end = bar?.selectionEnd ?? start;
+
+    this.setFormatted(text.slice(0, start) + inserted + text.slice(end), start + inserted.length);
+  }
+
+  private setFormatted(text: string, caret: number): void {
+    const formatted = formatAround(text, caret);
+    this.query.set(formatted.text);
+    // After query.set, since the cursor position is linked to the query.
+    this.cursorPosition.set(formatted.caret);
+  }
+
   private moveSelection(move: IndexMove): void {
     const list = this.suggestions();
     if (list.all.length === 0) return;
@@ -271,7 +296,10 @@ export class CommandShell {
     const index = this.selectedIndex();
     if (index === undefined) return;
 
-    const applied = applyCompletion(this.query(), this.suggestions().all[index]);
+    const item = this.suggestions().all[index];
+    const completed = applyCompletion(this.query(), item);
+    // A completion that starts the next line is laid out like a typed newline.
+    const applied = item.insertText.includes('\n') ? formatAround(completed.text, completed.caret) : completed;
     this.lastApplied.set(applied);
     this.query.set(applied.text);
     // After query.set, since the cursor position is linked to the query.
