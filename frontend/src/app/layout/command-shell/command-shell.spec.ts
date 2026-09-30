@@ -426,7 +426,27 @@ describe('CommandShell', () => {
 
       type('xy');
 
-      expect(statusMessage()).toBe('');
+      expect(statusMessage()).not.toContain('Not a valid command');
+    });
+
+    it('says a command is being entered while the text is not one yet', () => {
+      type('libr');
+
+      expect(statusMessage()).toBe('Entering command…');
+    });
+
+    it('describes the command once the text is a valid one', () => {
+      type('library');
+      expect(statusMessage()).toBe('Statistics about your library');
+
+      type('add book Dune\n    by author Frank Herbert');
+      expect(statusMessage()).toBe('Add a book to your library');
+    });
+
+    it('does not describe text the parser only recovered from', () => {
+      type('library xyz');
+
+      expect(statusMessage()).toBe('Entering command…');
     });
   });
 

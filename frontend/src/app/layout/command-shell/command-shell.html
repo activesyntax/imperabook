@@ -33,6 +33,10 @@
             Not a valid command. Check what you typed, or type <span class="cmd">help</span> to see the commands.
           } @else if (!hasText()) {
             Type a command like <span class="cmd">list books</span>
+          } @else if (description(); as text) {
+            {{ text }}
+          } @else {
+            Entering command…
           }
         </span>
       </span>

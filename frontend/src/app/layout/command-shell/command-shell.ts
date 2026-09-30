@@ -21,6 +21,7 @@ import { AppliedCompletion, applyCompletion, SuggestionService } from './suggest
 import { authorValueAt, canContinueOnNewLine, CompletionItem } from './autocomplete';
 import { Index, IndexMove, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 import { checkCommand } from './command-visitor';
+import { COMMAND_DESCRIPTIONS } from './command-descriptions';
 import { formatAround } from './command-format';
 
 interface FieldAttrs {
@@ -86,8 +87,16 @@ export class CommandShell {
   protected readonly hasText = computed(() => this.query().trim() !== '');
   protected readonly multiLine = computed(() => this.query().includes('\n'));
 
+  private readonly check = computed(() => checkCommand(this.query()));
+
   /** Whether the text is a command that could be sent as it stands. */
-  protected readonly valid = computed(() => checkCommand(this.query()).valid);
+  protected readonly valid = computed(() => this.check().valid);
+
+  /** What the typed command does; only for a valid one. */
+  protected readonly description = computed(() => {
+    const { command, valid } = this.check();
+    return valid && command !== null ? COMMAND_DESCRIPTIONS[command.command] : undefined;
+  });
 
   /** Set when an invalid command was sent; any edit clears it. */
   protected readonly rejected = linkedSignal<string, boolean>({
