@@ -21,6 +21,12 @@ public static class BookEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        app.MapDelete("/api/books/{id:guid}", RemoveBook)
+            .WithName("RemoveBook")
+            .Produces<CommandResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         app.MapPost("/api/books", AddBook)
             .WithName("AddBook")
             .Produces<CommandResult>(StatusCodes.Status201Created)
@@ -65,6 +71,23 @@ public static class BookEndpoints
                 detail: "That book is not in your library.",
                 extensions: new Dictionary<string, object?> { ["code"] = "book_not_found" }
             );
+    }
+
+    private static async Task<IResult> RemoveBook(
+        Guid id,
+        RemoveBookCommandHandler handler,
+        CancellationToken ct
+    )
+    {
+        var result = await handler.Handle(id, ct);
+
+        return result.IsSuccess
+            ? TypedResults.Ok(
+                new CommandResult(
+                    [new MessageView($"Removed \"{result.Value.Title}\".", MessageKind.Success)]
+                )
+            )
+            : result.Error.ToProblem();
     }
 
     private static async Task<IResult> AddBook(

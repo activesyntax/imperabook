@@ -28,6 +28,13 @@ internal static class ApplicationErrorResults
                 "no_library"
             ),
 
+            ApplicationError.BookNotFound => Problem(
+                StatusCodes.Status404NotFound,
+                "Book not found",
+                "That book is not in your library.",
+                "book_not_found"
+            ),
+
             ApplicationError.ImageNotFound e => Problem(
                 StatusCodes.Status422UnprocessableEntity,
                 "Image not found",
