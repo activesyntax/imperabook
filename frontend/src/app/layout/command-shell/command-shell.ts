@@ -92,6 +92,12 @@ export class CommandShell {
   /** Whether the text is a command that could be sent as it stands. */
   protected readonly valid = computed(() => this.check().valid);
 
+  /** The command the text is, once it is a valid one. */
+  protected readonly currentCommand = computed(() => {
+    const { command, valid } = this.check();
+    return valid && command !== null ? command.command : undefined;
+  });
+
   /** What the typed command does; only for a valid one. */
   protected readonly description = computed(() => {
     const { command, valid } = this.check();

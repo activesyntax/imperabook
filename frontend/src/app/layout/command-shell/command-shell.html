@@ -1,6 +1,11 @@
 <section class="shell" role="region" aria-label="Command shell">
   <div class="main">
-    <div class="suggestions" role="listbox" aria-label="Suggestions">
+    <!-- A listbox only while there is something to choose: one with no options
+         is not a listbox, and the label below is plain text. -->
+    <div
+      class="suggestions"
+      [attr.role]="suggestions().all.length > 0 ? 'listbox' : null"
+      [attr.aria-label]="suggestions().all.length > 0 ? 'Suggestions' : null">
         @for (cmd of suggestions().all; track $index; let i = $index) {
           <button
             type="button"
@@ -12,7 +17,13 @@
             {{ cmd.label }}
           </button>
         } @empty {
-          <span class="fall">no commands</span>
+          <!-- Nothing left to suggest for a complete command: name it, since
+               that is what will run. -->
+          @if (currentCommand(); as name) {
+            <span class="current">{{ name }}</span>
+          } @else if (hasText()) {
+            <span class="fall">no matching command</span>
+          }
         }
     </div>
 

@@ -443,6 +443,32 @@ describe('CommandShell', () => {
       expect(statusMessage()).toBe('Add a book to your library');
     });
 
+    it('names a complete command where the suggestions were', () => {
+      type('library');
+
+      const row: HTMLElement = fixture.nativeElement.querySelector('.suggestions');
+      expect(chips()).toEqual([]);
+      expect(row.querySelector('.current')?.textContent?.trim()).toBe('library');
+      expect(row.textContent).not.toContain('no');
+      expect(row.getAttribute('role')).toBeNull();
+    });
+
+    it('says nothing matches when the text is neither a command nor the start of one', () => {
+      type('xyz');
+
+      const row: HTMLElement = fixture.nativeElement.querySelector('.suggestions');
+      expect(row.querySelector('.current')).toBeNull();
+      expect(row.textContent?.trim()).toBe('no matching command');
+    });
+
+    it('is a listbox only while there are suggestions', () => {
+      type('lib');
+
+      const row: HTMLElement = fixture.nativeElement.querySelector('.suggestions');
+      expect(row.getAttribute('role')).toBe('listbox');
+      expect(row.getAttribute('aria-label')).toBe('Suggestions');
+    });
+
     it('does not describe text the parser only recovered from', () => {
       type('library xyz');
 

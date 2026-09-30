@@ -31,6 +31,18 @@
   }
 }
 
+// The complete command, named where the suggestions were. Shaped like a chip
+// but outlined, not filled, and not clickable: there is nothing to choose.
+.current {
+  flex: none;
+  line-height: 1;
+  padding: 7px 14px;
+  border: 0.5px solid var(--ib-accent);
+  border-radius: var(--ib-radius-pill);
+  color: var(--ib-accent);
+  white-space: nowrap;
+}
+
 .chip {
   flex: none;
   line-height: 1;
