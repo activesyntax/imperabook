@@ -189,6 +189,18 @@ describe('CommandShell', () => {
       expect(TestBed.inject(WorkspaceStore).views()[0]).toMatchObject({ type: 'message', kind: 'error' });
     });
 
+    it('runs once every detail is typed, as nothing more can follow', async () => {
+      const all = [
+        'add book Dune', 'by author A', 'subtitled S', 'in language en',
+        'published in 1965', 'with isbn 1', 'with summary X',
+      ].join('\n    ');
+
+      press(type(all), 'Enter');
+      await fixture.whenStable();
+
+      expect(runner.run).toHaveBeenCalled();
+    });
+
     it('always starts a new line with Shift', () => {
       const input = type('dashboard');
 

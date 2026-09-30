@@ -74,6 +74,48 @@ describe('applyCompletion', () => {
   });
 });
 
+describe('parameters already used', () => {
+  function labels(query: string): string[] {
+    const caret = query.indexOf('|');
+    return getDSLCompletions(query.replace('|', ''), caret).map(c => c.label);
+  }
+
+  it('are not offered again on a new line', () => {
+    const offered = labels('add book Dune\n    by author Frank Herbert\n    |');
+
+    expect(offered).not.toContain('by author');
+    expect(offered).toContain('with isbn');
+  });
+
+  it('are not offered again from the end of a value line', () => {
+    const offered = labels('add book Dune\n    with isbn 123\n    by author Frank Herbert|');
+
+    expect(offered).not.toContain('with isbn');
+    expect(offered).not.toContain('by author');
+    expect(offered).toContain('published in');
+  });
+
+  it('tell apart phrases that share a first word', () => {
+    const offered = labels('add book Dune\n    with isbn 123\n    |');
+
+    expect(offered).not.toContain('with isbn');
+    expect(offered).toContain('with summary');
+  });
+
+  it('still complete on the line where one is being typed', () => {
+    expect(labels('add book Dune\n    by au|')).toContain('by author');
+  });
+
+  it('leave nothing to offer once every detail is there', () => {
+    const all = [
+      'add book Dune', 'by author A', 'subtitled S', 'in language en',
+      'published in 1965', 'with isbn 1', 'with summary X',
+    ].join('\n    ');
+
+    expect(labels(`${all}\n    |`)).toEqual([]);
+  });
+});
+
 describe('authorValueAt', () => {
   function at(query: string) {
     const caret = query.indexOf('|');

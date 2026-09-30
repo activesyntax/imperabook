@@ -116,7 +116,7 @@ const IGNORED_TOKENS = [
  * "add book Dune" / "by author ".
  */
 export function getDSLCompletions(input: string, caretOffset: number): CompletionItem[] {
-  const here = completionsAt(input, caretOffset);
+  const here = withoutUsedParams(completionsAt(input, caretOffset), input, caretOffset);
   if (here.length > 0 || !atLineEnd(input, caretOffset)) return here;
 
   return nextLineCompletions(input, caretOffset);
@@ -132,7 +132,54 @@ export function canContinueOnNewLine(text: string): boolean {
   if (!isRecognized(text)) return false;
 
   const next = `${text}\n`;
-  return completionsAt(next, next.length).length > 0;
+  return withoutUsedParams(completionsAt(next, next.length), next, next.length).length > 0;
+}
+
+/**
+ * The grammar lets a detail line repeat, but a book has one author line, one
+ * ISBN and so on — a second would be ignored. So a parameter already on
+ * another line of the command is not offered again. The caret's own line does
+ * not count: that is where a parameter is being typed or completed.
+ */
+function withoutUsedParams(items: CompletionItem[], input: string, caretOffset: number): CompletionItem[] {
+  const used = usedParams(input, lineOf(input, caretOffset));
+  return used.size === 0 ? items : items.filter(item => !used.has(item.label));
+}
+
+/** Each parameter phrase's label, by the tokens that open its line. */
+const PARAM_OPENERS: ReadonlyArray<readonly [label: string, first: number, second?: number]> = [
+  ['by author', ImperaBookDSLLexer.BY, ImperaBookDSLLexer.AUTHOR],
+  ['subtitled', ImperaBookDSLLexer.SUBTITLED],
+  ['in language', ImperaBookDSLLexer.IN, ImperaBookDSLLexer.LANGUAGE],
+  ['published in', ImperaBookDSLLexer.PUBLISHED, ImperaBookDSLLexer.IN],
+  ['with isbn', ImperaBookDSLLexer.WITH, ImperaBookDSLLexer.ISBN],
+  ['with summary', ImperaBookDSLLexer.WITH, ImperaBookDSLLexer.SUMMARY],
+];
+
+/** Labels of the parameters opening lines other than exceptLine (1-based). */
+function usedParams(input: string, exceptLine: number): Set<string> {
+  const lexer = new ImperaBookDSLLexer(CharStream.fromString(input));
+  lexer.removeErrorListeners();
+
+  const firstTwoByLine = new Map<number, number[]>();
+  for (const token of lexer.getAllTokens()) {
+    if (token.type === ImperaBookDSLLexer.NL || token.line === exceptLine) continue;
+    const types = firstTwoByLine.get(token.line) ?? [];
+    if (types.length < 2) firstTwoByLine.set(token.line, [...types, token.type]);
+  }
+
+  const used = new Set<string>();
+  for (const [first, second] of firstTwoByLine.values()) {
+    const opener = PARAM_OPENERS.find(([, a, b]) => a === first && (b === undefined || b === second));
+    if (opener !== undefined) used.add(opener[0]);
+  }
+  return used;
+}
+
+function lineOf(input: string, offset: number): number {
+  let line = 1;
+  for (let i = 0; i < offset; i++) if (input[i] === '\n') line++;
+  return line;
 }
 
 function nextLineCompletions(input: string, caretOffset: number): CompletionItem[] {
@@ -142,8 +189,10 @@ function nextLineCompletions(input: string, caretOffset: number): CompletionItem
   let lineEnd = caretOffset;
   while (lineEnd > 0 && /[ \t]/.test(input[lineEnd - 1])) lineEnd--;
 
+  // Asked from the new line itself, so the line the caret ends counts as used.
   const shifted = `${input.slice(0, caretOffset)}\n${input.slice(caretOffset)}`;
-  return completionsAt(shifted, caretOffset + 1).map(item => ({
+  const next = withoutUsedParams(completionsAt(shifted, caretOffset + 1), shifted, caretOffset + 1);
+  return next.map(item => ({
     ...item,
     insertText: `\n${item.insertText}`,
     replaceStart: lineEnd,
