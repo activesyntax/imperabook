@@ -122,4 +122,22 @@ describe('Workspace', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', cancelable: true }));
     expect(scrollBy).toHaveBeenCalled();
   });
+
+  it('scrolls with PageDown and PageUp exactly as with the arrows', () => {
+    const section: HTMLElement = fixture.nativeElement.querySelector('.workspace');
+    const scrollBy = vi.fn();
+    section.scrollBy = scrollBy;
+
+    const down = new KeyboardEvent('keydown', { key: 'PageDown', cancelable: true });
+    document.dispatchEvent(down);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageUp', cancelable: true }));
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', cancelable: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', cancelable: true }));
+
+    const [pageDown, pageUp, arrowDown, arrowUp] = scrollBy.mock.calls;
+    expect(pageDown).toEqual(arrowDown);
+    expect(pageUp).toEqual(arrowUp);
+    expect(down.defaultPrevented).toBe(true);
+  });
 });

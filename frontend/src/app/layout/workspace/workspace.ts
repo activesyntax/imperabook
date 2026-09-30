@@ -11,7 +11,7 @@ import { WorkspaceStore } from '@app/state/workspace-store';
 import { View } from './views/view/view';
 import { CommandResult } from './views/view-node';
 import { handleKeyboardEvent, KeyboardActions } from '@core/keyboard';
-import { scrollByPage, scrollByStep, scrollToTop, scrollToBottom } from '@core/scroll';
+import { scrollByStep, scrollToTop, scrollToBottom } from '@core/scroll';
 
 @Component({
   selector: 'app-workspace',
@@ -46,8 +46,9 @@ export class Workspace {
   }
 
   private readonly scrollActions: KeyboardActions = {
-    PageDown: (e) => scrollByPage(this.scrollElement(), 1),
-    PageUp: (e) => scrollByPage(this.scrollElement(), -1),
+    // Same step as the arrows: a whole page per press jumped past too much to follow.
+    PageDown: (e) => scrollByStep(this.scrollElement(), 1),
+    PageUp: (e) => scrollByStep(this.scrollElement(), -1),
     ArrowDown: (e) => scrollByStep(this.scrollElement(), 1),
     ArrowUp: (e) => scrollByStep(this.scrollElement(), -1),
     Home: (e) => scrollToTop(this.scrollElement()),

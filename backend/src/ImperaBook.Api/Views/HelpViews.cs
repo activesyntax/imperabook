@@ -43,7 +43,7 @@ public static class HelpViews
                             + "arrows move the view, Alt moves the selection, Ctrl fetches "
                             + "more results."
                     ),
-                    TextNode.Hint(["↑", "↓"], "scroll the workspace"),
+                    TextNode.Hint(["↑", "↓", "PgUp", "PgDn"], "scroll the workspace"),
                     TextNode.Hint(["Alt + ↑ ↓ ← →"], "move the selection through the grid"),
                     TextNode.Hint(["Ctrl + ←", "Ctrl + →"], "previous or next page"),
                     TextNode.Hint(["Enter", "Esc"], "open the selection, or go back"),
