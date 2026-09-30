@@ -182,17 +182,10 @@ export class CommandShell {
       case 'ArrowDown':
       case 'ArrowLeft':
       case 'ArrowRight':
-        // Bare arrows scroll the workspace or move the caret; Alt moves the item
-        // selection through the grid. Always claimed, even with nothing to move
-        // through: Alt+Left/Right is the browser's Back/Forward.
-        if (!event.altKey) {
-          // Once the command spans lines, bare Up/Down move between them and
-          // must not reach the workspace, which scrolls on them.
-          if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && this.query().includes('\n')) {
-            event.stopPropagation();
-          }
-          return;
-        }
+        // Bare arrows move the caret; Alt moves the item selection through the
+        // grid. Always claimed, even with nothing to move through: Alt+Left/Right
+        // is the browser's Back/Forward.
+        if (!event.altKey) return;
         event.preventDefault();
         this.opener.moveInGrid(ARROW_DIRECTION[event.key]);
         break;

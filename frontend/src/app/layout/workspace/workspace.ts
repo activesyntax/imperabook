@@ -46,11 +46,10 @@ export class Workspace {
   }
 
   private readonly scrollActions: KeyboardActions = {
-    // Same step as the arrows: a whole page per press jumped past too much to follow.
+    // A modest step: a whole page per press jumped past too much to follow.
+    // Bare Up/Down are the command bar's (moving between its lines), not ours.
     PageDown: (e) => scrollByStep(this.scrollElement(), 1),
     PageUp: (e) => scrollByStep(this.scrollElement(), -1),
-    ArrowDown: (e) => scrollByStep(this.scrollElement(), 1),
-    ArrowUp: (e) => scrollByStep(this.scrollElement(), -1),
     Home: (e) => scrollToTop(this.scrollElement()),
     End: (e) => scrollToBottom(this.scrollElement()),
   };

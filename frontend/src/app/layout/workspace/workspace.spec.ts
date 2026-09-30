@@ -109,21 +109,22 @@ describe('Workspace', () => {
     expect(scroll.value).toBe(800);
   });
 
-  it('scrolls on bare arrows but leaves Alt-arrows to the selection', () => {
+  it('leaves the arrows alone, bare or with Alt', () => {
     const section: HTMLElement = fixture.nativeElement.querySelector('.workspace');
     const scrollBy = vi.fn();
     section.scrollBy = scrollBy;
 
-    const alt = new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true, cancelable: true });
-    document.dispatchEvent(alt);
+    for (const init of [{}, { altKey: true }]) {
+      for (const key of ['ArrowDown', 'ArrowUp']) {
+        const event = new KeyboardEvent('keydown', { key, cancelable: true, ...init });
+        document.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(false);
+      }
+    }
     expect(scrollBy).not.toHaveBeenCalled();
-    expect(alt.defaultPrevented).toBe(false);
-
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', cancelable: true }));
-    expect(scrollBy).toHaveBeenCalled();
   });
 
-  it('scrolls with PageDown and PageUp exactly as with the arrows', () => {
+  it('scrolls a step down and up with PageDown and PageUp', () => {
     const section: HTMLElement = fixture.nativeElement.querySelector('.workspace');
     const scrollBy = vi.fn();
     section.scrollBy = scrollBy;
@@ -132,12 +133,10 @@ describe('Workspace', () => {
     document.dispatchEvent(down);
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageUp', cancelable: true }));
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', cancelable: true }));
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', cancelable: true }));
-
-    const [pageDown, pageUp, arrowDown, arrowUp] = scrollBy.mock.calls;
-    expect(pageDown).toEqual(arrowDown);
-    expect(pageUp).toEqual(arrowUp);
+    expect(scrollBy.mock.calls).toEqual([
+      [{ top: 120, behavior: 'smooth' }],
+      [{ top: -120, behavior: 'smooth' }],
+    ]);
     expect(down.defaultPrevented).toBe(true);
   });
 });

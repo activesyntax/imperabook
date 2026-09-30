@@ -278,20 +278,13 @@ describe('CommandShell', () => {
     }
   });
 
-  it('moves between lines with bare Up/Down instead of scrolling the workspace', () => {
-    const reached = vi.fn();
-    document.addEventListener('keydown', reached);
-    try {
-      const input = type('add book Dune\nby author Frank Herbert');
-      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
-      expect(reached).not.toHaveBeenCalled();
-
-      const single = type('dashboard');
-      single.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
-      expect(reached).toHaveBeenCalled();
-    } finally {
-      document.removeEventListener('keydown', reached);
+  it('leaves bare Up/Down to the caret', () => {
+    for (const text of ['dashboard', 'add book Dune\nby author Frank Herbert']) {
+      const input = type(text);
+      expect(press(input, 'ArrowUp').defaultPrevented).toBe(false);
+      expect(press(input, 'ArrowDown').defaultPrevented).toBe(false);
     }
+    expect(opener.moveInGrid).not.toHaveBeenCalled();
   });
 
   it('does not run unrecognized input', async () => {

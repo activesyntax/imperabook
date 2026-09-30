@@ -39,11 +39,11 @@ public static class HelpViews
                     TextNode.H2("Moving around"),
                     TextNode.Para(
                         "The command bar always holds focus, so plain letters are typing, "
-                            + "never shortcuts. Movement is split by modifier instead: bare "
-                            + "arrows move the view, Alt moves the selection, Ctrl fetches "
-                            + "more results."
+                            + "never shortcuts. Movement is split by key instead: PgUp and "
+                            + "PgDn move the view, Alt with the arrows moves the selection, "
+                            + "Ctrl fetches more results."
                     ),
-                    TextNode.Hint(["↑", "↓", "PgUp", "PgDn"], "scroll the workspace"),
+                    TextNode.Hint(["PgUp", "PgDn"], "scroll the workspace"),
                     TextNode.Hint(["Alt + ↑ ↓ ← →"], "move the selection through the grid"),
                     TextNode.Hint(["Ctrl + ←", "Ctrl + →"], "previous or next page"),
                     TextNode.Hint(["Enter", "Esc"], "open the selection, or go back"),
