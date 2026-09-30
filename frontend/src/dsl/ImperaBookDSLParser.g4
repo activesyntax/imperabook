@@ -25,15 +25,16 @@ command        : addBookCmd
                ;
 
 // The title is the rest of the first line; the optional details, author
-// included, follow one per line in any order. No author means the author is
-// unknown. A value left empty still parses, so the server can say what is
-// missing instead of the command being unrecognized.
-addBookCmd     : ADD BOOK bookTitle? (NL+ bookDetailParam)* ;
+// included, follow one per line in any order. No author line means the author
+// is unknown. Every value that is written must be there: "add book" with no
+// title, or "by author" with no name, is not a command yet — the bar says so
+// instead of sending what the server can only refuse.
+addBookCmd     : ADD BOOK bookTitle (NL+ bookDetailParam)* ;
 updateBookCmd  : UPDATE BOOK ;
 removeBookCmd  : REMOVE BOOK ;
 listBooksCmd   : LIST BOOKS ;
 
-addAuthorCmd   : ADD AUTHOR authorName? ;
+addAuthorCmd   : ADD AUTHOR authorName ;
 updateAuthorCmd: UPDATE AUTHOR ;
 removeAuthorCmd: REMOVE AUTHOR ;
 listAuthorsCmd : LIST AUTHORS ;
@@ -61,12 +62,12 @@ bookDetailParam
                | isbnParam
                | summaryParam
                ;
-authorParam    : BY AUTHOR value? ;
-subtitleParam  : SUBTITLED value? ;
-languageParam  : IN LANGUAGE value? ;
+authorParam    : BY AUTHOR value ;
+subtitleParam  : SUBTITLED value ;
+languageParam  : IN LANGUAGE value ;
 publicationYearParam
-               : PUBLISHED IN value? ;
-isbnParam      : WITH ISBN value? ;
-summaryParam   : WITH SUMMARY value? ;
+               : PUBLISHED IN value ;
+isbnParam      : WITH ISBN value ;
+summaryParam   : WITH SUMMARY value ;
 
 value          : VALUE ;

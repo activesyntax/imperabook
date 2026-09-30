@@ -215,6 +215,29 @@ describe('CommandShell', () => {
       expect(runner.run).not.toHaveBeenCalled();
     });
 
+    it('refuses a book with no title instead of sending it', async () => {
+      const input = type('add book');
+
+      await submit(input);
+      fixture.detectChanges();
+
+      expect(runner.run).not.toHaveBeenCalled();
+      expect(input.value).toBe('add book');
+      expect(statusMessage()).toContain('Not a valid command');
+    });
+
+    it('does not open a parameter line under a command still missing its value', async () => {
+      const input = type('add book Dune\n    by author');
+
+      press(input, 'Enter');
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(input.value).toBe('add book Dune\n    by author');
+      expect(runner.run).not.toHaveBeenCalled();
+      expect(statusMessage()).toContain('Not a valid command');
+    });
+
     it('always runs with Ctrl', async () => {
       await submit(type('add book Dune'));
 

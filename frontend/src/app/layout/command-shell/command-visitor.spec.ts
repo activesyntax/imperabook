@@ -68,10 +68,6 @@ describe('CommandVisitor', () => {
     });
   });
 
-  it('sends an empty title or detail, for the server to reject', () => {
-    expect(parse('add book\nby author')).toEqual({ command: 'add book', params: { title: '', author: '' } });
-  });
-
   it('leaves out a detail that was not typed', () => {
     expect(parse('add book Beowulf')).toEqual({ command: 'add book', params: { title: 'Beowulf' } });
   });
@@ -101,8 +97,16 @@ describe('checkCommand', () => {
     expect(checkCommand('add book Dune\n    by author Frank Herbert').valid).toBe(true);
   });
 
-  it('accepts an empty value: the syntax is right, the server says what is missing', () => {
-    expect(checkCommand('add book').valid).toBe(true);
+  it('rejects a value that is written but missing', () => {
+    expect(checkCommand('add book').valid).toBe(false);
+    expect(checkCommand('add book   ').valid).toBe(false);
+    expect(checkCommand('add author').valid).toBe(false);
+    expect(checkCommand('add book Dune\n    by author').valid).toBe(false);
+    expect(checkCommand('add book Dune\n    with isbn   \n    by author Frank Herbert').valid).toBe(false);
+  });
+
+  it('does not require the optional details at all', () => {
+    expect(checkCommand('add book Dune').valid).toBe(true);
   });
 
   it('rejects what is not a command, or not yet one', () => {

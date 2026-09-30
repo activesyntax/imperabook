@@ -41,7 +41,7 @@
         }
         <span class="say" [class.rejected]="rejected()" aria-live="polite">
           @if (rejected()) {
-            Not a valid command. Check what you typed, or type <span class="cmd">help</span> to see the commands.
+            Not a valid command.
           } @else if (!hasText()) {
             Type a command like <span class="cmd">list books</span>
           } @else if (description(); as text) {

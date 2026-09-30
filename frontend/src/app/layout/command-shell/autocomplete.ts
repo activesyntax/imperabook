@@ -7,8 +7,7 @@ import {
 import { CandidatesCollection, CodeCompletionCore } from 'antlr4-c3';
 import { ImperaBookDSLLexer } from '@dsl/generated/ImperaBookDSLLexer';
 import { ImperaBookDSLParser } from '@dsl/generated/ImperaBookDSLParser';
-import { parseDSLCommand } from './command-parser';
-import { CommandVisitor } from './command-visitor';
+import { checkCommand } from './command-visitor';
 
 export interface CompletionItem {
   label: string;
@@ -123,13 +122,14 @@ export function getDSLCompletions(input: string, caretOffset: number): Completio
 }
 
 /**
- * Whether the text is a recognized command that could take another parameter
- * line. Recognized first: after a line break the grammar would also accept the
- * start of any command, so unrecognized text ("xyz") would otherwise always
- * look like it could continue.
+ * Whether the text is a valid command that could take another parameter line.
+ * Valid first: after a line break the grammar would also accept the start of
+ * any command, so "xyz" would otherwise look like it could continue — and a
+ * command still missing a value ("add book", "by author") should get that
+ * value, not a new line.
  */
 export function canContinueOnNewLine(text: string): boolean {
-  if (!isRecognized(text)) return false;
+  if (!isValid(text)) return false;
 
   const next = `${text}\n`;
   return withoutUsedParams(completionsAt(next, next.length), next, next.length).length > 0;
@@ -183,7 +183,7 @@ function lineOf(input: string, offset: number): number {
 }
 
 function nextLineCompletions(input: string, caretOffset: number): CompletionItem[] {
-  if (input.slice(0, caretOffset).trim() === '' || !isRecognized(input)) return [];
+  if (input.slice(0, caretOffset).trim() === '' || !isValid(input)) return [];
 
   // Blanks left at the end of the value line go with the line break.
   let lineEnd = caretOffset;
@@ -205,8 +205,8 @@ function atLineEnd(input: string, caretOffset: number): boolean {
   return caretOffset === input.length || input[caretOffset] === '\n' || input[caretOffset] === '\r';
 }
 
-function isRecognized(text: string): boolean {
-  return new CommandVisitor().visit(parseDSLCommand(text)) !== null;
+function isValid(text: string): boolean {
+  return checkCommand(text).valid;
 }
 
 function completionsAt(input: string, caretOffset: number): CompletionItem[] {

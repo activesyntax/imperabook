@@ -311,45 +311,37 @@ export class ImperaBookDSLParser extends antlr.Parser {
             this.match(ImperaBookDSLParser.ADD);
             this.state = 90;
             this.match(ImperaBookDSLParser.BOOK);
-            this.state = 92;
+            this.state = 91;
+            this.bookTitle();
+            this.state = 100;
             this.errorHandler.sync(this);
-            _la = this.tokenStream.LA(1);
-            if (_la === 32) {
-                {
-                this.state = 91;
-                this.bookTitle();
-                }
-            }
-
-            this.state = 102;
-            this.errorHandler.sync(this);
-            alternative = this.interpreter.adaptivePredict(this.tokenStream, 5, this.context);
+            alternative = this.interpreter.adaptivePredict(this.tokenStream, 4, this.context);
             while (alternative !== 2 && alternative !== antlr.ATN.INVALID_ALT_NUMBER) {
                 if (alternative === 1) {
                     {
                     {
-                    this.state = 95;
+                    this.state = 93;
                     this.errorHandler.sync(this);
                     _la = this.tokenStream.LA(1);
                     do {
                         {
                         {
-                        this.state = 94;
+                        this.state = 92;
                         this.match(ImperaBookDSLParser.NL);
                         }
                         }
-                        this.state = 97;
+                        this.state = 95;
                         this.errorHandler.sync(this);
                         _la = this.tokenStream.LA(1);
                     } while (_la === 22);
-                    this.state = 99;
+                    this.state = 97;
                     this.bookDetailParam();
                     }
                     }
                 }
-                this.state = 104;
+                this.state = 102;
                 this.errorHandler.sync(this);
-                alternative = this.interpreter.adaptivePredict(this.tokenStream, 5, this.context);
+                alternative = this.interpreter.adaptivePredict(this.tokenStream, 4, this.context);
             }
             }
         }
@@ -372,9 +364,9 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 105;
+            this.state = 103;
             this.match(ImperaBookDSLParser.UPDATE);
-            this.state = 106;
+            this.state = 104;
             this.match(ImperaBookDSLParser.BOOK);
             }
         }
@@ -397,9 +389,9 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 108;
+            this.state = 106;
             this.match(ImperaBookDSLParser.REMOVE);
-            this.state = 109;
+            this.state = 107;
             this.match(ImperaBookDSLParser.BOOK);
             }
         }
@@ -422,9 +414,9 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 111;
+            this.state = 109;
             this.match(ImperaBookDSLParser.LIST);
-            this.state = 112;
+            this.state = 110;
             this.match(ImperaBookDSLParser.BOOKS);
             }
         }
@@ -444,24 +436,15 @@ export class ImperaBookDSLParser extends antlr.Parser {
     public addAuthorCmd(): AddAuthorCmdContext {
         let localContext = new AddAuthorCmdContext(this.context, this.state);
         this.enterRule(localContext, 12, ImperaBookDSLParser.RULE_addAuthorCmd);
-        let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 114;
+            this.state = 112;
             this.match(ImperaBookDSLParser.ADD);
-            this.state = 115;
+            this.state = 113;
             this.match(ImperaBookDSLParser.AUTHOR);
-            this.state = 117;
-            this.errorHandler.sync(this);
-            _la = this.tokenStream.LA(1);
-            if (_la === 32) {
-                {
-                this.state = 116;
-                this.authorName();
-                }
-            }
-
+            this.state = 114;
+            this.authorName();
             }
         }
         catch (re) {
@@ -483,9 +466,9 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 119;
+            this.state = 116;
             this.match(ImperaBookDSLParser.UPDATE);
-            this.state = 120;
+            this.state = 117;
             this.match(ImperaBookDSLParser.AUTHOR);
             }
         }
@@ -508,9 +491,9 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 122;
+            this.state = 119;
             this.match(ImperaBookDSLParser.REMOVE);
-            this.state = 123;
+            this.state = 120;
             this.match(ImperaBookDSLParser.AUTHOR);
             }
         }
@@ -533,9 +516,9 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 125;
+            this.state = 122;
             this.match(ImperaBookDSLParser.LIST);
-            this.state = 126;
+            this.state = 123;
             this.match(ImperaBookDSLParser.AUTHORS);
             }
         }
@@ -558,7 +541,7 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 128;
+            this.state = 125;
             this.match(ImperaBookDSLParser.DASHBOARD);
             }
         }
@@ -581,7 +564,7 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 130;
+            this.state = 127;
             this.match(ImperaBookDSLParser.LIBRARY);
             }
         }
@@ -604,7 +587,7 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 132;
+            this.state = 129;
             this.match(ImperaBookDSLParser.SETTINGS);
             }
         }
@@ -627,7 +610,7 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 134;
+            this.state = 131;
             this.match(ImperaBookDSLParser.ABOUT);
             }
         }
@@ -650,7 +633,7 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 136;
+            this.state = 133;
             this.match(ImperaBookDSLParser.HELP);
             }
         }
@@ -673,7 +656,7 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 138;
+            this.state = 135;
             this.match(ImperaBookDSLParser.ACCOUNT);
             }
         }
@@ -696,7 +679,7 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 140;
+            this.state = 137;
             this.match(ImperaBookDSLParser.LOGIN);
             }
         }
@@ -719,7 +702,7 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 142;
+            this.state = 139;
             this.match(ImperaBookDSLParser.LOGOUT);
             }
         }
@@ -742,7 +725,7 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 144;
+            this.state = 141;
             this.match(ImperaBookDSLParser.VALUE);
             }
         }
@@ -765,7 +748,7 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 146;
+            this.state = 143;
             this.match(ImperaBookDSLParser.VALUE);
             }
         }
@@ -786,48 +769,48 @@ export class ImperaBookDSLParser extends antlr.Parser {
         let localContext = new BookDetailParamContext(this.context, this.state);
         this.enterRule(localContext, 40, ImperaBookDSLParser.RULE_bookDetailParam);
         try {
-            this.state = 154;
+            this.state = 151;
             this.errorHandler.sync(this);
-            switch (this.interpreter.adaptivePredict(this.tokenStream, 7, this.context) ) {
+            switch (this.interpreter.adaptivePredict(this.tokenStream, 5, this.context) ) {
             case 1:
                 this.enterOuterAlt(localContext, 1);
                 {
-                this.state = 148;
+                this.state = 145;
                 this.authorParam();
                 }
                 break;
             case 2:
                 this.enterOuterAlt(localContext, 2);
                 {
-                this.state = 149;
+                this.state = 146;
                 this.subtitleParam();
                 }
                 break;
             case 3:
                 this.enterOuterAlt(localContext, 3);
                 {
-                this.state = 150;
+                this.state = 147;
                 this.languageParam();
                 }
                 break;
             case 4:
                 this.enterOuterAlt(localContext, 4);
                 {
-                this.state = 151;
+                this.state = 148;
                 this.publicationYearParam();
                 }
                 break;
             case 5:
                 this.enterOuterAlt(localContext, 5);
                 {
-                this.state = 152;
+                this.state = 149;
                 this.isbnParam();
                 }
                 break;
             case 6:
                 this.enterOuterAlt(localContext, 6);
                 {
-                this.state = 153;
+                this.state = 150;
                 this.summaryParam();
                 }
                 break;
@@ -849,24 +832,15 @@ export class ImperaBookDSLParser extends antlr.Parser {
     public authorParam(): AuthorParamContext {
         let localContext = new AuthorParamContext(this.context, this.state);
         this.enterRule(localContext, 42, ImperaBookDSLParser.RULE_authorParam);
-        let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 156;
+            this.state = 153;
             this.match(ImperaBookDSLParser.BY);
-            this.state = 157;
+            this.state = 154;
             this.match(ImperaBookDSLParser.AUTHOR);
-            this.state = 159;
-            this.errorHandler.sync(this);
-            _la = this.tokenStream.LA(1);
-            if (_la === 32) {
-                {
-                this.state = 158;
-                this.value();
-                }
-            }
-
+            this.state = 155;
+            this.value();
             }
         }
         catch (re) {
@@ -885,22 +859,13 @@ export class ImperaBookDSLParser extends antlr.Parser {
     public subtitleParam(): SubtitleParamContext {
         let localContext = new SubtitleParamContext(this.context, this.state);
         this.enterRule(localContext, 44, ImperaBookDSLParser.RULE_subtitleParam);
-        let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 161;
+            this.state = 157;
             this.match(ImperaBookDSLParser.SUBTITLED);
-            this.state = 163;
-            this.errorHandler.sync(this);
-            _la = this.tokenStream.LA(1);
-            if (_la === 32) {
-                {
-                this.state = 162;
-                this.value();
-                }
-            }
-
+            this.state = 158;
+            this.value();
             }
         }
         catch (re) {
@@ -919,24 +884,15 @@ export class ImperaBookDSLParser extends antlr.Parser {
     public languageParam(): LanguageParamContext {
         let localContext = new LanguageParamContext(this.context, this.state);
         this.enterRule(localContext, 46, ImperaBookDSLParser.RULE_languageParam);
-        let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 165;
+            this.state = 160;
             this.match(ImperaBookDSLParser.IN);
-            this.state = 166;
+            this.state = 161;
             this.match(ImperaBookDSLParser.LANGUAGE);
-            this.state = 168;
-            this.errorHandler.sync(this);
-            _la = this.tokenStream.LA(1);
-            if (_la === 32) {
-                {
-                this.state = 167;
-                this.value();
-                }
-            }
-
+            this.state = 162;
+            this.value();
             }
         }
         catch (re) {
@@ -955,24 +911,15 @@ export class ImperaBookDSLParser extends antlr.Parser {
     public publicationYearParam(): PublicationYearParamContext {
         let localContext = new PublicationYearParamContext(this.context, this.state);
         this.enterRule(localContext, 48, ImperaBookDSLParser.RULE_publicationYearParam);
-        let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 170;
+            this.state = 164;
             this.match(ImperaBookDSLParser.PUBLISHED);
-            this.state = 171;
+            this.state = 165;
             this.match(ImperaBookDSLParser.IN);
-            this.state = 173;
-            this.errorHandler.sync(this);
-            _la = this.tokenStream.LA(1);
-            if (_la === 32) {
-                {
-                this.state = 172;
-                this.value();
-                }
-            }
-
+            this.state = 166;
+            this.value();
             }
         }
         catch (re) {
@@ -991,24 +938,15 @@ export class ImperaBookDSLParser extends antlr.Parser {
     public isbnParam(): IsbnParamContext {
         let localContext = new IsbnParamContext(this.context, this.state);
         this.enterRule(localContext, 50, ImperaBookDSLParser.RULE_isbnParam);
-        let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 175;
+            this.state = 168;
             this.match(ImperaBookDSLParser.WITH);
-            this.state = 176;
+            this.state = 169;
             this.match(ImperaBookDSLParser.ISBN);
-            this.state = 178;
-            this.errorHandler.sync(this);
-            _la = this.tokenStream.LA(1);
-            if (_la === 32) {
-                {
-                this.state = 177;
-                this.value();
-                }
-            }
-
+            this.state = 170;
+            this.value();
             }
         }
         catch (re) {
@@ -1027,24 +965,15 @@ export class ImperaBookDSLParser extends antlr.Parser {
     public summaryParam(): SummaryParamContext {
         let localContext = new SummaryParamContext(this.context, this.state);
         this.enterRule(localContext, 52, ImperaBookDSLParser.RULE_summaryParam);
-        let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 180;
+            this.state = 172;
             this.match(ImperaBookDSLParser.WITH);
-            this.state = 181;
+            this.state = 173;
             this.match(ImperaBookDSLParser.SUMMARY);
-            this.state = 183;
-            this.errorHandler.sync(this);
-            _la = this.tokenStream.LA(1);
-            if (_la === 32) {
-                {
-                this.state = 182;
-                this.value();
-                }
-            }
-
+            this.state = 174;
+            this.value();
             }
         }
         catch (re) {
@@ -1066,7 +995,7 @@ export class ImperaBookDSLParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 185;
+            this.state = 176;
             this.match(ImperaBookDSLParser.VALUE);
             }
         }
@@ -1085,68 +1014,63 @@ export class ImperaBookDSLParser extends antlr.Parser {
     }
 
     public static readonly _serializedATN: number[] = [
-        4,1,33,188,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,33,179,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
         2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,20,
         7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,7,24,2,25,7,25,2,26,7,26,
         2,27,7,27,1,0,5,0,58,8,0,10,0,12,0,61,9,0,1,0,1,0,5,0,65,8,0,10,
         0,12,0,68,9,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-        1,1,1,1,1,1,1,1,1,1,1,3,1,88,8,1,1,2,1,2,1,2,3,2,93,8,2,1,2,4,2,
-        96,8,2,11,2,12,2,97,1,2,5,2,101,8,2,10,2,12,2,104,9,2,1,3,1,3,1,
-        3,1,4,1,4,1,4,1,5,1,5,1,5,1,6,1,6,1,6,3,6,118,8,6,1,7,1,7,1,7,1,
-        8,1,8,1,8,1,9,1,9,1,9,1,10,1,10,1,11,1,11,1,12,1,12,1,13,1,13,1,
-        14,1,14,1,15,1,15,1,16,1,16,1,17,1,17,1,18,1,18,1,19,1,19,1,20,1,
-        20,1,20,1,20,1,20,1,20,3,20,155,8,20,1,21,1,21,1,21,3,21,160,8,21,
-        1,22,1,22,3,22,164,8,22,1,23,1,23,1,23,3,23,169,8,23,1,24,1,24,1,
-        24,3,24,174,8,24,1,25,1,25,1,25,3,25,179,8,25,1,26,1,26,1,26,3,26,
-        184,8,26,1,27,1,27,1,27,0,0,28,0,2,4,6,8,10,12,14,16,18,20,22,24,
-        26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,0,0,191,0,59,1,0,0,
-        0,2,87,1,0,0,0,4,89,1,0,0,0,6,105,1,0,0,0,8,108,1,0,0,0,10,111,1,
-        0,0,0,12,114,1,0,0,0,14,119,1,0,0,0,16,122,1,0,0,0,18,125,1,0,0,
-        0,20,128,1,0,0,0,22,130,1,0,0,0,24,132,1,0,0,0,26,134,1,0,0,0,28,
-        136,1,0,0,0,30,138,1,0,0,0,32,140,1,0,0,0,34,142,1,0,0,0,36,144,
-        1,0,0,0,38,146,1,0,0,0,40,154,1,0,0,0,42,156,1,0,0,0,44,161,1,0,
-        0,0,46,165,1,0,0,0,48,170,1,0,0,0,50,175,1,0,0,0,52,180,1,0,0,0,
-        54,185,1,0,0,0,56,58,5,22,0,0,57,56,1,0,0,0,58,61,1,0,0,0,59,57,
-        1,0,0,0,59,60,1,0,0,0,60,62,1,0,0,0,61,59,1,0,0,0,62,66,3,2,1,0,
-        63,65,5,22,0,0,64,63,1,0,0,0,65,68,1,0,0,0,66,64,1,0,0,0,66,67,1,
-        0,0,0,67,69,1,0,0,0,68,66,1,0,0,0,69,70,5,0,0,1,70,1,1,0,0,0,71,
-        88,3,4,2,0,72,88,3,6,3,0,73,88,3,8,4,0,74,88,3,10,5,0,75,88,3,12,
-        6,0,76,88,3,14,7,0,77,88,3,16,8,0,78,88,3,18,9,0,79,88,3,20,10,0,
-        80,88,3,22,11,0,81,88,3,24,12,0,82,88,3,26,13,0,83,88,3,28,14,0,
-        84,88,3,30,15,0,85,88,3,32,16,0,86,88,3,34,17,0,87,71,1,0,0,0,87,
-        72,1,0,0,0,87,73,1,0,0,0,87,74,1,0,0,0,87,75,1,0,0,0,87,76,1,0,0,
-        0,87,77,1,0,0,0,87,78,1,0,0,0,87,79,1,0,0,0,87,80,1,0,0,0,87,81,
-        1,0,0,0,87,82,1,0,0,0,87,83,1,0,0,0,87,84,1,0,0,0,87,85,1,0,0,0,
-        87,86,1,0,0,0,88,3,1,0,0,0,89,90,5,1,0,0,90,92,5,5,0,0,91,93,3,36,
-        18,0,92,91,1,0,0,0,92,93,1,0,0,0,93,102,1,0,0,0,94,96,5,22,0,0,95,
-        94,1,0,0,0,96,97,1,0,0,0,97,95,1,0,0,0,97,98,1,0,0,0,98,99,1,0,0,
-        0,99,101,3,40,20,0,100,95,1,0,0,0,101,104,1,0,0,0,102,100,1,0,0,
-        0,102,103,1,0,0,0,103,5,1,0,0,0,104,102,1,0,0,0,105,106,5,2,0,0,
-        106,107,5,5,0,0,107,7,1,0,0,0,108,109,5,3,0,0,109,110,5,5,0,0,110,
-        9,1,0,0,0,111,112,5,4,0,0,112,113,5,6,0,0,113,11,1,0,0,0,114,115,
-        5,1,0,0,115,117,5,7,0,0,116,118,3,38,19,0,117,116,1,0,0,0,117,118,
-        1,0,0,0,118,13,1,0,0,0,119,120,5,2,0,0,120,121,5,7,0,0,121,15,1,
-        0,0,0,122,123,5,3,0,0,123,124,5,7,0,0,124,17,1,0,0,0,125,126,5,4,
-        0,0,126,127,5,8,0,0,127,19,1,0,0,0,128,129,5,9,0,0,129,21,1,0,0,
-        0,130,131,5,10,0,0,131,23,1,0,0,0,132,133,5,11,0,0,133,25,1,0,0,
-        0,134,135,5,12,0,0,135,27,1,0,0,0,136,137,5,13,0,0,137,29,1,0,0,
-        0,138,139,5,14,0,0,139,31,1,0,0,0,140,141,5,15,0,0,141,33,1,0,0,
-        0,142,143,5,16,0,0,143,35,1,0,0,0,144,145,5,32,0,0,145,37,1,0,0,
-        0,146,147,5,32,0,0,147,39,1,0,0,0,148,155,3,42,21,0,149,155,3,44,
-        22,0,150,155,3,46,23,0,151,155,3,48,24,0,152,155,3,50,25,0,153,155,
-        3,52,26,0,154,148,1,0,0,0,154,149,1,0,0,0,154,150,1,0,0,0,154,151,
-        1,0,0,0,154,152,1,0,0,0,154,153,1,0,0,0,155,41,1,0,0,0,156,157,5,
-        17,0,0,157,159,5,7,0,0,158,160,3,54,27,0,159,158,1,0,0,0,159,160,
-        1,0,0,0,160,43,1,0,0,0,161,163,5,21,0,0,162,164,3,54,27,0,163,162,
-        1,0,0,0,163,164,1,0,0,0,164,45,1,0,0,0,165,166,5,19,0,0,166,168,
-        5,29,0,0,167,169,3,54,27,0,168,167,1,0,0,0,168,169,1,0,0,0,169,47,
-        1,0,0,0,170,171,5,20,0,0,171,173,5,19,0,0,172,174,3,54,27,0,173,
-        172,1,0,0,0,173,174,1,0,0,0,174,49,1,0,0,0,175,176,5,18,0,0,176,
-        178,5,26,0,0,177,179,3,54,27,0,178,177,1,0,0,0,178,179,1,0,0,0,179,
-        51,1,0,0,0,180,181,5,18,0,0,181,183,5,27,0,0,182,184,3,54,27,0,183,
-        182,1,0,0,0,183,184,1,0,0,0,184,53,1,0,0,0,185,186,5,32,0,0,186,
-        55,1,0,0,0,14,59,66,87,92,97,102,117,154,159,163,168,173,178,183
+        1,1,1,1,1,1,1,1,1,1,1,3,1,88,8,1,1,2,1,2,1,2,1,2,4,2,94,8,2,11,2,
+        12,2,95,1,2,5,2,99,8,2,10,2,12,2,102,9,2,1,3,1,3,1,3,1,4,1,4,1,4,
+        1,5,1,5,1,5,1,6,1,6,1,6,1,6,1,7,1,7,1,7,1,8,1,8,1,8,1,9,1,9,1,9,
+        1,10,1,10,1,11,1,11,1,12,1,12,1,13,1,13,1,14,1,14,1,15,1,15,1,16,
+        1,16,1,17,1,17,1,18,1,18,1,19,1,19,1,20,1,20,1,20,1,20,1,20,1,20,
+        3,20,152,8,20,1,21,1,21,1,21,1,21,1,22,1,22,1,22,1,23,1,23,1,23,
+        1,23,1,24,1,24,1,24,1,24,1,25,1,25,1,25,1,25,1,26,1,26,1,26,1,26,
+        1,27,1,27,1,27,0,0,28,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,
+        32,34,36,38,40,42,44,46,48,50,52,54,0,0,174,0,59,1,0,0,0,2,87,1,
+        0,0,0,4,89,1,0,0,0,6,103,1,0,0,0,8,106,1,0,0,0,10,109,1,0,0,0,12,
+        112,1,0,0,0,14,116,1,0,0,0,16,119,1,0,0,0,18,122,1,0,0,0,20,125,
+        1,0,0,0,22,127,1,0,0,0,24,129,1,0,0,0,26,131,1,0,0,0,28,133,1,0,
+        0,0,30,135,1,0,0,0,32,137,1,0,0,0,34,139,1,0,0,0,36,141,1,0,0,0,
+        38,143,1,0,0,0,40,151,1,0,0,0,42,153,1,0,0,0,44,157,1,0,0,0,46,160,
+        1,0,0,0,48,164,1,0,0,0,50,168,1,0,0,0,52,172,1,0,0,0,54,176,1,0,
+        0,0,56,58,5,22,0,0,57,56,1,0,0,0,58,61,1,0,0,0,59,57,1,0,0,0,59,
+        60,1,0,0,0,60,62,1,0,0,0,61,59,1,0,0,0,62,66,3,2,1,0,63,65,5,22,
+        0,0,64,63,1,0,0,0,65,68,1,0,0,0,66,64,1,0,0,0,66,67,1,0,0,0,67,69,
+        1,0,0,0,68,66,1,0,0,0,69,70,5,0,0,1,70,1,1,0,0,0,71,88,3,4,2,0,72,
+        88,3,6,3,0,73,88,3,8,4,0,74,88,3,10,5,0,75,88,3,12,6,0,76,88,3,14,
+        7,0,77,88,3,16,8,0,78,88,3,18,9,0,79,88,3,20,10,0,80,88,3,22,11,
+        0,81,88,3,24,12,0,82,88,3,26,13,0,83,88,3,28,14,0,84,88,3,30,15,
+        0,85,88,3,32,16,0,86,88,3,34,17,0,87,71,1,0,0,0,87,72,1,0,0,0,87,
+        73,1,0,0,0,87,74,1,0,0,0,87,75,1,0,0,0,87,76,1,0,0,0,87,77,1,0,0,
+        0,87,78,1,0,0,0,87,79,1,0,0,0,87,80,1,0,0,0,87,81,1,0,0,0,87,82,
+        1,0,0,0,87,83,1,0,0,0,87,84,1,0,0,0,87,85,1,0,0,0,87,86,1,0,0,0,
+        88,3,1,0,0,0,89,90,5,1,0,0,90,91,5,5,0,0,91,100,3,36,18,0,92,94,
+        5,22,0,0,93,92,1,0,0,0,94,95,1,0,0,0,95,93,1,0,0,0,95,96,1,0,0,0,
+        96,97,1,0,0,0,97,99,3,40,20,0,98,93,1,0,0,0,99,102,1,0,0,0,100,98,
+        1,0,0,0,100,101,1,0,0,0,101,5,1,0,0,0,102,100,1,0,0,0,103,104,5,
+        2,0,0,104,105,5,5,0,0,105,7,1,0,0,0,106,107,5,3,0,0,107,108,5,5,
+        0,0,108,9,1,0,0,0,109,110,5,4,0,0,110,111,5,6,0,0,111,11,1,0,0,0,
+        112,113,5,1,0,0,113,114,5,7,0,0,114,115,3,38,19,0,115,13,1,0,0,0,
+        116,117,5,2,0,0,117,118,5,7,0,0,118,15,1,0,0,0,119,120,5,3,0,0,120,
+        121,5,7,0,0,121,17,1,0,0,0,122,123,5,4,0,0,123,124,5,8,0,0,124,19,
+        1,0,0,0,125,126,5,9,0,0,126,21,1,0,0,0,127,128,5,10,0,0,128,23,1,
+        0,0,0,129,130,5,11,0,0,130,25,1,0,0,0,131,132,5,12,0,0,132,27,1,
+        0,0,0,133,134,5,13,0,0,134,29,1,0,0,0,135,136,5,14,0,0,136,31,1,
+        0,0,0,137,138,5,15,0,0,138,33,1,0,0,0,139,140,5,16,0,0,140,35,1,
+        0,0,0,141,142,5,32,0,0,142,37,1,0,0,0,143,144,5,32,0,0,144,39,1,
+        0,0,0,145,152,3,42,21,0,146,152,3,44,22,0,147,152,3,46,23,0,148,
+        152,3,48,24,0,149,152,3,50,25,0,150,152,3,52,26,0,151,145,1,0,0,
+        0,151,146,1,0,0,0,151,147,1,0,0,0,151,148,1,0,0,0,151,149,1,0,0,
+        0,151,150,1,0,0,0,152,41,1,0,0,0,153,154,5,17,0,0,154,155,5,7,0,
+        0,155,156,3,54,27,0,156,43,1,0,0,0,157,158,5,21,0,0,158,159,3,54,
+        27,0,159,45,1,0,0,0,160,161,5,19,0,0,161,162,5,29,0,0,162,163,3,
+        54,27,0,163,47,1,0,0,0,164,165,5,20,0,0,165,166,5,19,0,0,166,167,
+        3,54,27,0,167,49,1,0,0,0,168,169,5,18,0,0,169,170,5,26,0,0,170,171,
+        3,54,27,0,171,51,1,0,0,0,172,173,5,18,0,0,173,174,5,27,0,0,174,175,
+        3,54,27,0,175,53,1,0,0,0,176,177,5,32,0,0,177,55,1,0,0,0,6,59,66,
+        87,95,100,151
     ];
 
     private static __ATN: antlr.ATN;
@@ -1295,8 +1219,8 @@ export class AddBookCmdContext extends antlr.ParserRuleContext {
     public BOOK(): antlr.TerminalNode {
         return this.getToken(ImperaBookDSLParser.BOOK, 0)!;
     }
-    public bookTitle(): BookTitleContext | null {
-        return this.getRuleContext(0, BookTitleContext);
+    public bookTitle(): BookTitleContext {
+        return this.getRuleContext(0, BookTitleContext)!;
     }
     public bookDetailParam(): BookDetailParamContext[];
     public bookDetailParam(i: number): BookDetailParamContext | null;
@@ -1448,8 +1372,8 @@ export class AddAuthorCmdContext extends antlr.ParserRuleContext {
     public AUTHOR(): antlr.TerminalNode {
         return this.getToken(ImperaBookDSLParser.AUTHOR, 0)!;
     }
-    public authorName(): AuthorNameContext | null {
-        return this.getRuleContext(0, AuthorNameContext);
+    public authorName(): AuthorNameContext {
+        return this.getRuleContext(0, AuthorNameContext)!;
     }
     public override get ruleIndex(): number {
         return ImperaBookDSLParser.RULE_addAuthorCmd;
@@ -1928,8 +1852,8 @@ export class AuthorParamContext extends antlr.ParserRuleContext {
     public AUTHOR(): antlr.TerminalNode {
         return this.getToken(ImperaBookDSLParser.AUTHOR, 0)!;
     }
-    public value(): ValueContext | null {
-        return this.getRuleContext(0, ValueContext);
+    public value(): ValueContext {
+        return this.getRuleContext(0, ValueContext)!;
     }
     public override get ruleIndex(): number {
         return ImperaBookDSLParser.RULE_authorParam;
@@ -1961,8 +1885,8 @@ export class SubtitleParamContext extends antlr.ParserRuleContext {
     public SUBTITLED(): antlr.TerminalNode {
         return this.getToken(ImperaBookDSLParser.SUBTITLED, 0)!;
     }
-    public value(): ValueContext | null {
-        return this.getRuleContext(0, ValueContext);
+    public value(): ValueContext {
+        return this.getRuleContext(0, ValueContext)!;
     }
     public override get ruleIndex(): number {
         return ImperaBookDSLParser.RULE_subtitleParam;
@@ -1997,8 +1921,8 @@ export class LanguageParamContext extends antlr.ParserRuleContext {
     public LANGUAGE(): antlr.TerminalNode {
         return this.getToken(ImperaBookDSLParser.LANGUAGE, 0)!;
     }
-    public value(): ValueContext | null {
-        return this.getRuleContext(0, ValueContext);
+    public value(): ValueContext {
+        return this.getRuleContext(0, ValueContext)!;
     }
     public override get ruleIndex(): number {
         return ImperaBookDSLParser.RULE_languageParam;
@@ -2033,8 +1957,8 @@ export class PublicationYearParamContext extends antlr.ParserRuleContext {
     public IN(): antlr.TerminalNode {
         return this.getToken(ImperaBookDSLParser.IN, 0)!;
     }
-    public value(): ValueContext | null {
-        return this.getRuleContext(0, ValueContext);
+    public value(): ValueContext {
+        return this.getRuleContext(0, ValueContext)!;
     }
     public override get ruleIndex(): number {
         return ImperaBookDSLParser.RULE_publicationYearParam;
@@ -2069,8 +1993,8 @@ export class IsbnParamContext extends antlr.ParserRuleContext {
     public ISBN(): antlr.TerminalNode {
         return this.getToken(ImperaBookDSLParser.ISBN, 0)!;
     }
-    public value(): ValueContext | null {
-        return this.getRuleContext(0, ValueContext);
+    public value(): ValueContext {
+        return this.getRuleContext(0, ValueContext)!;
     }
     public override get ruleIndex(): number {
         return ImperaBookDSLParser.RULE_isbnParam;
@@ -2105,8 +2029,8 @@ export class SummaryParamContext extends antlr.ParserRuleContext {
     public SUMMARY(): antlr.TerminalNode {
         return this.getToken(ImperaBookDSLParser.SUMMARY, 0)!;
     }
-    public value(): ValueContext | null {
-        return this.getRuleContext(0, ValueContext);
+    public value(): ValueContext {
+        return this.getRuleContext(0, ValueContext)!;
     }
     public override get ruleIndex(): number {
         return ImperaBookDSLParser.RULE_summaryParam;
