@@ -1,5 +1,5 @@
 import { parseDSLCommand } from './command-parser';
-import { CommandVisitor, ParsedCommand } from './command-visitor';
+import { checkCommand, CommandVisitor, ParsedCommand } from './command-visitor';
 
 function parse(text: string): ParsedCommand | null {
   return new CommandVisitor().visit(parseDSLCommand(text));
@@ -92,5 +92,29 @@ describe('CommandVisitor', () => {
 
   it('does not recognize input that starts with no command', () => {
     expect(parse('xyz')).toBeNull();
+  });
+});
+
+describe('checkCommand', () => {
+  it('accepts a command exactly as typed', () => {
+    expect(checkCommand('list books').valid).toBe(true);
+    expect(checkCommand('add book Dune\n    by author Frank Herbert').valid).toBe(true);
+  });
+
+  it('accepts an empty value: the syntax is right, the server says what is missing', () => {
+    expect(checkCommand('add book').valid).toBe(true);
+  });
+
+  it('rejects what is not a command, or not yet one', () => {
+    expect(checkCommand('xyz').valid).toBe(false);
+    expect(checkCommand('add bo').valid).toBe(false);
+    expect(checkCommand('').valid).toBe(false);
+  });
+
+  it('rejects text the parser only recovered from, though it found a command in it', () => {
+    const check = checkCommand('dashboard xyz');
+
+    expect(check.command).toEqual({ command: 'dashboard', params: {} });
+    expect(check.valid).toBe(false);
   });
 });

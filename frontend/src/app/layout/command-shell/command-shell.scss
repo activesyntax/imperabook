@@ -68,11 +68,36 @@
   color: var(--ib-dim);
 }
 
+.lead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
 .say {
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+
+  &.rejected {
+    color: var(--ib-error);
+  }
+}
+
+// Whether the text is a command as it stands. Filled, small, and beside the
+// words rather than instead of them.
+.validity {
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--ib-error);
+
+  &.valid {
+    background: var(--ib-success);
+  }
 }
 
 // A státusz nem rövidül és nem tördelődik: rövid, és mindig olvasható marad.

@@ -70,6 +70,10 @@ describe('CommandShell', () => {
     return fixture.whenStable();
   }
 
+  function statusMessage(): string {
+    return fixture.nativeElement.querySelector('.desc .say')?.textContent.replace(/\s+/g, ' ').trim() ?? '';
+  }
+
   function activeChip(): string {
     return fixture.nativeElement.querySelector('.chip.active')?.textContent.trim();
   }
@@ -182,11 +186,12 @@ describe('CommandShell', () => {
       });
     });
 
-    it('runs text it cannot continue, so an unrecognized command is reported', async () => {
+    it('tries to run text it cannot continue, so an invalid command is reported', async () => {
       press(type('xyz'), 'Enter');
       await fixture.whenStable();
+      fixture.detectChanges();
 
-      expect(TestBed.inject(WorkspaceStore).views()[0]).toMatchObject({ type: 'message', kind: 'error' });
+      expect(statusMessage()).toContain('Not a valid command');
     });
 
     it('runs once every detail is typed, as nothing more can follow', async () => {
@@ -353,11 +358,76 @@ describe('CommandShell', () => {
     });
   });
 
-  it('does not run unrecognized input', async () => {
-    await submit(type('xyz'));
+  describe('status bar', () => {
+    function dot(): HTMLElement | null {
+      return fixture.nativeElement.querySelector('.desc .validity');
+    }
 
-    expect(runner.run).not.toHaveBeenCalled();
-    expect(TestBed.inject(WorkspaceStore).views()[0]).toMatchObject({ type: 'message', kind: 'error' });
+    function keyHints(): string {
+      return fixture.nativeElement.querySelector('.desc .status')?.textContent.replace(/\s+/g, ' ').trim() ?? '';
+    }
+
+    it('suggests a first command while the bar is empty, with no validity dot', () => {
+      type('');
+
+      expect(statusMessage()).toBe('Type a command like list books');
+      expect(dot()).toBeNull();
+      expect(keyHints()).toBe('');
+    });
+
+    it('shows a green dot for a valid command and a red one otherwise', () => {
+      type('list books');
+      expect(dot()?.classList).toContain('valid');
+      expect(dot()?.getAttribute('aria-label')).toBe('Valid command');
+
+      type('list bo');
+      expect(dot()?.classList).not.toContain('valid');
+      expect(dot()?.getAttribute('aria-label')).toBe('Not a valid command');
+    });
+
+    it('counts text the parser only recovered from as invalid', () => {
+      type('dashboard xyz');
+
+      expect(dot()?.classList).not.toContain('valid');
+    });
+
+    it('shows what Enter does while the command is one line, without Ctrl+Enter', () => {
+      type('add book Dune');
+      expect(keyHints()).toBe('Tab accept · Enter new line');
+
+      type('dashboard');
+      expect(keyHints()).toContain('Enter run');
+      expect(keyHints()).not.toContain('Ctrl+Enter');
+    });
+
+    it('shows Ctrl+Enter as the way to run once parameters are on their own lines', () => {
+      type('add book Dune\n    by author Frank Herbert');
+
+      expect(keyHints()).toContain('Ctrl+Enter run');
+      expect(keyHints()).not.toContain('Enter new line');
+      expect(keyHints()).not.toMatch(/(^|· )Enter /);
+    });
+
+    it('refuses to send an invalid command: says so, keeps the text, leaves the workspace', async () => {
+      const input = type('xyz');
+
+      await submit(input);
+      fixture.detectChanges();
+
+      expect(runner.run).not.toHaveBeenCalled();
+      expect(input.value).toBe('xyz');
+      expect(statusMessage()).toContain('Not a valid command');
+      expect(TestBed.inject(WorkspaceStore).views()).toEqual([]);
+    });
+
+    it('clears the complaint as soon as the text is edited', async () => {
+      await submit(type('xyz'));
+      fixture.detectChanges();
+
+      type('xy');
+
+      expect(statusMessage()).toBe('');
+    });
   });
 
   function chips(): string[] {

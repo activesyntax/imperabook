@@ -1,4 +1,5 @@
 import { ImperaBookDSLParserVisitor } from '@dsl/generated/ImperaBookDSLParserVisitor';
+import { parseWithErrors } from './command-parser';
 import {
   AddAuthorCmdContext,
   AddBookCmdContext,
@@ -115,4 +116,20 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
   private text(raw: string | undefined): string {
     return (raw ?? '').trim();
   }
+}
+
+/**
+ * A command as typed, and whether it is one: no syntax errors and a command
+ * recognized. Error recovery can still find a command in invalid text
+ * ("dashboard xyz"), so `command` alone does not make it valid.
+ */
+export interface CommandCheck {
+  readonly command: ParsedCommand | null;
+  readonly valid: boolean;
+}
+
+export function checkCommand(text: string): CommandCheck {
+  const { tree, errors } = parseWithErrors(text);
+  const command = new CommandVisitor().visit(tree);
+  return { command, valid: errors === 0 && command !== null };
 }

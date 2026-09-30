@@ -16,13 +16,11 @@ import {
 import { AuthorLookup } from '@app/commands/author-lookup';
 import { CommandRunner } from '@app/commands/command-runner';
 import { GridDirection, ItemOpener } from '@app/commands/item-opener';
-import { resultOfUnrecognized } from '@app/commands/command-error';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { AppliedCompletion, applyCompletion, SuggestionService } from './suggestion-service';
 import { authorValueAt, canContinueOnNewLine, CompletionItem } from './autocomplete';
 import { Index, IndexMove, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
-import { parseDSLCommand } from './command-parser';
-import { CommandVisitor } from './command-visitor';
+import { checkCommand } from './command-visitor';
 import { formatAround } from './command-format';
 
 interface FieldAttrs {
@@ -33,6 +31,14 @@ interface FieldAttrs {
 const COMMAND_FIELD: FieldAttrs = {
   name: 'ib-command',
   autocomplete: 'off',
+};
+
+type EnterAction = 'open' | 'run' | 'newline';
+
+const ENTER_HINT: Record<EnterAction, string> = {
+  open: 'open the selection',
+  run: 'run',
+  newline: 'new line',
 };
 
 const ARROW_DIRECTION: Record<string, GridDirection> = {
@@ -74,6 +80,22 @@ export class CommandShell {
   protected readonly query = linkedSignal(() => this.externalQueryInput());
   // Caret position in the query. Defaults to the end whenever the query is replaced programmatically.
   private readonly cursorPosition = linkedSignal(() => this.query().length);
+
+  // --- Status bar --------------------------------------------------------------
+
+  protected readonly hasText = computed(() => this.query().trim() !== '');
+  protected readonly multiLine = computed(() => this.query().includes('\n'));
+
+  /** Whether the text is a command that could be sent as it stands. */
+  protected readonly valid = computed(() => checkCommand(this.query()).valid);
+
+  /** Set when an invalid command was sent; any edit clears it. */
+  protected readonly rejected = linkedSignal<string, boolean>({
+    source: this.query,
+    computation: () => false,
+  });
+
+  protected readonly enterHint = computed(() => ENTER_HINT[this.plainEnterAction()]);
 
   // The existing author being picked ("by author her"), if any.
   private readonly authorValue = computed(() => authorValueAt(this.query(), this.cursorPosition()));
@@ -243,11 +265,17 @@ export class CommandShell {
    *   parameter ("add book Dune"), and runs when nothing more can follow
    *   ("dashboard", "add author Homer", or unrecognized text).
    */
-  private enterAction(event: KeyboardEvent): 'open' | 'run' | 'newline' {
-    const text = this.query();
-    if (text.trim() === '') return 'open';
+  private enterAction(event: KeyboardEvent): EnterAction {
+    if (this.query().trim() === '') return 'open';
     if (event.shiftKey) return 'newline';
     if (event.ctrlKey || event.metaKey) return 'run';
+    return this.plainEnterAction();
+  }
+
+  /** What a bare Enter does with the text as it stands; also shown in the status bar. */
+  private plainEnterAction(): EnterAction {
+    const text = this.query();
+    if (text.trim() === '') return 'open';
     if (this.onBlankLine()) return 'run';
     return canContinueOnNewLine(text) ? 'newline' : 'run';
   }
@@ -308,12 +336,17 @@ export class CommandShell {
 
   protected async submit(): Promise<void> {
     const text = this.query();
-    this.query.set('');
-    const parsedCommand = new CommandVisitor().visit(parseDSLCommand(text));
+    const { command, valid } = checkCommand(text);
 
-    const commandResult = parsedCommand === null
-      ? resultOfUnrecognized(text)
-      : await this.runner.run(parsedCommand);
+    // Nothing to send: say so in the status bar and leave the text to fix,
+    // rather than replacing what the workspace shows.
+    if (!valid || command === null) {
+      this.rejected.set(true);
+      return;
+    }
+
+    this.query.set('');
+    const commandResult = await this.runner.run(command);
     this.store.setResult(commandResult);
 
     // Only if the bar is still empty: the user may have started the next command meanwhile.

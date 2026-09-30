@@ -16,31 +16,42 @@
         }
     </div>
 
-    <!-- <p class="desc"> -->
-    <!--   @switch (kind()) { -->
-    <!---->
-    <!--     @case ('running') { -->
-    <!--       <span class="say fall">running…</span> -->
-    <!--       <span class="status"> -->
-    <!--         <span class="cmd">{{ activeCommand()?.command }}</span> -->
-    <!--       </span> -->
-    <!--     } -->
-    <!---->
-    <!--     @default { -->
-    <!--       @if (activeCommand(); as sel) { -->
-    <!--         <span class="say">{{ sel.description }}</span> -->
-    <!--         <span class="status"><span class="cmd">{{ sel.command }}</span></span> -->
-    <!--       } @else if (query().length > 0) { -->
-    <!--         <span class="say">"{{ query() }}"</span> -->
-    <!--         <span class="status"><span class="cmd">search</span></span> -->
-    <!--       } @else { -->
-    <!--         <span class="say">Welcome to ImperaBook!</span> -->
-    <!--         <span class="status"></span> -->
-    <!--       } -->
-    <!--     } -->
-    <!--   } -->
-    <!-- </p> -->
-    <!---->
+    <!-- Status bar: whether the text is a command, and what the keys will do
+         with it. The dot is a glance; its label and the message carry the same
+         meaning for anyone who cannot tell red from green. -->
+    <p class="desc">
+      <span class="lead">
+        @if (hasText()) {
+          <span
+            class="validity"
+            [class.valid]="valid()"
+            role="img"
+            [attr.aria-label]="valid() ? 'Valid command' : 'Not a valid command'"></span>
+        }
+        <span class="say" [class.rejected]="rejected()" aria-live="polite">
+          @if (rejected()) {
+            Not a valid command. Check what you typed, or type <span class="cmd">help</span> to see the commands.
+          } @else if (!hasText()) {
+            Type a command like <span class="cmd">list books</span>
+          }
+        </span>
+      </span>
+
+      @if (hasText()) {
+        <!-- One line: Enter does the job, run or new line. Once parameters are on
+             lines of their own, Enter mostly adds lines, so running is Ctrl+Enter. -->
+        <span class="status">
+          @if (suggestions().all.length > 0) {
+            <span class="key">Tab</span> accept ·
+          }
+          @if (multiLine()) {
+            <span class="key">Ctrl+Enter</span> run
+          } @else {
+            <span class="key">Enter</span> {{ enterHint() }}
+          }
+        </span>
+      }
+    </p>
     <div class="entry">
       <div class="prompt">
         <img class="avatar" src="/static/imperabook-icon.svg" alt="" aria-hidden="true" />
