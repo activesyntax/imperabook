@@ -436,6 +436,25 @@ describe('CommandShell', () => {
     });
   });
 
+  it('leaves out commands shown elsewhere while the bar is empty', () => {
+    type('');
+
+    const offered = chips();
+    for (const hidden of ['account', 'login', 'logout', 'settings', 'about', 'help', 'dashboard', 'library']) {
+      expect(offered).not.toContain(hidden);
+    }
+    expect(offered).toContain('add book');
+    expect(offered).toContain('list books');
+  });
+
+  it('suggests those commands again as soon as something is typed', () => {
+    type('he');
+    expect(chips()).toContain('help');
+
+    type('l');
+    expect(chips()).toEqual(expect.arrayContaining(['list books', 'library', 'login', 'logout']));
+  });
+
   it('keeps the highlighted suggestion in view as the highlight moves', () => {
     const scroll = vi.fn();
     const original = HTMLElement.prototype.scrollIntoView;

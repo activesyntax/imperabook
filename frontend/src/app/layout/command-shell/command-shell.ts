@@ -49,6 +49,15 @@ interface Notice {
   readonly kind: 'error' | 'info';
 }
 
+/**
+ * Commands already on screen as pinned, application or account entries. On an
+ * empty bar their chips would only repeat them; once anything is typed they
+ * are suggested like any other command.
+ */
+const SHOWN_ELSEWHERE: ReadonlySet<string> = new Set([
+  'account', 'login', 'logout', 'settings', 'about', 'help', 'dashboard', 'library',
+]);
+
 const YES = ['yes', 'y'];
 const NO = ['no', 'n'];
 const ANSWERS = ['yes', 'no'];
@@ -180,8 +189,13 @@ export class CommandShell {
       ? this.answerChips()
       : [
           ...this.authorChips(),
-          ...this.suggestionService.suggestionsFor(this.query(), this.cursorPosition()),
+          ...this.grammarChips(),
         ]));
+
+  private readonly grammarChips = computed(() => {
+    const chips = this.suggestionService.suggestionsFor(this.query(), this.cursorPosition());
+    return this.query().trim() === '' ? chips.filter(chip => !SHOWN_ELSEWHERE.has(chip.label)) : chips;
+  });
 
   // While a question is open the only things to type are its answers.
   private readonly answerChips = computed<CompletionItem[]>(() => ANSWERS
