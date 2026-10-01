@@ -17,6 +17,14 @@ describe('applyCompletion', () => {
     expect(accept('list boo|', 'list books')).toBe('list books |');
   });
 
+  it('completes find from its first letters', () => {
+    expect(accept('fi|', 'find')).toBe('find |');
+  });
+
+  it('names what goes after find', () => {
+    expect(getDSLCompletions('find ', 5).map(c => c.label)).toEqual(['keywords']);
+  });
+
   it('completes a command from its first letters', () => {
     expect(accept('das|', 'dashboard')).toBe('dashboard |');
   });

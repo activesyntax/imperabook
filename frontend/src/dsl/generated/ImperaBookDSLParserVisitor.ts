@@ -12,6 +12,8 @@ import { AddAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { UpdateAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { ListAuthorsCmdContext } from "./ImperaBookDSLParser.js";
+import { FindCmdContext } from "./ImperaBookDSLParser.js";
+import { KeywordsContext } from "./ImperaBookDSLParser.js";
 import { DashboardCmdContext } from "./ImperaBookDSLParser.js";
 import { LibraryCmdContext } from "./ImperaBookDSLParser.js";
 import { SettingsCmdContext } from "./ImperaBookDSLParser.js";
@@ -100,6 +102,18 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      * @return the visitor result
      */
     visitListAuthorsCmd?: (ctx: ListAuthorsCmdContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.findCmd`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitFindCmd?: (ctx: FindCmdContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.keywords`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitKeywords?: (ctx: KeywordsContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.dashboardCmd`.
      * @param ctx the parse tree

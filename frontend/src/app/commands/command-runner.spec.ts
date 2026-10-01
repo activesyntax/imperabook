@@ -155,4 +155,16 @@ describe('CommandRunner', () => {
 
     expect(TestBed.inject(Session).signedIn()).toBe(false);
   });
+
+  it('finds by sending the keywords as the search query', async () => {
+    const found: CommandResult = { views: [] };
+
+    const result = runner.run({ command: 'find', params: { keywords: 'dune herbert' } });
+
+    const req = http.expectOne(r => r.url === '/api/search');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('q')).toBe('dune herbert');
+    req.flush(found);
+    expect(await result).toEqual(found);
+  });
 });

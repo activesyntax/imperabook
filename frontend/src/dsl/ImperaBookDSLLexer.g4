@@ -13,6 +13,7 @@ lexer grammar ImperaBookDSLLexer;
 
 // --- Default mode: the start of a line ---------------------------------------
 ADD            : 'add' -> pushMode(AFTER_ADD) ;
+FIND           : 'find' -> pushMode(VALUE_MODE) ;
 UPDATE         : 'update' ;
 REMOVE         : 'remove' ;
 LIST           : 'list' ;

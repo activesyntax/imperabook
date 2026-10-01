@@ -1,11 +1,25 @@
+using System.Linq.Expressions;
 using CSharpFunctionalExtensions;
 using ImperaBook.Application;
+using ImperaBook.Infrastructure.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ImperaBook.Infrastructure.Data.Queries;
 
 public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : IAuthorQueries
 {
+    /// <summary>The list-row projection, shared with queries that list a subset of authors.</summary>
+    internal static readonly Expression<Func<AuthorEntity, AuthorListItem>> ToListItem = a =>
+        new AuthorListItem(
+            a.Id,
+            a.FirstName,
+            a.LastName,
+            a.PortraitHash,
+            a.BirthYear,
+            a.Vitality,
+            a.DeathYear
+        );
+
     public Task<AuthorListItem[]> List(CancellationToken ct) =>
         db
             .Authors.AsNoTracking()
@@ -13,15 +27,7 @@ public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : I
             .OrderBy(a => a.LastName)
             .ThenBy(a => a.FirstName)
             .ThenBy(a => a.Id)
-            .Select(a => new AuthorListItem(
-                a.Id,
-                a.FirstName,
-                a.LastName,
-                a.PortraitHash,
-                a.BirthYear,
-                a.Vitality,
-                a.DeathYear
-            ))
+            .Select(ToListItem)
             .ToArrayAsync(ct);
 
     public async Task<Maybe<AuthorDetail>> Get(Guid id, CancellationToken ct)
@@ -29,15 +35,7 @@ public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : I
         var author = await db
             .Authors.AsNoTracking()
             .Where(a => a.OwnerId == user.Id && a.Id == id)
-            .Select(a => new AuthorListItem(
-                a.Id,
-                a.FirstName,
-                a.LastName,
-                a.PortraitHash,
-                a.BirthYear,
-                a.Vitality,
-                a.DeathYear
-            ))
+            .Select(ToListItem)
             .SingleOrDefaultAsync(ct);
 
         if (author is null)
@@ -55,7 +53,7 @@ public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : I
 
     public Task<AuthorListItem[]> Search(string term, CancellationToken ct)
     {
-        var pattern = $"%{EscapeLike(term)}%";
+        var pattern = LikePattern.Containing(term);
 
         return db
             .Authors.AsNoTracking()
@@ -64,25 +62,13 @@ public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : I
                 EF.Functions.ILike(
                     a.FirstName == null ? a.LastName : a.FirstName + " " + a.LastName,
                     pattern,
-                    @"\"
+                    LikePattern.Escape
                 )
             )
             .OrderBy(a => a.LastName)
             .ThenBy(a => a.FirstName)
             .ThenBy(a => a.Id)
-            .Select(a => new AuthorListItem(
-                a.Id,
-                a.FirstName,
-                a.LastName,
-                a.PortraitHash,
-                a.BirthYear,
-                a.Vitality,
-                a.DeathYear
-            ))
+            .Select(ToListItem)
             .ToArrayAsync(ct);
     }
-
-    // The user's text is matched literally: % and _ are not wildcards to them.
-    private static string EscapeLike(string term) =>
-        term.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_");
 }

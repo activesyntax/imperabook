@@ -253,6 +253,13 @@ describe('CommandShell', () => {
       expect(statusMessage()).toContain('Not a valid command');
     });
 
+    it('runs find, as nothing can follow its keywords', async () => {
+      press(type('find dune herbert'), 'Enter');
+      await fixture.whenStable();
+
+      expect(runner.run).toHaveBeenCalledWith({ command: 'find', params: { keywords: 'dune herbert' } });
+    });
+
     it('always runs with Ctrl', async () => {
       await submit(type('add book Dune'));
 

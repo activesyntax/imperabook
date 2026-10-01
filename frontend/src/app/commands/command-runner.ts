@@ -16,6 +16,8 @@ interface CommandEndpoint {
   readonly url: string;
   /** Builds the request body from the command's params; absent means no body. */
   readonly body?: (params: CommandParams) => unknown;
+  /** Builds the query string from the command's params; absent means none. */
+  readonly query?: (params: CommandParams) => Record<string, string>;
 }
 
 export interface Credentials {
@@ -23,7 +25,8 @@ export interface Credentials {
   readonly password: string;
 }
 
-const get = (url: string): CommandEndpoint => ({ method: 'GET', url });
+const get = (url: string, query?: (params: CommandParams) => Record<string, string>): CommandEndpoint =>
+  ({ method: 'GET', url, query });
 const post = (url: string, body?: (params: CommandParams) => unknown): CommandEndpoint =>
   ({ method: 'POST', url, body });
 
@@ -52,6 +55,7 @@ const ENDPOINTS: Partial<Record<CommandName, CommandEndpoint>> = {
   // The params are already the request's fields; "author" is search text the server resolves.
   'add book': post('/api/books', params => params),
   'list authors': get('/api/authors'),
+  'find': get('/api/search', ({ keywords }) => ({ q: keywords ?? '' })),
   'add author': post('/api/authors', ({ name }) => splitAuthorName(name ?? '')),
   'settings': get('/api/settings'),
   'about': get('/api/about'),
@@ -71,7 +75,12 @@ export class CommandRunner {
       return resultOfUnsupported(cmd.command);
     }
 
-    const result = await this.send(endpoint.method, endpoint.url, endpoint.body?.(cmd.params));
+    const result = await this.send(
+      endpoint.method,
+      endpoint.url,
+      endpoint.body?.(cmd.params),
+      endpoint.query?.(cmd.params),
+    );
 
     // Signing out changes who the chrome shows; ask rather than assume it worked.
     if (cmd.command === 'logout') await this.session.refresh();
@@ -107,9 +116,14 @@ export class CommandRunner {
     return result;
   }
 
-  private async send(method: HttpMethod, url: string, body?: unknown): Promise<CommandResult> {
+  private async send(
+    method: HttpMethod,
+    url: string,
+    body?: unknown,
+    params?: Record<string, string>,
+  ): Promise<CommandResult> {
     try {
-      return await firstValueFrom(this.http.request<CommandResult>(method, url, { body }));
+      return await firstValueFrom(this.http.request<CommandResult>(method, url, { body, params }));
     } catch (error) {
       // A 401 anywhere means there is no session (any more), whatever was shown.
       if (error instanceof HttpErrorResponse && error.status === 401) this.session.signedOut();

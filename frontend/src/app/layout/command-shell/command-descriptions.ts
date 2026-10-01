@@ -22,4 +22,5 @@ export const COMMAND_DESCRIPTIONS: Record<CommandName, string> = {
   'account': 'Your account',
   'login': 'Sign in',
   'logout': 'Sign out and leave your library',
+  'find': 'Find books and authors by keywords',
 };

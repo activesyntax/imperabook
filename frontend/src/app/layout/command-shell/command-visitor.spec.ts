@@ -86,6 +86,17 @@ describe('CommandVisitor', () => {
     });
   });
 
+  it('takes the rest of the line after find as its keywords', () => {
+    expect(parse('find dune  herbert')).toEqual({ command: 'find', params: { keywords: 'dune herbert' } });
+  });
+
+  it('never reads keywords after find as other commands or phrases', () => {
+    expect(parse('find by author with isbn')).toEqual({
+      command: 'find',
+      params: { keywords: 'by author with isbn' },
+    });
+  });
+
   it('does not recognize input that starts with no command', () => {
     expect(parse('xyz')).toBeNull();
   });
@@ -98,6 +109,8 @@ describe('checkCommand', () => {
   });
 
   it('rejects a value that is written but missing', () => {
+    expect(checkCommand('find').valid).toBe(false);
+    expect(checkCommand('find   ').valid).toBe(false);
     expect(checkCommand('add book').valid).toBe(false);
     expect(checkCommand('add book   ').valid).toBe(false);
     expect(checkCommand('add author').valid).toBe(false);

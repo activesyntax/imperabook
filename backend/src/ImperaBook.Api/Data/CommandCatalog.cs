@@ -126,6 +126,11 @@ public static class CommandCatalog
         new("update author", "Rename an author", []),
         new("remove author", "Delete an author", []),
         new("list authors", "List all authors", []),
+        new(
+            "find",
+            "Find books and authors by keywords",
+            [new("keywords", "Keywords", "", true)]
+        ),
         // FIXED
         new("dashboard", "Your library at a glance, and what needs attention", [])
         {

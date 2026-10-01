@@ -48,9 +48,11 @@ const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_accountCmd]: { label: 'account', insertText: 'account ' },
   [ImperaBookDSLParser.RULE_loginCmd]: { label: 'login', insertText: 'login ' },
   [ImperaBookDSLParser.RULE_logoutCmd]: { label: 'logout', insertText: 'logout ' },
+  [ImperaBookDSLParser.RULE_findCmd]: { label: 'find', insertText: 'find ' },
   // Values are typed as-is to the end of the line, so these two only name what
   // goes there; accepting them inserts nothing.
   [ImperaBookDSLParser.RULE_bookTitle]: { label: 'title', insertText: '' },
+  [ImperaBookDSLParser.RULE_keywords]: { label: 'keywords', insertText: '' },
   [ImperaBookDSLParser.RULE_authorName]: { label: 'first and last name', insertText: '' },
   [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author ' },
   [ImperaBookDSLParser.RULE_subtitleParam]: { label: 'subtitled', insertText: 'subtitled ' },
@@ -83,6 +85,7 @@ const COMMAND_RULES = [
   ImperaBookDSLParser.RULE_accountCmd,
   ImperaBookDSLParser.RULE_loginCmd,
   ImperaBookDSLParser.RULE_logoutCmd,
+  ImperaBookDSLParser.RULE_findCmd,
 ];
 
 /**
@@ -90,6 +93,7 @@ const COMMAND_RULES = [
  * params, and preferring it would hide the individual phrases inside it.
  */
 const PARAM_RULES = [
+  ImperaBookDSLParser.RULE_keywords,
   ImperaBookDSLParser.RULE_bookTitle,
   ImperaBookDSLParser.RULE_authorName,
   ImperaBookDSLParser.RULE_authorParam,

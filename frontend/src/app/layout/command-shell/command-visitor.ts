@@ -3,6 +3,7 @@ import { parseWithErrors } from './command-parser';
 import {
   AddAuthorCmdContext,
   AddBookCmdContext,
+  FindCmdContext,
   CommandContext,
   EntryContext,
   ValueContext,
@@ -24,7 +25,8 @@ export type CommandName =
   | 'help'
   | 'account'
   | 'login'
-  | 'logout';
+  | 'logout'
+  | 'find';
 
 export interface ParsedCommand {
   readonly command: CommandName;
@@ -76,6 +78,13 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
   override visitAddAuthorCmd = (ctx: AddAuthorCmdContext): ParsedCommand => ({
     command: 'add author',
     params: { name: this.text(ctx.authorName()?.VALUE()?.getText()) },
+  });
+
+  // The keywords as one string, blanks between them collapsed; splitting them up
+  // is the search's business.
+  override visitFindCmd = (ctx: FindCmdContext): ParsedCommand => ({
+    command: 'find',
+    params: { keywords: this.text(ctx.keywords()?.VALUE()?.getText()).split(/\s+/).join(' ') },
   });
 
   // Commands without parameters

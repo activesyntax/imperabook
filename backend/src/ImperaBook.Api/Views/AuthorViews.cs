@@ -84,7 +84,7 @@ public static class AuthorViews
             new ItemCollectionView([ToItem(existing)], ""),
         ];
 
-    private static ItemView ToItem(AuthorListItem a)
+    internal static ItemView ToItem(AuthorListItem a)
     {
         var properties = new List<ItemProperty>
         {

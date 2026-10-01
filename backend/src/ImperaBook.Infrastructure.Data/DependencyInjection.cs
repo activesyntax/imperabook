@@ -26,6 +26,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IDashboardQueries, DashboardQueries>();
         services.AddScoped<IBookQueries, BookQueries>();
         services.AddScoped<IAuthorQueries, AuthorQueries>();
+        services.AddScoped<ICatalogSearch, CatalogSearch>();
         services.AddScoped<ImageStore>();
         services.AddScoped<IImageStore>(sp => sp.GetRequiredService<ImageStore>());
         services.AddScoped<IArtwork, GeneratedArtwork>();

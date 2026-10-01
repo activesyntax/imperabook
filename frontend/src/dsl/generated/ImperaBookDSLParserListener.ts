@@ -12,6 +12,8 @@ import { AddAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { UpdateAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { ListAuthorsCmdContext } from "./ImperaBookDSLParser.js";
+import { FindCmdContext } from "./ImperaBookDSLParser.js";
+import { KeywordsContext } from "./ImperaBookDSLParser.js";
 import { DashboardCmdContext } from "./ImperaBookDSLParser.js";
 import { LibraryCmdContext } from "./ImperaBookDSLParser.js";
 import { SettingsCmdContext } from "./ImperaBookDSLParser.js";
@@ -137,6 +139,26 @@ export class ImperaBookDSLParserListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitListAuthorsCmd?: (ctx: ListAuthorsCmdContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.findCmd`.
+     * @param ctx the parse tree
+     */
+    enterFindCmd?: (ctx: FindCmdContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.findCmd`.
+     * @param ctx the parse tree
+     */
+    exitFindCmd?: (ctx: FindCmdContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.keywords`.
+     * @param ctx the parse tree
+     */
+    enterKeywords?: (ctx: KeywordsContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.keywords`.
+     * @param ctx the parse tree
+     */
+    exitKeywords?: (ctx: KeywordsContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.dashboardCmd`.
      * @param ctx the parse tree

@@ -22,6 +22,7 @@ command        : addBookCmd
                | accountCmd
                | loginCmd
                | logoutCmd
+               | findCmd
                ;
 
 // The title is the rest of the first line; the optional details, author
@@ -38,6 +39,10 @@ addAuthorCmd   : ADD AUTHOR authorName ;
 updateAuthorCmd: UPDATE AUTHOR ;
 removeAuthorCmd: REMOVE AUTHOR ;
 listAuthorsCmd : LIST AUTHORS ;
+
+// Keywords to look for in books and authors, the rest of the line: find dune herbert
+findCmd        : FIND keywords ;
+keywords       : VALUE ;
 
 dashboardCmd   : DASHBOARD ;
 libraryCmd     : LIBRARY ;

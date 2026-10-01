@@ -150,6 +150,7 @@ app.MapLibraryEndpoints();
 app.MapDashboardEndpoints();
 app.MapBookEndpoints();
 app.MapAuthorEndpoints();
+app.MapSearchEndpoints();
 app.MapHelpEndpoints();
 app.MapAboutEndpoints();
 app.MapSettingsEndpoints();
