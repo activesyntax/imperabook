@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 
 import { CommandSpec } from '@core/model';
@@ -13,20 +13,24 @@ import { UserBadge } from '@app/layout/user-badge/user-badge';
 })
 export class SideNav {
 
-  readonly name = input.required<string>();
-  readonly library = input.required<string>();
+  readonly signedIn = input.required<boolean>();
+  readonly name = input('');
+  readonly library = input('');
   readonly avatarUrl = input<string | null>(null);
 
+  // Signed out, only what works without a session is offered: signing in, and
+  // reading about the app and its commands.
+  protected readonly account = computed(() =>
+    ACCOUNT_COMMANDS.filter((c) => (this.signedIn() ? c.command !== 'login' : c.command === 'login')));
 
-  protected readonly userLoggedIn = signal(true);
-  protected readonly commandToFilter = computed(() => !this.userLoggedIn() ? 'logout' : 'login');
+  protected readonly application = computed(() =>
+    this.signedIn() ? APPLICATION_COMMANDS : APPLICATION_COMMANDS.filter((c) => SIGNED_OUT.has(c.command)));
 
-  protected readonly pinned = signal(PINNED_COMMANDS);
-  protected readonly account = computed(() => ACCOUNT_COMMANDS.filter((c) => c.command !== this.commandToFilter()));
-
-  protected readonly application = signal(APPLICATION_COMMANDS);
+  protected readonly pinned = computed(() => (this.signedIn() ? PINNED_COMMANDS : []));
 
 }
+
+const SIGNED_OUT: ReadonlySet<string> = new Set(['about', 'help']);
 
 // Mirrors the Fixed, Application and Account groups of the backend CommandCatalog, in catalog order.
 const PINNED_COMMANDS: readonly CommandSpec[] = [

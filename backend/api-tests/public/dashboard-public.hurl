@@ -8,3 +8,12 @@ header "Content-Type" contains "application/problem+json"
 jsonpath "$.code" == "not_authenticated"
 jsonpath "$.views[*].type" contains "image"
 jsonpath "$.views[*].type" contains "loginForm"
+
+# Who is signed in answers without a session: nobody.
+GET {{host}}/api/auth/session
+HTTP 200
+[Asserts]
+header "Content-Type" contains "application/json"
+jsonpath "$.signedIn" == false
+jsonpath "$.userName" == null
+jsonpath "$.libraryName" == null

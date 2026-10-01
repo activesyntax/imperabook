@@ -30,6 +30,11 @@ public static class AuthEndpoints
             .AllowAnonymous()
             .Produces<CommandResult>(StatusCodes.Status200OK);
 
+        app.MapGet("/api/auth/session", GetSession)
+            .WithName("GetSession")
+            .AllowAnonymous()
+            .Produces<SessionInfo>(StatusCodes.Status200OK);
+
         app.MapPost("/api/auth/logout", Logout)
             .WithName("Logout")
             .Produces<CommandResult>(StatusCodes.Status200OK)
@@ -71,6 +76,26 @@ public static class AuthEndpoints
         }
 
         return TypedResults.Ok(await LoggedIn(dashboard, user.FirstName, ct));
+    }
+
+    // Who is signed in, for the chrome around the workspace (the side nav's badge, which
+    // commands it offers). Public, so a signed-out visitor gets an answer rather than a 401,
+    // and plain data rather than a view: it shapes the frame, not the content.
+    private static async Task<Ok<SessionInfo>> GetSession(
+        ClaimsPrincipal principal,
+        IUserQueries users,
+        CancellationToken ct
+    )
+    {
+        if (principal.Identity?.IsAuthenticated != true)
+            return TypedResults.Ok(SessionInfo.SignedOut);
+
+        var owner = await users.GetOwner(ct);
+        var name = string.IsNullOrWhiteSpace(owner.FirstName)
+            ? owner.LastName
+            : $"{owner.FirstName} {owner.LastName}";
+
+        return TypedResults.Ok(new SessionInfo(true, name, owner.LibraryName));
     }
 
     private static ProblemHttpResult Rejected() =>
@@ -133,3 +158,8 @@ public static class AuthEndpoints
 }
 
 public sealed record LoginRequest(string Username, string Password);
+
+public sealed record SessionInfo(bool SignedIn, string? UserName, string? LibraryName)
+{
+    public static readonly SessionInfo SignedOut = new(false, null, null);
+}

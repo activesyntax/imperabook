@@ -1,10 +1,12 @@
 <nav class="nav" aria-label="Commands">
+  @if (signedIn()) {
   <app-user-badge
     class="nav__identity"
     [name]="name()"
     [library]="library()"
     [avatarUrl]="avatarUrl()"
   />
+  }
 
   @if (account().length > 0) {
   <ul class="nav__list" aria-label="Account commands">
@@ -27,6 +29,7 @@
   </ul>
   }
 
+  @if (signedIn()) {
   <p class="nav__title">Pinned commands</p>
 
   <ul class="nav__list">
@@ -38,6 +41,7 @@
     <li class="nav__empty">no pinned commands</li>
     }
   </ul>
+  }
 
   <span class="nav__spacer" aria-hidden="true"></span>
 </nav>

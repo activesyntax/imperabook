@@ -7,6 +7,13 @@ HTTP 200
 [Asserts]
 jsonpath "$.views[*].type" contains "loginForm"
 
+# Who is signed in is public too: nobody, yet.
+GET {{host}}/api/auth/session
+HTTP 200
+[Asserts]
+jsonpath "$.signedIn" == false
+jsonpath "$.userName" == null
+
 # Everything else is closed before sign-in, and the 401 carries the login screen so the
 # client can show it without a second request.
 GET {{host}}/api/dashboard
@@ -36,6 +43,14 @@ jsonpath "$.views" count > 0
 GET {{host}}/api/dashboard
 HTTP 200
 
+# The session now names the user and their library, for the side nav.
+GET {{host}}/api/auth/session
+HTTP 200
+[Asserts]
+jsonpath "$.signedIn" == true
+jsonpath "$.userName" isString
+jsonpath "$.libraryName" isString
+
 # The already-signed-in branch: same route, different answer.
 POST {{host}}/api/auth/login
 { "username": "john", "password": "{{password}}" }
@@ -52,3 +67,8 @@ jsonpath "$.views[*].type" contains "loginForm"
 
 GET {{host}}/api/dashboard
 HTTP 401
+
+GET {{host}}/api/auth/session
+HTTP 200
+[Asserts]
+jsonpath "$.signedIn" == false

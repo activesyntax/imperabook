@@ -7,6 +7,8 @@
 
   <span class="badge__text">
     <span class="badge__name">{{ name() }}</span>
+    @if (library()) {
     <span class="badge__library"><span class="badge__sigil"></span>{{ library() }}</span>
+    }
   </span>
 </div>

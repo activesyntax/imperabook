@@ -4,6 +4,6 @@
     <app-command-shell class="shell" />
   }
 
-  <app-side-nav class="side-nav" [name]="session.userName()" [library]="session.libraryName()"
-    [avatarUrl]="session.avatarUrl()" />
+  <app-side-nav class="side-nav" [signedIn]="session.signedIn()" [name]="session.user()?.name ?? ''"
+    [library]="session.user()?.library ?? ''" [avatarUrl]="session.avatarUrl()" />
 </section>

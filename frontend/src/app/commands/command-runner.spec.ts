@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import type { CommandResult } from '@workspace/views/view-node';
+import { Session } from '@app/state/session';
 import { CommandRunner, splitAuthorName } from './command-runner';
 
 describe('splitAuthorName', () => {
@@ -18,6 +19,9 @@ describe('splitAuthorName', () => {
     expect(splitAuthorName('   ')).toEqual({ lastName: '' });
   });
 });
+
+/** Lets the promise chain after a flushed response reach its next request. */
+const settle = () => new Promise(resolve => setTimeout(resolve));
 
 describe('CommandRunner', () => {
   let runner: CommandRunner;
@@ -119,5 +123,36 @@ describe('CommandRunner', () => {
 
     http.expectNone(() => true);
     expect(result.views[0]).toMatchObject({ type: 'message', kind: 'error' });
+  });
+
+  it('refreshes who is signed in after signing in', async () => {
+    const result = runner.login({ username: 'john', password: 'x' });
+
+    http.expectOne('/api/auth/login').flush({ views: [] });
+    await settle();
+    http.expectOne('/api/auth/session').flush({ signedIn: true, userName: 'John Smith', libraryName: 'Home' });
+    await result;
+
+    expect(TestBed.inject(Session).user()?.name).toBe('John Smith');
+  });
+
+  it('refreshes who is signed in after signing out', async () => {
+    const result = runner.run({ command: 'logout', params: {} });
+
+    http.expectOne('/api/auth/logout').flush({ views: [] });
+    await settle();
+    http.expectOne('/api/auth/session').flush({ signedIn: false, userName: null, libraryName: null });
+    await result;
+
+    expect(TestBed.inject(Session).signedIn()).toBe(false);
+  });
+
+  it('takes any 401 to mean the session is gone, without asking', async () => {
+    const result = runner.run({ command: 'list books', params: {} });
+
+    http.expectOne('/api/books').flush({ code: 'not_authenticated' }, { status: 401, statusText: 'Unauthorized' });
+    await result;
+
+    expect(TestBed.inject(Session).signedIn()).toBe(false);
   });
 });

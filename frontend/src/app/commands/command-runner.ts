@@ -1,10 +1,11 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import type { CommandResult } from '@workspace/views/view-node';
 import { CommandName, ParsedCommand } from '@app/layout/command-shell/command-visitor';
 import { resultOfError, resultOfUnsupported } from '@app/commands/command-error';
+import { Session } from '@app/state/session';
 
 type HttpMethod = 'GET' | 'POST' | 'DELETE';
 
@@ -62,6 +63,7 @@ const ENDPOINTS: Partial<Record<CommandName, CommandEndpoint>> = {
 @Injectable({ providedIn: 'root' })
 export class CommandRunner {
   private readonly http = inject(HttpClient);
+  private readonly session = inject(Session);
 
   async run(cmd: ParsedCommand): Promise<CommandResult> {
     const endpoint = ENDPOINTS[cmd.command];
@@ -69,7 +71,11 @@ export class CommandRunner {
       return resultOfUnsupported(cmd.command);
     }
 
-    return this.send(endpoint.method, endpoint.url, endpoint.body?.(cmd.params));
+    const result = await this.send(endpoint.method, endpoint.url, endpoint.body?.(cmd.params));
+
+    // Signing out changes who the chrome shows; ask rather than assume it worked.
+    if (cmd.command === 'logout') await this.session.refresh();
+    return result;
   }
 
   /**
@@ -95,14 +101,18 @@ export class CommandRunner {
   }
 
   /** Not a parsed command: credentials never pass through the command bar. */
-  login(credentials: Credentials): Promise<CommandResult> {
-    return this.send('POST', '/api/auth/login', credentials);
+  async login(credentials: Credentials): Promise<CommandResult> {
+    const result = await this.send('POST', '/api/auth/login', credentials);
+    await this.session.refresh();
+    return result;
   }
 
   private async send(method: HttpMethod, url: string, body?: unknown): Promise<CommandResult> {
     try {
       return await firstValueFrom(this.http.request<CommandResult>(method, url, { body }));
     } catch (error) {
+      // A 401 anywhere means there is no session (any more), whatever was shown.
+      if (error instanceof HttpErrorResponse && error.status === 401) this.session.signedOut();
       return resultOfError(error);
     }
   }
