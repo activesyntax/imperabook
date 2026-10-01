@@ -222,6 +222,15 @@ export class CommandShell {
   constructor() {
     effect(() => this.focus(this.bar()?.nativeElement));
 
+    // Past the suggestion row's height cap, keep the highlighted chip in view as
+    // Ctrl+` moves through them.
+    const host = inject<ElementRef<HTMLElement>>(ElementRef);
+    afterRenderEffect(() => {
+      this.selectedIndex();
+      this.suggestions();
+      host.nativeElement.querySelector('.chip.active')?.scrollIntoView?.({ block: 'nearest' });
+    });
+
     // Grow with the lines typed (up to the CSS max-height, then scroll).
     afterRenderEffect(() => {
       this.query();

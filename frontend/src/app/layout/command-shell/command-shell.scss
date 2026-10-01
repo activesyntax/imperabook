@@ -18,17 +18,19 @@
   padding: 26px var(--ib-gutter) 22px;
 }
 
+// Wraps onto more lines as the suggestions grow, like the command bar grows
+// with its text, up to a cap; past it, the rows scroll and the highlighted chip
+// is kept in view (see the component).
 .suggestions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   padding: 0 0 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  max-height: 30vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ib-border-faint) transparent;
 }
 
 // The complete command, named where the suggestions were. Shaped like a chip

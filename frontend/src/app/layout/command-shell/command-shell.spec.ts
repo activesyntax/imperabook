@@ -436,6 +436,23 @@ describe('CommandShell', () => {
     });
   });
 
+  it('keeps the highlighted suggestion in view as the highlight moves', () => {
+    const scroll = vi.fn();
+    const original = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scroll;
+    try {
+      const input = type('log');
+      scroll.mockClear();
+
+      press(input, '`', { ctrlKey: true });
+
+      expect(scroll).toHaveBeenCalledWith({ block: 'nearest' });
+      expect((scroll.mock.contexts.at(-1) as HTMLElement | undefined)?.textContent?.trim()).toBe('logout');
+    } finally {
+      HTMLElement.prototype.scrollIntoView = original;
+    }
+  });
+
   it('moves within the line with bare Home/End instead of scrolling the workspace', () => {
     const reached = vi.fn();
     document.addEventListener('keydown', reached);
