@@ -14,7 +14,7 @@ POST {{host}}/api/books
 Content-Type: application/json
 {
   "title": "Zeppelin{{newUuid}} Voyage",
-  "summary": "Dragons flying over the mountains.",
+  "summary": "Dragons flying over the mountains. A régi ház titkai.",
   "author": "Searchy Writer{{newUuid}}"
 }
 HTTP 201
@@ -57,6 +57,15 @@ jsonpath "$.views[1].items[0].open" == "{{book_url}}"
 GET {{host}}/api/search
 [Query]
 q: {{token}} flies
+HTTP 200
+[Asserts]
+jsonpath "$.views[1].items[0].open" == "{{book_url}}"
+
+
+# --- Accents ignored: "haz" finds "ház" ------------------------------------------------
+GET {{host}}/api/search
+[Query]
+q: {{token}} haz regi
 HTTP 200
 [Asserts]
 jsonpath "$.views[1].items[0].open" == "{{book_url}}"

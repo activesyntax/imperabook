@@ -122,7 +122,7 @@ public sealed class AddBookCommandHandler(
         // Contains-matching alone could never single out "John Smith" next to "John Smithson",
         // so a whole-name match wins when there is exactly one.
         var exact = matches
-            .Where(a => string.Equals(FullName(a), term, StringComparison.OrdinalIgnoreCase))
+            .Where(a => NameCase.SameName(FullName(a), term))
             .ToList();
 
         return (matches.Length, exact.Count) switch

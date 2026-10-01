@@ -54,7 +54,7 @@ public sealed class AddAuthorCommandHandler(
     }
 
     /// <summary>
-    /// The same full name — ignoring case and extra blanks — is the same author: adding it again
+    /// The same full name — ignoring case, accents and extra blanks — is the same author: adding it again
     /// would split their books across two entries. Namesakes are rare enough in a personal
     /// catalog that refusing is the better default.
     /// </summary>
@@ -65,7 +65,7 @@ public sealed class AddAuthorCommandHandler(
     {
         var name = FullName(author.FirstName.Map(f => f.Value).GetValueOrDefault(), author.LastName.Value);
         var existing = (await catalog.Search(name, ct)).FirstOrDefault(a =>
-            string.Equals(FullName(a.FirstName, a.LastName), name, StringComparison.OrdinalIgnoreCase)
+            NameCase.SameName(FullName(a.FirstName, a.LastName), name)
         );
 
         return existing is null

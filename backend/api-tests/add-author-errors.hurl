@@ -16,6 +16,7 @@ HTTP 201
 [Captures]
 existing_url: header "Location"
 family: jsonpath "$.views[0].text" regex "Added author Ann (Dup[0-9a-f-]{36})\\."
+suffix: jsonpath "$.views[0].text" regex "Added author Ann Dup([0-9a-f-]{36})\\."
 
 
 # --- Same name, different case and spacing: refused ---------------------------
@@ -39,6 +40,16 @@ q: {{family}}
 HTTP 200
 [Asserts]
 jsonpath "$" count == 1
+
+
+# --- Same name with accents: still the same author ----------------------------
+POST {{host}}/api/authors
+Content-Type: application/json
+{ "firstName": "Ánn", "lastName": "Dúp{{suffix}}" }
+HTTP 409
+[Asserts]
+jsonpath "$.code" == "author_exists"
+jsonpath "$.views[1].items[0].open" == "{{existing_url}}"
 
 
 # --- A different full name is a different author ------------------------------

@@ -48,3 +48,20 @@ GET {{host}}/api/authors/search?q=%20%20
 HTTP 200
 [Asserts]
 jsonpath "$" count == 0
+
+
+# --- Accents ignored: typed without them, found with them -----------------------------
+POST {{host}}/api/authors
+Content-Type: application/json
+{ "firstName": "Éva", "lastName": "Bárány{{newUuid}}" }
+HTTP 201
+[Captures]
+accented_suffix: jsonpath "$.views[0].text" regex "Added author Éva Bárány([0-9a-f-]{36})\\."
+
+GET {{host}}/api/authors/search
+[Query]
+q: eva barany{{accented_suffix}}
+HTTP 200
+[Asserts]
+jsonpath "$" count == 1
+jsonpath "$[0].name" == "Éva Bárány{{accented_suffix}}"

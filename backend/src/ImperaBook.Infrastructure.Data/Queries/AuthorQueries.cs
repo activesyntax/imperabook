@@ -59,9 +59,10 @@ public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : I
             .Authors.AsNoTracking()
             .Where(a => a.OwnerId == user.Id)
             .Where(a =>
+                // Accents ignored, as in find: "by author barany" resolves to Bárány.
                 EF.Functions.ILike(
-                    a.FirstName == null ? a.LastName : a.FirstName + " " + a.LastName,
-                    pattern,
+                    EF.Functions.Unaccent(a.FirstName == null ? a.LastName : a.FirstName + " " + a.LastName),
+                    EF.Functions.Unaccent(pattern),
                     LikePattern.Escape
                 )
             )

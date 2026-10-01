@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text;
+
 namespace ImperaBook.Domain;
 
 /// <summary>How a person's name is written once it is stored.</summary>
@@ -52,6 +55,28 @@ public static class NameCase
             i = end;
         }
         return new string(chars);
+    }
+
+    /// <summary>
+    /// Whether two names are the same name, as a person would read them: ignoring case,
+    /// accents ("Bárány" and "barany") and how many blanks sit between words. Matches the
+    /// database's unaccented search, so a name the search finds can also be recognized here.
+    /// </summary>
+    public static bool SameName(string a, string b) =>
+        string.Equals(Fold(a), Fold(b), StringComparison.Ordinal);
+
+    // Lower case, single blanks, and every accent mark dropped: "á" decomposes into "a" and a
+    // combining mark, and the mark is left out.
+    private static string Fold(string name)
+    {
+        var words = name.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        var decomposed = string.Join(' ', words).ToLowerInvariant().Normalize(NormalizationForm.FormD);
+
+        var folded = new StringBuilder(decomposed.Length);
+        foreach (var c in decomposed)
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                folded.Append(c);
+        return folded.ToString();
     }
 
     // The first letter, and the first after each hyphen.

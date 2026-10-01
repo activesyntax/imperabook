@@ -40,6 +40,21 @@ public class NameCaseTests
     public void Only_whole_words_are_particles() =>
         Assert.Equal("Vander Devon", NameCase.Capitalize("vander devon"));
 
+    [Theory]
+    [InlineData("Bárány Éva", "barany eva")]
+    [InlineData("Ödön von Horváth", "odon VON horvath")]
+    [InlineData("Frank  Herbert", " frank herbert ")]
+    [InlineData("Gárdonyi Géza", "Gardonyi Geza")]
+    public void Same_name_ignores_case_accents_and_blanks(string stored, string typed) =>
+        Assert.True(NameCase.SameName(stored, typed));
+
+    [Theory]
+    [InlineData("Bárány Éva", "Bárányi Éva")]
+    [InlineData("Frank Herbert", "Brian Herbert")]
+    [InlineData("Herbert", "Frank Herbert")]
+    public void Different_names_stay_different(string stored, string typed) =>
+        Assert.False(NameCase.SameName(stored, typed));
+
     [Fact]
     public void Nothing_typed_stays_nothing()
     {

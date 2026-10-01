@@ -30,7 +30,8 @@ public interface IAuthorQueries
     Task<Maybe<AuthorDetail>> Get(Guid id, CancellationToken ct);
 
     /// <summary>
-    /// The current user's authors whose full name contains <paramref name="term"/>, ignoring case.
+    /// The current user's authors whose full name contains <paramref name="term"/>, ignoring case
+    /// and accents ("barany" finds Bárány).
     /// </summary>
     Task<AuthorListItem[]> Search(string term, CancellationToken ct);
 }

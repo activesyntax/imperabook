@@ -24,6 +24,9 @@ public class ImperaBookDbContext(DbContextOptions<ImperaBookDbContext> options)
     {
         base.OnModelCreating(modelBuilder);
 
+        // Accent-insensitive search: "barany" finds Bárány (see CatalogSearch, AuthorQueries).
+        modelBuilder.HasPostgresExtension("unaccent");
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ImperaBookDbContext).Assembly);
     }
 }

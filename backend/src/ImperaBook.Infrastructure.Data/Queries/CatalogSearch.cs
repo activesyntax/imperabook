@@ -6,7 +6,8 @@ using Microsoft.EntityFrameworkCore;
 namespace ImperaBook.Infrastructure.Data.Queries;
 
 /// <summary>
-/// Plain ILIKE per keyword, with Postgres's English stemming beside it. Substring matching
+/// Plain ILIKE per keyword, accents ignored on both sides ("barany" finds Bárány), with
+/// Postgres's English stemming beside it. Substring matching
 /// finds part of a word ("dun" → Dune), which stemming alone would not; stemming finds another
 /// form of a word ("flies" → flying), which substrings would not. Names are only matched as
 /// substrings: stemming a name changes nothing useful.
@@ -53,15 +54,23 @@ public sealed class CatalogSearch(ImperaBookDbContext db, ICurrentUser user) : I
         var pattern = LikePattern.Containing(keyword);
 
         return b =>
-            EF.Functions.ILike(b.Title, pattern, LikePattern.Escape)
-            || (b.Subtitle != null && EF.Functions.ILike(b.Subtitle, pattern, LikePattern.Escape))
-            || (b.Summary != null && EF.Functions.ILike(b.Summary, pattern, LikePattern.Escape))
+            EF.Functions.ILike(EF.Functions.Unaccent(b.Title), EF.Functions.Unaccent(pattern), LikePattern.Escape)
+            || (
+                b.Subtitle != null
+                && EF.Functions.ILike(EF.Functions.Unaccent(b.Subtitle), EF.Functions.Unaccent(pattern), LikePattern.Escape)
+            )
+            || (
+                b.Summary != null
+                && EF.Functions.ILike(EF.Functions.Unaccent(b.Summary), EF.Functions.Unaccent(pattern), LikePattern.Escape)
+            )
             || b.Authors.Any(ba =>
                 EF.Functions.ILike(
-                    ba.Author.FirstName == null
-                        ? ba.Author.LastName
-                        : ba.Author.FirstName + " " + ba.Author.LastName,
-                    pattern,
+                    EF.Functions.Unaccent(
+                        ba.Author.FirstName == null
+                            ? ba.Author.LastName
+                            : ba.Author.FirstName + " " + ba.Author.LastName
+                    ),
+                    EF.Functions.Unaccent(pattern),
                     LikePattern.Escape
                 )
             )
@@ -76,8 +85,8 @@ public sealed class CatalogSearch(ImperaBookDbContext db, ICurrentUser user) : I
 
         return a =>
             EF.Functions.ILike(
-                a.FirstName == null ? a.LastName : a.FirstName + " " + a.LastName,
-                pattern,
+                EF.Functions.Unaccent(a.FirstName == null ? a.LastName : a.FirstName + " " + a.LastName),
+                EF.Functions.Unaccent(pattern),
                 LikePattern.Escape
             );
     }
