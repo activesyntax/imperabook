@@ -9,11 +9,12 @@ POST {{host}}/api/auth/login
 HTTP 200
 
 
+# Typed in lower case; stored, and named in the reply, capitalized.
 POST {{host}}/api/authors
 Content-Type: application/json
 {
-  "firstName": "Detail",
-  "lastName": "Author{{newUuid}}",
+  "firstName": "detail",
+  "lastName": "author{{newUuid}}",
   "birthYear": "1950",
   "vitality": "living"
 }

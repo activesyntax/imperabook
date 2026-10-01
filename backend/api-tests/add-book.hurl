@@ -44,11 +44,11 @@ POST {{host}}/api/books
 Content-Type: application/json
 {
   "title": "Clean Architecture",
-  "author": "Robert {{newUuid}}"
+  "author": "Robert Smith{{newUuid}}"
 }
 HTTP 201
 [Captures]
-new_author: jsonpath "$.views[0].text" regex "by (Robert [0-9a-f-]{36}) \\(new author\\)"
+new_author: jsonpath "$.views[0].text" regex "by (Robert Smith[0-9a-f-]{36}) \\(new author\\)"
 [Asserts]
 jsonpath "$.views[0].text" contains "(new author)"
 

@@ -107,16 +107,13 @@ public static class AuthorEndpoints
         var result = await handler.Handle(command, ct);
 
         return result.IsSuccess
-            ? TypedResults.Created(DetailPath(result.Value), Added(command))
+            ? TypedResults.Created(DetailPath(result.Value.Id), Added(result.Value))
             : result.Error.ToProblem();
     }
 
-    private static CommandResult Added(AddAuthorCommand command)
-    {
-        var name = $"{command.FirstName?.Trim()} {command.LastName.Trim()}".Trim();
-
-        return new CommandResult([new MessageView($"Added author {name}.", MessageKind.Success)]);
-    }
+    // Names the author as stored — capitalized — not as typed.
+    private static CommandResult Added(AuthorAdded author) =>
+        new([new MessageView($"Added author {author.Name}.", MessageKind.Success)]);
 }
 
 public sealed record AuthorMatch(Guid Id, string Name);

@@ -152,7 +152,8 @@ public sealed class AddBookCommandHandler(
 
         var created = await addAuthor.Handle(command, ct);
 
-        return created.Map(id => (AuthorResolution)new AuthorResolution.Created(id, name));
+        // The stored name, capitalized, not the search text it was made from.
+        return created.Map(added => (AuthorResolution)new AuthorResolution.Created(added.Id, added.Name));
     }
 
     private static Maybe<Authors> AuthorsOf(AuthorResolution author) =>

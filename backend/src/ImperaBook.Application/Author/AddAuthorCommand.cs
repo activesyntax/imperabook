@@ -16,6 +16,9 @@ public sealed record AddAuthorCommand
     public string? PortraitHash { get; init; }
 }
 
+/// <summary>The author as stored: their id, and their name as it was saved.</summary>
+public sealed record AuthorAdded(Guid Id, string Name);
+
 public sealed class AddAuthorCommandHandler(
     IAuthorCommands authors,
     IAuthorQueries catalog,
@@ -24,7 +27,7 @@ public sealed class AddAuthorCommandHandler(
     IArtwork artwork
 )
 {
-    public async Task<Result<Guid, ApplicationError>> Handle(
+    public async Task<Result<AuthorAdded, ApplicationError>> Handle(
         AddAuthorCommand command,
         CancellationToken ct
     )
@@ -47,7 +50,7 @@ public sealed class AddAuthorCommandHandler(
             Author.Create(a.Id, a.Owner, a.FirstName, a.LastName, a.LifeRange, portrait.Value),
             ct
         );
-        return a.Id.Value;
+        return new AuthorAdded(a.Id.Value, FullName(a.FirstName.Map(f => f.Value).GetValueOrDefault(), a.LastName.Value));
     }
 
     /// <summary>
@@ -96,8 +99,13 @@ public sealed class AddAuthorCommandHandler(
         Id<User> owner
     )
     {
-        var lastName = PersonName.Create(command.LastName);
-        var firstName = ParseFirstName(command.FirstName);
+        // Stored capitalized however it was typed ("le guin" → "Le Guin"). The last name only
+        // begins the whole name when there is no first name: "van Beethoven" after "Ludwig",
+        // but "Van Gogh" alone.
+        var firstName = ParseFirstName(NameCase.Capitalize(command.FirstName));
+        var lastName = PersonName.Create(
+            NameCase.Capitalize(command.LastName, startsName: string.IsNullOrWhiteSpace(command.FirstName))
+        );
         var birth = ParseYear(command.BirthYear);
         var death = ParseYear(command.DeathYear);
         var portrait = ParsePortrait(command.PortraitHash);
