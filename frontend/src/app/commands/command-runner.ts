@@ -6,7 +6,7 @@ import type { CommandResult } from '@workspace/views/view-node';
 import { CommandName, ParsedCommand } from '@app/layout/command-shell/command-visitor';
 import { resultOfError, resultOfUnsupported } from '@app/commands/command-error';
 
-type HttpMethod = 'GET' | 'POST';
+type HttpMethod = 'GET' | 'POST' | 'DELETE';
 
 type CommandParams = ParsedCommand['params'];
 
@@ -78,11 +78,20 @@ export class CommandRunner {
    * send the session cookie anywhere else.
    */
   open(url: string): Promise<CommandResult> {
+    return this.follow('GET', url);
+  }
+
+  /** Deletes what a link the server put on a view points at — the same guard as open. */
+  remove(url: string): Promise<CommandResult> {
+    return this.follow('DELETE', url);
+  }
+
+  private follow(method: HttpMethod, url: string): Promise<CommandResult> {
     if (!url.startsWith('/api/')) {
-      return Promise.resolve(resultOfError(new Error(`Refusing to open ${url}`)));
+      return Promise.resolve(resultOfError(new Error(`Refusing to follow ${url}`)));
     }
 
-    return this.send('GET', url);
+    return this.send(method, url);
   }
 
   /** Not a parsed command: credentials never pass through the command bar. */

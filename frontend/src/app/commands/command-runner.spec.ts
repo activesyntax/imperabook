@@ -102,4 +102,22 @@ describe('CommandRunner', () => {
     http.expectNone(() => true);
     expect(result.views[0]).toMatchObject({ type: 'message', kind: 'error' });
   });
+
+  it('removes by DELETE on the link the server gave, and shows the answer', async () => {
+    const removed: CommandResult = { views: [] };
+
+    const result = runner.remove('/api/books/42');
+
+    const req = http.expectOne('/api/books/42');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(removed);
+    expect(await result).toEqual(removed);
+  });
+
+  it('refuses to remove through a link outside the API', async () => {
+    const result = await runner.remove('https://example.com/x');
+
+    http.expectNone(() => true);
+    expect(result.views[0]).toMatchObject({ type: 'message', kind: 'error' });
+  });
 });

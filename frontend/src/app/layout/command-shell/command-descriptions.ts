@@ -8,7 +8,7 @@ import type { CommandName } from './command-visitor';
 export const COMMAND_DESCRIPTIONS: Record<CommandName, string> = {
   'add book': 'Add a book to your library',
   'update book': 'Change the details of a book',
-  'remove book': 'Remove a book from your library',
+  'remove book': 'Remove the selected book from your library',
   'list books': 'All the books in your library',
   'add author': 'Add an author to your catalog',
   'update author': 'Change the details of an author',

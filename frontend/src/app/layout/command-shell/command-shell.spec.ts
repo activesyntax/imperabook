@@ -5,8 +5,18 @@ import { AuthorLookup } from '@app/commands/author-lookup';
 import { CommandRunner } from '@app/commands/command-runner';
 import { ItemOpener } from '@app/commands/item-opener';
 import { WorkspaceStore } from '@app/state/workspace-store';
-import type { CommandResult } from '@workspace/views/view-node';
+import type { CommandResult, ItemView } from '@workspace/views/view-node';
 import { CommandShell } from './command-shell';
+
+const REMOVED_RESULT: CommandResult = {
+  views: [{ type: 'message', text: 'Removed "Dune".', kind: 'success' }],
+};
+
+const DUNE: ItemView = {
+  ref: 'b1',
+  open: '/api/books/b1',
+  properties: [{ name: 'Title', value: 'Dune', role: 'primary' }],
+};
 
 const DASHBOARD_RESULT: CommandResult = {
   views: [{ type: 'message', text: 'dashboard', kind: 'info' }],
@@ -15,23 +25,28 @@ const DASHBOARD_RESULT: CommandResult = {
 describe('CommandShell', () => {
   let component: CommandShell;
   let fixture: ComponentFixture<CommandShell>;
-  let runner: { run: ReturnType<typeof vi.fn> };
+  let runner: { run: ReturnType<typeof vi.fn>; remove: ReturnType<typeof vi.fn> };
   let authors: { search: ReturnType<typeof vi.fn> };
   let opener: {
     openSelected: ReturnType<typeof vi.fn>;
     back: ReturnType<typeof vi.fn>;
     moveInGrid: ReturnType<typeof vi.fn>;
     selectedElementId: ReturnType<typeof signal<string | undefined>>;
+    selectedItem: ReturnType<typeof signal<ItemView | undefined>>;
   };
 
   beforeEach(async () => {
-    runner = { run: vi.fn(() => Promise.resolve(DASHBOARD_RESULT)) };
+    runner = {
+      run: vi.fn(() => Promise.resolve(DASHBOARD_RESULT)),
+      remove: vi.fn(() => Promise.resolve(REMOVED_RESULT)),
+    };
     authors = { search: vi.fn(() => Promise.resolve([])) };
     opener = {
       openSelected: vi.fn(() => true),
       back: vi.fn(() => true),
       moveInGrid: vi.fn(),
       selectedElementId: signal<string | undefined>(undefined),
+      selectedItem: signal<ItemView | undefined>(undefined),
     };
 
     await TestBed.configureTestingModule({
@@ -317,6 +332,107 @@ describe('CommandShell', () => {
       await typeAndSettle('add book Dune\nby author ');
 
       expect(authors.search).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('remove book', () => {
+    async function run(text: string): Promise<HTMLTextAreaElement> {
+      const input = type(text);
+      press(input, 'Enter');
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return input;
+    }
+
+    it('asks before removing the selected book, and sends nothing yet', async () => {
+      opener.selectedItem.set(DUNE);
+
+      const input = await run('remove book');
+
+      expect(input.value).toBe('');
+      expect(statusMessage()).toBe('Remove "Dune"? Type yes or no.');
+      expect(runner.run).not.toHaveBeenCalled();
+      expect(runner.remove).not.toHaveBeenCalled();
+    });
+
+    it('removes it on yes, through the link the server gave the item', async () => {
+      opener.selectedItem.set(DUNE);
+      await run('remove book');
+
+      await run('yes');
+
+      expect(runner.remove).toHaveBeenCalledWith('/api/books/b1');
+      expect(TestBed.inject(WorkspaceStore).views()).toEqual(REMOVED_RESULT.views);
+      expect(statusMessage()).toBe('Type a command like list books');
+    });
+
+    it('takes y as yes', async () => {
+      opener.selectedItem.set(DUNE);
+      await run('remove book');
+
+      await run('Y');
+
+      expect(runner.remove).toHaveBeenCalled();
+    });
+
+    it('removes nothing on no, and says so', async () => {
+      opener.selectedItem.set(DUNE);
+      await run('remove book');
+
+      await run('no');
+
+      expect(runner.remove).not.toHaveBeenCalled();
+      expect(statusMessage()).toBe('Nothing was removed.');
+    });
+
+    it('cancels with Escape on an empty bar', async () => {
+      opener.selectedItem.set(DUNE);
+      const input = await run('remove book');
+
+      press(input, 'Escape');
+
+      expect(opener.back).not.toHaveBeenCalled();
+      expect(statusMessage()).toBe('Nothing was removed.');
+      await run('yes');
+      expect(runner.remove).not.toHaveBeenCalled();
+    });
+
+    it('keeps asking when the answer is neither yes nor no', async () => {
+      opener.selectedItem.set(DUNE);
+      await run('remove book');
+
+      const input = await run('maybe');
+
+      expect(runner.remove).not.toHaveBeenCalled();
+      expect(input.value).toBe('maybe');
+      expect(statusMessage()).toBe('Type yes or no. Remove "Dune"?');
+    });
+
+    it('offers yes and no as the only suggestions while asking', async () => {
+      opener.selectedItem.set(DUNE);
+      await run('remove book');
+
+      type('');
+      expect(chips()).toEqual(['yes', 'no']);
+
+      type('y');
+      expect(chips()).toEqual(['yes']);
+      expect(fixture.nativeElement.querySelector('.desc .validity')?.classList).toContain('valid');
+    });
+
+    it('says to select a book when none is selected', async () => {
+      await run('remove book');
+
+      expect(statusMessage()).toBe('Select a book in the list first, then run remove book.');
+      expect(runner.remove).not.toHaveBeenCalled();
+    });
+
+    it('does not remove an author selected in a list', async () => {
+      opener.selectedItem.set({ ref: 'a1', open: '/api/authors/a1', properties: [] });
+
+      await run('remove book');
+
+      expect(statusMessage()).toContain('Select a book');
     });
   });
 

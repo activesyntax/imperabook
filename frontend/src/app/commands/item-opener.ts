@@ -27,6 +27,9 @@ export class ItemOpener {
     this.store.views().flatMap(view =>
       view.type === 'itemCollection' ? view.items.filter(item => item.open !== undefined) : []));
 
+  /** The highlighted item itself, while one is highlighted. */
+  readonly selectedItem = computed(() => this.openable().find(item => item.ref === this.selectedRef()));
+
   readonly selectedRef = linkedSignal<readonly ItemView[], string | undefined>({
     source: this.openable,
     computation: items => items[0]?.ref,

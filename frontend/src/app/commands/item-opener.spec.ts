@@ -224,4 +224,11 @@ describe('ItemOpener', () => {
     opener.back();
     expect(store.views()).toEqual(bookDetail.views);
   });
+
+  it('exposes the selected item itself', () => {
+    show(item('a', '/api/books/a'), item('b', '/api/books/b'));
+    opener.selectedRef.set('b');
+
+    expect(opener.selectedItem()?.ref).toBe('b');
+  });
 });

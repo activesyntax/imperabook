@@ -16,6 +16,7 @@ import {
 import { AuthorLookup } from '@app/commands/author-lookup';
 import { CommandRunner } from '@app/commands/command-runner';
 import { GridDirection, ItemOpener } from '@app/commands/item-opener';
+import type { ItemView } from '@workspace/views/view-node';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { AppliedCompletion, applyCompletion, SuggestionService } from './suggestion-service';
 import { authorValueAt, canContinueOnNewLine, CompletionItem } from './autocomplete';
@@ -35,6 +36,31 @@ const COMMAND_FIELD: FieldAttrs = {
 };
 
 type EnterAction = 'open' | 'run' | 'newline';
+
+/** A removal waiting for the user's yes or no. */
+interface PendingRemoval {
+  readonly url: string;
+  readonly title: string;
+}
+
+/** A short word in the status bar after an action; any typing clears it. */
+interface Notice {
+  readonly text: string;
+  readonly kind: 'error' | 'info';
+}
+
+const YES = ['yes', 'y'];
+const NO = ['no', 'n'];
+const ANSWERS = ['yes', 'no'];
+
+/** Only list items that open as a book can be removed as one. */
+function isBook(item: ItemView): boolean {
+  return item.open?.startsWith('/api/books/') ?? false;
+}
+
+function titleOf(item: ItemView): string {
+  return item.properties.find(p => p.role === 'primary')?.value ?? 'this book';
+}
 
 const ENTER_HINT: Record<EnterAction, string> = {
   open: 'open the selection',
@@ -89,8 +115,9 @@ export class CommandShell {
 
   private readonly check = computed(() => checkCommand(this.query()));
 
-  /** Whether the text is a command that could be sent as it stands. */
-  protected readonly valid = computed(() => this.check().valid);
+  /** Whether the text could be sent as it stands: a command, or while a question is open, an answer. */
+  protected readonly valid = computed(() =>
+    this.pendingRemoval() !== undefined ? this.isAnswer() : this.check().valid);
 
   /** The command the text is, once it is a valid one. */
   protected readonly currentCommand = computed(() => {
@@ -103,6 +130,14 @@ export class CommandShell {
     const { command, valid } = this.check();
     return valid && command !== null ? COMMAND_DESCRIPTIONS[command.command] : undefined;
   });
+
+  /** "remove book" asked; the next Enter answers it. */
+  protected readonly pendingRemoval = signal<PendingRemoval | undefined>(undefined);
+
+  protected readonly notice = signal<Notice | undefined>(undefined);
+
+  private readonly answer = computed(() => this.query().trim().toLowerCase());
+  protected readonly isAnswer = computed(() => [...YES, ...NO].includes(this.answer()));
 
   /** Set when an invalid command was sent; any edit clears it. */
   protected readonly rejected = linkedSignal<string, boolean>({
@@ -140,10 +175,24 @@ export class CommandShell {
   });
 
   // Catalog names first: while one is being typed, they are what Tab should take.
-  protected readonly suggestions = computed<SuggestionList>(() => suggestionList([
-    ...this.authorChips(),
-    ...this.suggestionService.suggestionsFor(this.query(), this.cursorPosition()),
-  ]));
+  protected readonly suggestions = computed<SuggestionList>(() => suggestionList(
+    this.pendingRemoval() !== undefined
+      ? this.answerChips()
+      : [
+          ...this.authorChips(),
+          ...this.suggestionService.suggestionsFor(this.query(), this.cursorPosition()),
+        ]));
+
+  // While a question is open the only things to type are its answers.
+  private readonly answerChips = computed<CompletionItem[]>(() => ANSWERS
+    .filter(answer => answer.startsWith(this.answer()) && answer !== this.answer())
+    .map(answer => ({
+      label: answer,
+      insertText: answer,
+      replaceStart: 0,
+      replaceEnd: this.query().length,
+      caret: answer.length,
+    })));
 
   // Ctrl+` / Ctrl+~ move the highlight; Tab accepts it. Any change to the
   // suggestions (typing, moving the caret, accepting) starts again at the first.
@@ -194,6 +243,7 @@ export class CommandShell {
   }
 
   protected onInput(event: Event): void {
+    this.notice.set(undefined);
     const input = event.target as HTMLTextAreaElement;
     this.query.set(input.value);
     this.cursorPosition.set(input.selectionStart ?? input.value.length);
@@ -266,6 +316,10 @@ export class CommandShell {
           this.query.set('');
           return;
         }
+        if (this.pendingRemoval() !== undefined) {
+          this.cancelRemoval();
+          return;
+        }
         this.opener.back();
         break;
     }
@@ -281,6 +335,7 @@ export class CommandShell {
    *   ("dashboard", "add author Homer", or unrecognized text).
    */
   private enterAction(event: KeyboardEvent): EnterAction {
+    if (this.pendingRemoval() !== undefined) return 'run';
     if (this.query().trim() === '') return 'open';
     if (event.shiftKey) return 'newline';
     if (event.ctrlKey || event.metaKey) return 'run';
@@ -309,6 +364,41 @@ export class CommandShell {
     if (!pasted) return;
     event.preventDefault();
     this.insertAtCaret(pasted);
+  }
+
+  // --- Remove book: confirm first -------------------------------------------------
+
+  /** Asks about the highlighted book; says what to do when there is none. */
+  private askToRemove(): void {
+    const item = this.opener.selectedItem();
+    this.query.set('');
+
+    if (item === undefined || !isBook(item) || item.open === undefined) {
+      this.notice.set({ kind: 'error', text: 'Select a book in the list first, then run remove book.' });
+      return;
+    }
+    this.pendingRemoval.set({ url: item.open, title: titleOf(item) });
+  }
+
+  private async answerRemoval(pending: PendingRemoval): Promise<void> {
+    const answer = this.answer();
+
+    if (YES.includes(answer)) {
+      this.pendingRemoval.set(undefined);
+      this.query.set('');
+      this.store.setResult(await this.runner.remove(pending.url));
+    } else if (NO.includes(answer)) {
+      this.cancelRemoval();
+    } else {
+      // Keep the text and the question: the answer just is not one yet.
+      this.notice.set({ kind: 'error', text: 'Type yes or no.' });
+    }
+  }
+
+  private cancelRemoval(): void {
+    this.pendingRemoval.set(undefined);
+    this.query.set('');
+    this.notice.set({ kind: 'info', text: 'Nothing was removed.' });
   }
 
   /** Inserts text at the caret, replacing any selection, and lays the result out. */
@@ -351,12 +441,24 @@ export class CommandShell {
 
   protected async submit(): Promise<void> {
     const text = this.query();
+
+    const pending = this.pendingRemoval();
+    if (pending !== undefined) {
+      await this.answerRemoval(pending);
+      return;
+    }
+
     const { command, valid } = checkCommand(text);
 
     // Nothing to send: say so in the status bar and leave the text to fix,
     // rather than replacing what the workspace shows.
     if (!valid || command === null) {
       this.rejected.set(true);
+      return;
+    }
+
+    if (command.command === 'remove book') {
+      this.askToRemove();
       return;
     }
 

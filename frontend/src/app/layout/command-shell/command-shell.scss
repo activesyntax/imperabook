@@ -96,6 +96,11 @@
   &.rejected {
     color: var(--ib-error);
   }
+
+  // A question waiting for an answer: the accent, the shell's "look here".
+  &.asking {
+    color: var(--ib-accent);
+  }
 }
 
 // Whether the text is a command as it stands. Filled, small, and beside the

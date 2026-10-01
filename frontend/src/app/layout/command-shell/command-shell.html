@@ -21,7 +21,7 @@
                that is what will run. -->
           @if (currentCommand(); as name) {
             <span class="current">{{ name }}</span>
-          } @else if (hasText()) {
+          } @else if (hasText() && !pendingRemoval()) {
             <span class="fall">no matching command</span>
           }
         }
@@ -39,9 +39,18 @@
             role="img"
             [attr.aria-label]="valid() ? 'Valid command' : 'Not a valid command'"></span>
         }
-        <span class="say" [class.rejected]="rejected()" aria-live="polite">
+        <span
+          class="say"
+          [class.rejected]="rejected() || notice()?.kind === 'error'"
+          [class.asking]="pendingRemoval() !== undefined && !rejected() && !notice()"
+          aria-live="polite">
           @if (rejected()) {
             Not a valid command.
+          } @else if (notice(); as n) {
+            {{ n.text }}
+            @if (pendingRemoval(); as pending) { Remove "{{ pending.title }}"? }
+          } @else if (pendingRemoval(); as pending) {
+            Remove "{{ pending.title }}"? Type <span class="cmd">yes</span> or <span class="cmd">no</span>.
           } @else if (!hasText()) {
             Type a command like <span class="cmd">list books</span>
           } @else if (description(); as text) {
@@ -59,7 +68,9 @@
           @if (suggestions().all.length > 0) {
             <span class="key">Tab</span> accept ·
           }
-          @if (multiLine()) {
+          @if (pendingRemoval()) {
+            <span class="key">Enter</span> answer · <span class="key">Esc</span> cancel
+          } @else if (multiLine()) {
             <span class="key">Ctrl+Enter</span> run
           } @else {
             <span class="key">Enter</span> {{ enterHint() }}
