@@ -8,10 +8,11 @@ public static class HelpEndpoints
 {
     public static IEndpointRouteBuilder MapHelpEndpoints(this IEndpointRouteBuilder app)
     {
+        // Public: offered before sign-in, and says nothing about anyone's library.
         app.MapGet("/api/help", GetHelp)
             .WithName("GetHelp")
-            .Produces<CommandResult>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .AllowAnonymous()
+            .Produces<CommandResult>(StatusCodes.Status200OK);
 
         return app;
     }

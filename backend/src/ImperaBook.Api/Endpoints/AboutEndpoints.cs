@@ -8,10 +8,11 @@ public static class AboutEndpoints
 {
     public static IEndpointRouteBuilder MapAboutEndpoints(this IEndpointRouteBuilder app)
     {
+        // Public: offered before sign-in, and says nothing about anyone's library.
         app.MapGet("/api/about", GetAbout)
             .WithName("GetAbout")
-            .Produces<CommandResult>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .AllowAnonymous()
+            .Produces<CommandResult>(StatusCodes.Status200OK);
 
         return app;
     }

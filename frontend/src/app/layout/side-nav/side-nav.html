@@ -47,7 +47,13 @@
 </nav>
 
 <ng-template #pill let-cmd>
-  <button type="button" class="pin" [attr.title]="cmd.description" (mousedown)="$event.preventDefault()">
+  <!-- mousedown is swallowed so the command bar keeps focus; the click runs the command. -->
+  <button
+    type="button"
+    class="pin"
+    [attr.title]="cmd.description"
+    (mousedown)="$event.preventDefault()"
+    (click)="run.emit(cmd.command)">
     <span class="pin__icon" aria-hidden="true">
       @switch (cmd.command) {
       @case ('dashboard') {

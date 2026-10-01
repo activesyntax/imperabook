@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 
-import { CommandSpec } from '@core/model';
+import type { CommandName } from '@command-shell/command-visitor';
 import { UserBadge } from '@app/layout/user-badge/user-badge';
 
 @Component({
@@ -18,6 +18,9 @@ export class SideNav {
   readonly library = input('');
   readonly avatarUrl = input<string | null>(null);
 
+  /** A command picked from the nav; the layout runs it like one typed in the bar. */
+  readonly run = output<CommandName>();
+
   // Signed out, only what works without a session is offered: signing in, and
   // reading about the app and its commands.
   protected readonly account = computed(() =>
@@ -33,19 +36,25 @@ export class SideNav {
 const SIGNED_OUT: ReadonlySet<string> = new Set(['about', 'help']);
 
 // Mirrors the Fixed, Application and Account groups of the backend CommandCatalog, in catalog order.
-const PINNED_COMMANDS: readonly CommandSpec[] = [
-  { command: 'dashboard', description: 'Your library at a glance, and what needs attention', parameters: [] },
-  { command: 'library', description: 'Show library info: images, statistics', parameters: [] },
+/** A nav entry: a real command (the grammar's name for it), so a click can run it as is. */
+interface NavCommand {
+  readonly command: CommandName;
+  readonly description: string;
+}
+
+const PINNED_COMMANDS: readonly NavCommand[] = [
+  { command: 'dashboard', description: 'Your library at a glance, and what needs attention' },
+  { command: 'library', description: 'Show library info: images, statistics' },
 ];
 
-const APPLICATION_COMMANDS: readonly CommandSpec[] = [
-  { command: 'settings', description: 'Show and edit user settings', parameters: [] },
-  { command: 'about', description: 'Shows information about software', parameters: [] },
-  { command: 'help', description: 'Show available commands', parameters: [] },
+const APPLICATION_COMMANDS: readonly NavCommand[] = [
+  { command: 'settings', description: 'Show and edit user settings' },
+  { command: 'about', description: 'Shows information about software' },
+  { command: 'help', description: 'Show available commands' },
 ];
 
-const ACCOUNT_COMMANDS: readonly CommandSpec[] = [
-  { command: 'account', description: 'Account settings', parameters: [] },
-  { command: 'login', description: 'Enter into your library', parameters: [] },
-  { command: 'logout', description: 'Leave your library', parameters: [] },
+const ACCOUNT_COMMANDS: readonly NavCommand[] = [
+  { command: 'account', description: 'Account settings' },
+  { command: 'login', description: 'Enter into your library' },
+  { command: 'logout', description: 'Leave your library' },
 ];

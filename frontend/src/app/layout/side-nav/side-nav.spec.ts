@@ -45,4 +45,24 @@ describe('SideNav', () => {
     expect(commands(nav)).toEqual(['login', 'about', 'help']);
     expect(nav.textContent).not.toContain('Pinned commands');
   });
+
+  it('emits the command of the button clicked', () => {
+    const nav = show(false);
+    const picked: string[] = [];
+    fixture.componentInstance.run.subscribe(command => picked.push(command));
+
+    const help = [...nav.querySelectorAll<HTMLButtonElement>('.pin')].find(b => b.textContent?.includes('help'));
+    help?.click();
+
+    expect(picked).toEqual(['help']);
+  });
+
+  it('keeps focus where it was when a button is pressed', () => {
+    const pin: HTMLButtonElement = show(true, 'Ada').querySelector('.pin')!;
+    const press = new MouseEvent('mousedown', { cancelable: true });
+
+    pin.dispatchEvent(press);
+
+    expect(press.defaultPrevented).toBe(true);
+  });
 });

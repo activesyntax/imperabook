@@ -50,6 +50,7 @@ hurl --variables-file vars.env --variable host=https://api.example.com --test *.
 | `add-author-errors.hurl`    | `POST /api/authors` same full name twice → 409 with the existing author |
 | `get-author.hurl`           | `GET /api/authors/{id}` detail with the author's books; list items link via `open` |
 | `get-book.hurl`             | `GET /api/books/{id}` detail, list items link to it via `open` |
+| `public/about-help-public.hurl` | `GET /api/about`, `/api/help` without a session → 200 |
 | `public/routing-public.hurl` | unknown `/api` paths → JSON 404, not the SPA |
 | `remove-book.hurl`          | `DELETE /api/books/{id}`: removed, then 404; its author stays |
 | `add-book.hurl`             | `POST /api/books` author search: unknown / new / existing / ambiguous |

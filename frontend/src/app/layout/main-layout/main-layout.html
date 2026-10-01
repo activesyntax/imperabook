@@ -5,5 +5,5 @@
   }
 
   <app-side-nav class="side-nav" [signedIn]="session.signedIn()" [name]="session.user()?.name ?? ''"
-    [library]="session.user()?.library ?? ''" [avatarUrl]="session.avatarUrl()" />
+    [library]="session.user()?.library ?? ''" [avatarUrl]="session.avatarUrl()" (run)="run($event)" />
 </section>
