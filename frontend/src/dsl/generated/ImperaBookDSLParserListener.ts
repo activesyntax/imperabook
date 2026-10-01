@@ -8,6 +8,18 @@ import { AddBookCmdContext } from "./ImperaBookDSLParser.js";
 import { UpdateBookCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveBookCmdContext } from "./ImperaBookDSLParser.js";
 import { ListBooksCmdContext } from "./ImperaBookDSLParser.js";
+import { PagesFilterContext } from "./ImperaBookDSLParser.js";
+import { PageComparisonContext } from "./ImperaBookDSLParser.js";
+import { PagesOverContext } from "./ImperaBookDSLParser.js";
+import { PagesUnderContext } from "./ImperaBookDSLParser.js";
+import { PagesEqualContext } from "./ImperaBookDSLParser.js";
+import { PagesAtLeastContext } from "./ImperaBookDSLParser.js";
+import { PagesAtMostContext } from "./ImperaBookDSLParser.js";
+import { PagesOtherThanContext } from "./ImperaBookDSLParser.js";
+import { PagesBetweenContext } from "./ImperaBookDSLParser.js";
+import { OrOverContext } from "./ImperaBookDSLParser.js";
+import { OrUnderContext } from "./ImperaBookDSLParser.js";
+import { AndBoundContext } from "./ImperaBookDSLParser.js";
 import { AddAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { UpdateAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveAuthorCmdContext } from "./ImperaBookDSLParser.js";
@@ -99,6 +111,126 @@ export class ImperaBookDSLParserListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitListBooksCmd?: (ctx: ListBooksCmdContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.pagesFilter`.
+     * @param ctx the parse tree
+     */
+    enterPagesFilter?: (ctx: PagesFilterContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.pagesFilter`.
+     * @param ctx the parse tree
+     */
+    exitPagesFilter?: (ctx: PagesFilterContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.pageComparison`.
+     * @param ctx the parse tree
+     */
+    enterPageComparison?: (ctx: PageComparisonContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.pageComparison`.
+     * @param ctx the parse tree
+     */
+    exitPageComparison?: (ctx: PageComparisonContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.pagesOver`.
+     * @param ctx the parse tree
+     */
+    enterPagesOver?: (ctx: PagesOverContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.pagesOver`.
+     * @param ctx the parse tree
+     */
+    exitPagesOver?: (ctx: PagesOverContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.pagesUnder`.
+     * @param ctx the parse tree
+     */
+    enterPagesUnder?: (ctx: PagesUnderContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.pagesUnder`.
+     * @param ctx the parse tree
+     */
+    exitPagesUnder?: (ctx: PagesUnderContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.pagesEqual`.
+     * @param ctx the parse tree
+     */
+    enterPagesEqual?: (ctx: PagesEqualContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.pagesEqual`.
+     * @param ctx the parse tree
+     */
+    exitPagesEqual?: (ctx: PagesEqualContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.pagesAtLeast`.
+     * @param ctx the parse tree
+     */
+    enterPagesAtLeast?: (ctx: PagesAtLeastContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.pagesAtLeast`.
+     * @param ctx the parse tree
+     */
+    exitPagesAtLeast?: (ctx: PagesAtLeastContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.pagesAtMost`.
+     * @param ctx the parse tree
+     */
+    enterPagesAtMost?: (ctx: PagesAtMostContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.pagesAtMost`.
+     * @param ctx the parse tree
+     */
+    exitPagesAtMost?: (ctx: PagesAtMostContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.pagesOtherThan`.
+     * @param ctx the parse tree
+     */
+    enterPagesOtherThan?: (ctx: PagesOtherThanContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.pagesOtherThan`.
+     * @param ctx the parse tree
+     */
+    exitPagesOtherThan?: (ctx: PagesOtherThanContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.pagesBetween`.
+     * @param ctx the parse tree
+     */
+    enterPagesBetween?: (ctx: PagesBetweenContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.pagesBetween`.
+     * @param ctx the parse tree
+     */
+    exitPagesBetween?: (ctx: PagesBetweenContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.orOver`.
+     * @param ctx the parse tree
+     */
+    enterOrOver?: (ctx: OrOverContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.orOver`.
+     * @param ctx the parse tree
+     */
+    exitOrOver?: (ctx: OrOverContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.orUnder`.
+     * @param ctx the parse tree
+     */
+    enterOrUnder?: (ctx: OrUnderContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.orUnder`.
+     * @param ctx the parse tree
+     */
+    exitOrUnder?: (ctx: OrUnderContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.andBound`.
+     * @param ctx the parse tree
+     */
+    enterAndBound?: (ctx: AndBoundContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.andBound`.
+     * @param ctx the parse tree
+     */
+    exitAndBound?: (ctx: AndBoundContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.addAuthorCmd`.
      * @param ctx the parse tree

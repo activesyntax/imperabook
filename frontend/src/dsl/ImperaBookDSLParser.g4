@@ -33,7 +33,30 @@ command        : addBookCmd
 addBookCmd     : ADD BOOK bookTitle (NL+ bookDetailParam)* ;
 updateBookCmd  : UPDATE BOOK ;
 removeBookCmd  : REMOVE BOOK ;
-listBooksCmd   : LIST BOOKS ;
+// An optional page-count filter, on the same line: a new line after "list books"
+// would make Enter wait for more instead of listing.
+listBooksCmd   : LIST BOOKS pagesFilter? ;
+
+pagesFilter    : WITH PAGES pageComparison ;
+pageComparison : pagesOver        // with pages over 120
+               | pagesUnder       // with pages under 120
+               | pagesEqual       // with pages equal to 120
+               | pagesAtLeast     // with pages 120 or over
+               | pagesAtMost      // with pages 120 or under
+               | pagesOtherThan   // with pages other than 120
+               | pagesBetween     // with pages between 100 and 200
+               ;
+pagesOver      : OVER NUMBER ;
+pagesUnder     : UNDER NUMBER ;
+pagesEqual     : EQUAL TO NUMBER ;
+pagesAtLeast   : NUMBER orOver ;
+pagesAtMost    : NUMBER orUnder ;
+pagesOtherThan : OTHER THAN NUMBER ;
+pagesBetween   : BETWEEN NUMBER andBound ;
+// The second halves are rules of their own so they can be suggested on their own.
+orOver         : OR OVER ;
+orUnder        : OR UNDER ;
+andBound       : AND NUMBER ;
 
 addAuthorCmd   : ADD AUTHOR authorName ;
 updateAuthorCmd: UPDATE AUTHOR ;

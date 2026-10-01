@@ -17,6 +17,32 @@ describe('applyCompletion', () => {
     expect(accept('list boo|', 'list books')).toBe('list books |');
   });
 
+  describe('the page filter', () => {
+    function labels(text: string): string[] {
+      return getDSLCompletions(text, text.length).map(c => c.label);
+    }
+
+    it('is offered after list books', () => {
+      expect(labels('list books ')).toEqual(['with pages']);
+    });
+
+    it('offers the ways a comparison starts', () => {
+      expect(labels('list books with pages ')).toEqual(['over', 'under', 'equal to', 'other than', 'between']);
+    });
+
+    it('offers "or over" and "or under" after a number', () => {
+      expect(labels('list books with pages 120 ').sort()).toEqual(['or over', 'or under']);
+    });
+
+    it('offers the upper end of a range', () => {
+      expect(accept('list books with pages between 100 |', 'and')).toBe('list books with pages between 100 and |');
+    });
+
+    it('completes a half-typed comparison word', () => {
+      expect(accept('list books with pages ov|', 'over')).toBe('list books with pages over |');
+    });
+  });
+
   it('completes find from its first letters', () => {
     expect(accept('fi|', 'find')).toBe('find |');
   });

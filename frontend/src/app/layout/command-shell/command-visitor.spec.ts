@@ -97,6 +97,39 @@ describe('CommandVisitor', () => {
     });
   });
 
+  describe('list books with pages', () => {
+    const cases: [string, Record<string, string>][] = [
+      ['over 120', { pagesOp: 'over', pages: '120' }],
+      ['under 120', { pagesOp: 'under', pages: '120' }],
+      ['equal to 120', { pagesOp: 'equal', pages: '120' }],
+      ['120 or over', { pagesOp: 'atLeast', pages: '120' }],
+      ['120 or under', { pagesOp: 'atMost', pages: '120' }],
+      ['other than 120', { pagesOp: 'otherThan', pages: '120' }],
+      ['between 100 and 200', { pagesOp: 'between', pages: '100', pagesTo: '200' }],
+    ];
+
+    for (const [filter, params] of cases) {
+      it(`reads "${filter}"`, () => {
+        expect(parse(`list books with pages ${filter}`)).toEqual({ command: 'list books', params });
+      });
+    }
+
+    it('lists every book without a filter', () => {
+      expect(parse('list books')).toEqual({ command: 'list books', params: {} });
+    });
+
+    it('is not a command until the comparison is complete', () => {
+      for (const text of ['list books with pages', 'list books with pages over', 'list books with pages 120',
+        'list books with pages between 100', 'list books with pages over many']) {
+        expect(checkCommand(text).valid).toBe(false);
+      }
+    });
+
+    it('takes the filter on the same line only', () => {
+      expect(checkCommand('list books\n    with pages over 120').valid).toBe(false);
+    });
+  });
+
   it('does not recognize input that starts with no command', () => {
     expect(parse('xyz')).toBeNull();
   });

@@ -8,8 +8,33 @@ namespace ImperaBook.Infrastructure.Data.Queries;
 
 public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBookQueries
 {
-    public Task<BookListItem[]> List(CancellationToken ct) =>
-        Owned().OrderBy(b => b.Title).ThenBy(b => b.Id).Select(ToListItem).ToArrayAsync(ct);
+    public Task<BookListItem[]> List(PageFilter? filter, CancellationToken ct) =>
+        WithPages(Owned(), filter)
+            .OrderBy(b => b.Title)
+            .ThenBy(b => b.Id)
+            .Select(ToListItem)
+            .ToArrayAsync(ct);
+
+    // Comparisons with a null page count are false in SQL, so unknown counts drop out — except
+    // that C#'s != treats null as different from any number, which EF keeps; "other than"
+    // says outright that the count must be known.
+    private static IQueryable<BookEntity> WithPages(IQueryable<BookEntity> books, PageFilter? f) =>
+        f switch
+        {
+            null => books,
+            { Comparison: PageComparison.Over } => books.Where(b => b.PageCount > f.Pages),
+            { Comparison: PageComparison.Under } => books.Where(b => b.PageCount < f.Pages),
+            { Comparison: PageComparison.Equal } => books.Where(b => b.PageCount == f.Pages),
+            { Comparison: PageComparison.AtLeast } => books.Where(b => b.PageCount >= f.Pages),
+            { Comparison: PageComparison.AtMost } => books.Where(b => b.PageCount <= f.Pages),
+            { Comparison: PageComparison.OtherThan } => books.Where(b =>
+                b.PageCount != null && b.PageCount != f.Pages
+            ),
+            { Comparison: PageComparison.Between } => books.Where(b =>
+                b.PageCount >= f.Pages && b.PageCount <= f.UpTo
+            ),
+            _ => throw new InvalidOperationException($"Unhandled page comparison: {f.Comparison}"),
+        };
 
     /// <summary>The list-row projection, shared with queries that list a subset of books.</summary>
     internal static readonly Expression<Func<BookEntity, BookListItem>> ToListItem =

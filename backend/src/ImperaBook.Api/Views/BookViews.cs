@@ -10,15 +10,30 @@ public static class BookViews
     public static CommandResult ToCommandResult(
         this IReadOnlyList<BookListItem> books,
         string emptyMessage,
-        PageInfo? page = null
+        PageInfo? page = null,
+        string heading = "All books"
     ) =>
         new(
             new ViewNode[]
             {
-                new HeadingView("All books", page),
+                new HeadingView(heading, page),
                 new ItemCollectionView(books.Select(ToItem).ToArray(), emptyMessage),
             }
         );
+
+    /// <summary>A page filter in words, for headings: "over 120 pages", "between 100 and 200 pages".</summary>
+    public static string Describe(this PageFilter f) =>
+        f.Comparison switch
+        {
+            PageComparison.Over => $"over {f.Pages} pages",
+            PageComparison.Under => $"under {f.Pages} pages",
+            PageComparison.Equal => $"exactly {f.Pages} pages",
+            PageComparison.AtLeast => $"{f.Pages} or more pages",
+            PageComparison.AtMost => $"{f.Pages} or fewer pages",
+            PageComparison.OtherThan => $"a page count other than {f.Pages}",
+            PageComparison.Between => $"between {f.Pages} and {f.UpTo} pages",
+            _ => throw new InvalidOperationException($"Unhandled page comparison: {f.Comparison}"),
+        };
 
     public static CommandResult ToCommandResult(this BookDetail b)
     {

@@ -51,7 +51,8 @@ export function splitAuthorName(name: string): AuthorNameBody {
 const ENDPOINTS: Partial<Record<CommandName, CommandEndpoint>> = {
   'dashboard': get('/api/dashboard'),
   'library': get('/api/library'),
-  'list books': get('/api/books'),
+  // The page filter's params (pagesOp, pages, pagesTo) are the query as they are.
+  'list books': get('/api/books', params => ({ ...params })),
   // The params are already the request's fields; "author" is search text the server resolves.
   'add book': post('/api/books', params => params),
   'list authors': get('/api/authors'),

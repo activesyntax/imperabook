@@ -15,21 +15,26 @@ public static class HelpViews
                     TextNode.H2("Getting started"),
                     TextNode.Para(
                         "ImperaBook is a keyboard-driven catalog for your personal library. "
-                            + "You type a command, it asks for what it needs, one field at a "
-                            + "time. Anything that isn't a command runs as a search."
+                            + "You type a command and what it needs on the same line; a command "
+                            + "with more to say takes a detail per line below it. To look "
+                            + "something up, start with find."
                     ),
-                    TextNode.Hint(["add book"], "catalog a book, prompt by prompt"),
+                    TextNode.Hint(["add book Dune"], "the title, then a detail per line: by author, with isbn…"),
                     TextNode.Hint(["list books"], "see the whole catalog"),
-                    TextNode.Hint(["orwell"], "no command matches — so it searches"),
+                    TextNode.Hint(["list books with pages over 300"], "only the long ones — also under, equal to, other than"),
+                    TextNode.Hint(["list books with pages between 100 and 200"], "a range, both ends included; or 120 or over, 120 or under"),
+                    TextNode.Hint(["find orwell"], "search books and authors by any word"),
                     TextNode.H2("Finding commands"),
                     TextNode.Para(
-                        "You never have to remember a full command name. An empty bar shows "
-                            + "pinned commands — the few you reach for most. Start typing and "
-                            + "they give way to suggestions ranked against what you've typed, "
-                            + "matched on any word in the name, not just the first."
+                        "You never have to remember a full command name. An empty bar "
+                            + "suggests the book and author commands; the pinned ones sit in the "
+                            + "side nav. Start typing and the suggestions narrow to what begins "
+                            + "with it, then go on to what can follow — the next word, or the "
+                            + "next parameter. A dot beside the bar turns green once what you "
+                            + "typed is a command that can run."
                     ),
                     TextNode.Hint(["Ctrl + K"], "focus the command bar"),
-                    TextNode.Hint(["book"], "surfaces every book command"),
+                    TextNode.Hint(["ad"], "suggests add book and add author"),
                     TextNode.Hint(["Ctrl + `", "Ctrl + ~"], "highlight the next or previous suggestion"),
                     TextNode.Hint(["Tab"], "accept the highlighted one"),
                     TextNode.Hint(["Enter"], "run the command, or start a new line for the next parameter"),

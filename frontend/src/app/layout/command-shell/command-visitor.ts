@@ -4,6 +4,8 @@ import {
   AddAuthorCmdContext,
   AddBookCmdContext,
   FindCmdContext,
+  ListBooksCmdContext,
+  PageComparisonContext,
   CommandContext,
   EntryContext,
   ValueContext,
@@ -34,6 +36,20 @@ export interface ParsedCommand {
 }
 
 const noParams = (command: CommandName) => (): ParsedCommand => ({ command, params: {} });
+
+function pageFilter(c: PageComparisonContext): Record<string, string> {
+  const n = (token: { getText(): string } | null | undefined) => token?.getText() ?? '';
+
+  if (c.pagesOver()) return { pagesOp: 'over', pages: n(c.pagesOver()?.NUMBER()) };
+  if (c.pagesUnder()) return { pagesOp: 'under', pages: n(c.pagesUnder()?.NUMBER()) };
+  if (c.pagesEqual()) return { pagesOp: 'equal', pages: n(c.pagesEqual()?.NUMBER()) };
+  if (c.pagesAtLeast()) return { pagesOp: 'atLeast', pages: n(c.pagesAtLeast()?.NUMBER()) };
+  if (c.pagesAtMost()) return { pagesOp: 'atMost', pages: n(c.pagesAtMost()?.NUMBER()) };
+  if (c.pagesOtherThan()) return { pagesOp: 'otherThan', pages: n(c.pagesOtherThan()?.NUMBER()) };
+
+  const between = c.pagesBetween();
+  return { pagesOp: 'between', pages: n(between?.NUMBER()), pagesTo: n(between?.andBound()?.NUMBER()) };
+}
 
 // Extend the generated ImperaBookDSLVisitor class directly
 export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | null> {
@@ -90,7 +106,12 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
   // Commands without parameters
   override visitUpdateBookCmd = noParams('update book');
   override visitRemoveBookCmd = noParams('remove book');
-  override visitListBooksCmd = noParams('list books');
+  // The optional page filter becomes the query the server reads: pagesOp names
+  // the comparison, pages its number, pagesTo the upper bound of a "between".
+  override visitListBooksCmd = (ctx: ListBooksCmdContext): ParsedCommand => {
+    const comparison = ctx.pagesFilter()?.pageComparison();
+    return { command: 'list books', params: comparison ? pageFilter(comparison) : {} };
+  };
   override visitUpdateAuthorCmd = noParams('update author');
   override visitRemoveAuthorCmd = noParams('remove author');
   override visitListAuthorsCmd = noParams('list authors');

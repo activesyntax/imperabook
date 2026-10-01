@@ -53,6 +53,15 @@ const RULE_PHRASES: Record<number, Phrase> = {
   // goes there; accepting them inserts nothing.
   [ImperaBookDSLParser.RULE_bookTitle]: { label: 'title', insertText: '' },
   [ImperaBookDSLParser.RULE_keywords]: { label: 'keywords', insertText: '' },
+  [ImperaBookDSLParser.RULE_pagesFilter]: { label: 'with pages', insertText: 'with pages ' },
+  [ImperaBookDSLParser.RULE_pagesOver]: { label: 'over', insertText: 'over ' },
+  [ImperaBookDSLParser.RULE_pagesUnder]: { label: 'under', insertText: 'under ' },
+  [ImperaBookDSLParser.RULE_pagesEqual]: { label: 'equal to', insertText: 'equal to ' },
+  [ImperaBookDSLParser.RULE_pagesOtherThan]: { label: 'other than', insertText: 'other than ' },
+  [ImperaBookDSLParser.RULE_pagesBetween]: { label: 'between', insertText: 'between ' },
+  [ImperaBookDSLParser.RULE_orOver]: { label: 'or over', insertText: 'or over' },
+  [ImperaBookDSLParser.RULE_orUnder]: { label: 'or under', insertText: 'or under' },
+  [ImperaBookDSLParser.RULE_andBound]: { label: 'and', insertText: 'and ' },
   [ImperaBookDSLParser.RULE_authorName]: { label: 'first and last name', insertText: '' },
   [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author ' },
   [ImperaBookDSLParser.RULE_subtitleParam]: { label: 'subtitled', insertText: 'subtitled ' },
@@ -94,6 +103,7 @@ const COMMAND_RULES = [
  */
 const PARAM_RULES = [
   ImperaBookDSLParser.RULE_keywords,
+  ImperaBookDSLParser.RULE_pagesFilter,
   ImperaBookDSLParser.RULE_bookTitle,
   ImperaBookDSLParser.RULE_authorName,
   ImperaBookDSLParser.RULE_authorParam,
@@ -105,8 +115,28 @@ const PARAM_RULES = [
 ];
 
 // Free text and line breaks are typed, not suggested.
+/**
+ * The page filter nests two levels below its command, so each level is a pass of
+ * its own: how a comparison starts ("over", "between"), then the second half of
+ * one already started ("or over" after a number, "and" after "between 100").
+ */
+const COMPARISON_RULES = [
+  ImperaBookDSLParser.RULE_pagesOver,
+  ImperaBookDSLParser.RULE_pagesUnder,
+  ImperaBookDSLParser.RULE_pagesEqual,
+  ImperaBookDSLParser.RULE_pagesOtherThan,
+  ImperaBookDSLParser.RULE_pagesBetween,
+];
+
+const COMPARISON_END_RULES = [
+  ImperaBookDSLParser.RULE_orOver,
+  ImperaBookDSLParser.RULE_orUnder,
+  ImperaBookDSLParser.RULE_andBound,
+];
+
 const IGNORED_TOKENS = [
   ImperaBookDSLParser.VALUE,
+  ImperaBookDSLParser.NUMBER,
   ImperaBookDSLParser.NL,
   ImperaBookDSLParser.EOF,
   ImperaBookDSLParser.WS,
@@ -268,6 +298,8 @@ function collectSuggestions(
   const passes = [
     collectFor(parser, caretTokenIndex, COMMAND_RULES),
     collectFor(parser, caretTokenIndex, PARAM_RULES),
+    collectFor(parser, caretTokenIndex, COMPARISON_RULES),
+    collectFor(parser, caretTokenIndex, COMPARISON_END_RULES),
   ];
 
   // 5. Turn candidate rules into phrase suggestions

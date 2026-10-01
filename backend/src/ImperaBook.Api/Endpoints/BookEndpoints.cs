@@ -1,3 +1,4 @@
+using System.Globalization;
 using ImperaBook.Api.Errors;
 using ImperaBook.API.Views;
 using ImperaBook.Application;
@@ -13,6 +14,7 @@ public static class BookEndpoints
         app.MapGet("/api/books", ListBooks)
             .WithName("ListBooks")
             .Produces<CommandResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         app.MapGet("/api/books/{id:guid}", GetBook)
@@ -38,16 +40,65 @@ public static class BookEndpoints
         return app;
     }
 
-    private static async Task<Ok<CommandResult>> ListBooks(IBookQueries books, CancellationToken ct)
+    // "list books", optionally "with pages over 120" and the like: the command bar sends the
+    // comparison as pagesOp, its number as pages, and a range's upper end as pagesTo.
+    private static async Task<IResult> ListBooks(
+        string? pagesOp,
+        string? pages,
+        string? pagesTo,
+        IBookQueries books,
+        CancellationToken ct
+    )
     {
-        var bookList = await books.List(ct);
+        var filter = ParsePageFilter(pagesOp, pages, pagesTo);
+        if (filter.IsFailure)
+            return TypedResults.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid page filter",
+                detail: filter.Error,
+                extensions: new Dictionary<string, object?> { ["code"] = "invalid_page_filter" }
+            );
+
+        var bookList = await books.List(filter.Value, ct);
+        var page = new PageInfo(1, 1, bookList.Length, "books");
 
         return TypedResults.Ok(
-            bookList.ToCommandResult(
-                "No books yet. Add one to start your library.",
-                new PageInfo(1, 1, bookList.Count(), "books")
-            )
+            filter.Value is { } f
+                ? bookList.ToCommandResult($"No books with {f.Describe()}.", page, $"Books with {f.Describe()}")
+                : bookList.ToCommandResult("No books yet. Add one to start your library.", page)
         );
+    }
+
+    private static readonly Dictionary<string, PageComparison> Comparisons = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["over"] = PageComparison.Over,
+        ["under"] = PageComparison.Under,
+        ["equal"] = PageComparison.Equal,
+        ["atLeast"] = PageComparison.AtLeast,
+        ["atMost"] = PageComparison.AtMost,
+        ["otherThan"] = PageComparison.OtherThan,
+        ["between"] = PageComparison.Between,
+    };
+
+    /// <summary>No pagesOp is no filter; a pagesOp that cannot be read is an error, not "all books".</summary>
+    private static CSharpFunctionalExtensions.Result<PageFilter?, string> ParsePageFilter(string? op, string? pages, string? pagesTo)
+    {
+        if (string.IsNullOrWhiteSpace(op))
+            return CSharpFunctionalExtensions.Result.Success<PageFilter?, string>(null);
+
+        if (!Comparisons.TryGetValue(op, out var comparison))
+            return $"Unknown page comparison \"{op}\".";
+
+        if (!int.TryParse(pages, NumberStyles.None, CultureInfo.InvariantCulture, out var n))
+            return "The page count must be a whole number.";
+
+        if (comparison != PageComparison.Between)
+            return new PageFilter(comparison, n);
+
+        if (!int.TryParse(pagesTo, NumberStyles.None, CultureInfo.InvariantCulture, out var upTo))
+            return "A range needs a whole number at both ends.";
+
+        return PageFilter.Between(n, upTo);
     }
 
     /// <summary>Where a single book is shown; list items link here through Open.</summary>

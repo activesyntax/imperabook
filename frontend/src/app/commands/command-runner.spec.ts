@@ -167,4 +167,15 @@ describe('CommandRunner', () => {
     req.flush(found);
     expect(await result).toEqual(found);
   });
+
+  it('sends a page filter as the book list query', async () => {
+    const result = runner.run({ command: 'list books', params: { pagesOp: 'between', pages: '100', pagesTo: '200' } });
+
+    const req = http.expectOne(r => r.url === '/api/books');
+    expect(req.request.params.get('pagesOp')).toBe('between');
+    expect(req.request.params.get('pages')).toBe('100');
+    expect(req.request.params.get('pagesTo')).toBe('200');
+    req.flush({ views: [] });
+    await result;
+  });
 });

@@ -8,6 +8,18 @@ import { AddBookCmdContext } from "./ImperaBookDSLParser.js";
 import { UpdateBookCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveBookCmdContext } from "./ImperaBookDSLParser.js";
 import { ListBooksCmdContext } from "./ImperaBookDSLParser.js";
+import { PagesFilterContext } from "./ImperaBookDSLParser.js";
+import { PageComparisonContext } from "./ImperaBookDSLParser.js";
+import { PagesOverContext } from "./ImperaBookDSLParser.js";
+import { PagesUnderContext } from "./ImperaBookDSLParser.js";
+import { PagesEqualContext } from "./ImperaBookDSLParser.js";
+import { PagesAtLeastContext } from "./ImperaBookDSLParser.js";
+import { PagesAtMostContext } from "./ImperaBookDSLParser.js";
+import { PagesOtherThanContext } from "./ImperaBookDSLParser.js";
+import { PagesBetweenContext } from "./ImperaBookDSLParser.js";
+import { OrOverContext } from "./ImperaBookDSLParser.js";
+import { OrUnderContext } from "./ImperaBookDSLParser.js";
+import { AndBoundContext } from "./ImperaBookDSLParser.js";
 import { AddAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { UpdateAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveAuthorCmdContext } from "./ImperaBookDSLParser.js";
@@ -78,6 +90,78 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      * @return the visitor result
      */
     visitListBooksCmd?: (ctx: ListBooksCmdContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.pagesFilter`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPagesFilter?: (ctx: PagesFilterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.pageComparison`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPageComparison?: (ctx: PageComparisonContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.pagesOver`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPagesOver?: (ctx: PagesOverContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.pagesUnder`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPagesUnder?: (ctx: PagesUnderContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.pagesEqual`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPagesEqual?: (ctx: PagesEqualContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.pagesAtLeast`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPagesAtLeast?: (ctx: PagesAtLeastContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.pagesAtMost`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPagesAtMost?: (ctx: PagesAtMostContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.pagesOtherThan`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPagesOtherThan?: (ctx: PagesOtherThanContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.pagesBetween`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPagesBetween?: (ctx: PagesBetweenContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.orOver`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitOrOver?: (ctx: OrOverContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.orUnder`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitOrUnder?: (ctx: OrUnderContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.andBound`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitAndBound?: (ctx: AndBoundContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.addAuthorCmd`.
      * @param ctx the parse tree
