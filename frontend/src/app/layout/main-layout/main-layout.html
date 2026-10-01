@@ -1,6 +1,8 @@
 <section class="main">
   <app-workspace class="workspace" />
-  @if (!store.loginRequested()) {
+  <!-- Commands are for a signed-in user: signed out, the side nav offers the few
+       that work (login, about, help), and the login form takes the bar's place. -->
+  @if (session.signedIn() && !store.loginRequested()) {
     <app-command-shell class="shell" />
   }
 
