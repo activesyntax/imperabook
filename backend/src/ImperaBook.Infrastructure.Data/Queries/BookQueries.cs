@@ -53,6 +53,7 @@ public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBo
                 })
                 .ToList(),
             CoverHash = b.CoverHash,
+            Pages = b.PageCount,
         };
 
     public async Task<Maybe<BookDetail>> Get(Guid id, CancellationToken ct)

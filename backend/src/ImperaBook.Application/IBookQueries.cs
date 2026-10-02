@@ -16,6 +16,7 @@ public sealed record BookListItem
     public string? Subtitle { get; init; }
     public required IReadOnlyList<BookAuthor> Authors { get; init; }
     public string? CoverHash { get; init; }
+    public int? Pages { get; init; }
 }
 
 public sealed record BookDetail

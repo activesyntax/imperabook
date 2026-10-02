@@ -192,9 +192,26 @@ export class CommandShell {
           ...this.grammarChips(),
         ]));
 
+  private readonly grammarItems = computed(() =>
+    this.suggestionService.suggestionsFor(this.query(), this.cursorPosition()));
+
+  // Only what inserts something is a chip; a bare name for what to type next
+  // ("title", "page count") is shown as ghost text instead.
   private readonly grammarChips = computed(() => {
-    const chips = this.suggestionService.suggestionsFor(this.query(), this.cursorPosition());
+    const chips = this.grammarItems().filter(item => item.insertText !== '');
     return this.query().trim() === '' ? chips.filter(chip => !SHOWN_ELSEWHERE.has(chip.label)) : chips;
+  });
+
+  /**
+   * What is still to type, named in faded text right after the caret: "add book
+   * ░title░", "with pages over ░page count░". Only with the caret at the end,
+   * where the ghost layer lines it up behind the text.
+   */
+  protected readonly ghost = computed(() => {
+    const text = this.query();
+    if (this.pendingRemoval() !== undefined || this.cursorPosition() !== text.length) return undefined;
+
+    return this.grammarItems().find(item => item.insertText === '')?.label;
   });
 
   // While a question is open the only things to type are its answers.

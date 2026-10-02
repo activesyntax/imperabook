@@ -46,17 +46,19 @@ pageComparison : pagesOver        // with pages over 120
                | pagesOtherThan   // with pages other than 120
                | pagesBetween     // with pages between 100 and 200
                ;
-pagesOver      : OVER NUMBER ;
-pagesUnder     : UNDER NUMBER ;
-pagesEqual     : EQUAL TO NUMBER ;
-pagesAtLeast   : NUMBER orOver ;
-pagesAtMost    : NUMBER orUnder ;
-pagesOtherThan : OTHER THAN NUMBER ;
-pagesBetween   : BETWEEN NUMBER andBound ;
+pagesOver      : OVER pageCount ;
+pagesUnder     : UNDER pageCount ;
+pagesEqual     : EQUAL TO pageCount ;
+pagesAtLeast   : pageCount orOver ;
+pagesAtMost    : pageCount orUnder ;
+pagesOtherThan : OTHER THAN pageCount ;
+pagesBetween   : BETWEEN pageCount andBound ;
 // The second halves are rules of their own so they can be suggested on their own.
 orOver         : OR OVER ;
 orUnder        : OR UNDER ;
-andBound       : AND NUMBER ;
+andBound       : AND pageCount ;
+// A rule of its own so the bar can name what goes here ("page count") while it is still to type.
+pageCount      : NUMBER ;
 
 addAuthorCmd   : ADD AUTHOR authorName ;
 updateAuthorCmd: UPDATE AUTHOR ;

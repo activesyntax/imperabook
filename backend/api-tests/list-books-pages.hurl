@@ -44,6 +44,9 @@ HTTP 200
 [Asserts]
 jsonpath "$.views[0].text" == "Books with over 120 pages"
 jsonpath "$.views[1].items[*].ref" contains "{{b150}}"
+# What the list is filtered by is on each item.
+jsonpath "$.views[1].items[?(@.ref=='{{b150}}')].properties[?(@.name=='Pages')].value" == "150 pages"
+jsonpath "$.views[1].items[?(@.ref=='{{b150}}')].properties[?(@.name=='Pages')].role" == "meta"
 jsonpath "$.views[1].items[*].ref" contains "{{b300}}"
 jsonpath "$.views[1].items[*].ref" not contains "{{b100}}"
 jsonpath "$.views[1].items[*].ref" not contains "{{bnone}}"
@@ -105,6 +108,8 @@ HTTP 200
 [Asserts]
 jsonpath "$.views[0].text" == "All books"
 jsonpath "$.views[1].items[*].ref" contains "{{bnone}}"
+# Unfiltered, the page count is not part of the list.
+jsonpath "$.views[1].items[?(@.ref=='{{b150}}')].properties[?(@.name=='Pages')]" count == 0
 
 
 # --- A filter that cannot be read is an error, not "all books" -------------------------

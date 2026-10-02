@@ -6,6 +6,7 @@ import {
   FindCmdContext,
   ListBooksCmdContext,
   PageComparisonContext,
+  PageCountContext,
   CommandContext,
   EntryContext,
   ValueContext,
@@ -38,17 +39,17 @@ export interface ParsedCommand {
 const noParams = (command: CommandName) => (): ParsedCommand => ({ command, params: {} });
 
 function pageFilter(c: PageComparisonContext): Record<string, string> {
-  const n = (token: { getText(): string } | null | undefined) => token?.getText() ?? '';
+  const n = (count: PageCountContext | null | undefined) => count?.NUMBER()?.getText() ?? '';
 
-  if (c.pagesOver()) return { pagesOp: 'over', pages: n(c.pagesOver()?.NUMBER()) };
-  if (c.pagesUnder()) return { pagesOp: 'under', pages: n(c.pagesUnder()?.NUMBER()) };
-  if (c.pagesEqual()) return { pagesOp: 'equal', pages: n(c.pagesEqual()?.NUMBER()) };
-  if (c.pagesAtLeast()) return { pagesOp: 'atLeast', pages: n(c.pagesAtLeast()?.NUMBER()) };
-  if (c.pagesAtMost()) return { pagesOp: 'atMost', pages: n(c.pagesAtMost()?.NUMBER()) };
-  if (c.pagesOtherThan()) return { pagesOp: 'otherThan', pages: n(c.pagesOtherThan()?.NUMBER()) };
+  if (c.pagesOver()) return { pagesOp: 'over', pages: n(c.pagesOver()?.pageCount()) };
+  if (c.pagesUnder()) return { pagesOp: 'under', pages: n(c.pagesUnder()?.pageCount()) };
+  if (c.pagesEqual()) return { pagesOp: 'equal', pages: n(c.pagesEqual()?.pageCount()) };
+  if (c.pagesAtLeast()) return { pagesOp: 'atLeast', pages: n(c.pagesAtLeast()?.pageCount()) };
+  if (c.pagesAtMost()) return { pagesOp: 'atMost', pages: n(c.pagesAtMost()?.pageCount()) };
+  if (c.pagesOtherThan()) return { pagesOp: 'otherThan', pages: n(c.pagesOtherThan()?.pageCount()) };
 
   const between = c.pagesBetween();
-  return { pagesOp: 'between', pages: n(between?.NUMBER()), pagesTo: n(between?.andBound()?.NUMBER()) };
+  return { pagesOp: 'between', pages: n(between?.pageCount()), pagesTo: n(between?.andBound()?.pageCount()) };
 }
 
 // Extend the generated ImperaBookDSLVisitor class directly

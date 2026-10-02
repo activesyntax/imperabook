@@ -62,6 +62,7 @@ const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_orOver]: { label: 'or over', insertText: 'or over' },
   [ImperaBookDSLParser.RULE_orUnder]: { label: 'or under', insertText: 'or under' },
   [ImperaBookDSLParser.RULE_andBound]: { label: 'and', insertText: 'and ' },
+  [ImperaBookDSLParser.RULE_pageCount]: { label: 'page count', insertText: '' },
   [ImperaBookDSLParser.RULE_authorName]: { label: 'first and last name', insertText: '' },
   [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author ' },
   [ImperaBookDSLParser.RULE_subtitleParam]: { label: 'subtitled', insertText: 'subtitled ' },
@@ -300,6 +301,7 @@ function collectSuggestions(
     collectFor(parser, caretTokenIndex, PARAM_RULES),
     collectFor(parser, caretTokenIndex, COMPARISON_RULES),
     collectFor(parser, caretTokenIndex, COMPARISON_END_RULES),
+    collectFor(parser, caretTokenIndex, [ImperaBookDSLParser.RULE_pageCount]),
   ];
 
   // 5. Turn candidate rules into phrase suggestions

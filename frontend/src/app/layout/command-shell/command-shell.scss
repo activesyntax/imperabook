@@ -191,7 +191,16 @@
   white-space: nowrap;
 }
 
+.bar-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  min-width: 40px;
+}
+
 .bar {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-width: 40px;
   margin: 12px 0;
@@ -214,6 +223,24 @@
   &::placeholder {
     color: color-mix(in srgb, var(--ib-dim) 60%, transparent);
   }
+}
+
+// Same box, font and wrapping as the textarea it sits behind; only the hint
+// shows. It never takes input or scrolls on its own.
+.ghost {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  color: transparent;
+  pointer-events: none;
+  field-sizing: initial;
+}
+
+.ghost__hint {
+  color: color-mix(in srgb, var(--ib-dim) 60%, transparent);
 }
 
 .send {

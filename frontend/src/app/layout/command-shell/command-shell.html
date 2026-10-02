@@ -21,7 +21,7 @@
                that is what will run. -->
           @if (currentCommand(); as name) {
             <span class="current">{{ name }}</span>
-          } @else if (hasText() && !pendingRemoval()) {
+          } @else if (hasText() && !pendingRemoval() && !ghost()) {
             <span class="fall">no matching command</span>
           }
         }
@@ -85,6 +85,13 @@
           <!-- Multi-line: a value runs to the end of its line, and each parameter
                goes on a line of its own. Enter decides between a new line and
                running the command; see onKeydown. -->
+          <!-- The ghost sits behind the transparent textarea, laid out the same: an
+               invisible copy of the text, then the hint, so the hint lines up right
+               after what is typed. -->
+          <div class="bar-wrap">
+          @if (ghost(); as hint) {
+            <div class="bar ghost" aria-hidden="true"><span class="ghost__typed">{{ query() }}</span><span class="ghost__hint">{{ hint }}</span></div>
+          }
           <textarea
             #bar
             class="bar"
@@ -102,6 +109,7 @@
             [readOnly]="busy()"
             (keydown)="onKeydown($event)"
             (paste)="onPaste($event)"></textarea>
+          </div>
 
         <button
           type="button"

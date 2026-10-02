@@ -26,8 +26,12 @@ describe('applyCompletion', () => {
       expect(labels('list books ')).toEqual(['with pages']);
     });
 
-    it('offers the ways a comparison starts', () => {
-      expect(labels('list books with pages ')).toEqual(['over', 'under', 'equal to', 'other than', 'between']);
+    it('offers the ways a comparison starts, and names a page count for "120 or over"', () => {
+      expect(labels('list books with pages ')).toEqual(['over', 'under', 'equal to', 'other than', 'between', 'page count']);
+    });
+
+    it('names the page count after a comparison word', () => {
+      expect(labels('list books with pages over ')).toEqual(['page count']);
     });
 
     it('offers "or over" and "or under" after a number', () => {

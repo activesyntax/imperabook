@@ -7,17 +7,22 @@ namespace ImperaBook.API.Views;
 
 public static class BookViews
 {
+    /// <param name="showPages">
+    /// Puts each book's page count on its item — for a list filtered by pages, where the count
+    /// is what the list is about.
+    /// </param>
     public static CommandResult ToCommandResult(
         this IReadOnlyList<BookListItem> books,
         string emptyMessage,
         PageInfo? page = null,
-        string heading = "All books"
+        string heading = "All books",
+        bool showPages = false
     ) =>
         new(
             new ViewNode[]
             {
                 new HeadingView(heading, page),
-                new ItemCollectionView(books.Select(ToItem).ToArray(), emptyMessage),
+                new ItemCollectionView(books.Select(b => ToItem(b, showPages)).ToArray(), emptyMessage),
             }
         );
 
@@ -65,7 +70,9 @@ public static class BookViews
         return new CommandResult(nodes);
     }
 
-    internal static ItemView ToItem(BookListItem b)
+    internal static ItemView ToItem(BookListItem b) => ToItem(b, showPages: false);
+
+    private static ItemView ToItem(BookListItem b, bool showPages)
     {
         var properties = new List<ItemProperty>
         {
@@ -76,6 +83,9 @@ public static class BookViews
                 PropertyRole.Secondary
             ),
         };
+
+        if (showPages && b.Pages is { } pages)
+            properties.Add(new("Pages", $"{pages} {"page".Plural(pages)}", PropertyRole.Meta));
 
         return new ItemView(
             Ref: b.Id.ToString(),

@@ -64,7 +64,12 @@ public static class BookEndpoints
 
         return TypedResults.Ok(
             filter.Value is { } f
-                ? bookList.ToCommandResult($"No books with {f.Describe()}.", page, $"Books with {f.Describe()}")
+                ? bookList.ToCommandResult(
+                    $"No books with {f.Describe()}.",
+                    page,
+                    $"Books with {f.Describe()}",
+                    showPages: true
+                )
                 : bookList.ToCommandResult("No books yet. Add one to start your library.", page)
         );
     }

@@ -20,6 +20,7 @@ import { PagesBetweenContext } from "./ImperaBookDSLParser.js";
 import { OrOverContext } from "./ImperaBookDSLParser.js";
 import { OrUnderContext } from "./ImperaBookDSLParser.js";
 import { AndBoundContext } from "./ImperaBookDSLParser.js";
+import { PageCountContext } from "./ImperaBookDSLParser.js";
 import { AddAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { UpdateAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveAuthorCmdContext } from "./ImperaBookDSLParser.js";
@@ -162,6 +163,12 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      * @return the visitor result
      */
     visitAndBound?: (ctx: AndBoundContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.pageCount`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPageCount?: (ctx: PageCountContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.addAuthorCmd`.
      * @param ctx the parse tree

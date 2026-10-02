@@ -89,6 +89,10 @@ describe('CommandShell', () => {
     return fixture.nativeElement.querySelector('.desc .say')?.textContent.replace(/\s+/g, ' ').trim() ?? '';
   }
 
+  function ghost(): string | undefined {
+    return fixture.nativeElement.querySelector('.ghost__hint')?.textContent ?? undefined;
+  }
+
   function activeChip(): string {
     return fixture.nativeElement.querySelector('.chip.active')?.textContent.trim();
   }
@@ -671,12 +675,13 @@ describe('CommandShell', () => {
     expect(runner.run).not.toHaveBeenCalled();
   });
 
-  it('shows the parameters at once after accepting a command', () => {
+  it('names what to type next as ghost text after accepting a command', () => {
     const input = type('ad');
 
     press(input, 'Tab');
     expect(input.value).toBe('add book ');
-    expect(activeChip()).toBe('title');
+    expect(ghost()).toBe('title');
+    expect(chips()).not.toContain('title');
   });
 
   it('moves the suggestion highlight with Ctrl+` without touching the query, wrapping around', () => {
@@ -715,7 +720,52 @@ describe('CommandShell', () => {
     press(input, 'Tab');
 
     expect(input.value).toBe('add author ');
-    expect(activeChip()).toBe('first and last name');
+    expect(ghost()).toBe('first and last name');
+  });
+
+  describe('ghost text', () => {
+    it('names the page count still to type', () => {
+      type('list books with pages over ');
+      expect(ghost()).toBe('page count');
+
+      type('list books with pages between 100 and ');
+      expect(ghost()).toBe('page count');
+    });
+
+    it('names the keywords after find', () => {
+      type('find ');
+
+      expect(ghost()).toBe('keywords');
+    });
+
+    it('lines the hint up after an invisible copy of the text', () => {
+      type('add book ');
+
+      const layer: HTMLElement = fixture.nativeElement.querySelector('.ghost');
+      expect(layer.querySelector('.ghost__typed')?.textContent).toBe('add book ');
+      expect(layer.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('goes once the value is being typed', () => {
+      type('add book D');
+
+      expect(ghost()).toBeUndefined();
+    });
+
+    it('shows only with the caret at the end', () => {
+      const input = type('add book ');
+      input.setSelectionRange(3, 3);
+      input.dispatchEvent(new Event('selectionchange'));
+      fixture.detectChanges();
+
+      expect(ghost()).toBeUndefined();
+    });
+
+    it('does not count as "no matching command"', () => {
+      type('add book ');
+
+      expect(fixture.nativeElement.querySelector('.suggestions')?.textContent).not.toContain('no matching command');
+    });
   });
 
   it('starts the highlight over at the first suggestion when the user types', () => {
