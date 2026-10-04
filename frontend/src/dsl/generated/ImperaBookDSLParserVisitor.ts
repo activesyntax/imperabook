@@ -10,15 +10,13 @@ import { RemoveBookCmdContext } from "./ImperaBookDSLParser.js";
 import { ListBooksCmdContext } from "./ImperaBookDSLParser.js";
 import { PagesFilterContext } from "./ImperaBookDSLParser.js";
 import { PageComparisonContext } from "./ImperaBookDSLParser.js";
-import { PagesOverContext } from "./ImperaBookDSLParser.js";
-import { PagesUnderContext } from "./ImperaBookDSLParser.js";
-import { PagesEqualContext } from "./ImperaBookDSLParser.js";
+import { PagesMoreThanContext } from "./ImperaBookDSLParser.js";
+import { PagesLessThanContext } from "./ImperaBookDSLParser.js";
 import { PagesAtLeastContext } from "./ImperaBookDSLParser.js";
 import { PagesAtMostContext } from "./ImperaBookDSLParser.js";
-import { PagesOtherThanContext } from "./ImperaBookDSLParser.js";
 import { PagesBetweenContext } from "./ImperaBookDSLParser.js";
-import { OrOverContext } from "./ImperaBookDSLParser.js";
-import { OrUnderContext } from "./ImperaBookDSLParser.js";
+import { PagesNotContext } from "./ImperaBookDSLParser.js";
+import { PagesEqualContext } from "./ImperaBookDSLParser.js";
 import { AndBoundContext } from "./ImperaBookDSLParser.js";
 import { PageCountContext } from "./ImperaBookDSLParser.js";
 import { AddAuthorCmdContext } from "./ImperaBookDSLParser.js";
@@ -104,23 +102,17 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      */
     visitPageComparison?: (ctx: PageComparisonContext) => Result;
     /**
-     * Visit a parse tree produced by `ImperaBookDSLParser.pagesOver`.
+     * Visit a parse tree produced by `ImperaBookDSLParser.pagesMoreThan`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitPagesOver?: (ctx: PagesOverContext) => Result;
+    visitPagesMoreThan?: (ctx: PagesMoreThanContext) => Result;
     /**
-     * Visit a parse tree produced by `ImperaBookDSLParser.pagesUnder`.
+     * Visit a parse tree produced by `ImperaBookDSLParser.pagesLessThan`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitPagesUnder?: (ctx: PagesUnderContext) => Result;
-    /**
-     * Visit a parse tree produced by `ImperaBookDSLParser.pagesEqual`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitPagesEqual?: (ctx: PagesEqualContext) => Result;
+    visitPagesLessThan?: (ctx: PagesLessThanContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.pagesAtLeast`.
      * @param ctx the parse tree
@@ -134,29 +126,23 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      */
     visitPagesAtMost?: (ctx: PagesAtMostContext) => Result;
     /**
-     * Visit a parse tree produced by `ImperaBookDSLParser.pagesOtherThan`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitPagesOtherThan?: (ctx: PagesOtherThanContext) => Result;
-    /**
      * Visit a parse tree produced by `ImperaBookDSLParser.pagesBetween`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitPagesBetween?: (ctx: PagesBetweenContext) => Result;
     /**
-     * Visit a parse tree produced by `ImperaBookDSLParser.orOver`.
+     * Visit a parse tree produced by `ImperaBookDSLParser.pagesNot`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitOrOver?: (ctx: OrOverContext) => Result;
+    visitPagesNot?: (ctx: PagesNotContext) => Result;
     /**
-     * Visit a parse tree produced by `ImperaBookDSLParser.orUnder`.
+     * Visit a parse tree produced by `ImperaBookDSLParser.pagesEqual`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitOrUnder?: (ctx: OrUnderContext) => Result;
+    visitPagesEqual?: (ctx: PagesEqualContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.andBound`.
      * @param ctx the parse tree

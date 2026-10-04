@@ -21,8 +21,8 @@ public static class HelpViews
                     ),
                     TextNode.Hint(["add book Dune"], "the title, then a detail per line: by author, with isbn…"),
                     TextNode.Hint(["list books"], "see the whole catalog"),
-                    TextNode.Hint(["list books with pages over 300"], "only the long ones — also under, equal to, other than"),
-                    TextNode.Hint(["list books with pages between 100 and 200"], "a range, both ends included; or 120 or over, 120 or under"),
+                    TextNode.Hint(["list books whose page count is more than 300"], "only the long ones — also less than, at least, at most, not"),
+                    TextNode.Hint(["list books whose page count is between 100 and 200"], "a range, both ends included; or just is 120"),
                     TextNode.Hint(["find orwell"], "search books and authors by any word"),
                     TextNode.H2("Finding commands"),
                     TextNode.Para(

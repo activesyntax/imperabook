@@ -204,7 +204,7 @@ export class CommandShell {
 
   /**
    * What is still to type, named in faded text right after the caret: "add book
-   * ░title░", "with pages over ░page count░". Only with the caret at the end,
+   * ░title░", "whose page count is at least ░page count░". Only with the caret at the end,
    * where the ghost layer lines it up behind the text.
    */
   protected readonly ghost = computed(() => {

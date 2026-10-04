@@ -26,17 +26,21 @@ public static class BookViews
             }
         );
 
-    /// <summary>A page filter in words, for headings: "over 120 pages", "between 100 and 200 pages".</summary>
+    /// <summary>
+    /// A page filter as the clause it was typed as, for headings: "whose page count is at least
+    /// 120" — so the list says back what was asked.
+    /// </summary>
     public static string Describe(this PageFilter f) =>
-        f.Comparison switch
+        "whose page count is "
+        + f.Comparison switch
         {
-            PageComparison.Over => $"over {f.Pages} pages",
-            PageComparison.Under => $"under {f.Pages} pages",
-            PageComparison.Equal => $"exactly {f.Pages} pages",
-            PageComparison.AtLeast => $"{f.Pages} or more pages",
-            PageComparison.AtMost => $"{f.Pages} or fewer pages",
-            PageComparison.OtherThan => $"a page count other than {f.Pages}",
-            PageComparison.Between => $"between {f.Pages} and {f.UpTo} pages",
+            PageComparison.Over => $"more than {f.Pages}",
+            PageComparison.Under => $"less than {f.Pages}",
+            PageComparison.Equal => $"{f.Pages}",
+            PageComparison.AtLeast => $"at least {f.Pages}",
+            PageComparison.AtMost => $"at most {f.Pages}",
+            PageComparison.OtherThan => $"not {f.Pages}",
+            PageComparison.Between => $"between {f.Pages} and {f.UpTo}",
             _ => throw new InvalidOperationException($"Unhandled page comparison: {f.Comparison}"),
         };
 

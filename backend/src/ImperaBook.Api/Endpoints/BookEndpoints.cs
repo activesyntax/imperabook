@@ -40,7 +40,7 @@ public static class BookEndpoints
         return app;
     }
 
-    // "list books", optionally "with pages over 120" and the like: the command bar sends the
+    // "list books", optionally "whose page count is at least 120" and the like: the command bar sends the
     // comparison as pagesOp, its number as pages, and a range's upper end as pagesTo.
     private static async Task<IResult> ListBooks(
         string? pagesOp,
@@ -65,9 +65,9 @@ public static class BookEndpoints
         return TypedResults.Ok(
             filter.Value is { } f
                 ? bookList.ToCommandResult(
-                    $"No books with {f.Describe()}.",
+                    $"No books {f.Describe()}.",
                     page,
-                    $"Books with {f.Describe()}",
+                    $"Books {f.Describe()}",
                     showPages: true
                 )
                 : bookList.ToCommandResult("No books yet. Add one to start your library.", page)

@@ -1,4 +1,4 @@
-# GET /api/books?pagesOp=…&pages=…[&pagesTo=…] — "list books with pages …". Each run adds
+# GET /api/books?pagesOp=…&pages=…[&pagesTo=…] — "list books whose page count is …". Each run adds
 # books of 100, 150 and 300 pages and one with no page count; the library holds other books
 # too, so each case checks which of these four are in the list and which are not.
 #
@@ -42,7 +42,7 @@ bnone: header "Location" regex "/api/books/(.+)$"
 GET {{host}}/api/books?pagesOp=over&pages=120
 HTTP 200
 [Asserts]
-jsonpath "$.views[0].text" == "Books with over 120 pages"
+jsonpath "$.views[0].text" == "Books whose page count is more than 120"
 jsonpath "$.views[1].items[*].ref" contains "{{b150}}"
 # What the list is filtered by is on each item.
 jsonpath "$.views[1].items[?(@.ref=='{{b150}}')].properties[?(@.name=='Pages')].value" == "150 pages"
@@ -63,7 +63,7 @@ jsonpath "$.views[1].items[*].ref" not contains "{{bnone}}"
 GET {{host}}/api/books?pagesOp=equal&pages=150
 HTTP 200
 [Asserts]
-jsonpath "$.views[0].text" == "Books with exactly 150 pages"
+jsonpath "$.views[0].text" == "Books whose page count is 150"
 jsonpath "$.views[1].items[*].ref" contains "{{b150}}"
 jsonpath "$.views[1].items[*].ref" not contains "{{b100}}"
 jsonpath "$.views[1].items[*].ref" not contains "{{b300}}"
@@ -97,7 +97,7 @@ jsonpath "$.views[1].items[*].ref" not contains "{{bnone}}"
 GET {{host}}/api/books?pagesOp=between&pages=300&pagesTo=150
 HTTP 200
 [Asserts]
-jsonpath "$.views[0].text" == "Books with between 150 and 300 pages"
+jsonpath "$.views[0].text" == "Books whose page count is between 150 and 300"
 jsonpath "$.views[1].items[*].ref" contains "{{b150}}"
 jsonpath "$.views[1].items[*].ref" contains "{{b300}}"
 jsonpath "$.views[1].items[*].ref" not contains "{{b100}}"

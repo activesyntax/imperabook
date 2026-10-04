@@ -33,29 +33,28 @@ command        : addBookCmd
 addBookCmd     : ADD BOOK bookTitle (NL+ bookDetailParam)* ;
 updateBookCmd  : UPDATE BOOK ;
 removeBookCmd  : REMOVE BOOK ;
-// An optional page-count filter, on the same line: a new line after "list books"
-// would make Enter wait for more instead of listing.
+// An optional filter, on the same line (a new line after "list books" would make
+// Enter wait for more instead of listing). It reads as a sentence, property
+// first: "list books whose page count is at least 120".
 listBooksCmd   : LIST BOOKS pagesFilter? ;
 
-pagesFilter    : WITH PAGES pageComparison ;
-pageComparison : pagesOver        // with pages over 120
-               | pagesUnder       // with pages under 120
-               | pagesEqual       // with pages equal to 120
-               | pagesAtLeast     // with pages 120 or over
-               | pagesAtMost      // with pages 120 or under
-               | pagesOtherThan   // with pages other than 120
-               | pagesBetween     // with pages between 100 and 200
+pagesFilter    : WHOSE PAGE COUNT IS pageComparison ;
+pageComparison : pagesMoreThan    // is more than 300   (or greater than)
+               | pagesLessThan    // is less than 100   (or fewer than)
+               | pagesAtLeast     // is at least 120
+               | pagesAtMost      // is at most 120
+               | pagesBetween     // is between 100 and 200
+               | pagesNot         // is not 120
+               | pagesEqual       // is 120
                ;
-pagesOver      : OVER pageCount ;
-pagesUnder     : UNDER pageCount ;
-pagesEqual     : EQUAL TO pageCount ;
-pagesAtLeast   : pageCount orOver ;
-pagesAtMost    : pageCount orUnder ;
-pagesOtherThan : OTHER THAN pageCount ;
+pagesMoreThan  : (MORE_KW | GREATER) THAN pageCount ;
+pagesLessThan  : (LESS | FEWER) THAN pageCount ;
+pagesAtLeast   : AT LEAST pageCount ;
+pagesAtMost    : AT MOST pageCount ;
 pagesBetween   : BETWEEN pageCount andBound ;
-// The second halves are rules of their own so they can be suggested on their own.
-orOver         : OR OVER ;
-orUnder        : OR UNDER ;
+pagesNot       : NOT pageCount ;
+pagesEqual     : pageCount ;
+// A rule of its own so "and" can be suggested on its own.
 andBound       : AND pageCount ;
 // A rule of its own so the bar can name what goes here ("page count") while it is still to type.
 pageCount      : NUMBER ;

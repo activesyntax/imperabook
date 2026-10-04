@@ -725,10 +725,10 @@ describe('CommandShell', () => {
 
   describe('ghost text', () => {
     it('names the page count still to type', () => {
-      type('list books with pages over ');
+      type('list books whose page count is at least ');
       expect(ghost()).toBe('page count');
 
-      type('list books with pages between 100 and ');
+      type('list books whose page count is between 100 and ');
       expect(ghost()).toBe('page count');
     });
 

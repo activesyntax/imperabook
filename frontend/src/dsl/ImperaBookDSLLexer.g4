@@ -34,6 +34,7 @@ WITH           : 'with' -> pushMode(AFTER_WITH) ;
 IN             : 'in' -> pushMode(AFTER_IN) ;
 PUBLISHED      : 'published' -> pushMode(AFTER_PUBLISHED) ;
 SUBTITLED      : 'subtitled' -> pushMode(VALUE_MODE) ;
+WHOSE          : 'whose' -> pushMode(AFTER_WHOSE) ;
 
 NL             : '\r'? '\n' ;
 WS             : [ \t]+ -> skip ;
@@ -51,11 +52,10 @@ BY_AUTHOR      : 'author' -> type(AUTHOR), mode(VALUE_MODE) ;
 BY_NL          : '\r'? '\n' -> type(NL), popMode ;
 BY_WS          : [ \t]+ -> skip ;
 
-// --- with isbn … / with summary … / with pages … ----------------------------
+// --- with isbn … / with summary … --------------------------------------------
 mode AFTER_WITH;
 ISBN           : 'isbn' -> mode(VALUE_MODE) ;
 SUMMARY        : 'summary' -> mode(VALUE_MODE) ;
-PAGES          : 'pages' -> mode(PAGE_FILTER) ;
 WITH_NL        : '\r'? '\n' -> type(NL), popMode ;
 WITH_WS        : [ \t]+ -> skip ;
 
@@ -71,22 +71,32 @@ PUBLISHED_IN   : 'in' -> type(IN), mode(VALUE_MODE) ;
 PUBLISHED_NL   : '\r'? '\n' -> type(NL), popMode ;
 PUBLISHED_WS   : [ \t]+ -> skip ;
 
-// --- with pages over 120, … between 100 and 200 --------------------------------
-// A small fixed vocabulary and numbers, not free text: these words are keywords
-// only here, after "with pages", so they never clash with values elsewhere.
-mode PAGE_FILTER;
-OVER           : 'over' ;
-UNDER          : 'under' ;
-EQUAL          : 'equal' ;
-TO             : 'to' ;
-OR             : 'or' ;
-OTHER          : 'other' ;
+// --- whose page count is at least 120 … -------------------------------------
+// "whose" opens a filter clause; its words are keywords only inside it, so they
+// never clash with values elsewhere.
+mode AFTER_WHOSE;
+PAGE           : 'page' ;
+COUNT          : 'count' ;
+IS             : 'is' -> mode(COMPARISON) ;
+WHOSE_NL       : '\r'? '\n' -> type(NL), popMode ;
+WHOSE_WS       : [ \t]+ -> skip ;
+
+// What follows "is": an amount in everyday words, then a number.
+mode COMPARISON;
+MORE_KW        : 'more' ;  // MORE is a reserved name in ANTLR lexers
+GREATER        : 'greater' ;
+LESS           : 'less' ;
+FEWER          : 'fewer' ;
 THAN           : 'than' ;
+AT             : 'at' ;
+LEAST          : 'least' ;
+MOST           : 'most' ;
 BETWEEN        : 'between' ;
 AND            : 'and' ;
+NOT            : 'not' ;
 NUMBER         : [0-9]+ ;
-PAGE_NL        : '\r'? '\n' -> type(NL), popMode ;
-PAGE_WS        : [ \t]+ -> skip ;
+COMPARISON_NL  : '\r'? '\n' -> type(NL), popMode ;
+COMPARISON_WS  : [ \t]+ -> skip ;
 
 // --- The rest of the line, verbatim ------------------------------------------
 // Leading blanks are skipped; trailing ones are kept and trimmed by the visitor.

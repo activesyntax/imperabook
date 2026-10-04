@@ -97,20 +97,22 @@ describe('CommandVisitor', () => {
     });
   });
 
-  describe('list books with pages', () => {
+  describe('list books whose page count is', () => {
     const cases: [string, Record<string, string>][] = [
-      ['over 120', { pagesOp: 'over', pages: '120' }],
-      ['under 120', { pagesOp: 'under', pages: '120' }],
-      ['equal to 120', { pagesOp: 'equal', pages: '120' }],
-      ['120 or over', { pagesOp: 'atLeast', pages: '120' }],
-      ['120 or under', { pagesOp: 'atMost', pages: '120' }],
-      ['other than 120', { pagesOp: 'otherThan', pages: '120' }],
+      ['more than 120', { pagesOp: 'over', pages: '120' }],
+      ['greater than 120', { pagesOp: 'over', pages: '120' }],
+      ['less than 120', { pagesOp: 'under', pages: '120' }],
+      ['fewer than 120', { pagesOp: 'under', pages: '120' }],
+      ['120', { pagesOp: 'equal', pages: '120' }],
+      ['at least 120', { pagesOp: 'atLeast', pages: '120' }],
+      ['at most 120', { pagesOp: 'atMost', pages: '120' }],
+      ['not 120', { pagesOp: 'otherThan', pages: '120' }],
       ['between 100 and 200', { pagesOp: 'between', pages: '100', pagesTo: '200' }],
     ];
 
-    for (const [filter, params] of cases) {
-      it(`reads "${filter}"`, () => {
-        expect(parse(`list books with pages ${filter}`)).toEqual({ command: 'list books', params });
+    for (const [comparison, params] of cases) {
+      it(`reads "is ${comparison}"`, () => {
+        expect(parse(`list books whose page count is ${comparison}`)).toEqual({ command: 'list books', params });
       });
     }
 
@@ -118,15 +120,20 @@ describe('CommandVisitor', () => {
       expect(parse('list books')).toEqual({ command: 'list books', params: {} });
     });
 
-    it('is not a command until the comparison is complete', () => {
-      for (const text of ['list books with pages', 'list books with pages over', 'list books with pages 120',
-        'list books with pages between 100', 'list books with pages over many']) {
+    it('is not a command until the sentence is complete', () => {
+      for (const text of ['list books whose', 'list books whose page count', 'list books whose page count is',
+        'list books whose page count is more than', 'list books whose page count is more 300',
+        'list books whose page count is between 100', 'list books whose page count is at least many']) {
         expect(checkCommand(text).valid).toBe(false);
       }
     });
 
+    it('no longer takes the old "with pages" form', () => {
+      expect(checkCommand('list books with pages over 120').valid).toBe(false);
+    });
+
     it('takes the filter on the same line only', () => {
-      expect(checkCommand('list books\n    with pages over 120').valid).toBe(false);
+      expect(checkCommand('list books\n    whose page count is at least 120').valid).toBe(false);
     });
   });
 

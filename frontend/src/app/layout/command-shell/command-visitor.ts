@@ -41,12 +41,12 @@ const noParams = (command: CommandName) => (): ParsedCommand => ({ command, para
 function pageFilter(c: PageComparisonContext): Record<string, string> {
   const n = (count: PageCountContext | null | undefined) => count?.NUMBER()?.getText() ?? '';
 
-  if (c.pagesOver()) return { pagesOp: 'over', pages: n(c.pagesOver()?.pageCount()) };
-  if (c.pagesUnder()) return { pagesOp: 'under', pages: n(c.pagesUnder()?.pageCount()) };
+  if (c.pagesMoreThan()) return { pagesOp: 'over', pages: n(c.pagesMoreThan()?.pageCount()) };
+  if (c.pagesLessThan()) return { pagesOp: 'under', pages: n(c.pagesLessThan()?.pageCount()) };
   if (c.pagesEqual()) return { pagesOp: 'equal', pages: n(c.pagesEqual()?.pageCount()) };
   if (c.pagesAtLeast()) return { pagesOp: 'atLeast', pages: n(c.pagesAtLeast()?.pageCount()) };
   if (c.pagesAtMost()) return { pagesOp: 'atMost', pages: n(c.pagesAtMost()?.pageCount()) };
-  if (c.pagesOtherThan()) return { pagesOp: 'otherThan', pages: n(c.pagesOtherThan()?.pageCount()) };
+  if (c.pagesNot()) return { pagesOp: 'otherThan', pages: n(c.pagesNot()?.pageCount()) };
 
   const between = c.pagesBetween();
   return { pagesOp: 'between', pages: n(between?.pageCount()), pagesTo: n(between?.andBound()?.pageCount()) };
@@ -107,7 +107,8 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
   // Commands without parameters
   override visitUpdateBookCmd = noParams('update book');
   override visitRemoveBookCmd = noParams('remove book');
-  // The optional page filter becomes the query the server reads: pagesOp names
+  // The optional page filter becomes the query the server reads, unchanged by the
+  // wording ("is more than" is still "over"): pagesOp names
   // the comparison, pages its number, pagesTo the upper bound of a "between".
   override visitListBooksCmd = (ctx: ListBooksCmdContext): ParsedCommand => {
     const comparison = ctx.pagesFilter()?.pageComparison();

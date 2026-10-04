@@ -53,14 +53,14 @@ const RULE_PHRASES: Record<number, Phrase> = {
   // goes there; accepting them inserts nothing.
   [ImperaBookDSLParser.RULE_bookTitle]: { label: 'title', insertText: '' },
   [ImperaBookDSLParser.RULE_keywords]: { label: 'keywords', insertText: '' },
-  [ImperaBookDSLParser.RULE_pagesFilter]: { label: 'with pages', insertText: 'with pages ' },
-  [ImperaBookDSLParser.RULE_pagesOver]: { label: 'over', insertText: 'over ' },
-  [ImperaBookDSLParser.RULE_pagesUnder]: { label: 'under', insertText: 'under ' },
-  [ImperaBookDSLParser.RULE_pagesEqual]: { label: 'equal to', insertText: 'equal to ' },
-  [ImperaBookDSLParser.RULE_pagesOtherThan]: { label: 'other than', insertText: 'other than ' },
+  [ImperaBookDSLParser.RULE_pagesFilter]: { label: 'whose page count is', insertText: 'whose page count is ' },
+  // Each shows its usual wording; the synonyms (greater than, fewer than) are accepted, not offered.
+  [ImperaBookDSLParser.RULE_pagesMoreThan]: { label: 'more than', insertText: 'more than ' },
+  [ImperaBookDSLParser.RULE_pagesLessThan]: { label: 'less than', insertText: 'less than ' },
+  [ImperaBookDSLParser.RULE_pagesAtLeast]: { label: 'at least', insertText: 'at least ' },
+  [ImperaBookDSLParser.RULE_pagesAtMost]: { label: 'at most', insertText: 'at most ' },
   [ImperaBookDSLParser.RULE_pagesBetween]: { label: 'between', insertText: 'between ' },
-  [ImperaBookDSLParser.RULE_orOver]: { label: 'or over', insertText: 'or over' },
-  [ImperaBookDSLParser.RULE_orUnder]: { label: 'or under', insertText: 'or under' },
+  [ImperaBookDSLParser.RULE_pagesNot]: { label: 'not', insertText: 'not ' },
   [ImperaBookDSLParser.RULE_andBound]: { label: 'and', insertText: 'and ' },
   [ImperaBookDSLParser.RULE_pageCount]: { label: 'page count', insertText: '' },
   [ImperaBookDSLParser.RULE_authorName]: { label: 'first and last name', insertText: '' },
@@ -115,26 +115,26 @@ const PARAM_RULES = [
   ImperaBookDSLParser.RULE_summaryParam,
 ];
 
-// Free text and line breaks are typed, not suggested.
 /**
- * The page filter nests two levels below its command, so each level is a pass of
- * its own: how a comparison starts ("over", "between"), then the second half of
- * one already started ("or over" after a number, "and" after "between 100").
+ * The filter nests two levels below its command, so each level is a pass of its
+ * own: how a comparison starts ("at least", "between"), then the second half of
+ * one already started ("and" after "between 100"). A plain number ("is 120") is
+ * named by the page-count pass instead.
  */
 const COMPARISON_RULES = [
-  ImperaBookDSLParser.RULE_pagesOver,
-  ImperaBookDSLParser.RULE_pagesUnder,
-  ImperaBookDSLParser.RULE_pagesEqual,
-  ImperaBookDSLParser.RULE_pagesOtherThan,
+  ImperaBookDSLParser.RULE_pagesMoreThan,
+  ImperaBookDSLParser.RULE_pagesLessThan,
+  ImperaBookDSLParser.RULE_pagesAtLeast,
+  ImperaBookDSLParser.RULE_pagesAtMost,
   ImperaBookDSLParser.RULE_pagesBetween,
+  ImperaBookDSLParser.RULE_pagesNot,
 ];
 
 const COMPARISON_END_RULES = [
-  ImperaBookDSLParser.RULE_orOver,
-  ImperaBookDSLParser.RULE_orUnder,
   ImperaBookDSLParser.RULE_andBound,
 ];
 
+// Free text, numbers and line breaks are typed, not suggested.
 const IGNORED_TOKENS = [
   ImperaBookDSLParser.VALUE,
   ImperaBookDSLParser.NUMBER,

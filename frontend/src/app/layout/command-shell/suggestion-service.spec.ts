@@ -22,28 +22,28 @@ describe('applyCompletion', () => {
       return getDSLCompletions(text, text.length).map(c => c.label);
     }
 
-    it('is offered after list books', () => {
-      expect(labels('list books ')).toEqual(['with pages']);
+    it('is offered after list books, property first', () => {
+      expect(labels('list books ')).toEqual(['whose page count is']);
+      expect(accept('list books wh|', 'whose page count is')).toBe('list books whose page count is |');
     });
 
-    it('offers the ways a comparison starts, and names a page count for "120 or over"', () => {
-      expect(labels('list books with pages ')).toEqual(['over', 'under', 'equal to', 'other than', 'between', 'page count']);
+    it('offers the comparisons in their usual words, and names a page count for "is 120"', () => {
+      expect(labels('list books whose page count is '))
+        .toEqual(['more than', 'less than', 'at least', 'at most', 'between', 'not', 'page count']);
     });
 
-    it('names the page count after a comparison word', () => {
-      expect(labels('list books with pages over ')).toEqual(['page count']);
-    });
-
-    it('offers "or over" and "or under" after a number', () => {
-      expect(labels('list books with pages 120 ').sort()).toEqual(['or over', 'or under']);
+    it('names the page count after a comparison', () => {
+      expect(labels('list books whose page count is at least ')).toEqual(['page count']);
+      expect(labels('list books whose page count is not ')).toEqual(['page count']);
     });
 
     it('offers the upper end of a range', () => {
-      expect(accept('list books with pages between 100 |', 'and')).toBe('list books with pages between 100 and |');
+      expect(accept('list books whose page count is between 100 |', 'and'))
+        .toBe('list books whose page count is between 100 and |');
     });
 
-    it('completes a half-typed comparison word', () => {
-      expect(accept('list books with pages ov|', 'over')).toBe('list books with pages over |');
+    it('completes a half-typed comparison', () => {
+      expect(accept('list books whose page count is at l|', 'at least')).toBe('list books whose page count is at least |');
     });
   });
 
