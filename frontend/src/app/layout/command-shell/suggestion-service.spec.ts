@@ -51,10 +51,13 @@ describe('applyCompletion', () => {
         .toBe('list books whose page count is 120\nwritten by |');
     });
 
-    it('offers the four published phrases beside the other filters', () => {
-      expect(labels('list books ')).toEqual([
-        'whose page count is', 'written by', 'published in', 'published before', 'published after', 'published between',
-      ]);
+    it('offers one chip per filter, published among them', () => {
+      expect(labels('list books ')).toEqual(['whose page count is', 'written by', 'published']);
+    });
+
+    it('offers how a year compares once published is chosen', () => {
+      expect(labels('list books published ')).toEqual(['in', 'before', 'after', 'between']);
+      expect(accept('list books published b|', 'before')).toBe('list books published before |');
     });
 
     it('names the year still to type, and the end of a range', () => {
@@ -63,8 +66,13 @@ describe('applyCompletion', () => {
       expect(labels('add book Dune\n    published in ')).toEqual(['year']);
     });
 
-    it('offers no published phrase once one is used', () => {
+    it('offers published no more once it is used, in any form', () => {
       expect(labels('list books published after 1950')).toEqual(['whose page count is', 'written by']);
+      expect(labels('list books published in 1965\n    written by x')).toEqual(['whose page count is']);
+    });
+
+    it('keeps published in as one chip when adding a book', () => {
+      expect(labels('add book Dune\n    ')).toContain('published in');
     });
 
     it('names the author after written by', () => {

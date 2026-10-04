@@ -46,17 +46,18 @@ listFilter     : pagesFilter
                ;
 
 // published in 1965 / before 1950 / after 1950 / between 1950 and 1960.
-// Each is a whole phrase, so all four can be offered as they are.
-publishedFilter: publishedIn
-               | publishedBefore
-               | publishedAfter
-               | publishedBetween
+// Two steps, like the page filter: "published" is offered beside the other
+// filters, and the four comparisons only once it is chosen.
+publishedFilter: PUBLISHED yearComparison ;
+yearComparison : yearIn
+               | yearBefore
+               | yearAfter
+               | yearBetween
                ;
-publishedIn    : PUBLISHED IN year ;
-publishedBefore: PUBLISHED BEFORE year ;
-publishedAfter : PUBLISHED AFTER year ;
-publishedBetween
-               : PUBLISHED BETWEEN year yearAnd ;
+yearIn         : IN year ;
+yearBefore     : BEFORE year ;
+yearAfter      : AFTER year ;
+yearBetween    : BETWEEN year yearAnd ;
 yearAnd        : AND year ;
 // A rule of its own so the bar can name what goes here ("year") while it is still to type.
 year           : NUMBER ;

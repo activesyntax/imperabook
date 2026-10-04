@@ -10,10 +10,11 @@ import { RemoveBookCmdContext } from "./ImperaBookDSLParser.js";
 import { ListBooksCmdContext } from "./ImperaBookDSLParser.js";
 import { ListFilterContext } from "./ImperaBookDSLParser.js";
 import { PublishedFilterContext } from "./ImperaBookDSLParser.js";
-import { PublishedInContext } from "./ImperaBookDSLParser.js";
-import { PublishedBeforeContext } from "./ImperaBookDSLParser.js";
-import { PublishedAfterContext } from "./ImperaBookDSLParser.js";
-import { PublishedBetweenContext } from "./ImperaBookDSLParser.js";
+import { YearComparisonContext } from "./ImperaBookDSLParser.js";
+import { YearInContext } from "./ImperaBookDSLParser.js";
+import { YearBeforeContext } from "./ImperaBookDSLParser.js";
+import { YearAfterContext } from "./ImperaBookDSLParser.js";
+import { YearBetweenContext } from "./ImperaBookDSLParser.js";
 import { YearAndContext } from "./ImperaBookDSLParser.js";
 import { YearContext } from "./ImperaBookDSLParser.js";
 import { AuthorFilterContext } from "./ImperaBookDSLParser.js";
@@ -141,45 +142,55 @@ export class ImperaBookDSLParserListener implements ParseTreeListener {
      */
     exitPublishedFilter?: (ctx: PublishedFilterContext) => void;
     /**
-     * Enter a parse tree produced by `ImperaBookDSLParser.publishedIn`.
+     * Enter a parse tree produced by `ImperaBookDSLParser.yearComparison`.
      * @param ctx the parse tree
      */
-    enterPublishedIn?: (ctx: PublishedInContext) => void;
+    enterYearComparison?: (ctx: YearComparisonContext) => void;
     /**
-     * Exit a parse tree produced by `ImperaBookDSLParser.publishedIn`.
+     * Exit a parse tree produced by `ImperaBookDSLParser.yearComparison`.
      * @param ctx the parse tree
      */
-    exitPublishedIn?: (ctx: PublishedInContext) => void;
+    exitYearComparison?: (ctx: YearComparisonContext) => void;
     /**
-     * Enter a parse tree produced by `ImperaBookDSLParser.publishedBefore`.
+     * Enter a parse tree produced by `ImperaBookDSLParser.yearIn`.
      * @param ctx the parse tree
      */
-    enterPublishedBefore?: (ctx: PublishedBeforeContext) => void;
+    enterYearIn?: (ctx: YearInContext) => void;
     /**
-     * Exit a parse tree produced by `ImperaBookDSLParser.publishedBefore`.
+     * Exit a parse tree produced by `ImperaBookDSLParser.yearIn`.
      * @param ctx the parse tree
      */
-    exitPublishedBefore?: (ctx: PublishedBeforeContext) => void;
+    exitYearIn?: (ctx: YearInContext) => void;
     /**
-     * Enter a parse tree produced by `ImperaBookDSLParser.publishedAfter`.
+     * Enter a parse tree produced by `ImperaBookDSLParser.yearBefore`.
      * @param ctx the parse tree
      */
-    enterPublishedAfter?: (ctx: PublishedAfterContext) => void;
+    enterYearBefore?: (ctx: YearBeforeContext) => void;
     /**
-     * Exit a parse tree produced by `ImperaBookDSLParser.publishedAfter`.
+     * Exit a parse tree produced by `ImperaBookDSLParser.yearBefore`.
      * @param ctx the parse tree
      */
-    exitPublishedAfter?: (ctx: PublishedAfterContext) => void;
+    exitYearBefore?: (ctx: YearBeforeContext) => void;
     /**
-     * Enter a parse tree produced by `ImperaBookDSLParser.publishedBetween`.
+     * Enter a parse tree produced by `ImperaBookDSLParser.yearAfter`.
      * @param ctx the parse tree
      */
-    enterPublishedBetween?: (ctx: PublishedBetweenContext) => void;
+    enterYearAfter?: (ctx: YearAfterContext) => void;
     /**
-     * Exit a parse tree produced by `ImperaBookDSLParser.publishedBetween`.
+     * Exit a parse tree produced by `ImperaBookDSLParser.yearAfter`.
      * @param ctx the parse tree
      */
-    exitPublishedBetween?: (ctx: PublishedBetweenContext) => void;
+    exitYearAfter?: (ctx: YearAfterContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.yearBetween`.
+     * @param ctx the parse tree
+     */
+    enterYearBetween?: (ctx: YearBetweenContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.yearBetween`.
+     * @param ctx the parse tree
+     */
+    exitYearBetween?: (ctx: YearBetweenContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.yearAnd`.
      * @param ctx the parse tree

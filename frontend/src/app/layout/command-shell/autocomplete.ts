@@ -64,10 +64,11 @@ const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_andBound]: { label: 'and', insertText: 'and ' },
   [ImperaBookDSLParser.RULE_pageCount]: { label: 'page count', insertText: '' },
   [ImperaBookDSLParser.RULE_authorFilter]: { label: 'written by', insertText: 'written by ' },
-  [ImperaBookDSLParser.RULE_publishedIn]: { label: 'published in', insertText: 'published in ' },
-  [ImperaBookDSLParser.RULE_publishedBefore]: { label: 'published before', insertText: 'published before ' },
-  [ImperaBookDSLParser.RULE_publishedAfter]: { label: 'published after', insertText: 'published after ' },
-  [ImperaBookDSLParser.RULE_publishedBetween]: { label: 'published between', insertText: 'published between ' },
+  [ImperaBookDSLParser.RULE_publishedFilter]: { label: 'published', insertText: 'published ' },
+  [ImperaBookDSLParser.RULE_yearIn]: { label: 'in', insertText: 'in ' },
+  [ImperaBookDSLParser.RULE_yearBefore]: { label: 'before', insertText: 'before ' },
+  [ImperaBookDSLParser.RULE_yearAfter]: { label: 'after', insertText: 'after ' },
+  [ImperaBookDSLParser.RULE_yearBetween]: { label: 'between', insertText: 'between ' },
   [ImperaBookDSLParser.RULE_yearAnd]: { label: 'and', insertText: 'and ' },
   [ImperaBookDSLParser.RULE_year]: { label: 'year', insertText: '' },
   [ImperaBookDSLParser.RULE_writerName]: { label: 'author name', insertText: '' },
@@ -114,10 +115,7 @@ const PARAM_RULES = [
   ImperaBookDSLParser.RULE_keywords,
   ImperaBookDSLParser.RULE_pagesFilter,
   ImperaBookDSLParser.RULE_authorFilter,
-  ImperaBookDSLParser.RULE_publishedIn,
-  ImperaBookDSLParser.RULE_publishedBefore,
-  ImperaBookDSLParser.RULE_publishedAfter,
-  ImperaBookDSLParser.RULE_publishedBetween,
+  ImperaBookDSLParser.RULE_publishedFilter,
   ImperaBookDSLParser.RULE_bookTitle,
   ImperaBookDSLParser.RULE_authorName,
   ImperaBookDSLParser.RULE_authorParam,
@@ -129,10 +127,10 @@ const PARAM_RULES = [
 ];
 
 /**
- * The filter nests two levels below its command, so each level is a pass of its
- * own: how a comparison starts ("at least", "between"), then the second half of
- * one already started ("and" after "between 100"). A plain number ("is 120") is
- * named by the page-count pass instead.
+ * The list filters nest two levels below their command, so each level is a pass
+ * of its own: how a comparison starts ("at least", "before", "between"), then
+ * the second half of one already started ("and" after "between 100"). A plain
+ * number ("is 120") is named by the page-count pass instead.
  */
 const COMPARISON_RULES = [
   ImperaBookDSLParser.RULE_pagesMoreThan,
@@ -141,6 +139,10 @@ const COMPARISON_RULES = [
   ImperaBookDSLParser.RULE_pagesAtMost,
   ImperaBookDSLParser.RULE_pagesBetween,
   ImperaBookDSLParser.RULE_pagesNot,
+  ImperaBookDSLParser.RULE_yearIn,
+  ImperaBookDSLParser.RULE_yearBefore,
+  ImperaBookDSLParser.RULE_yearAfter,
+  ImperaBookDSLParser.RULE_yearBetween,
 ];
 
 const COMPARISON_END_RULES = [
@@ -190,16 +192,8 @@ export function canContinueOnNewLine(text: string): boolean {
  * another line of the command is not offered again. The caret's own line does
  * not count: that is where a parameter is being typed or completed.
  */
-/** Phrases that set the same thing: once one is used, none is offered again. */
-const ALTERNATIVES: readonly (readonly string[])[] = [
-  ['published in', 'published before', 'published after', 'published between'],
-];
-
 function withoutUsedParams(items: CompletionItem[], input: string, caretOffset: number): CompletionItem[] {
   const used = usedParams(input, lineOf(input, caretOffset));
-  for (const group of ALTERNATIVES) {
-    if (group.some(label => used.has(label))) group.forEach(label => used.add(label));
-  }
   return used.size === 0 ? items : items.filter(item => !used.has(item.label));
 }
 
@@ -212,9 +206,8 @@ const PARAM_OPENERS: ReadonlyArray<readonly [label: string, first: number, secon
   ['with isbn', ImperaBookDSLLexer.WITH, ImperaBookDSLLexer.ISBN],
   ['with summary', ImperaBookDSLLexer.WITH, ImperaBookDSLLexer.SUMMARY],
   ['written by', ImperaBookDSLLexer.WRITTEN, ImperaBookDSLLexer.BY],
-  ['published before', ImperaBookDSLLexer.PUBLISHED, ImperaBookDSLLexer.BEFORE],
-  ['published after', ImperaBookDSLLexer.PUBLISHED, ImperaBookDSLLexer.AFTER],
-  ['published between', ImperaBookDSLLexer.PUBLISHED, ImperaBookDSLLexer.BETWEEN],
+  // The list filter's one chip; any of its forms uses it up.
+  ['published', ImperaBookDSLLexer.PUBLISHED],
   ['whose page count is', ImperaBookDSLLexer.WHOSE],
 ];
 

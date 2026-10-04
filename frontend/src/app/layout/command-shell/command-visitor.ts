@@ -45,11 +45,12 @@ function yearText(year: YearContext | null | undefined): string {
 }
 
 function yearFilter(f: PublishedFilterContext): Record<string, string> {
-  if (f.publishedIn()) return { publishedOp: 'in', published: yearText(f.publishedIn()?.year()) };
-  if (f.publishedBefore()) return { publishedOp: 'before', published: yearText(f.publishedBefore()?.year()) };
-  if (f.publishedAfter()) return { publishedOp: 'after', published: yearText(f.publishedAfter()?.year()) };
+  const c = f.yearComparison();
+  if (c?.yearIn()) return { publishedOp: 'in', published: yearText(c.yearIn()?.year()) };
+  if (c?.yearBefore()) return { publishedOp: 'before', published: yearText(c.yearBefore()?.year()) };
+  if (c?.yearAfter()) return { publishedOp: 'after', published: yearText(c.yearAfter()?.year()) };
 
-  const between = f.publishedBetween();
+  const between = c?.yearBetween();
   return {
     publishedOp: 'between',
     published: yearText(between?.year()),
