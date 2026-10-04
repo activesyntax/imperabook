@@ -17,6 +17,7 @@ public sealed record BookListItem
     public required IReadOnlyList<BookAuthor> Authors { get; init; }
     public string? CoverHash { get; init; }
     public int? Pages { get; init; }
+    public int? Published { get; init; }
 }
 
 public sealed record BookDetail
@@ -56,14 +57,40 @@ public sealed record PageFilter(PageComparison Comparison, int Pages, int UpTo =
         new(PageComparison.Between, Math.Min(one, other), Math.Max(one, other));
 }
 
+public enum YearComparison
+{
+    In,
+    Before,
+    After,
+    Between,
+}
+
+/// <summary>
+/// Books by publication year: "before 1950" and "after 1950" leave 1950 out, "between 1950 and
+/// 1960" keeps both ends. A book whose year is unknown matches none of them.
+/// </summary>
+public sealed record YearFilter(YearComparison Comparison, int Year, int UpTo = 0)
+{
+    /// <summary>A range given either way round is the same range.</summary>
+    public static YearFilter Between(int one, int other) =>
+        new(YearComparison.Between, Math.Min(one, other), Math.Max(one, other));
+}
+
+/// <summary>What a book list is narrowed to; every filter given must hold, none means all books.</summary>
+/// <param name="Pages">By page count.</param>
+/// <param name="Author">
+/// By an author whose full name contains this, ignoring case and accents, as "by author" matches.
+/// </param>
+/// <param name="Published">By publication year.</param>
+public sealed record BookFilter(PageFilter? Pages = null, string? Author = null, YearFilter? Published = null)
+{
+    public bool IsEmpty => Pages is null && Author is null && Published is null;
+}
+
 public interface IBookQueries
 {
-    /// <param name="pages">Only books whose page count matches; none means any.</param>
-    /// <param name="author">
-    /// Only books with an author whose full name contains this, ignoring case and accents, as
-    /// "by author" matches; none means any.
-    /// </param>
-    Task<BookListItem[]> List(PageFilter? pages, string? author, CancellationToken ct);
+    /// <summary>The current user's books matching every filter given in <paramref name="filter"/>.</summary>
+    Task<BookListItem[]> List(BookFilter filter, CancellationToken ct);
 
     Task<Maybe<BookDetail>> Get(Guid id, CancellationToken ct);
 }

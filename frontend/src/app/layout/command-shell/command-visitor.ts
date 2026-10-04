@@ -5,6 +5,8 @@ import {
   AddBookCmdContext,
   FindCmdContext,
   ListBooksCmdContext,
+  PublishedFilterContext,
+  YearContext,
   PageComparisonContext,
   PageCountContext,
   CommandContext,
@@ -37,6 +39,23 @@ export interface ParsedCommand {
 }
 
 const noParams = (command: CommandName) => (): ParsedCommand => ({ command, params: {} });
+
+function yearText(year: YearContext | null | undefined): string {
+  return year?.NUMBER()?.getText() ?? '';
+}
+
+function yearFilter(f: PublishedFilterContext): Record<string, string> {
+  if (f.publishedIn()) return { publishedOp: 'in', published: yearText(f.publishedIn()?.year()) };
+  if (f.publishedBefore()) return { publishedOp: 'before', published: yearText(f.publishedBefore()?.year()) };
+  if (f.publishedAfter()) return { publishedOp: 'after', published: yearText(f.publishedAfter()?.year()) };
+
+  const between = f.publishedBetween();
+  return {
+    publishedOp: 'between',
+    published: yearText(between?.year()),
+    publishedTo: yearText(between?.yearAnd()?.year()),
+  };
+}
 
 function pageFilter(c: PageComparisonContext): Record<string, string> {
   const n = (count: PageCountContext | null | undefined) => count?.NUMBER()?.getText() ?? '';
@@ -78,15 +97,15 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
     };
 
     for (const p of ctx.bookDetailParam()) {
-      const [name, value] =
-        p.authorParam() ? ['author', p.authorParam()?.value()]
-        : p.subtitleParam() ? ['subtitle', p.subtitleParam()?.value()]
-        : p.languageParam() ? ['language', p.languageParam()?.value()]
-        : p.publicationYearParam() ? ['published', p.publicationYearParam()?.value()]
-        : p.isbnParam() ? ['isbn', p.isbnParam()?.value()]
-        : ['summary', p.summaryParam()?.value()];
+      const [name, text] =
+        p.authorParam() ? ['author', this.valueText(p.authorParam()?.value())]
+        : p.subtitleParam() ? ['subtitle', this.valueText(p.subtitleParam()?.value())]
+        : p.languageParam() ? ['language', this.valueText(p.languageParam()?.value())]
+        : p.publicationYearParam() ? ['published', yearText(p.publicationYearParam()?.year())]
+        : p.isbnParam() ? ['isbn', this.valueText(p.isbnParam()?.value())]
+        : ['summary', this.valueText(p.summaryParam()?.value())];
 
-      if (!(name in params)) params[name] = this.valueText(value);
+      if (!(name in params)) params[name] = text;
     }
 
     return { command: 'add book', params };
@@ -110,7 +129,8 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
   // The optional page filter becomes the query the server reads, unchanged by the
   // wording ("is more than" is still "over"): pagesOp names
   // the comparison, pages its number, pagesTo the upper bound of a "between".
-  // "written by" becomes author, matched by the server against the books' authors.
+  // "written by" becomes author, matched by the server against the books' authors;
+  // "published …" becomes publishedOp, published and (for a range) publishedTo.
   // As with add book, the first of a repeated filter wins.
   override visitListBooksCmd = (ctx: ListBooksCmdContext): ParsedCommand => {
     let params: Record<string, string> = {};
@@ -121,6 +141,9 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
 
       const writer = filter.authorFilter()?.writerName();
       if (writer && !('author' in params)) params = { ...params, author: this.text(writer.VALUE()?.getText()) };
+
+      const published = filter.publishedFilter();
+      if (published && !('publishedOp' in params)) params = { ...params, ...yearFilter(published) };
     }
 
     return { command: 'list books', params };

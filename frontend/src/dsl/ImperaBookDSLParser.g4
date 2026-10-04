@@ -42,7 +42,24 @@ listBooksCmd   : LIST BOOKS listFilter? (NL+ listFilter)* ;
 
 listFilter     : pagesFilter
                | authorFilter
+               | publishedFilter
                ;
+
+// published in 1965 / before 1950 / after 1950 / between 1950 and 1960.
+// Each is a whole phrase, so all four can be offered as they are.
+publishedFilter: publishedIn
+               | publishedBefore
+               | publishedAfter
+               | publishedBetween
+               ;
+publishedIn    : PUBLISHED IN year ;
+publishedBefore: PUBLISHED BEFORE year ;
+publishedAfter : PUBLISHED AFTER year ;
+publishedBetween
+               : PUBLISHED BETWEEN year yearAnd ;
+yearAnd        : AND year ;
+// A rule of its own so the bar can name what goes here ("year") while it is still to type.
+year           : NUMBER ;
 
 // The rest of the line, matched against the book's authors: written by herbert
 authorFilter   : WRITTEN BY writerName ;
@@ -105,7 +122,7 @@ authorParam    : BY AUTHOR value ;
 subtitleParam  : SUBTITLED value ;
 languageParam  : IN LANGUAGE value ;
 publicationYearParam
-               : PUBLISHED IN value ;
+               : PUBLISHED IN year ;
 isbnParam      : WITH ISBN value ;
 summaryParam   : WITH SUMMARY value ;
 

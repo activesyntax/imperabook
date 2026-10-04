@@ -41,38 +41,51 @@ public static class BookEndpoints
     }
 
     // "list books", optionally filtered: "whose page count is at least 120" arrives as pagesOp,
-    // pages and (for a range) pagesTo; "written by herbert" as author.
+    // pages and (for a range) pagesTo; "written by herbert" as author; "published before 1950"
+    // as publishedOp, published and (for a range) publishedTo.
     private static async Task<IResult> ListBooks(
         string? pagesOp,
         string? pages,
         string? pagesTo,
         string? author,
+        string? publishedOp,
+        string? published,
+        string? publishedTo,
         IBookQueries books,
         CancellationToken ct
     )
     {
-        var filter = ParsePageFilter(pagesOp, pages, pagesTo);
-        if (filter.IsFailure)
-            return TypedResults.Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "Invalid page filter",
-                detail: filter.Error,
-                extensions: new Dictionary<string, object?> { ["code"] = "invalid_page_filter" }
-            );
+        var pageFilter = ParsePageFilter(pagesOp, pages, pagesTo);
+        if (pageFilter.IsFailure)
+            return InvalidFilter("Invalid page filter", pageFilter.Error, "invalid_page_filter");
 
-        var writer = string.IsNullOrWhiteSpace(author) ? null : author.Trim();
-        var bookList = await books.List(filter.Value, writer, ct);
+        var yearFilter = ParseYearFilter(publishedOp, published, publishedTo);
+        if (yearFilter.IsFailure)
+            return InvalidFilter("Invalid publication filter", yearFilter.Error, "invalid_published_filter");
+
+        var filter = new BookFilter(
+            pageFilter.Value,
+            string.IsNullOrWhiteSpace(author) ? null : author.Trim(),
+            yearFilter.Value
+        );
+        var bookList = await books.List(filter, ct);
         var page = new PageInfo(1, 1, bookList.Length, "books");
 
-        if (filter.Value is null && writer is null)
+        if (filter.IsEmpty)
             return TypedResults.Ok(
                 bookList.ToCommandResult("No books yet. Add one to start your library.", page)
             );
 
-        // The filters said back as one phrase: "written by herbert whose page count is at least 120".
+        // The filters said back as one phrase, in reading order:
+        // "written by herbert published before 1970 whose page count is at least 300".
         var which = string.Join(
             ' ',
-            new[] { writer is null ? null : $"written by {writer}", filter.Value?.Describe() }.OfType<string>()
+            new[]
+            {
+                filter.Author is null ? null : $"written by {filter.Author}",
+                filter.Published?.Describe(),
+                filter.Pages?.Describe(),
+            }.OfType<string>()
         );
 
         return TypedResults.Ok(
@@ -80,9 +93,52 @@ public static class BookEndpoints
                 $"No books {which}.",
                 page,
                 $"Books {which}",
-                showPages: filter.Value is not null
+                showPages: filter.Pages is not null,
+                showYear: filter.Published is not null
             )
         );
+    }
+
+    private static ProblemHttpResult InvalidFilter(string title, string detail, string code) =>
+        TypedResults.Problem(
+            statusCode: StatusCodes.Status400BadRequest,
+            title: title,
+            detail: detail,
+            extensions: new Dictionary<string, object?> { ["code"] = code }
+        );
+
+    private static readonly Dictionary<string, YearComparison> YearComparisons = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["in"] = YearComparison.In,
+        ["before"] = YearComparison.Before,
+        ["after"] = YearComparison.After,
+        ["between"] = YearComparison.Between,
+    };
+
+    /// <summary>No publishedOp is no filter; one that cannot be read is an error, not "all books".</summary>
+    private static CSharpFunctionalExtensions.Result<YearFilter?, string> ParseYearFilter(
+        string? op,
+        string? year,
+        string? yearTo
+    )
+    {
+        if (string.IsNullOrWhiteSpace(op))
+            return CSharpFunctionalExtensions.Result.Success<YearFilter?, string>(null);
+
+        if (!YearComparisons.TryGetValue(op, out var comparison))
+            return $"Unknown publication comparison \"{op}\".";
+
+        // A sign is allowed: the catalog keeps years before the common era.
+        if (!int.TryParse(year, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var y))
+            return "The year must be a whole number.";
+
+        if (comparison != YearComparison.Between)
+            return new YearFilter(comparison, y);
+
+        if (!int.TryParse(yearTo, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var upTo))
+            return "A range needs a year at both ends.";
+
+        return YearFilter.Between(y, upTo);
     }
 
     private static readonly Dictionary<string, PageComparison> Comparisons = new(StringComparer.OrdinalIgnoreCase)

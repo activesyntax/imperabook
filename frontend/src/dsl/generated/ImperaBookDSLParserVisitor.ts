@@ -9,6 +9,13 @@ import { UpdateBookCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveBookCmdContext } from "./ImperaBookDSLParser.js";
 import { ListBooksCmdContext } from "./ImperaBookDSLParser.js";
 import { ListFilterContext } from "./ImperaBookDSLParser.js";
+import { PublishedFilterContext } from "./ImperaBookDSLParser.js";
+import { PublishedInContext } from "./ImperaBookDSLParser.js";
+import { PublishedBeforeContext } from "./ImperaBookDSLParser.js";
+import { PublishedAfterContext } from "./ImperaBookDSLParser.js";
+import { PublishedBetweenContext } from "./ImperaBookDSLParser.js";
+import { YearAndContext } from "./ImperaBookDSLParser.js";
+import { YearContext } from "./ImperaBookDSLParser.js";
 import { AuthorFilterContext } from "./ImperaBookDSLParser.js";
 import { WriterNameContext } from "./ImperaBookDSLParser.js";
 import { PagesFilterContext } from "./ImperaBookDSLParser.js";
@@ -98,6 +105,48 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      * @return the visitor result
      */
     visitListFilter?: (ctx: ListFilterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.publishedFilter`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPublishedFilter?: (ctx: PublishedFilterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.publishedIn`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPublishedIn?: (ctx: PublishedInContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.publishedBefore`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPublishedBefore?: (ctx: PublishedBeforeContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.publishedAfter`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPublishedAfter?: (ctx: PublishedAfterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.publishedBetween`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPublishedBetween?: (ctx: PublishedBetweenContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.yearAnd`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitYearAnd?: (ctx: YearAndContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.year`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitYear?: (ctx: YearContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.authorFilter`.
      * @param ctx the parse tree

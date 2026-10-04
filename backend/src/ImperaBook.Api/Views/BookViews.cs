@@ -11,20 +11,36 @@ public static class BookViews
     /// Puts each book's page count on its item — for a list filtered by pages, where the count
     /// is what the list is about.
     /// </param>
+    /// <param name="showYear">The same for the publication year, for a list filtered by it.</param>
     public static CommandResult ToCommandResult(
         this IReadOnlyList<BookListItem> books,
         string emptyMessage,
         PageInfo? page = null,
         string heading = "All books",
-        bool showPages = false
+        bool showPages = false,
+        bool showYear = false
     ) =>
         new(
             new ViewNode[]
             {
                 new HeadingView(heading, page),
-                new ItemCollectionView(books.Select(b => ToItem(b, showPages)).ToArray(), emptyMessage),
+                new ItemCollectionView(
+                    books.Select(b => ToItem(b, showPages, showYear)).ToArray(),
+                    emptyMessage
+                ),
             }
         );
+
+    /// <summary>A year filter as typed, for headings: "published before 1950".</summary>
+    public static string Describe(this YearFilter f) =>
+        f.Comparison switch
+        {
+            YearComparison.In => $"published in {f.Year}",
+            YearComparison.Before => $"published before {f.Year}",
+            YearComparison.After => $"published after {f.Year}",
+            YearComparison.Between => $"published between {f.Year} and {f.UpTo}",
+            _ => throw new InvalidOperationException($"Unhandled year comparison: {f.Comparison}"),
+        };
 
     /// <summary>
     /// A page filter as the clause it was typed as, for headings: "whose page count is at least
@@ -74,9 +90,9 @@ public static class BookViews
         return new CommandResult(nodes);
     }
 
-    internal static ItemView ToItem(BookListItem b) => ToItem(b, showPages: false);
+    internal static ItemView ToItem(BookListItem b) => ToItem(b, showPages: false, showYear: false);
 
-    private static ItemView ToItem(BookListItem b, bool showPages)
+    private static ItemView ToItem(BookListItem b, bool showPages, bool showYear)
     {
         var properties = new List<ItemProperty>
         {
@@ -87,6 +103,9 @@ public static class BookViews
                 PropertyRole.Secondary
             ),
         };
+
+        if (showYear && b.Published is { } year)
+            properties.Add(new("Published", $"published {year}", PropertyRole.Meta));
 
         if (showPages && b.Pages is { } pages)
             properties.Add(new("Pages", $"{pages} {"page".Plural(pages)}", PropertyRole.Meta));

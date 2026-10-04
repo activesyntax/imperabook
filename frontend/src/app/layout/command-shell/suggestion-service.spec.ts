@@ -22,8 +22,8 @@ describe('applyCompletion', () => {
       return getDSLCompletions(text, text.length).map(c => c.label);
     }
 
-    it('is offered after list books, property first, beside written by', () => {
-      expect(labels('list books ')).toEqual(['whose page count is', 'written by']);
+    it('is offered after list books, property first, beside the other filters', () => {
+      expect(labels('list books ')).toContain('whose page count is');
       expect(accept('list books wh|', 'whose page count is')).toBe('list books whose page count is |');
     });
 
@@ -42,11 +42,29 @@ describe('applyCompletion', () => {
         .toBe('list books whose page count is between 100 and |');
     });
 
-    it('offers the other filter from the end of a filter line, not the one used', () => {
-      expect(labels('list books whose page count is 120')).toEqual(['written by']);
-      expect(labels('list books written by herbert')).toEqual(['whose page count is']);
+    it('offers the other filters from the end of a filter line, not the one used', () => {
+      expect(labels('list books whose page count is 120')).not.toContain('whose page count is');
+      expect(labels('list books whose page count is 120')).toContain('written by');
+      expect(labels('list books written by herbert')).not.toContain('written by');
+      expect(labels('list books written by herbert')).toContain('whose page count is');
       expect(accept('list books whose page count is 120|', 'written by'))
         .toBe('list books whose page count is 120\nwritten by |');
+    });
+
+    it('offers the four published phrases beside the other filters', () => {
+      expect(labels('list books ')).toEqual([
+        'whose page count is', 'written by', 'published in', 'published before', 'published after', 'published between',
+      ]);
+    });
+
+    it('names the year still to type, and the end of a range', () => {
+      expect(labels('list books published before ')).toEqual(['year']);
+      expect(labels('list books published between 1950 ')).toEqual(['and']);
+      expect(labels('add book Dune\n    published in ')).toEqual(['year']);
+    });
+
+    it('offers no published phrase once one is used', () => {
+      expect(labels('list books published after 1950')).toEqual(['whose page count is', 'written by']);
     });
 
     it('names the author after written by', () => {

@@ -134,6 +134,39 @@ describe('CommandVisitor', () => {
 
   });
 
+  describe('list books published', () => {
+    const cases: [string, Record<string, string>][] = [
+      ['in 1965', { publishedOp: 'in', published: '1965' }],
+      ['before 1950', { publishedOp: 'before', published: '1950' }],
+      ['after 1950', { publishedOp: 'after', published: '1950' }],
+      ['between 1950 and 1960', { publishedOp: 'between', published: '1950', publishedTo: '1960' }],
+    ];
+
+    for (const [filter, params] of cases) {
+      it(`reads "published ${filter}"`, () => {
+        expect(parse(`list books published ${filter}`)).toEqual({ command: 'list books', params });
+      });
+    }
+
+    it('combines with the other filters, one per line', () => {
+      expect(parse('list books published before 1950\n    written by herbert\n    whose page count is 300')?.params).toEqual({
+        publishedOp: 'before', published: '1950', author: 'herbert', pagesOp: 'equal', pages: '300',
+      });
+    });
+
+    it('needs a year, and digits only', () => {
+      for (const text of ['list books published', 'list books published before', 'list books published in 19x',
+        'list books published between 1950', 'list books published between 1950 and']) {
+        expect(checkCommand(text).valid).toBe(false);
+      }
+    });
+  });
+
+  it('takes a year after "published in" when adding a book, too', () => {
+    expect(parse('add book Dune\n    published in 1965')?.params).toEqual({ title: 'Dune', published: '1965' });
+    expect(checkCommand('add book Dune\n    published in nineteen').valid).toBe(false);
+  });
+
   describe('list books written by', () => {
     it('takes the rest of the line as the author', () => {
       expect(parse('list books written by frank herbert')).toEqual({

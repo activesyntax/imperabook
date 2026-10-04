@@ -67,8 +67,13 @@ IN_NL          : '\r'? '\n' -> type(NL), popMode ;
 IN_WS          : [ \t]+ -> skip ;
 
 // --- published in … ----------------------------------------------------------
+// A year, not free text: "published in 1965" adding a book, and the list
+// filters "published before/after 1950", "published between 1950 and 1960".
 mode AFTER_PUBLISHED;
-PUBLISHED_IN   : 'in' -> type(IN), mode(VALUE_MODE) ;
+PUBLISHED_IN   : 'in' -> type(IN), mode(YEAR_MODE) ;
+BEFORE         : 'before' -> mode(YEAR_MODE) ;
+AFTER          : 'after' -> mode(YEAR_MODE) ;
+PUBLISHED_BETWEEN : 'between' -> type(BETWEEN), mode(YEAR_MODE) ;
 PUBLISHED_NL   : '\r'? '\n' -> type(NL), popMode ;
 PUBLISHED_WS   : [ \t]+ -> skip ;
 
@@ -104,6 +109,12 @@ NOT            : 'not' ;
 NUMBER         : [0-9]+ ;
 COMPARISON_NL  : '\r'? '\n' -> type(NL), popMode ;
 COMPARISON_WS  : [ \t]+ -> skip ;
+
+mode YEAR_MODE;
+YEAR_NUMBER    : [0-9]+ -> type(NUMBER) ;
+YEAR_AND       : 'and' -> type(AND) ;
+YEAR_NL        : '\r'? '\n' -> type(NL), popMode ;
+YEAR_WS        : [ \t]+ -> skip ;
 
 // --- The rest of the line, verbatim ------------------------------------------
 // Leading blanks are skipped; trailing ones are kept and trimmed by the visitor.

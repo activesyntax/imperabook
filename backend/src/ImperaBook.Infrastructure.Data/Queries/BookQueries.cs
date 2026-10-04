@@ -8,12 +8,26 @@ namespace ImperaBook.Infrastructure.Data.Queries;
 
 public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBookQueries
 {
-    public Task<BookListItem[]> List(PageFilter? pages, string? author, CancellationToken ct) =>
-        WrittenBy(WithPages(Owned(), pages), author)
+    public Task<BookListItem[]> List(BookFilter filter, CancellationToken ct) =>
+        PublishedIn(WrittenBy(WithPages(Owned(), filter.Pages), filter.Author), filter.Published)
             .OrderBy(b => b.Title)
             .ThenBy(b => b.Id)
             .Select(ToListItem)
             .ToArrayAsync(ct);
+
+    // Unknown years drop out: a comparison with null is false in SQL.
+    private static IQueryable<BookEntity> PublishedIn(IQueryable<BookEntity> books, YearFilter? f) =>
+        f switch
+        {
+            null => books,
+            { Comparison: YearComparison.In } => books.Where(b => b.PublishedYear == f.Year),
+            { Comparison: YearComparison.Before } => books.Where(b => b.PublishedYear < f.Year),
+            { Comparison: YearComparison.After } => books.Where(b => b.PublishedYear > f.Year),
+            { Comparison: YearComparison.Between } => books.Where(b =>
+                b.PublishedYear >= f.Year && b.PublishedYear <= f.UpTo
+            ),
+            _ => throw new InvalidOperationException($"Unhandled year comparison: {f.Comparison}"),
+        };
 
     private static IQueryable<BookEntity> WrittenBy(IQueryable<BookEntity> books, string? author)
     {
@@ -75,6 +89,7 @@ public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBo
                 .ToList(),
             CoverHash = b.CoverHash,
             Pages = b.PageCount,
+            Published = b.PublishedYear,
         };
 
     public async Task<Maybe<BookDetail>> Get(Guid id, CancellationToken ct)

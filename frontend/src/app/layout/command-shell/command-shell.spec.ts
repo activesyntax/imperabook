@@ -304,12 +304,12 @@ describe('CommandShell', () => {
     });
 
     it('runs a list at once when every filter is there', async () => {
-      press(type('list books whose page count is 120\n    written by herbert'), 'Enter');
+      press(type('list books whose page count is 120\n    written by herbert\n    published after 1950'), 'Enter');
       await fixture.whenStable();
 
       expect(runner.run).toHaveBeenCalledWith({
         command: 'list books',
-        params: { pagesOp: 'equal', pages: '120', author: 'herbert' },
+        params: { pagesOp: 'equal', pages: '120', author: 'herbert', publishedOp: 'after', published: '1950' },
       });
     });
 
