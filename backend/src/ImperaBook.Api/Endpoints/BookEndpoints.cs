@@ -40,12 +40,13 @@ public static class BookEndpoints
         return app;
     }
 
-    // "list books", optionally "whose page count is at least 120" and the like: the command bar sends the
-    // comparison as pagesOp, its number as pages, and a range's upper end as pagesTo.
+    // "list books", optionally filtered: "whose page count is at least 120" arrives as pagesOp,
+    // pages and (for a range) pagesTo; "written by herbert" as author.
     private static async Task<IResult> ListBooks(
         string? pagesOp,
         string? pages,
         string? pagesTo,
+        string? author,
         IBookQueries books,
         CancellationToken ct
     )
@@ -59,18 +60,28 @@ public static class BookEndpoints
                 extensions: new Dictionary<string, object?> { ["code"] = "invalid_page_filter" }
             );
 
-        var bookList = await books.List(filter.Value, ct);
+        var writer = string.IsNullOrWhiteSpace(author) ? null : author.Trim();
+        var bookList = await books.List(filter.Value, writer, ct);
         var page = new PageInfo(1, 1, bookList.Length, "books");
 
+        if (filter.Value is null && writer is null)
+            return TypedResults.Ok(
+                bookList.ToCommandResult("No books yet. Add one to start your library.", page)
+            );
+
+        // The filters said back as one phrase: "written by herbert whose page count is at least 120".
+        var which = string.Join(
+            ' ',
+            new[] { writer is null ? null : $"written by {writer}", filter.Value?.Describe() }.OfType<string>()
+        );
+
         return TypedResults.Ok(
-            filter.Value is { } f
-                ? bookList.ToCommandResult(
-                    $"No books {f.Describe()}.",
-                    page,
-                    $"Books {f.Describe()}",
-                    showPages: true
-                )
-                : bookList.ToCommandResult("No books yet. Add one to start your library.", page)
+            bookList.ToCommandResult(
+                $"No books {which}.",
+                page,
+                $"Books {which}",
+                showPages: filter.Value is not null
+            )
         );
     }
 

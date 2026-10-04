@@ -22,8 +22,8 @@ describe('applyCompletion', () => {
       return getDSLCompletions(text, text.length).map(c => c.label);
     }
 
-    it('is offered after list books, property first', () => {
-      expect(labels('list books ')).toEqual(['whose page count is']);
+    it('is offered after list books, property first, beside written by', () => {
+      expect(labels('list books ')).toEqual(['whose page count is', 'written by']);
       expect(accept('list books wh|', 'whose page count is')).toBe('list books whose page count is |');
     });
 
@@ -40,6 +40,17 @@ describe('applyCompletion', () => {
     it('offers the upper end of a range', () => {
       expect(accept('list books whose page count is between 100 |', 'and'))
         .toBe('list books whose page count is between 100 and |');
+    });
+
+    it('offers the other filter from the end of a filter line, not the one used', () => {
+      expect(labels('list books whose page count is 120')).toEqual(['written by']);
+      expect(labels('list books written by herbert')).toEqual(['whose page count is']);
+      expect(accept('list books whose page count is 120|', 'written by'))
+        .toBe('list books whose page count is 120\nwritten by |');
+    });
+
+    it('names the author after written by', () => {
+      expect(labels('list books written by ')).toEqual(['author name']);
     });
 
     it('completes a half-typed comparison', () => {
@@ -162,6 +173,11 @@ describe('authorValueAt', () => {
 
   it('finds the name on a "by author" line', () => {
     expect(at('add book Dune\nby author her|')).toEqual({ start: 24, end: 27, text: 'her' });
+  });
+
+  it('finds the name after "written by", on the list line or its own', () => {
+    expect(at('list books written by her|')).toEqual({ start: 22, end: 25, text: 'her' });
+    expect(at('list books\n    written by her|')).toEqual({ start: 26, end: 29, text: 'her' });
   });
 
   it('is nothing after "add author", which names a new author', () => {

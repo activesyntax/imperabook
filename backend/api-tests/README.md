@@ -50,6 +50,7 @@ hurl --variables-file vars.env --variable host=https://api.example.com --test *.
 | `add-author-errors.hurl`    | `POST /api/authors` same full name twice → 409 with the existing author |
 | `get-author.hurl`           | `GET /api/authors/{id}` detail with the author's books; list items link via `open` |
 | `list-books-pages.hurl`      | `GET /api/books` page filter ("whose page count is …"): more/less than, is, at least/most, not, between; bad filter → 400 |
+| `list-books-written-by.hurl` | `GET /api/books?author=` ("written by"): part of a name, any case, no accents; with the page filter |
 | `search.hurl`                | `GET /api/search?q=` (find): title, part of a word, stemming, author name, all keywords |
 | `get-book.hurl`             | `GET /api/books/{id}` detail, list items link to it via `open` |
 | `public/about-help-public.hurl` | `GET /api/about`, `/api/help` without a session → 200 |

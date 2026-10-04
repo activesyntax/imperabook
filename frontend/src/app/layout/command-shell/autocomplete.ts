@@ -63,6 +63,8 @@ const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_pagesNot]: { label: 'not', insertText: 'not ' },
   [ImperaBookDSLParser.RULE_andBound]: { label: 'and', insertText: 'and ' },
   [ImperaBookDSLParser.RULE_pageCount]: { label: 'page count', insertText: '' },
+  [ImperaBookDSLParser.RULE_authorFilter]: { label: 'written by', insertText: 'written by ' },
+  [ImperaBookDSLParser.RULE_writerName]: { label: 'author name', insertText: '' },
   [ImperaBookDSLParser.RULE_authorName]: { label: 'first and last name', insertText: '' },
   [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author ' },
   [ImperaBookDSLParser.RULE_subtitleParam]: { label: 'subtitled', insertText: 'subtitled ' },
@@ -105,6 +107,7 @@ const COMMAND_RULES = [
 const PARAM_RULES = [
   ImperaBookDSLParser.RULE_keywords,
   ImperaBookDSLParser.RULE_pagesFilter,
+  ImperaBookDSLParser.RULE_authorFilter,
   ImperaBookDSLParser.RULE_bookTitle,
   ImperaBookDSLParser.RULE_authorName,
   ImperaBookDSLParser.RULE_authorParam,
@@ -189,24 +192,32 @@ const PARAM_OPENERS: ReadonlyArray<readonly [label: string, first: number, secon
   ['published in', ImperaBookDSLLexer.PUBLISHED, ImperaBookDSLLexer.IN],
   ['with isbn', ImperaBookDSLLexer.WITH, ImperaBookDSLLexer.ISBN],
   ['with summary', ImperaBookDSLLexer.WITH, ImperaBookDSLLexer.SUMMARY],
+  ['written by', ImperaBookDSLLexer.WRITTEN, ImperaBookDSLLexer.BY],
+  ['whose page count is', ImperaBookDSLLexer.WHOSE],
 ];
 
-/** Labels of the parameters opening lines other than exceptLine (1-based). */
+/**
+ * Labels of the parameters on lines other than exceptLine (1-based). Looked for
+ * anywhere on a line, not just at its start: a list's first filter shares the
+ * command's line. A keyword can only be structure — inside a value, words are
+ * one VALUE token — so a match is always a parameter.
+ */
 function usedParams(input: string, exceptLine: number): Set<string> {
   const lexer = new ImperaBookDSLLexer(CharStream.fromString(input));
   lexer.removeErrorListeners();
 
-  const firstTwoByLine = new Map<number, number[]>();
+  const typesByLine = new Map<number, number[]>();
   for (const token of lexer.getAllTokens()) {
     if (token.type === ImperaBookDSLLexer.NL || token.line === exceptLine) continue;
-    const types = firstTwoByLine.get(token.line) ?? [];
-    if (types.length < 2) firstTwoByLine.set(token.line, [...types, token.type]);
+    typesByLine.set(token.line, [...(typesByLine.get(token.line) ?? []), token.type]);
   }
 
   const used = new Set<string>();
-  for (const [first, second] of firstTwoByLine.values()) {
-    const opener = PARAM_OPENERS.find(([, a, b]) => a === first && (b === undefined || b === second));
-    if (opener !== undefined) used.add(opener[0]);
+  for (const types of typesByLine.values()) {
+    for (const [label, first, second] of PARAM_OPENERS) {
+      const at = types.findIndex((type, i) => type === first && (second === undefined || types[i + 1] === second));
+      if (at >= 0) used.add(label);
+    }
   }
   return used;
 }
@@ -301,7 +312,8 @@ function collectSuggestions(
     collectFor(parser, caretTokenIndex, PARAM_RULES),
     collectFor(parser, caretTokenIndex, COMPARISON_RULES),
     collectFor(parser, caretTokenIndex, COMPARISON_END_RULES),
-    collectFor(parser, caretTokenIndex, [ImperaBookDSLParser.RULE_pageCount]),
+    // Names of what goes where, nested too deep for the passes above.
+    collectFor(parser, caretTokenIndex, [ImperaBookDSLParser.RULE_pageCount, ImperaBookDSLParser.RULE_writerName]),
   ];
 
   // 5. Turn candidate rules into phrase suggestions
@@ -464,11 +476,12 @@ export interface ValueSpan {
 }
 
 /**
- * The author name the caret is in, if any: the value of a "by author" line,
- * empty while nothing is typed after the phrase. Read from the lexer's tokens,
- * so a value that merely contains "by author" never counts.
+ * The author name the caret is in, if any: the value after "by author" (adding
+ * a book) or "written by" (listing books), empty while nothing is typed after
+ * the phrase. Read from the lexer's tokens, so a value that merely contains
+ * those words never counts.
  *
- * Only "by author" picks an existing author. "add author" names a new one, so
+ * Only these pick an existing author. "add author" names a new one, so
  * catalog names there would suggest the opposite of what the command does —
  * the server refuses a duplicate instead.
  */
@@ -483,10 +496,16 @@ export function authorValueAt(input: string, caretOffset: number): ValueSpan | u
     .getAllTokens()
     .filter(t => t.start >= lineStart && t.stop < lineEnd && t.type !== ImperaBookDSLLexer.NL);
 
-  const [first, second, value] = tokens;
-  const isAuthorPhrase =
-    first?.type === ImperaBookDSLLexer.BY && second?.type === ImperaBookDSLLexer.AUTHOR;
-  if (!isAuthorPhrase || caretOffset <= second.stop + 1) return undefined;
+  // "written by" may follow "list books" on the same line, so the phrase is
+  // looked for anywhere on the line, not only at its start.
+  const at = tokens.findIndex((t, i) =>
+    (t.type === ImperaBookDSLLexer.BY && tokens[i + 1]?.type === ImperaBookDSLLexer.AUTHOR)
+    || (t.type === ImperaBookDSLLexer.WRITTEN && tokens[i + 1]?.type === ImperaBookDSLLexer.BY));
+  if (at < 0) return undefined;
+
+  const second = tokens[at + 1];
+  const value = tokens[at + 2];
+  if (caretOffset <= second.stop + 1) return undefined;
 
   if (value?.type !== ImperaBookDSLLexer.VALUE) {
     return { start: caretOffset, end: caretOffset, text: '' };

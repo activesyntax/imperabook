@@ -33,10 +33,20 @@ command        : addBookCmd
 addBookCmd     : ADD BOOK bookTitle (NL+ bookDetailParam)* ;
 updateBookCmd  : UPDATE BOOK ;
 removeBookCmd  : REMOVE BOOK ;
-// An optional filter, on the same line (a new line after "list books" would make
-// Enter wait for more instead of listing). It reads as a sentence, property
-// first: "list books whose page count is at least 120".
-listBooksCmd   : LIST BOOKS pagesFilter? ;
+// Optional filters, like add book's parameters: one per line, in any order. The
+// first may share the command's line, so a one-filter list stays one sentence:
+//
+//   list books whose page count is at least 120
+//       written by Frank Herbert
+listBooksCmd   : LIST BOOKS listFilter? (NL+ listFilter)* ;
+
+listFilter     : pagesFilter
+               | authorFilter
+               ;
+
+// The rest of the line, matched against the book's authors: written by herbert
+authorFilter   : WRITTEN BY writerName ;
+writerName     : VALUE ;
 
 pagesFilter    : WHOSE PAGE COUNT IS pageComparison ;
 pageComparison : pagesMoreThan    // is more than 300   (or greater than)

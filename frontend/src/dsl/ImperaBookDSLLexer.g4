@@ -35,6 +35,7 @@ IN             : 'in' -> pushMode(AFTER_IN) ;
 PUBLISHED      : 'published' -> pushMode(AFTER_PUBLISHED) ;
 SUBTITLED      : 'subtitled' -> pushMode(VALUE_MODE) ;
 WHOSE          : 'whose' -> pushMode(AFTER_WHOSE) ;
+WRITTEN        : 'written' -> pushMode(AFTER_WRITTEN) ;
 
 NL             : '\r'? '\n' ;
 WS             : [ \t]+ -> skip ;
@@ -70,6 +71,12 @@ mode AFTER_PUBLISHED;
 PUBLISHED_IN   : 'in' -> type(IN), mode(VALUE_MODE) ;
 PUBLISHED_NL   : '\r'? '\n' -> type(NL), popMode ;
 PUBLISHED_WS   : [ \t]+ -> skip ;
+
+// --- written by … (a list filter) --------------------------------------------
+mode AFTER_WRITTEN;
+WRITTEN_BY     : 'by' -> type(BY), mode(VALUE_MODE) ;
+WRITTEN_NL     : '\r'? '\n' -> type(NL), popMode ;
+WRITTEN_WS     : [ \t]+ -> skip ;
 
 // --- whose page count is at least 120 … -------------------------------------
 // "whose" opens a filter clause; its words are keywords only inside it, so they

@@ -58,7 +58,12 @@ public sealed record PageFilter(PageComparison Comparison, int Pages, int UpTo =
 
 public interface IBookQueries
 {
-    Task<BookListItem[]> List(PageFilter? filter, CancellationToken ct);
+    /// <param name="pages">Only books whose page count matches; none means any.</param>
+    /// <param name="author">
+    /// Only books with an author whose full name contains this, ignoring case and accents, as
+    /// "by author" matches; none means any.
+    /// </param>
+    Task<BookListItem[]> List(PageFilter? pages, string? author, CancellationToken ct);
 
     Task<Maybe<BookDetail>> Get(Guid id, CancellationToken ct);
 }

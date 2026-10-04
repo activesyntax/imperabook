@@ -8,6 +8,9 @@ import { AddBookCmdContext } from "./ImperaBookDSLParser.js";
 import { UpdateBookCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveBookCmdContext } from "./ImperaBookDSLParser.js";
 import { ListBooksCmdContext } from "./ImperaBookDSLParser.js";
+import { ListFilterContext } from "./ImperaBookDSLParser.js";
+import { AuthorFilterContext } from "./ImperaBookDSLParser.js";
+import { WriterNameContext } from "./ImperaBookDSLParser.js";
 import { PagesFilterContext } from "./ImperaBookDSLParser.js";
 import { PageComparisonContext } from "./ImperaBookDSLParser.js";
 import { PagesMoreThanContext } from "./ImperaBookDSLParser.js";
@@ -110,6 +113,36 @@ export class ImperaBookDSLParserListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitListBooksCmd?: (ctx: ListBooksCmdContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.listFilter`.
+     * @param ctx the parse tree
+     */
+    enterListFilter?: (ctx: ListFilterContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.listFilter`.
+     * @param ctx the parse tree
+     */
+    exitListFilter?: (ctx: ListFilterContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.authorFilter`.
+     * @param ctx the parse tree
+     */
+    enterAuthorFilter?: (ctx: AuthorFilterContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.authorFilter`.
+     * @param ctx the parse tree
+     */
+    exitAuthorFilter?: (ctx: AuthorFilterContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.writerName`.
+     * @param ctx the parse tree
+     */
+    enterWriterName?: (ctx: WriterNameContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.writerName`.
+     * @param ctx the parse tree
+     */
+    exitWriterName?: (ctx: WriterNameContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.pagesFilter`.
      * @param ctx the parse tree

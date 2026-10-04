@@ -74,6 +74,10 @@
             <span class="key">Ctrl+Enter</span> run
           } @else {
             <span class="key">Enter</span> {{ enterHint() }}
+            <!-- When Enter only adds a line, say how to run it. -->
+            @if (enterAddsLine()) {
+              · <span class="key">Ctrl+Enter</span> run
+            }
           }
         </span>
       }

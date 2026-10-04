@@ -8,6 +8,9 @@ import { AddBookCmdContext } from "./ImperaBookDSLParser.js";
 import { UpdateBookCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveBookCmdContext } from "./ImperaBookDSLParser.js";
 import { ListBooksCmdContext } from "./ImperaBookDSLParser.js";
+import { ListFilterContext } from "./ImperaBookDSLParser.js";
+import { AuthorFilterContext } from "./ImperaBookDSLParser.js";
+import { WriterNameContext } from "./ImperaBookDSLParser.js";
 import { PagesFilterContext } from "./ImperaBookDSLParser.js";
 import { PageComparisonContext } from "./ImperaBookDSLParser.js";
 import { PagesMoreThanContext } from "./ImperaBookDSLParser.js";
@@ -89,6 +92,24 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      * @return the visitor result
      */
     visitListBooksCmd?: (ctx: ListBooksCmdContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.listFilter`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitListFilter?: (ctx: ListFilterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.authorFilter`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitAuthorFilter?: (ctx: AuthorFilterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.writerName`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitWriterName?: (ctx: WriterNameContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.pagesFilter`.
      * @param ctx the parse tree

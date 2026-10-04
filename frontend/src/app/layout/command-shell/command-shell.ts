@@ -155,6 +155,7 @@ export class CommandShell {
   });
 
   protected readonly enterHint = computed(() => ENTER_HINT[this.plainEnterAction()]);
+  protected readonly enterAddsLine = computed(() => this.plainEnterAction() === 'newline');
 
   // The existing author being picked ("by author her"), if any.
   private readonly authorValue = computed(() => authorValueAt(this.query(), this.cursorPosition()));
@@ -387,6 +388,11 @@ export class CommandShell {
     const text = this.query();
     if (text.trim() === '') return 'open';
     if (this.onBlankLine()) return 'run';
+    // A bare "list books" runs: its filters are optional, and listing everything
+    // is the usual ask. Once it has a filter it has parameters, and Enter works as
+    // for add book — a new line while another filter can follow; Ctrl+Enter runs.
+    const command = this.check().command;
+    if (command?.command === 'list books' && Object.keys(command.params).length === 0) return 'run';
     return canContinueOnNewLine(text) ? 'newline' : 'run';
   }
 

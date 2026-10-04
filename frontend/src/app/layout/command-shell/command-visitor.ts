@@ -110,9 +110,20 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
   // The optional page filter becomes the query the server reads, unchanged by the
   // wording ("is more than" is still "over"): pagesOp names
   // the comparison, pages its number, pagesTo the upper bound of a "between".
+  // "written by" becomes author, matched by the server against the books' authors.
+  // As with add book, the first of a repeated filter wins.
   override visitListBooksCmd = (ctx: ListBooksCmdContext): ParsedCommand => {
-    const comparison = ctx.pagesFilter()?.pageComparison();
-    return { command: 'list books', params: comparison ? pageFilter(comparison) : {} };
+    let params: Record<string, string> = {};
+
+    for (const filter of ctx.listFilter()) {
+      const comparison = filter.pagesFilter()?.pageComparison();
+      if (comparison && !('pagesOp' in params)) params = { ...params, ...pageFilter(comparison) };
+
+      const writer = filter.authorFilter()?.writerName();
+      if (writer && !('author' in params)) params = { ...params, author: this.text(writer.VALUE()?.getText()) };
+    }
+
+    return { command: 'list books', params };
   };
   override visitUpdateAuthorCmd = noParams('update author');
   override visitRemoveAuthorCmd = noParams('remove author');

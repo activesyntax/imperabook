@@ -8,12 +8,33 @@ namespace ImperaBook.Infrastructure.Data.Queries;
 
 public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBookQueries
 {
-    public Task<BookListItem[]> List(PageFilter? filter, CancellationToken ct) =>
-        WithPages(Owned(), filter)
+    public Task<BookListItem[]> List(PageFilter? pages, string? author, CancellationToken ct) =>
+        WrittenBy(WithPages(Owned(), pages), author)
             .OrderBy(b => b.Title)
             .ThenBy(b => b.Id)
             .Select(ToListItem)
             .ToArrayAsync(ct);
+
+    private static IQueryable<BookEntity> WrittenBy(IQueryable<BookEntity> books, string? author)
+    {
+        if (string.IsNullOrWhiteSpace(author))
+            return books;
+
+        var pattern = LikePattern.Containing(author.Trim());
+        return books.Where(b =>
+            b.Authors.Any(ba =>
+                EF.Functions.ILike(
+                    EF.Functions.Unaccent(
+                        ba.Author.FirstName == null
+                            ? ba.Author.LastName
+                            : ba.Author.FirstName + " " + ba.Author.LastName
+                    ),
+                    EF.Functions.Unaccent(pattern),
+                    LikePattern.Escape
+                )
+            )
+        );
+    }
 
     // Comparisons with a null page count are false in SQL, so unknown counts drop out — except
     // that C#'s != treats null as different from any number, which EF keeps; "other than"

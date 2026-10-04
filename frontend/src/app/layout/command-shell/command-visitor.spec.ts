@@ -132,8 +132,36 @@ describe('CommandVisitor', () => {
       expect(checkCommand('list books with pages over 120').valid).toBe(false);
     });
 
-    it('takes the filter on the same line only', () => {
-      expect(checkCommand('list books\n    whose page count is at least 120').valid).toBe(false);
+  });
+
+  describe('list books written by', () => {
+    it('takes the rest of the line as the author', () => {
+      expect(parse('list books written by frank herbert')).toEqual({
+        command: 'list books',
+        params: { author: 'frank herbert' },
+      });
+    });
+
+    it('takes one filter per line, in any order, the first on the command line or its own', () => {
+      const params = { pagesOp: 'atLeast', pages: '120', author: 'herbert' };
+
+      expect(parse('list books whose page count is at least 120\n    written by herbert')).toEqual({ command: 'list books', params });
+      expect(parse('list books\n    written by herbert\n    whose page count is at least 120')).toEqual({ command: 'list books', params });
+    });
+
+    it('reads the rest of a written-by line as the name, whatever it says', () => {
+      expect(parse('list books written by herbert whose page count is 3')?.params).toEqual({
+        author: 'herbert whose page count is 3',
+      });
+    });
+
+    it('keeps the first of a repeated filter', () => {
+      expect(parse('list books written by a\n    written by b')?.params).toEqual({ author: 'a' });
+    });
+
+    it('needs a name', () => {
+      expect(checkCommand('list books written by').valid).toBe(false);
+      expect(checkCommand('list books\n    written by  ').valid).toBe(false);
     });
   });
 

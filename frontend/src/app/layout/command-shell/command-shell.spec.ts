@@ -264,6 +264,55 @@ describe('CommandShell', () => {
       expect(runner.run).toHaveBeenCalledWith({ command: 'find', params: { keywords: 'dune herbert' } });
     });
 
+    it('runs a bare list at once', async () => {
+      press(type('list books'), 'Enter');
+      await fixture.whenStable();
+
+      expect(runner.run).toHaveBeenCalledWith({ command: 'list books', params: {} });
+    });
+
+    it('starts a new line after a filter, as for add book, and runs with Ctrl+Enter', async () => {
+      const input = type('list books whose page count is more than 400');
+
+      press(input, 'Enter');
+      expect(input.value).toBe('list books whose page count is more than 400\n    ');
+      expect(runner.run).not.toHaveBeenCalled();
+
+      await submit(input);
+      expect(runner.run).toHaveBeenCalledWith({ command: 'list books', params: { pagesOp: 'over', pages: '400' } });
+    });
+
+    it('adds a further filter on a new line with Tab', () => {
+      const input = type('list books whose page count is 120');
+
+      press(input, 'Tab');
+
+      expect(input.value).toBe('list books whose page count is 120\n    written by ');
+    });
+
+    it('treats a list spanning lines like any multi-line command', async () => {
+      const input = type('list books\n    written by herbert');
+
+      // The page filter could still follow, so Enter opens a line for it…
+      press(input, 'Enter');
+      expect(input.value).toBe('list books\n    written by herbert\n    ');
+
+      // …and on that blank line it runs.
+      press(input, 'Enter');
+      await fixture.whenStable();
+      expect(runner.run).toHaveBeenCalledWith({ command: 'list books', params: { author: 'herbert' } });
+    });
+
+    it('runs a list at once when every filter is there', async () => {
+      press(type('list books whose page count is 120\n    written by herbert'), 'Enter');
+      await fixture.whenStable();
+
+      expect(runner.run).toHaveBeenCalledWith({
+        command: 'list books',
+        params: { pagesOp: 'equal', pages: '120', author: 'herbert' },
+      });
+    });
+
     it('always runs with Ctrl', async () => {
       await submit(type('add book Dune'));
 
@@ -336,6 +385,15 @@ describe('CommandShell', () => {
       await typeAndSettle('add book Dune\nby author Frank Herbert');
 
       expect(chips()).not.toContain('Frank Herbert');
+    });
+
+    it('offers catalog authors after written by, too', async () => {
+      authors.search.mockResolvedValue([HERBERT]);
+
+      await typeAndSettle('list books written by her');
+
+      expect(authors.search).toHaveBeenCalledWith('her', expect.anything());
+      expect(chips()[0]).toBe('Frank Herbert');
     });
 
     it('does not look anything up outside an author name', async () => {
@@ -577,12 +635,19 @@ describe('CommandShell', () => {
       expect(dot()?.classList).not.toContain('valid');
     });
 
-    it('shows what Enter does while the command is one line, without Ctrl+Enter', () => {
+    it('shows Ctrl+Enter beside Enter when Enter only adds a line', () => {
       type('add book Dune');
-      expect(keyHints()).toBe('Tab accept · Enter new line');
+      expect(keyHints()).toBe('Tab accept · Enter new line · Ctrl+Enter run');
 
+      type('list books whose page count is more than 400');
+      expect(keyHints()).toContain('Enter new line · Ctrl+Enter run');
+    });
+
+    it('shows only Enter when Enter runs the one-line command', () => {
       type('dashboard');
-      expect(keyHints()).toContain('Enter run');
+      expect(keyHints()).toBe('Enter run');
+
+      type('list books');
       expect(keyHints()).not.toContain('Ctrl+Enter');
     });
 
