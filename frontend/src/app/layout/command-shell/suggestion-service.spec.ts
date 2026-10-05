@@ -107,9 +107,14 @@ describe('applyCompletion', () => {
       expect(labels('list books having no page count\n    whose page count is at least ')).toEqual(['page count']);
     });
 
-    it('offers having no books for authors, and nothing of the books\' filters', () => {
-      expect(labels('list authors ')).toEqual(['having no']);
-      expect(labels('list authors having no ')).toEqual(['books']);
+    it('offers the author filters, and nothing of the books\'', () => {
+      expect(labels('list authors ')).toEqual(['born', 'living', 'having no books']);
+      expect(labels('list authors born ')).toEqual(['in', 'before', 'after', 'between']);
+    });
+
+    it('offers the author filters not yet used on a further line', () => {
+      expect(labels('list authors born before 1900\n    ')).toEqual(['living', 'having no books']);
+      expect(labels('list authors living\n    having no books\n    ')).toEqual(['born']);
     });
 
     it('names the author after written by', () => {
@@ -176,7 +181,7 @@ describe('applyCompletion', () => {
   });
 
   it('offers no next line when nothing more can follow, or the text is not a command', () => {
-    expect(getDSLCompletions('list authors having no books', 'list authors having no books'.length)).toEqual([]);
+    expect(getDSLCompletions('find dune', 'find dune'.length)).toEqual([]);
     expect(getDSLCompletions('xyz', 3)).toEqual([]);
   });
 

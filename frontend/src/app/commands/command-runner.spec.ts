@@ -199,4 +199,15 @@ describe('CommandRunner', () => {
     req.flush({ views: [] }, { status: 201, statusText: 'Created' });
     await result;
   });
+
+  it('sends the author list filters as its query', async () => {
+    const result = runner.run({ command: 'list authors', params: { bornOp: 'before', born: '1900', vitality: 'living' } });
+
+    const req = http.expectOne(r => r.url === '/api/authors');
+    expect(req.request.params.get('bornOp')).toBe('before');
+    expect(req.request.params.get('born')).toBe('1900');
+    expect(req.request.params.get('vitality')).toBe('living');
+    req.flush({ views: [] });
+    await result;
+  });
 });

@@ -22,9 +22,14 @@ public sealed record AuthorListItem(
 /// <summary>One author in full: the list row's facts plus the books they are credited on.</summary>
 public sealed record AuthorDetail(AuthorListItem Author, IReadOnlyList<BookListItem> Books);
 
-/// <summary>What an author list is narrowed to; the default is every author.</summary>
+/// <summary>What an author list is narrowed to; every filter given must hold, the default is every author.</summary>
 /// <param name="WithoutBooks">Only authors no book is credited to.</param>
-public sealed record AuthorFilter(bool WithoutBooks = false);
+/// <param name="Born">By birth year; an unknown birth year matches no comparison.</param>
+/// <param name="Living">Only authors recorded as living.</param>
+public sealed record AuthorFilter(bool WithoutBooks = false, YearFilter? Born = null, bool Living = false)
+{
+    public bool IsEmpty => !WithoutBooks && Born is null && !Living;
+}
 
 public interface IAuthorQueries
 {

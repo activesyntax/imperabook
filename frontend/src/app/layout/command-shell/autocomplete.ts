@@ -57,8 +57,10 @@ const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_pagesFilter]: { label: 'page count is', insertText: 'page count is ' },
   [ImperaBookDSLParser.RULE_languageFilter]: { label: 'language is', insertText: 'language is ' },
   [ImperaBookDSLParser.RULE_missingFilter]: { label: 'having no', insertText: 'having no ' },
-  [ImperaBookDSLParser.RULE_authorsWithoutBooks]: { label: 'having no', insertText: 'having no ' },
-  [ImperaBookDSLParser.RULE_noBooks]: { label: 'books', insertText: 'books' },
+  // The one thing an author can lack, so one chip rather than two steps.
+  [ImperaBookDSLParser.RULE_authorsWithoutBooks]: { label: 'having no books', insertText: 'having no books' },
+  [ImperaBookDSLParser.RULE_bornFilter]: { label: 'born', insertText: 'born ' },
+  [ImperaBookDSLParser.RULE_livingFilter]: { label: 'living', insertText: 'living' },
   // Complete filters: nothing follows on their line, so no trailing space.
   [ImperaBookDSLParser.RULE_missingAuthor]: { label: 'author', insertText: 'author' },
   [ImperaBookDSLParser.RULE_missingPages]: { label: 'page count', insertText: 'page count' },
@@ -138,6 +140,8 @@ const PARAM_RULES = [
   ImperaBookDSLParser.RULE_livingParam,
   ImperaBookDSLParser.RULE_missingFilter,
   ImperaBookDSLParser.RULE_authorsWithoutBooks,
+  ImperaBookDSLParser.RULE_bornFilter,
+  ImperaBookDSLParser.RULE_livingFilter,
   ImperaBookDSLParser.RULE_authorFilter,
   ImperaBookDSLParser.RULE_publishedFilter,
   ImperaBookDSLParser.RULE_bookTitle,
@@ -160,7 +164,6 @@ const PROPERTY_RULES = [
   ImperaBookDSLParser.RULE_missingLanguage,
   ImperaBookDSLParser.RULE_missingIsbn,
   ImperaBookDSLParser.RULE_missingCover,
-  ImperaBookDSLParser.RULE_noBooks,
 ];
 
 /**
@@ -271,6 +274,8 @@ const PARAM_OPENERS: ReadonlyArray<readonly [label: string, ...tokens: number[]]
   ['page count is', ImperaBookDSLLexer.WHOSE, ImperaBookDSLLexer.PAGE],
   ['language is', ImperaBookDSLLexer.WHOSE, ImperaBookDSLLexer.LANGUAGE],
   ['born in', ImperaBookDSLLexer.BORN],
+  ['born', ImperaBookDSLLexer.BORN],
+  ['having no books', ImperaBookDSLLexer.HAVING, ImperaBookDSLLexer.NO, ImperaBookDSLLexer.BOOKS],
   ['died', ImperaBookDSLLexer.DIED],
   ['living', ImperaBookDSLLexer.LIVING],
   // What "having no" leads to, one property per line.

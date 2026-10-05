@@ -232,10 +232,30 @@ describe('CommandVisitor', () => {
     });
   });
 
-  describe('list authors having no books', () => {
+  describe('list authors with filters', () => {
     it('reads the filter on the command line', () => {
       expect(parse('list authors having no books')).toEqual({ command: 'list authors', params: { missing: 'books' } });
       expect(parse('list authors')).toEqual({ command: 'list authors', params: {} });
+    });
+
+    it('reads born, with the same comparisons as published', () => {
+      expect(parse('list authors born before 1900')?.params).toEqual({ bornOp: 'before', born: '1900' });
+      expect(parse('list authors born in 1920')?.params).toEqual({ bornOp: 'in', born: '1920' });
+      expect(parse('list authors born after 1950')?.params).toEqual({ bornOp: 'after', born: '1950' });
+      expect(parse('list authors born between 1900 and 1950')?.params)
+        .toEqual({ bornOp: 'between', born: '1900', bornTo: '1950' });
+      expect(parse('list authors born before 500 BC')?.params).toEqual({ bornOp: 'before', born: '-500' });
+    });
+
+    it('reads living, and every filter together, one per line', () => {
+      expect(parse('list authors living')?.params).toEqual({ vitality: 'living' });
+      expect(parse('list authors living\n    born before 1950\n    having no books')?.params).toEqual({
+        vitality: 'living', bornOp: 'before', born: '1950', missing: 'books',
+      });
+    });
+
+    it('takes only "born in" when adding an author', () => {
+      expect(checkCommand('add author X\n    born before 1900').valid).toBe(false);
     });
 
     it('knows only books as what an author can lack', () => {

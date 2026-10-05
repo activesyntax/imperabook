@@ -65,19 +65,19 @@ public static class BookEndpoints
     {
         var pageFilter = ParsePageFilter(pagesOp, pages, pagesTo);
         if (pageFilter.IsFailure)
-            return InvalidFilter("Invalid page filter", pageFilter.Error, "invalid_page_filter");
+            return ListFilters.Invalid("Invalid page filter", pageFilter.Error, "invalid_page_filter");
 
-        var yearFilter = ParseYearFilter(publishedOp, published, publishedTo);
+        var yearFilter = ListFilters.ParseYear(publishedOp, published, publishedTo);
         if (yearFilter.IsFailure)
-            return InvalidFilter("Invalid publication filter", yearFilter.Error, "invalid_published_filter");
+            return ListFilters.Invalid("Invalid publication filter", yearFilter.Error, "invalid_published_filter");
 
         var languageFilter = ParseLanguageFilter(languageOp, language);
         if (languageFilter.IsFailure)
-            return InvalidFilter("Invalid language filter", languageFilter.Error, "invalid_language_filter");
+            return ListFilters.Invalid("Invalid language filter", languageFilter.Error, "invalid_language_filter");
 
         var missingFilter = ParseMissing(missing);
         if (missingFilter.IsFailure)
-            return InvalidFilter("Invalid having-no filter", missingFilter.Error, "invalid_missing_filter");
+            return ListFilters.Invalid("Invalid having-no filter", missingFilter.Error, "invalid_missing_filter");
 
         var filter = new BookFilter(
             pageFilter.Value,
@@ -202,48 +202,6 @@ public static class BookEndpoints
             return $"\"{language}\" is not a language I know. Try its English name, like hungarian, or its code, like hu.";
 
         return new LanguageFilter(code, negated.Value);
-    }
-
-    private static ProblemHttpResult InvalidFilter(string title, string detail, string code) =>
-        TypedResults.Problem(
-            statusCode: StatusCodes.Status400BadRequest,
-            title: title,
-            detail: detail,
-            extensions: new Dictionary<string, object?> { ["code"] = code }
-        );
-
-    private static readonly Dictionary<string, YearComparison> YearComparisons = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["in"] = YearComparison.In,
-        ["before"] = YearComparison.Before,
-        ["after"] = YearComparison.After,
-        ["between"] = YearComparison.Between,
-    };
-
-    /// <summary>No publishedOp is no filter; one that cannot be read is an error, not "all books".</summary>
-    private static CSharpFunctionalExtensions.Result<YearFilter?, string> ParseYearFilter(
-        string? op,
-        string? year,
-        string? yearTo
-    )
-    {
-        if (string.IsNullOrWhiteSpace(op))
-            return CSharpFunctionalExtensions.Result.Success<YearFilter?, string>(null);
-
-        if (!YearComparisons.TryGetValue(op, out var comparison))
-            return $"Unknown publication comparison \"{op}\".";
-
-        // A sign is allowed: the catalog keeps years before the common era.
-        if (!int.TryParse(year, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var y))
-            return "The year must be a whole number.";
-
-        if (comparison != YearComparison.Between)
-            return new YearFilter(comparison, y);
-
-        if (!int.TryParse(yearTo, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var upTo))
-            return "A range needs a year at both ends.";
-
-        return YearFilter.Between(y, upTo);
     }
 
     private static readonly Dictionary<string, PageComparison> Comparisons = new(StringComparer.OrdinalIgnoreCase)

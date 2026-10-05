@@ -151,8 +151,13 @@ COMPARISON_NL  : '\r'? '\n' -> type(NL), popMode ;
 COMPARISON_WS  : [ \t]+ -> skip ;
 
 // --- born in 1920 / died in 1986 / died (year unknown) ---------------------------
+// "born before/after/between …" are the author list's filters; adding an author
+// only takes "in", which the parser enforces.
 mode AFTER_LIFE_EVENT;
 LIFE_EVENT_IN  : 'in' -> type(IN), mode(YEAR_MODE) ;
+LIFE_EVENT_BEFORE : 'before' -> type(BEFORE), mode(YEAR_MODE) ;
+LIFE_EVENT_AFTER  : 'after' -> type(AFTER), mode(YEAR_MODE) ;
+LIFE_EVENT_BETWEEN : 'between' -> type(BETWEEN), mode(YEAR_MODE) ;
 LIFE_EVENT_NL  : '\r'? '\n' -> type(NL), popMode ;
 LIFE_EVENT_WS  : [ \t]+ -> skip ;
 

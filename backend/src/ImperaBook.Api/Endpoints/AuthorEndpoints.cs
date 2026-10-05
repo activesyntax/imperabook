@@ -44,30 +44,54 @@ public static class AuthorEndpoints
         return app;
     }
 
-    // "list authors", optionally "having no books", which arrives as missing=books.
+    // "list authors", optionally filtered: "having no books" arrives as missing=books, "born
+    // before 1900" as bornOp, born and (for a range) bornTo, "living" as vitality=living.
     private static async Task<IResult> ListAuthors(
         string? missing,
+        string? bornOp,
+        string? born,
+        string? bornTo,
+        string? vitality,
         IAuthorQueries authors,
         CancellationToken ct
     )
     {
         var withoutBooks = !string.IsNullOrWhiteSpace(missing);
         if (withoutBooks && !string.Equals(missing!.Trim(), "books", StringComparison.OrdinalIgnoreCase))
-            return TypedResults.Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "Invalid having-no filter",
-                detail: $"An author can only lack books, not \"{missing}\".",
-                extensions: new Dictionary<string, object?> { ["code"] = "invalid_missing_filter" }
+            return ListFilters.Invalid(
+                "Invalid having-no filter",
+                $"An author can only lack books, not \"{missing}\".",
+                "invalid_missing_filter"
             );
 
-        var authorList = await authors.List(new AuthorFilter(withoutBooks), ct);
+        var bornFilter = ListFilters.ParseYear(bornOp, born, bornTo);
+        if (bornFilter.IsFailure)
+            return ListFilters.Invalid("Invalid birth filter", bornFilter.Error, "invalid_born_filter");
+
+        var living = !string.IsNullOrWhiteSpace(vitality);
+        if (living && !string.Equals(vitality!.Trim(), "living", StringComparison.OrdinalIgnoreCase))
+            return ListFilters.Invalid(
+                "Invalid vitality filter",
+                $"Authors can be listed as living, not \"{vitality}\".",
+                "invalid_vitality_filter"
+            );
+
+        var filter = new AuthorFilter(withoutBooks, bornFilter.Value, living);
+        var authorList = await authors.List(filter, ct);
         var page = new PageInfo(1, 1, authorList.Length, "authors");
 
-        return TypedResults.Ok(
-            withoutBooks
-                ? authorList.ToCommandResult("Every author has a book.", page, "Authors having no books")
-                : authorList.ToCommandResult("No authors yet.", page)
+        if (filter.IsEmpty)
+            return TypedResults.Ok(authorList.ToCommandResult("No authors yet.", page));
+
+        // Said back as one phrase: "Living authors born before 1900 having no books".
+        var who = filter.Living ? "living authors" : "authors";
+        var which = string.Join(
+            ' ',
+            new[] { filter.Born?.Describe("born"), filter.WithoutBooks ? "having no books" : null }.OfType<string>()
         );
+        var heading = $"{char.ToUpperInvariant(who[0])}{who[1..]}{(which.Length == 0 ? "" : " " + which)}";
+
+        return TypedResults.Ok(authorList.ToCommandResult($"No {who}{(which.Length == 0 ? "" : " " + which)}.", page, heading));
     }
 
     /// <summary>How many matches the command bar can use as suggestion chips.</summary>

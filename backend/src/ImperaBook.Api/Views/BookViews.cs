@@ -32,13 +32,14 @@ public static class BookViews
         );
 
     /// <summary>A year filter as typed, for headings: "published before 1950".</summary>
-    public static string Describe(this YearFilter f) =>
-        f.Comparison switch
+    public static string Describe(this YearFilter f, string verb = "published") =>
+        verb
+        + f.Comparison switch
         {
-            YearComparison.In => $"published in {f.Year.AsYear()}",
-            YearComparison.Before => $"published before {f.Year.AsYear()}",
-            YearComparison.After => $"published after {f.Year.AsYear()}",
-            YearComparison.Between => $"published between {f.Year.AsYear()} and {f.UpTo.AsYear()}",
+            YearComparison.In => $" in {f.Year.AsYear()}",
+            YearComparison.Before => $" before {f.Year.AsYear()}",
+            YearComparison.After => $" after {f.Year.AsYear()}",
+            YearComparison.Between => $" between {f.Year.AsYear()} and {f.UpTo.AsYear()}",
             _ => throw new InvalidOperationException($"Unhandled year comparison: {f.Comparison}"),
         };
 

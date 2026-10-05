@@ -21,11 +21,15 @@ public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : I
         );
 
     public Task<AuthorListItem[]> List(AuthorFilter filter, CancellationToken ct) =>
-        db
-            .Authors.AsNoTracking()
-            .Where(a => a.OwnerId == user.Id)
-            // The same test the dashboard counts with, so its finding and this list agree.
-            .Where(a => !filter.WithoutBooks || !db.Set<BookAuthorEntity>().Any(ba => ba.AuthorId == a.Id))
+        BornIn(
+                db
+                    .Authors.AsNoTracking()
+                    .Where(a => a.OwnerId == user.Id)
+                    // The same test the dashboard counts with, so its finding and this list agree.
+                    .Where(a => !filter.WithoutBooks || !db.Set<BookAuthorEntity>().Any(ba => ba.AuthorId == a.Id))
+                    .Where(a => !filter.Living || a.Vitality == VitalityKind.Living),
+                filter.Born
+            )
             .OrderBy(a => a.LastName)
             .ThenBy(a => a.FirstName)
             .ThenBy(a => a.Id)
@@ -74,4 +78,18 @@ public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : I
             .Select(ToListItem)
             .ToArrayAsync(ct);
     }
+
+    // Unknown birth years drop out: a comparison with null is false in SQL.
+    private static IQueryable<AuthorEntity> BornIn(IQueryable<AuthorEntity> authors, YearFilter? f) =>
+        f switch
+        {
+            null => authors,
+            { Comparison: YearComparison.In } => authors.Where(a => a.BirthYear == f.Year),
+            { Comparison: YearComparison.Before } => authors.Where(a => a.BirthYear < f.Year),
+            { Comparison: YearComparison.After } => authors.Where(a => a.BirthYear > f.Year),
+            { Comparison: YearComparison.Between } => authors.Where(a =>
+                a.BirthYear >= f.Year && a.BirthYear <= f.UpTo
+            ),
+            _ => throw new InvalidOperationException($"Unhandled year comparison: {f.Comparison}"),
+        };
 }

@@ -51,8 +51,10 @@ import { LivingParamContext } from "./ImperaBookDSLParser.js";
 import { UpdateAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { ListAuthorsCmdContext } from "./ImperaBookDSLParser.js";
+import { AuthorListFilterContext } from "./ImperaBookDSLParser.js";
+import { BornFilterContext } from "./ImperaBookDSLParser.js";
+import { LivingFilterContext } from "./ImperaBookDSLParser.js";
 import { AuthorsWithoutBooksContext } from "./ImperaBookDSLParser.js";
-import { NoBooksContext } from "./ImperaBookDSLParser.js";
 import { FindCmdContext } from "./ImperaBookDSLParser.js";
 import { KeywordsContext } from "./ImperaBookDSLParser.js";
 import { DashboardCmdContext } from "./ImperaBookDSLParser.js";
@@ -378,17 +380,29 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      */
     visitListAuthorsCmd?: (ctx: ListAuthorsCmdContext) => Result;
     /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.authorListFilter`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitAuthorListFilter?: (ctx: AuthorListFilterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.bornFilter`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitBornFilter?: (ctx: BornFilterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.livingFilter`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitLivingFilter?: (ctx: LivingFilterContext) => Result;
+    /**
      * Visit a parse tree produced by `ImperaBookDSLParser.authorsWithoutBooks`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitAuthorsWithoutBooks?: (ctx: AuthorsWithoutBooksContext) => Result;
-    /**
-     * Visit a parse tree produced by `ImperaBookDSLParser.noBooks`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitNoBooks?: (ctx: NoBooksContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.findCmd`.
      * @param ctx the parse tree

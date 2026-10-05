@@ -8,6 +8,7 @@ import {
   ListBooksCmdContext,
   MissingPropertyContext,
   PublishedFilterContext,
+  YearComparisonContext,
   YearContext,
   PageComparisonContext,
   PageCountContext,
@@ -60,15 +61,20 @@ function yearText(year: YearContext | null | undefined): string {
 
 function yearFilter(f: PublishedFilterContext): Record<string, string> {
   const c = f.yearComparison();
-  if (c?.yearIn()) return { publishedOp: 'in', published: yearText(c.yearIn()?.year()) };
-  if (c?.yearBefore()) return { publishedOp: 'before', published: yearText(c.yearBefore()?.year()) };
-  if (c?.yearAfter()) return { publishedOp: 'after', published: yearText(c.yearAfter()?.year()) };
+  return c ? yearParams(c, 'published') : {};
+}
 
-  const between = c?.yearBetween();
+/** A year comparison as query params named after what it is about: publishedOp/published/publishedTo, bornOp/…. */
+function yearParams(c: YearComparisonContext, name: string): Record<string, string> {
+  if (c.yearIn()) return { [`${name}Op`]: 'in', [name]: yearText(c.yearIn()?.year()) };
+  if (c.yearBefore()) return { [`${name}Op`]: 'before', [name]: yearText(c.yearBefore()?.year()) };
+  if (c.yearAfter()) return { [`${name}Op`]: 'after', [name]: yearText(c.yearAfter()?.year()) };
+
+  const between = c.yearBetween();
   return {
-    publishedOp: 'between',
-    published: yearText(between?.year()),
-    publishedTo: yearText(between?.yearAnd()?.year()),
+    [`${name}Op`]: 'between',
+    [name]: yearText(between?.year()),
+    [`${name}To`]: yearText(between?.yearAnd()?.year()),
   };
 }
 
@@ -201,10 +207,20 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
   override visitUpdateAuthorCmd = noParams('update author');
   override visitRemoveAuthorCmd = noParams('remove author');
   // "having no books" becomes missing=books, as the server reads it.
-  override visitListAuthorsCmd = (ctx: ListAuthorsCmdContext): ParsedCommand => ({
-    command: 'list authors',
-    params: ctx.authorsWithoutBooks() ? { missing: 'books' } : {},
-  });
+  // As the server reads them: bornOp, born and (for a range) bornTo; vitality=living;
+  // missing=books. The first of a repeated filter wins.
+  override visitListAuthorsCmd = (ctx: ListAuthorsCmdContext): ParsedCommand => {
+    let params: Record<string, string> = {};
+
+    for (const filter of ctx.authorListFilter()) {
+      const born = filter.bornFilter()?.yearComparison();
+      if (born && !('bornOp' in params)) params = { ...params, ...yearParams(born, 'born') };
+      if (filter.livingFilter()) params = { vitality: 'living', ...params };
+      if (filter.authorsWithoutBooks()) params = { missing: 'books', ...params };
+    }
+
+    return { command: 'list authors', params };
+  };
   override visitDashboardCmd = noParams('dashboard');
   override visitLibraryCmd = noParams('library');
   override visitSettingsCmd = noParams('settings');

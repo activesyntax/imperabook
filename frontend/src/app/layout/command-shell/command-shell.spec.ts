@@ -268,16 +268,14 @@ describe('CommandShell', () => {
       expect(runner.run).toHaveBeenCalledWith({ command: 'find', params: { keywords: 'dune herbert' } });
     });
 
-    it('runs an author list at once, filtered or not, as nothing can follow', async () => {
+    it('runs a bare author list at once, and opens a line after a filter, as for books', async () => {
       press(type('list authors'), 'Enter');
       await fixture.whenStable();
-      press(type('list authors having no books'), 'Enter');
-      await fixture.whenStable();
+      expect(runner.run).toHaveBeenCalledWith({ command: 'list authors', params: {} });
 
-      expect(runner.run.mock.calls).toEqual([
-        [{ command: 'list authors', params: {} }],
-        [{ command: 'list authors', params: { missing: 'books' } }],
-      ]);
+      const input = type('list authors born before 1900');
+      press(input, 'Enter');
+      expect(input.value).toBe('list authors born before 1900\n    ');
     });
 
     it('runs a bare list at once', async () => {
