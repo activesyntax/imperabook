@@ -24,7 +24,13 @@
       }
       }
       @case ('finding') {
-        <button type="button" class="finding" >
+        <!-- Runs its command as if typed; mousedown is swallowed so the command bar keeps focus. -->
+        <button
+          type="button"
+          class="finding"
+          [attr.aria-label]="block.value + ' ' + block.text + ', run ' + block.command"
+          (mousedown)="$event.preventDefault()"
+          (click)="run(block.command)">
           <span class="finding-value">{{ block.value }}</span>
           <span class="finding-text">{{ block.text }}</span>
           <code class="finding-command">{{ block.command }}</code>
