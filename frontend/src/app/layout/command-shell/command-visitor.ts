@@ -5,6 +5,7 @@ import {
   AddBookCmdContext,
   FindCmdContext,
   ListBooksCmdContext,
+  MissingPropertyContext,
   PublishedFilterContext,
   YearContext,
   PageComparisonContext,
@@ -39,6 +40,16 @@ export interface ParsedCommand {
 }
 
 const noParams = (command: CommandName) => (): ParsedCommand => ({ command, params: {} });
+
+/** The server's name for what a "having no" line says a book lacks. */
+function missingName(p: MissingPropertyContext): string {
+  if (p.missingAuthor()) return 'author';
+  if (p.missingPages()) return 'pages';
+  if (p.missingYear()) return 'published';
+  if (p.missingLanguage()) return 'language';
+  if (p.missingIsbn()) return 'isbn';
+  return 'cover';
+}
 
 function yearText(year: YearContext | null | undefined): string {
   return year?.NUMBER()?.getText() ?? '';
@@ -136,6 +147,7 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
   // As with add book, the first of a repeated filter wins.
   override visitListBooksCmd = (ctx: ListBooksCmdContext): ParsedCommand => {
     let params: Record<string, string> = {};
+    const missing: string[] = [];
 
     for (const filter of ctx.listFilter()) {
       const comparison = filter.whoseFilter()?.pagesFilter()?.pageComparison();
@@ -156,7 +168,14 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
 
       const published = filter.publishedFilter();
       if (published && !('publishedOp' in params)) params = { ...params, ...yearFilter(published) };
+
+      const lacking = filter.missingFilter()?.missingProperty();
+      const name = lacking ? missingName(lacking) : undefined;
+      if (name && !missing.includes(name)) missing.push(name);
     }
+
+    // Every "having no …" line together, as the server reads them: missing=pages,cover.
+    if (missing.length > 0) params = { ...params, missing: missing.join(',') };
 
     return { command: 'list books', params };
   };

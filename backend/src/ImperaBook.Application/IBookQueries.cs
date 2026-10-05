@@ -89,14 +89,28 @@ public sealed record LanguageFilter(string Code, bool Negated = false);
 /// </param>
 /// <param name="Published">By publication year.</param>
 /// <param name="Language">By language.</param>
+/// <param name="Missing">Lacking every one of these.</param>
 public sealed record BookFilter(
     PageFilter? Pages = null,
     string? Author = null,
     YearFilter? Published = null,
-    LanguageFilter? Language = null
+    LanguageFilter? Language = null,
+    IReadOnlySet<MissingField>? Missing = null
 )
 {
-    public bool IsEmpty => Pages is null && Author is null && Published is null && Language is null;
+    public bool IsEmpty =>
+        Pages is null && Author is null && Published is null && Language is null && Missing is not { Count: > 0 };
+}
+
+/// <summary>What a book can lack, for "having no …": each one listed must be absent.</summary>
+public enum MissingField
+{
+    Author,
+    Pages,
+    Published,
+    Language,
+    Isbn,
+    Cover,
 }
 
 public interface IBookQueries

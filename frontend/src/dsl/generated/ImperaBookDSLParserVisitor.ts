@@ -9,6 +9,14 @@ import { UpdateBookCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveBookCmdContext } from "./ImperaBookDSLParser.js";
 import { ListBooksCmdContext } from "./ImperaBookDSLParser.js";
 import { ListFilterContext } from "./ImperaBookDSLParser.js";
+import { MissingFilterContext } from "./ImperaBookDSLParser.js";
+import { MissingPropertyContext } from "./ImperaBookDSLParser.js";
+import { MissingAuthorContext } from "./ImperaBookDSLParser.js";
+import { MissingPagesContext } from "./ImperaBookDSLParser.js";
+import { MissingYearContext } from "./ImperaBookDSLParser.js";
+import { MissingLanguageContext } from "./ImperaBookDSLParser.js";
+import { MissingIsbnContext } from "./ImperaBookDSLParser.js";
+import { MissingCoverContext } from "./ImperaBookDSLParser.js";
 import { PublishedFilterContext } from "./ImperaBookDSLParser.js";
 import { YearComparisonContext } from "./ImperaBookDSLParser.js";
 import { YearInContext } from "./ImperaBookDSLParser.js";
@@ -110,6 +118,54 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      * @return the visitor result
      */
     visitListFilter?: (ctx: ListFilterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.missingFilter`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitMissingFilter?: (ctx: MissingFilterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.missingProperty`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitMissingProperty?: (ctx: MissingPropertyContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.missingAuthor`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitMissingAuthor?: (ctx: MissingAuthorContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.missingPages`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitMissingPages?: (ctx: MissingPagesContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.missingYear`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitMissingYear?: (ctx: MissingYearContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.missingLanguage`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitMissingLanguage?: (ctx: MissingLanguageContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.missingIsbn`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitMissingIsbn?: (ctx: MissingIsbnContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.missingCover`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitMissingCover?: (ctx: MissingCoverContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.publishedFilter`.
      * @param ctx the parse tree

@@ -58,7 +58,7 @@ describe('applyCompletion', () => {
     });
 
     it('offers one chip per filter, published among them', () => {
-      expect(labels('list books ')).toEqual(['whose', 'written by', 'published']);
+      expect(labels('list books ')).toEqual(['whose', 'written by', 'published', 'having no']);
     });
 
     it('offers how a year compares once published is chosen', () => {
@@ -73,8 +73,8 @@ describe('applyCompletion', () => {
     });
 
     it('offers published no more once it is used, in any form', () => {
-      expect(labels('list books published after 1950')).toEqual(['whose', 'written by']);
-      expect(labels('list books published in 1965\n    written by x')).toEqual(['whose']);
+      expect(labels('list books published after 1950')).toEqual(['whose', 'written by', 'having no']);
+      expect(labels('list books published in 1965\n    written by x')).toEqual(['whose', 'having no']);
     });
 
     it('keeps published in as one chip when adding a book', () => {
@@ -84,6 +84,27 @@ describe('applyCompletion', () => {
     it('offers not, and names the language, after language is', () => {
       expect(labels('list books whose language is ')).toEqual(['not', 'language']);
       expect(labels('list books whose language is not ')).toEqual(['language']);
+    });
+
+    it('offers what a book may lack after having no', () => {
+      expect(labels('list books having no '))
+        .toEqual(['author', 'page count', 'publication year', 'language', 'isbn', 'cover']);
+      expect(accept('list books having no pub|', 'publication year')).toBe('list books having no publication year|');
+    });
+
+    it('offers only what is not yet asked for on a further having-no line', () => {
+      expect(labels('list books having no page count\n    having no '))
+        .toEqual(['author', 'publication year', 'language', 'isbn', 'cover']);
+    });
+
+    it('offers having no no more once every property is used', () => {
+      const all = ['cover', 'isbn', 'author', 'language', 'publication year', 'page count']
+        .map(p => `having no ${p}`).join('\n    ');
+      expect(labels(`list books ${all}`)).not.toContain('having no');
+    });
+
+    it('keeps the page-count hint even when "page count" is used up as a having-no property', () => {
+      expect(labels('list books having no page count\n    whose page count is at least ')).toEqual(['page count']);
     });
 
     it('names the author after written by', () => {

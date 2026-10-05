@@ -9,9 +9,12 @@ namespace ImperaBook.Infrastructure.Data.Queries;
 public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBookQueries
 {
     public Task<BookListItem[]> List(BookFilter filter, CancellationToken ct) =>
-        InLanguage(
-            PublishedIn(WrittenBy(WithPages(Owned(), filter.Pages), filter.Author), filter.Published),
-            filter.Language
+        Lacking(
+            InLanguage(
+                PublishedIn(WrittenBy(WithPages(Owned(), filter.Pages), filter.Author), filter.Published),
+                filter.Language
+            ),
+            filter.Missing
         )
             .OrderBy(b => b.Title)
             .ThenBy(b => b.Id)
@@ -24,6 +27,25 @@ public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBo
             .Select(b => b.Language!)
             .Distinct()
             .ToArrayAsync(ct);
+
+    // "having no author" is a book no author is linked to: its attribution is unknown.
+    private static IQueryable<BookEntity> Lacking(IQueryable<BookEntity> books, IReadOnlySet<MissingField>? missing)
+    {
+        foreach (var field in missing ?? new HashSet<MissingField>())
+        {
+            books = field switch
+            {
+                MissingField.Author => books.Where(b => !b.Authors.Any()),
+                MissingField.Pages => books.Where(b => b.PageCount == null),
+                MissingField.Published => books.Where(b => b.PublishedYear == null),
+                MissingField.Language => books.Where(b => b.Language == null),
+                MissingField.Isbn => books.Where(b => b.Isbn == null),
+                MissingField.Cover => books.Where(b => b.CoverHash == null),
+                _ => throw new InvalidOperationException($"Unhandled missing field: {field}"),
+            };
+        }
+        return books;
+    }
 
     // As with "other than" for pages, an unknown language is not "not English": C#'s != would
     // count null as different, so "is not" says outright that the language must be known.

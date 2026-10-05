@@ -163,6 +163,42 @@ describe('CommandVisitor', () => {
     });
   });
 
+  describe('list books having no', () => {
+    const cases: [string, string][] = [
+      ['author', 'author'],
+      ['page count', 'pages'],
+      ['publication year', 'published'],
+      ['language', 'language'],
+      ['isbn', 'isbn'],
+      ['cover', 'cover'],
+    ];
+
+    for (const [property, name] of cases) {
+      it(`reads "having no ${property}"`, () => {
+        expect(parse(`list books having no ${property}`)?.params).toEqual({ missing: name });
+      });
+    }
+
+    it('gathers every having-no line, each once, beside the other filters', () => {
+      expect(parse('list books having no page count\n    written by x\n    having no cover\n    having no page count')?.params)
+        .toEqual({ missing: 'pages,cover', author: 'x' });
+    });
+
+    it('reads the dashboard\'s findings as they are written', () => {
+      for (const text of ['list books having no page count', 'list books having no isbn',
+        'list books having no cover', 'list books having no publication year']) {
+        expect(checkCommand(text).valid).toBe(true);
+      }
+    });
+
+    it('needs a known property', () => {
+      for (const text of ['list books having', 'list books having no', 'list books having no pages',
+        'list books having no publisher']) {
+        expect(checkCommand(text).valid).toBe(false);
+      }
+    });
+  });
+
   describe('list books published', () => {
     const cases: [string, Record<string, string>][] = [
       ['in 1965', { publishedOp: 'in', published: '1965' }],

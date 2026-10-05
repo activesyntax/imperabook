@@ -36,6 +36,7 @@ PUBLISHED      : 'published' -> pushMode(AFTER_PUBLISHED) ;
 SUBTITLED      : 'subtitled' -> pushMode(VALUE_MODE) ;
 WHOSE          : 'whose' -> pushMode(AFTER_WHOSE) ;
 WRITTEN        : 'written' -> pushMode(AFTER_WRITTEN) ;
+HAVING         : 'having' -> pushMode(AFTER_HAVING) ;
 
 NL             : '\r'? '\n' ;
 WS             : [ \t]+ -> skip ;
@@ -76,6 +77,25 @@ AFTER          : 'after' -> mode(YEAR_MODE) ;
 PUBLISHED_BETWEEN : 'between' -> type(BETWEEN), mode(YEAR_MODE) ;
 PUBLISHED_NL   : '\r'? '\n' -> type(NL), popMode ;
 PUBLISHED_WS   : [ \t]+ -> skip ;
+
+// --- having no page count … (a list filter) -----------------------------------
+// After "no", only the names of what a book may lack.
+mode AFTER_HAVING;
+NO             : 'no' -> mode(MISSING) ;
+HAVING_NL      : '\r'? '\n' -> type(NL), popMode ;
+HAVING_WS      : [ \t]+ -> skip ;
+
+mode MISSING;
+MISSING_AUTHOR : 'author' -> type(AUTHOR) ;
+MISSING_PAGE   : 'page' -> type(PAGE) ;
+MISSING_COUNT  : 'count' -> type(COUNT) ;
+PUBLICATION    : 'publication' ;
+YEAR           : 'year' ;
+MISSING_LANGUAGE : 'language' -> type(LANGUAGE) ;
+MISSING_ISBN   : 'isbn' -> type(ISBN) ;
+COVER          : 'cover' ;
+MISSING_NL     : '\r'? '\n' -> type(NL), popMode ;
+MISSING_WS     : [ \t]+ -> skip ;
 
 // --- written by … (a list filter) --------------------------------------------
 mode AFTER_WRITTEN;

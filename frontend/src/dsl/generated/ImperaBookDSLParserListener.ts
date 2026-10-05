@@ -9,6 +9,14 @@ import { UpdateBookCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveBookCmdContext } from "./ImperaBookDSLParser.js";
 import { ListBooksCmdContext } from "./ImperaBookDSLParser.js";
 import { ListFilterContext } from "./ImperaBookDSLParser.js";
+import { MissingFilterContext } from "./ImperaBookDSLParser.js";
+import { MissingPropertyContext } from "./ImperaBookDSLParser.js";
+import { MissingAuthorContext } from "./ImperaBookDSLParser.js";
+import { MissingPagesContext } from "./ImperaBookDSLParser.js";
+import { MissingYearContext } from "./ImperaBookDSLParser.js";
+import { MissingLanguageContext } from "./ImperaBookDSLParser.js";
+import { MissingIsbnContext } from "./ImperaBookDSLParser.js";
+import { MissingCoverContext } from "./ImperaBookDSLParser.js";
 import { PublishedFilterContext } from "./ImperaBookDSLParser.js";
 import { YearComparisonContext } from "./ImperaBookDSLParser.js";
 import { YearInContext } from "./ImperaBookDSLParser.js";
@@ -135,6 +143,86 @@ export class ImperaBookDSLParserListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitListFilter?: (ctx: ListFilterContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.missingFilter`.
+     * @param ctx the parse tree
+     */
+    enterMissingFilter?: (ctx: MissingFilterContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.missingFilter`.
+     * @param ctx the parse tree
+     */
+    exitMissingFilter?: (ctx: MissingFilterContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.missingProperty`.
+     * @param ctx the parse tree
+     */
+    enterMissingProperty?: (ctx: MissingPropertyContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.missingProperty`.
+     * @param ctx the parse tree
+     */
+    exitMissingProperty?: (ctx: MissingPropertyContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.missingAuthor`.
+     * @param ctx the parse tree
+     */
+    enterMissingAuthor?: (ctx: MissingAuthorContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.missingAuthor`.
+     * @param ctx the parse tree
+     */
+    exitMissingAuthor?: (ctx: MissingAuthorContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.missingPages`.
+     * @param ctx the parse tree
+     */
+    enterMissingPages?: (ctx: MissingPagesContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.missingPages`.
+     * @param ctx the parse tree
+     */
+    exitMissingPages?: (ctx: MissingPagesContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.missingYear`.
+     * @param ctx the parse tree
+     */
+    enterMissingYear?: (ctx: MissingYearContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.missingYear`.
+     * @param ctx the parse tree
+     */
+    exitMissingYear?: (ctx: MissingYearContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.missingLanguage`.
+     * @param ctx the parse tree
+     */
+    enterMissingLanguage?: (ctx: MissingLanguageContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.missingLanguage`.
+     * @param ctx the parse tree
+     */
+    exitMissingLanguage?: (ctx: MissingLanguageContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.missingIsbn`.
+     * @param ctx the parse tree
+     */
+    enterMissingIsbn?: (ctx: MissingIsbnContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.missingIsbn`.
+     * @param ctx the parse tree
+     */
+    exitMissingIsbn?: (ctx: MissingIsbnContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.missingCover`.
+     * @param ctx the parse tree
+     */
+    enterMissingCover?: (ctx: MissingCoverContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.missingCover`.
+     * @param ctx the parse tree
+     */
+    exitMissingCover?: (ctx: MissingCoverContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.publishedFilter`.
      * @param ctx the parse tree

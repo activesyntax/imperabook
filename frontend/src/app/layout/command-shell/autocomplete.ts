@@ -56,6 +56,14 @@ const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_whoseFilter]: { label: 'whose', insertText: 'whose ' },
   [ImperaBookDSLParser.RULE_pagesFilter]: { label: 'page count is', insertText: 'page count is ' },
   [ImperaBookDSLParser.RULE_languageFilter]: { label: 'language is', insertText: 'language is ' },
+  [ImperaBookDSLParser.RULE_missingFilter]: { label: 'having no', insertText: 'having no ' },
+  // Complete filters: nothing follows on their line, so no trailing space.
+  [ImperaBookDSLParser.RULE_missingAuthor]: { label: 'author', insertText: 'author' },
+  [ImperaBookDSLParser.RULE_missingPages]: { label: 'page count', insertText: 'page count' },
+  [ImperaBookDSLParser.RULE_missingYear]: { label: 'publication year', insertText: 'publication year' },
+  [ImperaBookDSLParser.RULE_missingLanguage]: { label: 'language', insertText: 'language' },
+  [ImperaBookDSLParser.RULE_missingIsbn]: { label: 'isbn', insertText: 'isbn' },
+  [ImperaBookDSLParser.RULE_missingCover]: { label: 'cover', insertText: 'cover' },
   [ImperaBookDSLParser.RULE_languageNot]: { label: 'not', insertText: 'not ' },
   [ImperaBookDSLParser.RULE_languageName]: { label: 'language', insertText: '' },
   // Each shows its usual wording; the synonyms (greater than, fewer than) are accepted, not offered.
@@ -118,6 +126,7 @@ const COMMAND_RULES = [
 const PARAM_RULES = [
   ImperaBookDSLParser.RULE_keywords,
   ImperaBookDSLParser.RULE_whoseFilter,
+  ImperaBookDSLParser.RULE_missingFilter,
   ImperaBookDSLParser.RULE_authorFilter,
   ImperaBookDSLParser.RULE_publishedFilter,
   ImperaBookDSLParser.RULE_bookTitle,
@@ -134,6 +143,12 @@ const PARAM_RULES = [
 const PROPERTY_RULES = [
   ImperaBookDSLParser.RULE_pagesFilter,
   ImperaBookDSLParser.RULE_languageFilter,
+  ImperaBookDSLParser.RULE_missingAuthor,
+  ImperaBookDSLParser.RULE_missingPages,
+  ImperaBookDSLParser.RULE_missingYear,
+  ImperaBookDSLParser.RULE_missingLanguage,
+  ImperaBookDSLParser.RULE_missingIsbn,
+  ImperaBookDSLParser.RULE_missingCover,
 ];
 
 /**
@@ -207,6 +222,7 @@ export function canContinueOnNewLine(text: string): boolean {
 /** A two-step chip is used up only once everything it leads to is. */
 const LEADS_TO: Readonly<Record<string, readonly string[]>> = {
   whose: ['page count is', 'language is'],
+  'having no': ['author', 'page count', 'publication year', 'language', 'isbn', 'cover'],
 };
 
 function withoutUsedParams(items: CompletionItem[], input: string, caretOffset: number): CompletionItem[] {
@@ -214,11 +230,14 @@ function withoutUsedParams(items: CompletionItem[], input: string, caretOffset: 
   for (const [chip, choices] of Object.entries(LEADS_TO)) {
     if (choices.every(choice => used.has(choice))) used.add(chip);
   }
-  return used.size === 0 ? items : items.filter(item => !used.has(item.label));
+  // Only chips are used up; a hint naming what to type ("page count") shares some
+  // labels with chips and must stay.
+  return used.size === 0 ? items : items.filter(item => item.insertText === '' || !used.has(item.label));
 }
 
 /** Each parameter phrase's label, by the tokens that open its line. */
-const PARAM_OPENERS: ReadonlyArray<readonly [label: string, first: number, second?: number]> = [
+/** A parameter's label, and the tokens that say it is on a line, in order. */
+const PARAM_OPENERS: ReadonlyArray<readonly [label: string, ...tokens: number[]]> = [
   ['by author', ImperaBookDSLLexer.BY, ImperaBookDSLLexer.AUTHOR],
   ['subtitled', ImperaBookDSLLexer.SUBTITLED],
   ['in language', ImperaBookDSLLexer.IN, ImperaBookDSLLexer.LANGUAGE],
@@ -230,6 +249,13 @@ const PARAM_OPENERS: ReadonlyArray<readonly [label: string, first: number, secon
   ['published', ImperaBookDSLLexer.PUBLISHED],
   ['page count is', ImperaBookDSLLexer.WHOSE, ImperaBookDSLLexer.PAGE],
   ['language is', ImperaBookDSLLexer.WHOSE, ImperaBookDSLLexer.LANGUAGE],
+  // What "having no" leads to, one property per line.
+  ['author', ImperaBookDSLLexer.HAVING, ImperaBookDSLLexer.NO, ImperaBookDSLLexer.AUTHOR],
+  ['page count', ImperaBookDSLLexer.HAVING, ImperaBookDSLLexer.NO, ImperaBookDSLLexer.PAGE],
+  ['publication year', ImperaBookDSLLexer.HAVING, ImperaBookDSLLexer.NO, ImperaBookDSLLexer.PUBLICATION],
+  ['language', ImperaBookDSLLexer.HAVING, ImperaBookDSLLexer.NO, ImperaBookDSLLexer.LANGUAGE],
+  ['isbn', ImperaBookDSLLexer.HAVING, ImperaBookDSLLexer.NO, ImperaBookDSLLexer.ISBN],
+  ['cover', ImperaBookDSLLexer.HAVING, ImperaBookDSLLexer.NO, ImperaBookDSLLexer.COVER],
 ];
 
 /**
@@ -250,9 +276,9 @@ function usedParams(input: string, exceptLine: number): Set<string> {
 
   const used = new Set<string>();
   for (const types of typesByLine.values()) {
-    for (const [label, first, second] of PARAM_OPENERS) {
-      const at = types.findIndex((type, i) => type === first && (second === undefined || types[i + 1] === second));
-      if (at >= 0) used.add(label);
+    for (const [label, ...tokens] of PARAM_OPENERS) {
+      const found = types.some((_, at) => tokens.every((token, k) => types[at + k] === token));
+      if (found) used.add(label);
     }
   }
   return used;

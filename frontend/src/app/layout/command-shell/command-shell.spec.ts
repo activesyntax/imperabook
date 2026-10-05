@@ -314,6 +314,7 @@ describe('CommandShell', () => {
         'written by herbert',
         'published after 1950',
         'whose language is not english',
+        ...['author', 'page count', 'publication year', 'language', 'isbn', 'cover'].map(p => `having no ${p}`),
       ].join('\n    ')), 'Enter');
       await fixture.whenStable();
 
@@ -321,7 +322,7 @@ describe('CommandShell', () => {
         command: 'list books',
         params: {
           pagesOp: 'equal', pages: '120', author: 'herbert', publishedOp: 'after', published: '1950',
-          languageOp: 'not', language: 'english',
+          languageOp: 'not', language: 'english', missing: 'author,pages,published,language,isbn,cover',
         },
       });
     });

@@ -43,7 +43,25 @@ listBooksCmd   : LIST BOOKS listFilter? (NL+ listFilter)* ;
 listFilter     : whoseFilter
                | authorFilter
                | publishedFilter
+               | missingFilter
                ;
+
+// Books lacking something, the way the dashboard's findings put it:
+// "having no page count". One property per line; several lines all hold.
+missingFilter  : HAVING NO missingProperty ;
+missingProperty: missingAuthor
+               | missingPages
+               | missingYear
+               | missingLanguage
+               | missingIsbn
+               | missingCover
+               ;
+missingAuthor  : AUTHOR ;
+missingPages   : PAGE COUNT ;
+missingYear    : PUBLICATION YEAR ;
+missingLanguage: LANGUAGE ;
+missingIsbn    : ISBN ;
+missingCover   : COVER ;
 
 // published in 1965 / before 1950 / after 1950 / between 1950 and 1960.
 // Two steps, like the page filter: "published" is offered beside the other

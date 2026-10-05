@@ -58,6 +58,7 @@ public static class BookEndpoints
         string? publishedTo,
         string? languageOp,
         string? language,
+        string? missing,
         IBookQueries books,
         CancellationToken ct
     )
@@ -74,11 +75,16 @@ public static class BookEndpoints
         if (languageFilter.IsFailure)
             return InvalidFilter("Invalid language filter", languageFilter.Error, "invalid_language_filter");
 
+        var missingFilter = ParseMissing(missing);
+        if (missingFilter.IsFailure)
+            return InvalidFilter("Invalid having-no filter", missingFilter.Error, "invalid_missing_filter");
+
         var filter = new BookFilter(
             pageFilter.Value,
             string.IsNullOrWhiteSpace(author) ? null : author.Trim(),
             yearFilter.Value,
-            languageFilter.Value
+            languageFilter.Value,
+            missingFilter.Value
         );
         var bookList = await books.List(filter, ct);
         var page = new PageInfo(1, 1, bookList.Length, "books");
@@ -101,6 +107,7 @@ public static class BookEndpoints
                 filter.Author is null ? null : $"written by {filter.Author}",
                 filter.Published?.Describe(),
                 whose.Length == 0 ? null : whose,
+                DescribeMissing(filter.Missing),
             }.OfType<string>()
         );
 
@@ -127,6 +134,51 @@ public static class BookEndpoints
                 .ToArray()
         );
     }
+
+    private static readonly Dictionary<string, MissingField> MissingFields = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["author"] = MissingField.Author,
+        ["pages"] = MissingField.Pages,
+        ["published"] = MissingField.Published,
+        ["language"] = MissingField.Language,
+        ["isbn"] = MissingField.Isbn,
+        ["cover"] = MissingField.Cover,
+    };
+
+    /// <summary>"having no …" as the command bar sends it: missing=pages,cover. A name it does not know is an error.</summary>
+    private static CSharpFunctionalExtensions.Result<IReadOnlySet<MissingField>?, string> ParseMissing(string? missing)
+    {
+        if (string.IsNullOrWhiteSpace(missing))
+            return CSharpFunctionalExtensions.Result.Success<IReadOnlySet<MissingField>?, string>(null);
+
+        var fields = new HashSet<MissingField>();
+        foreach (var name in missing.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!MissingFields.TryGetValue(name, out var field))
+                return $"A book cannot lack \"{name}\". Try author, pages, published, language, isbn or cover.";
+            fields.Add(field);
+        }
+        return fields;
+    }
+
+    // "having no page count and no cover", always in the same order.
+    private static string? DescribeMissing(IReadOnlySet<MissingField>? missing) =>
+        missing is not { Count: > 0 }
+            ? null
+            : "having "
+                + string.Join(
+                    " and ",
+                    missing.OrderBy(f => f).Select(f => f switch
+                    {
+                        MissingField.Author => "no author",
+                        MissingField.Pages => "no page count",
+                        MissingField.Published => "no publication year",
+                        MissingField.Language => "no language",
+                        MissingField.Isbn => "no ISBN",
+                        MissingField.Cover => "no cover",
+                        _ => throw new InvalidOperationException($"Unhandled missing field: {f}"),
+                    })
+                );
 
     /// <summary>No languageOp is no filter; a language that cannot be identified is an error.</summary>
     private static CSharpFunctionalExtensions.Result<LanguageFilter?, string> ParseLanguageFilter(
