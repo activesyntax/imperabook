@@ -55,7 +55,7 @@ hurl --variables-file vars.env --variable host=https://api.example.com --test *.
 | `list-books-language.hurl`   | `GET /api/books` language filter ("whose language is [not] …"): by name, native name or code; `/api/books/languages` |
 | `list-books-having-no.hurl`  | `GET /api/books?missing=` ("having no …"): each property, several together, with other filters; bad name → 400 |
 | `list-authors-having-no.hurl` | `GET /api/authors?missing=books`: authors no book credits; matches the dashboard finding |
-| `list-authors-filters.hurl`  | `GET /api/authors` born (in/before/after/between, BC) and living filters, together; bad filter → 400 |
+| `list-authors-filters.hurl`  | `GET /api/authors` born and died (in/before/after/between, BC) and living filters, together; bad filter → 400 |
 | `search.hurl`                | `GET /api/search?q=` (find): title, part of a word, stemming, author name, all keywords |
 | `get-book.hurl`             | `GET /api/books/{id}` detail, list items link to it via `open` |
 | `public/about-help-public.hurl` | `GET /api/about`, `/api/help` without a session → 200 |

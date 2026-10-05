@@ -53,6 +53,7 @@ import { RemoveAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { ListAuthorsCmdContext } from "./ImperaBookDSLParser.js";
 import { AuthorListFilterContext } from "./ImperaBookDSLParser.js";
 import { BornFilterContext } from "./ImperaBookDSLParser.js";
+import { DiedFilterContext } from "./ImperaBookDSLParser.js";
 import { LivingFilterContext } from "./ImperaBookDSLParser.js";
 import { AuthorsWithoutBooksContext } from "./ImperaBookDSLParser.js";
 import { FindCmdContext } from "./ImperaBookDSLParser.js";
@@ -592,6 +593,16 @@ export class ImperaBookDSLParserListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitBornFilter?: (ctx: BornFilterContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.diedFilter`.
+     * @param ctx the parse tree
+     */
+    enterDiedFilter?: (ctx: DiedFilterContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.diedFilter`.
+     * @param ctx the parse tree
+     */
+    exitDiedFilter?: (ctx: DiedFilterContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.livingFilter`.
      * @param ctx the parse tree

@@ -247,6 +247,15 @@ describe('CommandVisitor', () => {
       expect(parse('list authors born before 500 BC')?.params).toEqual({ bornOp: 'before', born: '-500' });
     });
 
+    it('reads died, with the same comparisons', () => {
+      expect(parse('list authors died before 1900')?.params).toEqual({ diedOp: 'before', died: '1900' });
+      expect(parse('list authors died after 1950')?.params).toEqual({ diedOp: 'after', died: '1950' });
+      expect(parse('list authors born after 1850\n    died between 1890 and 1910')?.params).toEqual({
+        bornOp: 'after', born: '1850', diedOp: 'between', died: '1890', diedTo: '1910',
+      });
+      expect(checkCommand('list authors died').valid).toBe(false);
+    });
+
     it('reads living, and every filter together, one per line', () => {
       expect(parse('list authors living')?.params).toEqual({ vitality: 'living' });
       expect(parse('list authors living\n    born before 1950\n    having no books')?.params).toEqual({

@@ -201,9 +201,14 @@ describe('CommandRunner', () => {
   });
 
   it('sends the author list filters as its query', async () => {
-    const result = runner.run({ command: 'list authors', params: { bornOp: 'before', born: '1900', vitality: 'living' } });
+    const result = runner.run({
+      command: 'list authors',
+      params: { bornOp: 'before', born: '1900', vitality: 'living', diedOp: 'after', died: '1950' },
+    });
 
     const req = http.expectOne(r => r.url === '/api/authors');
+    expect(req.request.params.get('diedOp')).toBe('after');
+    expect(req.request.params.get('died')).toBe('1950');
     expect(req.request.params.get('bornOp')).toBe('before');
     expect(req.request.params.get('born')).toBe('1900');
     expect(req.request.params.get('vitality')).toBe('living');

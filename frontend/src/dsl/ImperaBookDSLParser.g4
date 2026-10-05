@@ -140,12 +140,13 @@ removeAuthorCmd: REMOVE AUTHOR ;
 // command's line.
 //
 //   list authors born before 1900
-//       living
+//       died after 1950
 //       having no books
 listAuthorsCmd : LIST AUTHORS authorListFilter? (NL+ authorListFilter)* ;
 
 authorListFilter
                : bornFilter
+               | diedFilter
                | livingFilter
                | authorsWithoutBooks
                ;
@@ -153,6 +154,7 @@ authorListFilter
 // born in 1920 / before 1900 / after 1950 / between 1900 and 1950 — the same
 // comparisons as "published".
 bornFilter     : BORN yearComparison ;
+diedFilter     : DIED yearComparison ;
 livingFilter   : LIVING ;
 authorsWithoutBooks
                : HAVING NO BOOKS ;

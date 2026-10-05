@@ -53,6 +53,7 @@ import { RemoveAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { ListAuthorsCmdContext } from "./ImperaBookDSLParser.js";
 import { AuthorListFilterContext } from "./ImperaBookDSLParser.js";
 import { BornFilterContext } from "./ImperaBookDSLParser.js";
+import { DiedFilterContext } from "./ImperaBookDSLParser.js";
 import { LivingFilterContext } from "./ImperaBookDSLParser.js";
 import { AuthorsWithoutBooksContext } from "./ImperaBookDSLParser.js";
 import { FindCmdContext } from "./ImperaBookDSLParser.js";
@@ -391,6 +392,12 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      * @return the visitor result
      */
     visitBornFilter?: (ctx: BornFilterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.diedFilter`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitDiedFilter?: (ctx: DiedFilterContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.livingFilter`.
      * @param ctx the parse tree

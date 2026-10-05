@@ -207,7 +207,8 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
   override visitUpdateAuthorCmd = noParams('update author');
   override visitRemoveAuthorCmd = noParams('remove author');
   // "having no books" becomes missing=books, as the server reads it.
-  // As the server reads them: bornOp, born and (for a range) bornTo; vitality=living;
+  // As the server reads them: bornOp, born and (for a range) bornTo; diedOp, died,
+  // diedTo the same way; vitality=living;
   // missing=books. The first of a repeated filter wins.
   override visitListAuthorsCmd = (ctx: ListAuthorsCmdContext): ParsedCommand => {
     let params: Record<string, string> = {};
@@ -215,6 +216,8 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
     for (const filter of ctx.authorListFilter()) {
       const born = filter.bornFilter()?.yearComparison();
       if (born && !('bornOp' in params)) params = { ...params, ...yearParams(born, 'born') };
+      const died = filter.diedFilter()?.yearComparison();
+      if (died && !('diedOp' in params)) params = { ...params, ...yearParams(died, 'died') };
       if (filter.livingFilter()) params = { vitality: 'living', ...params };
       if (filter.authorsWithoutBooks()) params = { missing: 'books', ...params };
     }

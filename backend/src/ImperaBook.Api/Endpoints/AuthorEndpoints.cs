@@ -45,12 +45,16 @@ public static class AuthorEndpoints
     }
 
     // "list authors", optionally filtered: "having no books" arrives as missing=books, "born
-    // before 1900" as bornOp, born and (for a range) bornTo, "living" as vitality=living.
+    // before 1900" as bornOp, born and (for a range) bornTo, "died …" as diedOp, died and
+    // diedTo, "living" as vitality=living.
     private static async Task<IResult> ListAuthors(
         string? missing,
         string? bornOp,
         string? born,
         string? bornTo,
+        string? diedOp,
+        string? died,
+        string? diedTo,
         string? vitality,
         IAuthorQueries authors,
         CancellationToken ct
@@ -68,6 +72,10 @@ public static class AuthorEndpoints
         if (bornFilter.IsFailure)
             return ListFilters.Invalid("Invalid birth filter", bornFilter.Error, "invalid_born_filter");
 
+        var diedFilter = ListFilters.ParseYear(diedOp, died, diedTo);
+        if (diedFilter.IsFailure)
+            return ListFilters.Invalid("Invalid death filter", diedFilter.Error, "invalid_died_filter");
+
         var living = !string.IsNullOrWhiteSpace(vitality);
         if (living && !string.Equals(vitality!.Trim(), "living", StringComparison.OrdinalIgnoreCase))
             return ListFilters.Invalid(
@@ -76,18 +84,23 @@ public static class AuthorEndpoints
                 "invalid_vitality_filter"
             );
 
-        var filter = new AuthorFilter(withoutBooks, bornFilter.Value, living);
+        var filter = new AuthorFilter(withoutBooks, bornFilter.Value, living, diedFilter.Value);
         var authorList = await authors.List(filter, ct);
         var page = new PageInfo(1, 1, authorList.Length, "authors");
 
         if (filter.IsEmpty)
             return TypedResults.Ok(authorList.ToCommandResult("No authors yet.", page));
 
-        // Said back as one phrase: "Living authors born before 1900 having no books".
+        // Said back as one phrase: "Authors born after 1850 who died before 1900 having no books".
         var who = filter.Living ? "living authors" : "authors";
         var which = string.Join(
             ' ',
-            new[] { filter.Born?.Describe("born"), filter.WithoutBooks ? "having no books" : null }.OfType<string>()
+            new[]
+            {
+                filter.Born?.Describe("born"),
+                filter.Died is { } d ? "who " + d.Describe("died") : null,
+                filter.WithoutBooks ? "having no books" : null,
+            }.OfType<string>()
         );
         var heading = $"{char.ToUpperInvariant(who[0])}{who[1..]}{(which.Length == 0 ? "" : " " + which)}";
 

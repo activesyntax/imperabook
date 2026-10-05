@@ -60,6 +60,7 @@ const RULE_PHRASES: Record<number, Phrase> = {
   // The one thing an author can lack, so one chip rather than two steps.
   [ImperaBookDSLParser.RULE_authorsWithoutBooks]: { label: 'having no books', insertText: 'having no books' },
   [ImperaBookDSLParser.RULE_bornFilter]: { label: 'born', insertText: 'born ' },
+  [ImperaBookDSLParser.RULE_diedFilter]: { label: 'died', insertText: 'died ' },
   [ImperaBookDSLParser.RULE_livingFilter]: { label: 'living', insertText: 'living' },
   // Complete filters: nothing follows on their line, so no trailing space.
   [ImperaBookDSLParser.RULE_missingAuthor]: { label: 'author', insertText: 'author' },
@@ -141,6 +142,7 @@ const PARAM_RULES = [
   ImperaBookDSLParser.RULE_missingFilter,
   ImperaBookDSLParser.RULE_authorsWithoutBooks,
   ImperaBookDSLParser.RULE_bornFilter,
+  ImperaBookDSLParser.RULE_diedFilter,
   ImperaBookDSLParser.RULE_livingFilter,
   ImperaBookDSLParser.RULE_authorFilter,
   ImperaBookDSLParser.RULE_publishedFilter,

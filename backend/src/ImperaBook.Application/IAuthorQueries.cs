@@ -26,9 +26,15 @@ public sealed record AuthorDetail(AuthorListItem Author, IReadOnlyList<BookListI
 /// <param name="WithoutBooks">Only authors no book is credited to.</param>
 /// <param name="Born">By birth year; an unknown birth year matches no comparison.</param>
 /// <param name="Living">Only authors recorded as living.</param>
-public sealed record AuthorFilter(bool WithoutBooks = false, YearFilter? Born = null, bool Living = false)
+/// <param name="Died">By death year; an unknown death year matches no comparison.</param>
+public sealed record AuthorFilter(
+    bool WithoutBooks = false,
+    YearFilter? Born = null,
+    bool Living = false,
+    YearFilter? Died = null
+)
 {
-    public bool IsEmpty => !WithoutBooks && Born is null && !Living;
+    public bool IsEmpty => !WithoutBooks && Born is null && !Living && Died is null;
 }
 
 public interface IAuthorQueries

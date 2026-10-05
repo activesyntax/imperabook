@@ -108,13 +108,19 @@ describe('applyCompletion', () => {
     });
 
     it('offers the author filters, and nothing of the books\'', () => {
-      expect(labels('list authors ')).toEqual(['born', 'living', 'having no books']);
+      expect(labels('list authors ')).toEqual(['born', 'died', 'living', 'having no books']);
+      expect(labels('list authors died ')).toEqual(['in', 'before', 'after', 'between']);
       expect(labels('list authors born ')).toEqual(['in', 'before', 'after', 'between']);
     });
 
     it('offers the author filters not yet used on a further line', () => {
-      expect(labels('list authors born before 1900\n    ')).toEqual(['living', 'having no books']);
+      expect(labels('list authors born before 1900\n    ')).toEqual(['died', 'living', 'having no books']);
       expect(labels('list authors living\n    having no books\n    ')).toEqual(['born']);
+    });
+
+    it('offers died and living no more once either is used, as when adding', () => {
+      expect(labels('list authors died before 1900\n    ')).toEqual(['born', 'having no books']);
+      expect(labels('list authors living\n    ')).toEqual(['born', 'having no books']);
     });
 
     it('names the author after written by', () => {

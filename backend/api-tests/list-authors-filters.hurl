@@ -1,5 +1,5 @@
-# GET /api/authors?bornOp=…&born=…[&bornTo=…]&vitality=living — "list authors born before
-# 1900", "list authors living", one per line together. Each run adds an author born 1850 who
+# GET /api/authors?bornOp=…&born=…[&bornTo=…]&diedOp=…&died=…[&diedTo=…]&vitality=living —
+# "list authors born before 1900", "… died after 1950", "… living", one per line together. Each run adds an author born 1850 who
 # died, one born 1930 still living, and one with no birth year; the catalog holds others too,
 # so each case checks which of these three are listed and which are not.
 #
@@ -65,6 +65,28 @@ jsonpath "$.views[0].text" == "Living authors born after 1900 having no books"
 jsonpath "$.views[1].items[*].ref" contains "{{alive}}"
 jsonpath "$.views[1].items[*].ref" not contains "{{old}}"
 
+# --- died: only authors with a death year can match -------------------------------------
+GET {{host}}/api/authors?diedOp=before&died=1950
+HTTP 200
+[Asserts]
+jsonpath "$.views[0].text" == "Authors who died before 1950"
+jsonpath "$.views[1].items[*].ref" contains "{{old}}"
+jsonpath "$.views[1].items[*].ref" not contains "{{alive}}"
+jsonpath "$.views[1].items[*].ref" not contains "{{unknown}}"
+
+GET {{host}}/api/authors?diedOp=after&died=1950
+HTTP 200
+[Asserts]
+jsonpath "$.views[1].items[*].ref" not contains "{{old}}"
+
+# Born and died together read as one phrase.
+GET {{host}}/api/authors?bornOp=after&born=1800&diedOp=in&died=1920
+HTTP 200
+[Asserts]
+jsonpath "$.views[0].text" == "Authors born after 1800 who died in 1920"
+jsonpath "$.views[1].items[*].ref" contains "{{old}}"
+
+
 # --- years before the common era ------------------------------------------------------------
 GET {{host}}/api/authors?bornOp=before&born=-400
 HTTP 200
@@ -78,6 +100,11 @@ GET {{host}}/api/authors?bornOp=around&born=1900
 HTTP 400
 [Asserts]
 jsonpath "$.code" == "invalid_born_filter"
+
+GET {{host}}/api/authors?diedOp=around&died=1900
+HTTP 400
+[Asserts]
+jsonpath "$.code" == "invalid_died_filter"
 
 GET {{host}}/api/authors?vitality=dead
 HTTP 400
