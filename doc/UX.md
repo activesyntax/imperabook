@@ -4,185 +4,190 @@ This document records UX patterns and the reasoning behind them — the companio
 `DECISIONS.md` (architecture) and `COMMANDS.md` (command reference). The same rule applies: where a
 pattern has a soft spot, it is named rather than hidden.
 
----
-
-## 1. Anticipatory draft preview for create commands
-
-**Concept.** The moment `add book` becomes the top-ranked suggestion in the command bar — *before*
-Enter — the workspace renders a draft book: a soft placeholder cover and the fields shown as gentle,
-muted prompts (a ghosted *e.g. The Hobbit* where the title will go, *e.g. Ursula K. Le Guin* for the
-author). As each quoted value in the composed command is filled, the draft fills in with it. The
-command bar and the workspace become two views of the same in-progress entity — the sentence and the
-book it describes, side by side.
-
-**Why.** A bare command line makes you type into the void and trust that the right thing happened
-after Enter. The draft collapses that gap — the result is visible while you build it, not after.
-It also teaches the data model without a tutorial: the shape on screen *is* the shape a book has, so
-a first-time user learns what a book is made of by filling one in. And it suits the typography-driven,
-view-based aesthetic — the create flow is a view that resolves, not a modal form bolted onto a
-terminal.
-
-**Trigger and lifecycle.**
-
-- **Top suggestion (pre-Enter):** as soon as `add book` is the *top-ranked* suggestion, the draft
-  appears with its placeholders — so the workspace responds *during* selection, not only after the
-  command is accepted. This is the deliberate trade for responsive feedback: if the top suggestion
-  shifts to a non-create command, the draft simply slides back out (see *Workspace*), so the
-  occasional transient draft is cheap rather than jarring.
-- **Composing:** the draft is driven by the *parsed state of the buffer*, not by a sequence of
-  answers — the same token list the bar already produces for its own suggestions (DECISIONS 28). A
-  segment whose value is complete lights up its field; deleting the segment puts the placeholder
-  back. Because parameter order is free, fields fill in whatever order the sentence is written, which
-  is one more reason the draft renders the whole book rather than the current step.
-- **Commit:** on the final step the draft is sent to the backend; success resolves the draft card
-  into the confirmed detail, and the saved book joins the list view.
-- **Cancel / `Esc`:** the draft slides out and nothing was ever persisted.
-
-**What it renders.** The draft is `BookDetailView` (from the `CommandView` contract) in a
-draft variant — the *same surface* the book will have once saved, not a bespoke form. That keeps the
-preview honest: you are looking at the real result template, partially filled. Empty optional fields
-render as absent, consistent with how `Maybe<T>` optionals are shown elsewhere (DECISIONS 11);
-required-but-unfilled fields show the muted example placeholders described under *Placeholder
-treatment*.
-
-A per-field placeholder is only expressible because the node is typed to the entity (DECISIONS 32).
-Against a generic array of label/value pairs the frontend would have to find the title by matching on
-its caption — the same knowledge, held where nothing checks it. This section was the requirement that
-made the leak visible.
-
-**Placeholder treatment.** Empty fields use the conventional input-placeholder convention rather than
-value-like defaults: muted, lower-contrast ghost text phrased as a gentle example — *e.g. The Hobbit*
-for the title, *e.g. Ursula K. Le Guin* for the author — and a soft, skeletal cover frame rather than
-a mock cover. The point is that an empty slot should read as *type here*, not as a saved book that
-happens to be blank — which is the risk a solid "Untitled" / "Unknown author" carries. The same
-wording appears in the connective that fills it, so the command bar and the draft speak with one
-voice. When a
-field is answered, its text snaps from the muted placeholder to the full-contrast committed value,
-and that contrast shift is itself the feedback that the field went from empty to set. Optional fields
-left blank do not linger as ghosts; they collapse to absent (DECISIONS 11).
-
-**Workspace (carousel).** The workspace is a horizontally paginated carousel of cards. The draft does
-not *replace* what is on screen — it slides in as a new card and pushes the existing content aside.
-That makes cancel free: the original content was never destroyed, so when the draft slides out it
-simply returns to position. Because the draft is one card among others, the responsive
-top-suggestion trigger stays cheap — a card sliding in and out is a light gesture, not a full screen
-swap — which is exactly what makes triggering on the top suggestion (rather than on acceptance)
-affordable.
-
-**Boundaries.** The draft is a **frontend-only view state until commit** — no backend round-trip, no
-orphan row, nothing persisted until the required fields are satisfied and the user commits. This sits
-cleanly inside the existing split: the frontend owns rendering, so a draft is just local view state.
-Validation is unchanged — it runs on commit through the `Result` / ProblemDetails channel
-(DECISIONS 12); the preview is a convenience, never a substitute for it. Reading the buffer to fill
-the draft is lexical, not semantic: the frontend recognizes that a value belongs to the `with title`
-segment, and knows nothing about what `add book` does. Focus stays in the command bar throughout;
-the draft is a passenger, it never steals input.
-
-**Generalizes to.** Any mutating command that targets a single entity. `update book` is the same idea
-with a non-empty starting state — the selected book, edited live. The detail reached by opening a row
-and the add/update drafts are then one surface in three states (read, creating, editing), which is
-what makes `BookDetailView` one node rather than three. Scoped to `add book` for MVP1; the rest
-follow once it proves out.
+The thesis the patterns serve: **less to hold in your head.** A form asks you to find the field; a
+classic CLI asks you to remember the flag. ImperaBook asks you to say what you want in a short English
+sentence, and tells you — at every keystroke — what can come next, whether what you typed will run,
+and what `Enter` is about to do. It is not artificial intelligence. It is software that is
+*intelligent enough*: a closed grammar, your own catalog, and a few honest rules.
 
 ---
 
-## 2. The command bar composes a whole sentence
+## 1. Anticipatory draft preview for create commands — *not built*
 
-**Concept.** A command is written as one visible sentence and stays visible until it runs.
-Completion walks it one segment at a time — accepting `add book` types the verb, the suggestion row
-then offers `with title`, accepting it appends `with title ""` with the caret between the quotes —
-and as segments accumulate the bar breaks them onto separate lines and grows to fit. `Tab` moves the
-highlight through the row and never writes; `Enter` accepts the highlighted suggestion, and a second
-`Enter` runs the command. `Esc` clears. The full mechanics are in `COMMANDS.md`; what follows is why.
+> **Status.** Designed, not implemented. The ghost text and status bar (sections 4 and 5) took over
+> most of what this was meant to do — naming the next value and confirming the shape of the command
+> — at a fraction of the cost. Kept as the design for when `update book` arrives, where a live view
+> of the record being edited earns more than it does for a blank one.
 
-**The guidance of a prompt, without being inside one.** The suggestion row does what a prompt
-sequence did — it tells you what comes next — and that is deliberate: the step-by-step help was the
-prompt model's one real virtue, and it is kept. What is dropped is the enclosure. The row is advice
-sitting *beside* a buffer you own, not a question you are obliged to answer; every previous segment
-stays on screen, editable, and you can ignore the suggestion and type the next connective yourself.
-The difference between guidance and a state machine is exactly this: whether the previous answers are
-still in front of you.
+**Concept.** The moment `add book` is recognized in the bar, the workspace renders a draft book: a
+soft placeholder cover and the fields as muted prompts (*e.g. The Hobbit*). As each line of the
+command is filled, the draft fills in with it — the sentence and the book it describes, side by side.
 
-**Why not a prompt sequence.** Prompting one field at a time is the easier thing to build and the
-worse thing to use, for one reason: it hides the thing being built. Only the current step is on
-screen, so the surrounding context — what has already been given — has to be held in the head, which
-is the exact cost this product exists to remove. Correction is worse still. A typo three fields back
-needs a way back, and in a step machine that way back has to be invented: a keybinding that means
-nothing anywhere else, doing what `←` already does in every text field on the machine. The composed
-sentence needs no such invention, because it never left the text field.
+**Why.** It collapses the gap between typing and result, and teaches the data model without a
+tutorial: the shape on screen *is* the shape a book has.
 
-**What being text buys.** A visible command is a value, and values can be handled. It can be
-recalled and re-run with one quoted segment changed — which is what cataloguing several books by the
-same author actually is. It can be copied into a bug report, or out of `help` and pasted. And a user
-who has seen the sentence can eventually type it from scratch, faster than any menu, which is the
-whole promise of a keyboard-first tool. A prompt sequence has none of these properties in principle,
-not merely in this implementation.
+**Boundaries.** A frontend-only view state until commit, driven by the same parse tree the
+suggestions use (DECISIONS 33): nothing persisted, validation unchanged, focus never leaves the bar.
+Rendered with the real book detail template in a draft variant, so the preview is honest. Empty
+optional fields collapse to absent (DECISIONS 11).
 
-**The bar's height is a state readout.** One line means nothing is under composition — and that is
-also when bare `↑` `↓` scroll the workspace. A grown bar means a command is being written, and the
-arrows edit it. The mode is real, but it is legible at a glance rather than remembered, which is the
-condition under which a mode is acceptable here.
+---
 
-**Where it is weakest.** Two places, both named rather than smoothed over.
+## 2. The command bar composes a whole sentence, one detail per line
 
-*The first thing a new user meets is not this, and is no longer even typed.* `login` collects its
-credentials in dedicated fields, off the buffer, because a password must never be visible,
-editable, or re-runnable (DECISIONS 24/25/27) — so it never demonstrated the composition surface in
-the first place. It is now also started by the shell rather than typed, since with no session it is
-the only runnable command and an empty bar with one legal input is a guessing game (DECISIONS 30).
-The consequence is that the composition syntax is first met at `add book`: seven fields deep,
-writing real data, with no rehearsal behind it.
+**Concept.** A command is one visible English sentence that stays visible until it runs. The
+first value sits on the command's own line; each further detail takes a line of its own, indented
+automatically:
 
-That makes the mitigations below load-bearing rather than supporting. The suggestion row names each
-field as it becomes relevant and supplies the quotes on acceptance; the draft preview above shows
-the whole shape of a book while the sentence is still being written; and `Tab` selects while
-`Enter` confirms, so nothing runs by accident on the way. Whether that is enough is the first-use
-question in `TESZTELES-1.md` most worth watching — and it is now the *only* one, because the
-gentler introduction that `login` might have been is gone by design.
+```
+add book Dune
+    by author Frank Herbert
+    published in 1965
+```
 
-*A long free-text value fights the form.* A multi-paragraph summary inside a quoted segment is
-genuinely worse here than in a form with a text area, and autoformat does not fix it. Unresolved;
-see `COMMANDS.md`, *Open questions*.
+No quotes, no flags, no field order to remember. A value runs to the end of its line, and the words
+that open a line say which field it is. The full mechanics are in `COMMANDS.md`; what follows is why.
+
+**Why lines, not quotes.** The earlier syntax put every value in double quotes on one long line
+(`add book with title "Dune" by author "Frank Herbert"`). It was unambiguous and it was a chore:
+two characters per value that carry no meaning to a person, a mode (inside / outside a quote) that
+had to be tracked by eye, and a title containing a quote mark that could not be typed at all. A line
+break is a delimiter people already use without thinking — it is how a postal address, a shopping
+list or a recipe is written — and it is one keystroke the user was going to press anyway
+(DECISIONS 34).
+
+**The guidance of a form, without the form.** The suggestion row tells you what comes next, the way
+a form's labels do, but it is advice beside text you own rather than a field you are put in. Every
+earlier line stays on screen and editable; a mistake three lines up is a caret move, not a "back"
+button.
+
+**What being text buys.** A visible command is a value. It can be edited and re-run with one line
+changed — which is what cataloguing five books by the same author is. It can be copied out of `help`
+or into a bug report. And a user who has seen the sentence a few times types it from memory, faster
+than any menu, which is the whole promise of a keyboard-first tool.
+
+**The bar's height is a state readout.** One line: a short command, and `Home` / `End` scroll the
+workspace. Several lines: a sentence under composition, and those keys move within the line. The
+mode is legible at a glance rather than remembered.
+
+**Where it is weakest.** *A long free-text value fights the line.* A multi-paragraph summary is
+genuinely worse here than in a text area. Unresolved; see `COMMANDS.md`, *Open questions*.
 
 ---
 
 ## 3. The signed-out shell is a different view, not a disabled one
 
-**Concept.** Without a session the shell is not the ordinary interface with most of it greyed out.
-It is a smaller interface: one command in the registry, one view on the workspace, and a command bar
-that has already started the only thing there is to start. The user types a username and a password
-into dedicated fields, and lands on the dashboard.
+**Concept.** Without a session there is **no command bar**. The side nav offers the three things
+that work — `login`, `about`, `help` — and `login` puts dedicated username and password fields where
+the bar would be. Signing in lands on the dashboard, and the bar, the pinned commands and the user's
+badge arrive together.
 
-**Why it is not the normal shell in a disabled state.** A disabled control invites a press that goes
-nowhere, which is the same objection ADR 21 raises against rendering a paging affordance when there
-is nothing to page to. Signed out, almost every affordance would be in that state — a pinned rail of
-commands that all fail, a suggestion row listing verbs the server will refuse. The honest rendering
-is the one that shows what is actually available, and what is actually available is `login`.
+**Why not the normal shell in a disabled state.** A disabled control invites a press that goes
+nowhere. Signed out, almost every command would be in that state: a bar whose suggestions the
+server will refuse. The honest rendering shows what is actually available. A password is never
+typed into the command bar (DECISIONS 25), so a bar would have nothing to do here at all.
 
-That is also why the shell runs it rather than waiting. A row of one suggestion in front of an empty
-bar is not a choice; it is a prompt to guess correctly. The command name still appears in the bar
-before the credential fields replace it, so the user sees that signing in was a command
-(DECISIONS 30) — but nobody is asked to discover a name that has no alternatives.
+**What arrives with the session.** The chrome reads one public endpoint, `/api/auth/session`, and
+re-reads it after `login` and `logout` and on any 401. Everything signed-in — bar, badge, pinned
+commands — keys off that one answer.
 
-**What arrives with the session.** The registry reloads, so the suggestion row, the pinned rail, and
-`help` all widen at once, from one source. Nothing in the frontend enumerates what becomes available
-— it re-reads the catalog, and the catalog is the server's answer to "what may this session run".
-The same happens in reverse on `logout`.
+**Failure is a view, not a banner.** A rejected sign-in returns the login screen with the reason on
+it, composed by the same producer that builds the clean one (DECISIONS 26).
 
-**Failure is a view, not a banner.** A rejected sign-in returns the login screen *with the reason on
-it* — one surface carrying its own error, composed by the same producer that builds the clean one
-(DECISIONS 26). There is no separate error state to design and no toast to place. The practical
-consequence is a rule the shell obeys: a restarted `login` must not repaint over that answer, so the
-opening round returns *nothing to show* rather than the pristine screen, and what the server said
-stays on screen while the fields clear.
+---
 
-**Where it is weakest.**
+## 4. Suggestions teach the grammar
 
-*Cancelling does nothing visible.* `Esc` during sign-in clears the fields and restarts the command,
-because there is no other state to return to. That is correct and it reads as unresponsive — the
-user pressed a key and the screen looks the same. A cleared field is thin feedback for a deliberate
-act.
+**Concept.** The suggestion row always shows what may come next *at the caret*, computed from the
+grammar itself (antlr4-c3 over the ANTLR grammar, DECISIONS 33/35). Nothing is hard-coded per
+command, so a command added to the grammar is suggested without a line of UI code.
 
-*One command is not a lesson.* The signed-out shell demonstrates that commands exist and nothing
-about how they are written. It is a foyer, not an introduction, and the first real one is `add book`
-(section 2, *Where it is weakest*).
+**What it offers, and when.**
+
+- **Words** of the command and its details, as chips. `Tab` accepts; `Ctrl + `` ` `` / `Ctrl + ~`
+  move the highlight. A chip ends in a space, so a following `Space` just confirms it.
+- **Ghost text** where a value goes: `book title`, `author name`, `year`, `page count`. Muted, never
+  inserted — it says *what kind of thing* to type without leaving anything to delete.
+- **Your own catalog** where it knows the answer: authors after `by author` and `written by`,
+  languages your books are in after `whose language is`. Matching is accent-insensitive, as the
+  server's is. `add author` suggests nothing, on purpose — it is about someone *not* yet in the
+  catalog, and offering existing names invites a duplicate.
+- **Next-line chips.** After a value, the row offers the details that can open the next line, and
+  accepting one starts that line, indented.
+
+**What it leaves out.** A detail already given is not offered again; mutually exclusive ones
+(`died` / `living`) drop out together. Long phrase families arrive in two steps — `whose`, then
+`page count is` / `language is`; `published`, then `in` / `before` / `after` / `between` — so the row
+never holds more than a handful of chips. On an empty bar, commands that already sit in the side nav
+are left out: the row would only repeat what is on screen.
+
+**Why it matters.** Optional details are *discovered*, not memorised — the row is how a user finds
+out that `add book` takes an ISBN, or that a list can be filtered by language. And because the row
+follows the real grammar, it never suggests something the bar will then refuse.
+
+---
+
+## 5. The status bar says what will happen before it happens
+
+**Concept.** A thin line under the bar answers three questions continuously:
+
+1. **Will this run?** A dot — green when the text is a complete command, neutral otherwise. The label
+   and the message carry the same fact for screen readers.
+2. **What is it?** Once the command is recognized, a one-line description (*Remove the selected
+   author; their books stay*). While it is still incomplete: *Entering command…*.
+3. **What does `Enter` do now?** Run, or start a new line — with `Ctrl+Enter` run shown whenever
+   `Enter` would add a line.
+
+**Why.** The Enter rule (`COMMANDS.md`, *The Enter rule*) is a heuristic: run a command that cannot
+take more, add a line to one that can, run on a blank line. A heuristic is only acceptable when it
+announces itself. The status bar is that announcement, so the user never presses `Enter` to find out
+what it does.
+
+**It is also where questions are asked.** A refusal to run invalid text appears here, with the text
+kept. The removal confirmation (*Remove "Dune"?*) appears here, with `yes` / `no` as chips: a
+destructive act gets a question in the place the eyes already are, not a modal.
+
+---
+
+## 6. CLI and GUI in harmony
+
+**Concept.** The command bar and the graphical surface are two ways to do the same things, and each
+teaches the other.
+
+- **Every clickable thing is a command.** The side nav's entries are command names; clicking one
+  runs exactly what typing it would. A dashboard finding (*12 books have no ISBN*) shows the command
+  that lists them, and clicking it runs that command — so reading the dashboard is learning the
+  grammar.
+- **Every list is navigable without the mouse.** Results render as a grid of cards with covers and
+  portraits. `Alt` + arrows move the selection geometrically through it, `Enter` opens, `Esc` comes
+  back with the selection and scroll position restored. A click does the same as the keys.
+- **Results speak the same language.** A filtered list says its filters back as a heading — *Books
+  written by herbert published before 1970* — in the words the command used, and shows the numbers
+  the filter was about (pages, years) on the cards.
+- **Errors carry a view.** An ambiguous author on `add book` answers with the candidates as a list,
+  and the bar keeps the text so narrowing the name is one edit.
+
+**Why.** A pure CLI is fast for the expert and opaque to everyone else; a pure GUI is discoverable and
+slow. Putting every GUI affordance on top of a real command means the mouse path is the training path
+for the keyboard path, and nobody has to choose.
+
+---
+
+## 7. Movement is split by modifier, not by letter
+
+The bar always holds focus, so plain letters are typing, never shortcuts. The three movements a result
+view supports are told apart by the modifier instead:
+
+| Movement | Keys |
+| --- | --- |
+| Scroll the view | `Page Up` / `Page Down`, `Home` / `End` (one-line bar) |
+| Move the selection | `Alt` + arrows |
+| Open / back | `Enter` / `Esc` on an empty bar |
+
+Bare `↑` `↓` never scroll — they belong to the multi-line bar. `Page Up` / `Page Down` move a modest
+step rather than a screen, because a whole screen per press jumped past too much to follow. A new
+result scrolls to the top; returning to an earlier one does not.
+
+**Where it is weakest.** `Esc` does two things — clear the text, or go back when there is none. It
+is consistent ("undo the most recent thing"), but a user who presses it twice to clear a long command
+goes back a view as well.

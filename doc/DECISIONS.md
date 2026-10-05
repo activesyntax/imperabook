@@ -332,6 +332,9 @@ grows.)
 
 ## 13. Command input: autocomplete over a closed grammar, not a lenient reverse-parser
 
+> **Extended by ADRs 33 and 35.** Everything below stands. The registry it matched against is now an
+> ANTLR grammar compiled into the frontend, and suggestions are computed from that grammar at the caret.
+
 > **Extended by ADR 27.** Token-match, the ranking rules and the rejection of a reverse-parser all
 > stand. What changed is what accepting a suggestion *does*: the matcher now runs on the whole buffer
 > rather than only on its first word, so after the verb it offers the command's next parameter and
@@ -454,6 +457,11 @@ pointing to it.
 
 ## 17. Multi-field mutating commands compose one canonical, connective-tagged string; parsed once, on the backend
 
+> **Superseded by ADRs 33 and 34.** Nothing is composed for the wire any more: the frontend parses
+> the sentence and sends plain JSON or query parameters, and values are no longer quoted. Kept as the
+> record of why the connective — the leading words that name a field — was the right idea; it
+> survives as the opening words of each detail line.
+
 > **Superseded in part by ADR 27.** The wire form survives intact — one canonical string, a
 > connective per value, unconditional quoting. What no longer applies is everything about *how it is
 > produced*: there is no interactive prompting and no `CommandRunner` composition step, because the
@@ -524,6 +532,10 @@ token-scan parser supersedes it rather than extends it — accepted because the 
 ---
 
 ## 18. Single `POST /api/command` endpoint; ADR 16's per-resource dispatch superseded
+
+> **Superseded by ADR 33.** With parsing on the frontend, per-resource REST endpoints are back and
+> `POST /api/command` no longer exists. References to it in ADRs 24 and 30 should be read as "the
+> command endpoints".
 
 > **Amended by ADR 19.** The dispatch reasoning below stands unchanged. What is restated is the
 > *status* of "one endpoint": ADR 19 shows it is a consequence of uniform command dispatch, not an
@@ -1474,6 +1486,12 @@ there is exactly one place that knows there were ever two shapes.
 
 ## 27. The command line is the composition surface; interactive prompting removed
 
+> **Amended by ADRs 34 and 36.** The thesis below — the sentence is the surface, no prompt sequence —
+> stands and is stronger for them. What changed is its form and its keys: no quotes, one detail per
+> line; `Tab` accepts a suggestion, `Ctrl + `` ` ``/`~` move the highlight, and `Enter` runs or adds a
+> line as the status bar announces. `login` is no longer started by the shell: signed out, there is
+> no command bar, and `login` is chosen from the side nav.
+
 > **Amended by ADR 30 in one place.** The trade-off below states that `login` is likely a new
 > user's first command and therefore teaches nothing about the composition syntax. That is
 > resolved by conceding it rather than fixing it: the user no longer types `login` at all — the
@@ -1611,6 +1629,9 @@ work and the other does not, which is an argument for settling it now rather tha
 
 ## 28. Lexing and validation, not parsing; the token list is the shared artifact
 
+> **Superseded by ADR 33.** The ceiling named at the end of this entry was reached: filters with
+> nested alternatives needed a real grammar, and the grammar now lives, once, in the frontend.
+
 **Context.** ADR 27 puts a typed sentence in front of the user, and two things now have to read it:
 the backend, to turn it into a command, and the frontend, to suggest and to give live feedback. The
 obvious framings are both wrong. A grammar-first approach — a parser generator, or hand-written
@@ -1664,6 +1685,9 @@ to talk about nesting, that is the ceiling above announcing itself.
 ---
 
 ## 29. The tokenizer stays in C#; a second language enters at the parser, if at all
+
+> **Overtaken by ADR 33.** There is no C# tokenizer any more; the parser arrived as an ANTLR grammar
+> compiled to TypeScript. The reasoning about a second backend language is unaffected.
 
 **Context.** ADR 1 collapsed an earlier polyglot backend into a single language and named what that
 bought: one toolchain, no interop seam. ADR 28's tokenizer reopened the question, because scanning
@@ -1951,6 +1975,184 @@ not appear in a `pg_dump` of that row does not belong on the node.
 `BookDetailView` in a draft variant — narrower, and honest in the same way: the preview is still the
 real result template, partially filled, and now the template is typed to what it previews.
 
+---
+
+## 33. The grammar moves to the frontend as ANTLR; per-resource endpoints return
+
+**Context.** ADRs 17, 18 and 28 put command interpretation on the backend: the client sent raw text
+to one `POST /api/command`, a C# tokenizer lexed it, and a validator checked it against a
+server-served `CommandSpec`. The client kept a second, advisory scanner for suggestions. Two things
+broke that arrangement. The grammar outgrew "flat": filters such as `whose page count is between 100
+and 200` or `published before 428 BC` have nested alternatives, which a token list plus set
+difference cannot describe — exactly the ceiling ADR 28 named in advance. And the richest feedback
+the user gets (what may come next, is this valid, what will `Enter` do) has to run on every keystroke,
+on the client, against the *real* grammar — an advisory copy that is only "cosmetically" wrong was
+now wrong in the place the user looks most.
+
+**Decision.** The grammar is written once, as split ANTLR grammars (`ImperaBookDSLLexer.g4` with
+lexer modes, `ImperaBookDSLParser.g4`), compiled with antlr-ng into the frontend. A visitor turns
+the parse tree into `ParsedCommand { command, params }`; `CommandRunner` maps each command to an
+ordinary REST endpoint (`GET /api/books?pagesOp=atLeast&pages=300`, `POST /api/authors`,
+`DELETE /api/books/{id}`, `GET /api/search?q=`), sending the params as query or JSON body. The
+backend validates every *value* it receives — domain validation never moved (ADR 3) — but no longer
+sees command text. `POST /api/command` and `GET /api/commands` are gone; `CommandCatalog.cs` remains
+only as a leftover.
+
+**What this reverses, and what it keeps.** ADR 18's single endpoint is reversed: its argument was that
+once the backend parsed the text, the URL said nothing the `command` field did not. With parsing on
+the client, the URL is again the most precise statement of the request, and the endpoints are
+individually testable (the hurl suite calls them directly). ADR 13 stands in full — closed grammar,
+autocomplete, no reverse-parser, rejection of word-order guessing. ADR 15's thin-client rule is kept
+where it matters: the client knows the *language*, never what a command *does*. Views, empty
+messages, headings and error wording all still come from the server (ADR 26). ADR 29's question is
+dissolved rather than answered: there is no C# tokenizer to keep, and the parser arrived as a
+generated one.
+
+**Trade-off.** The server now trusts the client to have said things in the right *shape*, so every
+query parameter is parsed defensively and a value it cannot read is a 400 with a reason
+(`invalid_page_filter`), never "all books". The grammar and the endpoint parameter names are a
+contract with no compiler between them; the visitor's comments and its spec are the guard. And a
+non-browser client gets REST, not the sentence language — acceptable, since the sentence language
+exists for people.
+
+---
+
+## 34. No quotes: a value runs to the end of its line, one detail per line
+
+**Context.** ADR 27's composed sentence quoted every value, unconditionally, so the frontend never
+had to judge which values needed it. On the wire that was free; on the screen it was the most
+visible cost of the whole interface — two meaningless keystrokes per value, an inside/outside-quote
+mode, and (Known limitations) no way at all to type a title containing a quote mark.
+
+**Decision.** The lexer switches mode after the words that introduce a value (`add book`, `by
+author`, `written by`, `find`, …) and takes **the rest of the line** as the value. A detail is
+introduced by its own line; the command's first value shares the command's line. Lines after the
+first are indented four spaces by the bar on `Enter` and on paste; the indent is display, and the
+grammar ignores blank space at line starts. Numeric values (years, page counts) and closed choices
+(`having no isbn`) remain ordinary tokens, so they are still validated as the user types.
+
+**Trade-off.** A value can no longer contain a line break — a multi-paragraph summary is the one
+casualty, already named as an open question. The one-line-per-detail form also makes `Enter`
+ambiguous between "run" and "next line", which ADR 36 resolves. In exchange the syntax has no escape
+rule because it needs none, and the quote limitation below is closed.
+
+---
+
+## 35. Suggestions come from the grammar: antlr4-c3, ghost text, and the user's catalog
+
+**Context.** ADR 13's suggestions were token-match over a registry of command names, extended in ADR
+27 to connectives. With a real grammar on the client (ADR 33), anything hand-maintained beside it —
+a list of what follows what — would drift from the parser that decides validity.
+
+**Decision.** antlr4-c3 computes the candidate tokens and rules at the caret from the parser itself,
+in a few passes (command, parameter, property, comparison). Candidates become:
+
+- **chips** for keywords and phrases, with a parameter's leading token sequence offered as one chip
+  where it is unambiguous;
+- **ghost text** for value rules (`bookTitle`, `year`, `pageCount` — rules exist partly so the bar
+  can name them), shown muted and never inserted;
+- **catalog lookups** for values the user's own data can answer: authors (`GET
+  /api/authors/search`) after `by author` / `written by`; languages present in the catalog (`GET
+  /api/books/languages`) after `whose language is`;
+- **next-line chips** after a complete value, for the details that can open a new line.
+
+A small amount of policy sits on top of the grammar, because a grammar that allows "once each, any
+order" by listing alternatives cannot itself say "already used": details already present are removed,
+mutually exclusive ones are removed together (`died` / `living`), and long phrase families are
+offered in two steps (`whose` → `page count is` / `language is`; `published` → `in` / `before` /
+`after` / `between`) to keep the row short.
+
+**Trade-off.** The "used" and "two-step" rules are a second, small description of the grammar's
+intent, kept beside it by hand. It is far smaller than the registry it replaces, and a mistake in it
+yields a missing or extra chip, never a wrong command — the parser still decides validity. Catalog
+lookups cost requests: author lookups wait for a pause in typing, are cancelled when superseded,
+and like every query are scoped to the user (ADR 31).
+
+---
+
+## 36. Enter runs or adds a line, and the status bar says which in advance
+
+**Context.** With details on their own lines (ADR 34), `Enter` has two legitimate meanings. Making
+`Ctrl + Enter` the only run key is honest and makes every one-line command (`dashboard`, `find
+orwell`) cost a chord. Making `Enter` always run makes multi-line commands need `Shift + Enter` on
+every line.
+
+**Decision.** A bare `Enter` does the likely thing: it **runs** a command that can take nothing more
+(or a bare `list books`, where listing everything is the usual ask), **adds a line** to one that can,
+and **runs on a blank line** — so a sentence with details ends with a double `Enter`. `Ctrl + Enter`
+always runs; `Shift + Enter` always adds a line; on an empty bar `Enter` opens the selection. The
+**status bar** announces the choice before the key is pressed — a validity dot, the command's
+description, and the key hints (`Ctrl+Enter run` shown whenever `Enter` would add a line). Invalid
+text is not sent: the bar keeps it and says why.
+
+**Trade-off.** A heuristic key is a mode, and modes are what this interface tries hardest to avoid.
+It is accepted only because it is announced, continuously, where the user is already looking.
+Descriptions live in a frontend table keyed by the full `CommandName` union, so a command added to
+the grammar does not compile until it is described.
+
+---
+
+## 37. Filters are English phrases over ordinary query parameters
+
+**Context.** "Books over 300 pages, in Hungarian, with no ISBN" needed a syntax. Flags (`--pages
+>300`) are compact and foreign; an expression language (`pages > 300 and lang = hu`) is a second
+language to learn. Several English phrasings were tried; the page filter went through `over` /
+`under` before settling on a form that reads as a sentence.
+
+**Decision.** Each filter is a phrase that completes the sentence `list books …`: `whose page count
+is at least 300`, `whose language is not english`, `written by herbert`, `published between 1950 and
+1960`, `having no isbn`; and for authors `born before 1900`, `died in 1950`, `living`, `having no
+books`. Synonyms are accepted where English has them (`more than` / `greater than`). Several filters
+combine with AND, one per line. Each maps to plain query parameters (`pagesOp`/`pages`/`pagesTo`,
+`languageOp`/`language`, `author`, `publishedOp`/`published`/`publishedTo`, `missing=pages,cover`,
+`bornOp`…, `vitality=living`), and the server says the active filters back in the result heading
+in the same words. `having no …` uses the dashboard's vocabulary, so a finding and the command that
+lists it are the same phrase (ADR 23). Languages are matched by English name, native name or ISO code
+(`CultureInfo`), and resolved to the code the book stores.
+
+**Trade-off.** English only, and no `or`: composition is the MVP2 grammar change ADR 28 anticipated,
+and now has a parser to land in. A record whose compared field is unknown drops out of every
+comparison — "books with fewer than 100 pages" does not list books whose page count is unknown,
+which is correct and occasionally surprising; `having no page count` is how to find them.
+
+---
+
+## 38. Author resolution in `add book` is a search, and an ambiguous one keeps the text
+
+**Context.** ADR 27's open question — does `by author` find, create or fail? Requiring `add author`
+first doubles the work for the common case; creating blindly turns every spelling into a new person.
+
+**Decision.** `by author` is **search text**, resolved by the server against the user's authors,
+accent- and case-insensitively: no line → unknown author; no match → a new author is created; one
+match, or one exact name among several → attached; several → **409** with the candidates as a list
+view and `keepQuery`, so the bar keeps the sentence and narrowing the name is one edit. New names
+are capitalized (`NameCase`: particles `van`, `der`, `de`, `von` stay lowercase except first), and
+`add author` refuses a name that is already there by the same accent-insensitive comparison. A book
+or author with no image gets generated artwork rather than a blank.
+
+**Trade-off.** A typo in a new author's name creates a new author rather than failing; the remedy is
+`list authors having no books` and `remove author`. Splitting a name on its last word gets compound
+last names wrong (*Le Guin*), named as an open question in `COMMANDS.md`.
+
+---
+
+## 39. Destructive commands target the selection and confirm in the status bar
+
+**Context.** `remove book` needs a target. A name in the sentence is ambiguous once two books share a
+title, and a second lookup that can fail in its own way.
+
+**Decision.** `remove book` / `remove author` act on the selected item — the view always has one
+(COMMANDS, *Navigation*) — and the item's own `Open` link tells the shell whether it is a book or an
+author. Before anything is sent, the status bar asks a question that **names** the target (*Remove
+author "Frank Herbert"?*) with `yes` / `no` chips; `Enter` answers, `Esc` cancels. The shell then
+`DELETE`s the item's own link, guarded to same-origin `/api/` paths. Removing an author unlinks their
+books in the same transaction and says how many were left without an author.
+
+**Trade-off.** The sentence no longer says what it acts on, so it cannot be re-run with a value
+changed and a bug report carrying it misses the target. The confirmation is where the target is
+restated, which is why it names the record instead of asking "are you sure".
+
+
 # Known limitations
 
 **`record struct` zero-value.** A `readonly record struct` always permits `default(T)`, which runs no
@@ -2003,7 +2205,8 @@ favours the extension. Note also that assets cannot use `Cache-Control: immutabl
 an image's URL is its content, so it can never go stale, while an asset keeps its name across deploys and
 must revalidate.
 
-**Quoting is user-facing syntax with no escape rule yet.** ADR 27 puts the composed string in front
+**~~Quoting is user-facing syntax with no escape rule yet.~~ Resolved by ADR 34:** values are no
+longer quoted, so there is nothing to escape. Kept for the record: ADR 27 puts the composed string in front
 of the user, so a value containing a double quote — a title with quoted words in it — is now something
 a user can type and the tokenizer can trip over. Accepting a parameter supplies both quote characters
 and makes the case rare, but rare is not handled: MVP1 has no escape convention, and an embedded quote currently
