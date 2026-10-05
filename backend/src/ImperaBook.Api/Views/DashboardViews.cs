@@ -35,28 +35,56 @@ public static class DashboardViews
                         ),
                     }
                 ),
-                new TextView([
-                    TextNode.H1("Needs attention"),
-                    TextNode.Para(
-                        TextNode.Strong("17"),
-                        " of your ",
-                        TextNode.Strong("24"),
-                        " books are missing something."
-                    ),
-                    TextNode.Finding(
-                        "3",
-                        "books have no page count",
-                        "list books having no page count"
-                    ),
-                    TextNode.Finding("12", "books have no ISBN", "list books having no isbn"),
-                    TextNode.Finding("8", "books have no cover", "list books having no cover"),
-                    TextNode.Finding(
-                        "5",
-                        "books have no publication year",
-                        "list books having no publication year"
-                    ),
-                    TextNode.Finding("3", "authors have no books", "list authors having no books"),
-                ]),
+                new TextView(NeedsAttention(s)),
             }
         );
+
+    /// <summary>
+    /// What the catalog lacks, counted for real: one finding per gap that has anything in it,
+    /// each running the command that lists those books. Nothing lacking says so.
+    /// </summary>
+    private static IReadOnlyList<TextBlock> NeedsAttention(DashboardSummary s)
+    {
+        var gaps = s.Gaps;
+        var blocks = new List<TextBlock> { TextNode.H1("Needs attention") };
+
+        if (gaps.BooksLackingAny > 0)
+            blocks.Add(
+                TextNode.Para(
+                    TextNode.Strong(gaps.BooksLackingAny.ToString("N0")),
+                    " of your ",
+                    TextNode.Strong(s.TotalBooks.ToString("N0")),
+                    $" {"book".Plural(s.TotalBooks)} {(gaps.BooksLackingAny == 1 ? "is" : "are")} missing something."
+                )
+            );
+        else if (s.TotalBooks > 0)
+            blocks.Add(TextNode.Para("Every book has its page count, ISBN, cover and publication year."));
+
+        AddFinding(blocks, gaps.BooksWithoutPageCount, "book", "no page count", "list books having no page count");
+        AddFinding(blocks, gaps.BooksWithoutIsbn, "book", "no ISBN", "list books having no isbn");
+        AddFinding(blocks, gaps.BooksWithoutCover, "book", "no cover", "list books having no cover");
+        AddFinding(
+            blocks,
+            gaps.BooksWithoutPublicationYear,
+            "book",
+            "no publication year",
+            "list books having no publication year"
+        );
+        AddFinding(blocks, gaps.AuthorsWithoutBooks, "author", "no books", "list authors having no books");
+
+        if (blocks.Count == 1)
+            blocks.Add(TextNode.Para("Nothing needs attention."));
+
+        return blocks;
+    }
+
+    // "1 book has no ISBN", "12 books have no ISBN"; a gap with nothing in it is not listed.
+    private static void AddFinding(List<TextBlock> blocks, int count, string noun, string lack, string command)
+    {
+        if (count == 0)
+            return;
+
+        var verb = count == 1 ? "has" : "have";
+        blocks.Add(TextNode.Finding(count.ToString("N0"), $"{noun.Plural(count)} {verb} {lack}", command));
+    }
 }

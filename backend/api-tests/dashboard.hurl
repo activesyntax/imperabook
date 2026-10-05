@@ -36,7 +36,38 @@ jsonpath "$.views[1].items[*].heading" contains "Authors"
 jsonpath "$.views[1].items[?(@.heading=='All Books')].value" matches /^[0-9][^A-Za-z]*$/
 jsonpath "$.views[1].items[?(@.heading=='Authors')].value" matches /^[0-9][^A-Za-z]*$/
 
-# "Needs attention" opens with its heading and lists findings that each carry a command.
+# "Needs attention" opens with its heading.
 jsonpath "$.views[2].blocks[0].type" == "heading"
-jsonpath "$.views[2].blocks[?(@.type=='finding')]" count > 0
-jsonpath "$.views[2].blocks[?(@.type=='finding')].command" isCollection
+
+
+# --- The findings are real counts ------------------------------------------------------
+# A book with nothing filled in guarantees the page-count, ISBN and publication-year
+# findings exist; each finding's number must match the length of the list its command
+# shows. (Mutates state: adds one book per run.)
+POST {{host}}/api/books
+Content-Type: application/json
+{ "title": "Gaps {{newUuid}}" }
+HTTP 201
+
+GET {{host}}/api/books?missing=pages
+HTTP 200
+[Captures]
+no_pages: jsonpath "$.views[1].items" count
+
+GET {{host}}/api/books?missing=isbn
+HTTP 200
+[Captures]
+no_isbn: jsonpath "$.views[1].items" count
+
+GET {{host}}/api/books?missing=published
+HTTP 200
+[Captures]
+no_year: jsonpath "$.views[1].items" count
+
+GET {{host}}/api/dashboard
+HTTP 200
+[Asserts]
+jsonpath "$.views[2].blocks[?(@.command=='list books having no page count')].value" == "{{no_pages}}"
+jsonpath "$.views[2].blocks[?(@.command=='list books having no isbn')].value" == "{{no_isbn}}"
+jsonpath "$.views[2].blocks[?(@.command=='list books having no publication year')].value" == "{{no_year}}"
+jsonpath "$.views[2].blocks[1].type" == "paragraph"

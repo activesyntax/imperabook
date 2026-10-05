@@ -43,7 +43,7 @@ hurl --variables-file vars.env --variable host=https://api.example.com --test *.
 |-----------------------------|-----------------------------------------------|
 | `public/dashboard-public.hurl` | anonymous `GET /api/dashboard` → 401 with the login screen |
 | `public/get-all-books-public.hurl` | anonymous book/author endpoints → 401 |
-| `dashboard.hurl`            | signed-in dashboard shape                      |
+| `dashboard.hurl`            | signed-in dashboard shape; each finding's count matches the list its command shows |
 | `search-books.hurl`         | `GET /books/search` (library and/or title)    |
 | `get-library-books.hurl`    | `GET /libraries/{id}/books`                    |
 | `search-authors.hurl`       | `GET /api/authors/search?q=` author suggestions for the command bar |
