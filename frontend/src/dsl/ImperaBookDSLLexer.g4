@@ -90,8 +90,24 @@ mode AFTER_WHOSE;
 PAGE           : 'page' ;
 COUNT          : 'count' ;
 IS             : 'is' -> mode(COMPARISON) ;
+WHOSE_LANGUAGE : 'language' -> type(LANGUAGE), mode(AFTER_WHOSE_LANGUAGE) ;
 WHOSE_NL       : '\r'? '\n' -> type(NL), popMode ;
 WHOSE_WS       : [ \t]+ -> skip ;
+
+// --- whose language is [not] hungarian -----------------------------------------
+mode AFTER_WHOSE_LANGUAGE;
+LANGUAGE_IS    : 'is' -> type(IS), mode(LANGUAGE_NAME) ;
+WHOSE_LANGUAGE_NL : '\r'? '\n' -> type(NL), popMode ;
+WHOSE_LANGUAGE_WS : [ \t]+ -> skip ;
+
+// A language is words of letters ("hungarian", "hu", "norwegian bokmål"). Word by
+// word, not the rest of the line, so a leading "not" can be told apart: as long
+// as a word, the earlier rule wins.
+mode LANGUAGE_NAME;
+LANGUAGE_NOT   : 'not' -> type(NOT) ;
+LANGUAGE_WORD  : [\p{L}-]+ ;
+LANGUAGE_NAME_NL : '\r'? '\n' -> type(NL), popMode ;
+LANGUAGE_NAME_WS : [ \t]+ -> skip ;
 
 // What follows "is": an amount in everyday words, then a number.
 mode COMPARISON;

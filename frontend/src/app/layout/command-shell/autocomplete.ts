@@ -53,7 +53,11 @@ const RULE_PHRASES: Record<number, Phrase> = {
   // goes there; accepting them inserts nothing.
   [ImperaBookDSLParser.RULE_bookTitle]: { label: 'title', insertText: '' },
   [ImperaBookDSLParser.RULE_keywords]: { label: 'keywords', insertText: '' },
-  [ImperaBookDSLParser.RULE_pagesFilter]: { label: 'whose page count is', insertText: 'whose page count is ' },
+  [ImperaBookDSLParser.RULE_whoseFilter]: { label: 'whose', insertText: 'whose ' },
+  [ImperaBookDSLParser.RULE_pagesFilter]: { label: 'page count is', insertText: 'page count is ' },
+  [ImperaBookDSLParser.RULE_languageFilter]: { label: 'language is', insertText: 'language is ' },
+  [ImperaBookDSLParser.RULE_languageNot]: { label: 'not', insertText: 'not ' },
+  [ImperaBookDSLParser.RULE_languageName]: { label: 'language', insertText: '' },
   // Each shows its usual wording; the synonyms (greater than, fewer than) are accepted, not offered.
   [ImperaBookDSLParser.RULE_pagesMoreThan]: { label: 'more than', insertText: 'more than ' },
   [ImperaBookDSLParser.RULE_pagesLessThan]: { label: 'less than', insertText: 'less than ' },
@@ -113,7 +117,7 @@ const COMMAND_RULES = [
  */
 const PARAM_RULES = [
   ImperaBookDSLParser.RULE_keywords,
-  ImperaBookDSLParser.RULE_pagesFilter,
+  ImperaBookDSLParser.RULE_whoseFilter,
   ImperaBookDSLParser.RULE_authorFilter,
   ImperaBookDSLParser.RULE_publishedFilter,
   ImperaBookDSLParser.RULE_bookTitle,
@@ -124,6 +128,12 @@ const PARAM_RULES = [
   ImperaBookDSLParser.RULE_publicationYearParam,
   ImperaBookDSLParser.RULE_isbnParam,
   ImperaBookDSLParser.RULE_summaryParam,
+];
+
+/** What a "whose" filter is about, one level below it: its own pass. */
+const PROPERTY_RULES = [
+  ImperaBookDSLParser.RULE_pagesFilter,
+  ImperaBookDSLParser.RULE_languageFilter,
 ];
 
 /**
@@ -143,6 +153,7 @@ const COMPARISON_RULES = [
   ImperaBookDSLParser.RULE_yearBefore,
   ImperaBookDSLParser.RULE_yearAfter,
   ImperaBookDSLParser.RULE_yearBetween,
+  ImperaBookDSLParser.RULE_languageNot,
 ];
 
 const COMPARISON_END_RULES = [
@@ -153,6 +164,7 @@ const COMPARISON_END_RULES = [
 // Free text, numbers and line breaks are typed, not suggested.
 const IGNORED_TOKENS = [
   ImperaBookDSLParser.VALUE,
+  ImperaBookDSLParser.LANGUAGE_WORD,
   ImperaBookDSLParser.NUMBER,
   ImperaBookDSLParser.NL,
   ImperaBookDSLParser.EOF,
@@ -192,8 +204,16 @@ export function canContinueOnNewLine(text: string): boolean {
  * another line of the command is not offered again. The caret's own line does
  * not count: that is where a parameter is being typed or completed.
  */
+/** A two-step chip is used up only once everything it leads to is. */
+const LEADS_TO: Readonly<Record<string, readonly string[]>> = {
+  whose: ['page count is', 'language is'],
+};
+
 function withoutUsedParams(items: CompletionItem[], input: string, caretOffset: number): CompletionItem[] {
   const used = usedParams(input, lineOf(input, caretOffset));
+  for (const [chip, choices] of Object.entries(LEADS_TO)) {
+    if (choices.every(choice => used.has(choice))) used.add(chip);
+  }
   return used.size === 0 ? items : items.filter(item => !used.has(item.label));
 }
 
@@ -208,7 +228,8 @@ const PARAM_OPENERS: ReadonlyArray<readonly [label: string, first: number, secon
   ['written by', ImperaBookDSLLexer.WRITTEN, ImperaBookDSLLexer.BY],
   // The list filter's one chip; any of its forms uses it up.
   ['published', ImperaBookDSLLexer.PUBLISHED],
-  ['whose page count is', ImperaBookDSLLexer.WHOSE],
+  ['page count is', ImperaBookDSLLexer.WHOSE, ImperaBookDSLLexer.PAGE],
+  ['language is', ImperaBookDSLLexer.WHOSE, ImperaBookDSLLexer.LANGUAGE],
 ];
 
 /**
@@ -325,6 +346,7 @@ function collectSuggestions(
   const passes = [
     collectFor(parser, caretTokenIndex, COMMAND_RULES),
     collectFor(parser, caretTokenIndex, PARAM_RULES),
+    collectFor(parser, caretTokenIndex, PROPERTY_RULES),
     collectFor(parser, caretTokenIndex, COMPARISON_RULES),
     collectFor(parser, caretTokenIndex, COMPARISON_END_RULES),
     // Names of what goes where, nested too deep for the passes above.
@@ -332,6 +354,7 @@ function collectSuggestions(
       ImperaBookDSLParser.RULE_pageCount,
       ImperaBookDSLParser.RULE_writerName,
       ImperaBookDSLParser.RULE_year,
+      ImperaBookDSLParser.RULE_languageName,
     ]),
   ];
 
@@ -530,4 +553,38 @@ export function authorValueAt(input: string, caretOffset: number): ValueSpan | u
     return { start: caretOffset, end: caretOffset, text: '' };
   }
   return { start: value.start, end: value.stop + 1, text: value.text ?? '' };
+}
+
+/**
+ * The language the caret is in, if any: the words after "whose language is"
+ * (and a "not"), empty while none is typed yet — for suggesting the languages
+ * the catalog holds.
+ */
+export function languageValueAt(input: string, caretOffset: number): ValueSpan | undefined {
+  const lineStart = input.lastIndexOf('\n', caretOffset - 1) + 1;
+  const newline = input.indexOf('\n', caretOffset);
+  const lineEnd = newline < 0 ? input.length : newline;
+
+  const lexer = new ImperaBookDSLLexer(CharStream.fromString(input));
+  lexer.removeErrorListeners();
+  const tokens = lexer
+    .getAllTokens()
+    .filter(t => t.start >= lineStart && t.stop < lineEnd && t.type !== ImperaBookDSLLexer.NL);
+
+  const at = tokens.findIndex((t, i) =>
+    t.type === ImperaBookDSLLexer.WHOSE
+    && tokens[i + 1]?.type === ImperaBookDSLLexer.LANGUAGE
+    && tokens[i + 2]?.type === ImperaBookDSLLexer.IS);
+  if (at < 0) return undefined;
+
+  let lead = tokens[at + 2];
+  if (tokens[at + 3]?.type === ImperaBookDSLLexer.NOT) lead = tokens[at + 3];
+  if (caretOffset <= lead.stop + 1) return undefined;
+
+  const words = tokens.slice(tokens.indexOf(lead) + 1).filter(t => t.type === ImperaBookDSLLexer.LANGUAGE_WORD);
+  if (words.length === 0) return { start: caretOffset, end: caretOffset, text: '' };
+
+  const first = words[0];
+  const last = words[words.length - 1];
+  return { start: first.start, end: last.stop + 1, text: input.slice(first.start, last.stop + 1) };
 }

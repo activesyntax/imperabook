@@ -134,6 +134,35 @@ describe('CommandVisitor', () => {
 
   });
 
+  describe('list books whose language is', () => {
+    it('reads a language, by name or code', () => {
+      expect(parse('list books whose language is hungarian')?.params).toEqual({ languageOp: 'is', language: 'hungarian' });
+      expect(parse('list books whose language is hu')?.params).toEqual({ languageOp: 'is', language: 'hu' });
+    });
+
+    it('reads "is not"', () => {
+      expect(parse('list books whose language is not english')?.params).toEqual({ languageOp: 'not', language: 'english' });
+    });
+
+    it('takes a language of more than one word, accents and all', () => {
+      expect(parse('list books whose language is norwegian bokmål')?.params)
+        .toEqual({ languageOp: 'is', language: 'norwegian bokmål' });
+    });
+
+    it('combines with the page filter, each whose on its own line', () => {
+      expect(parse('list books whose language is hu\n    whose page count is at least 100')?.params).toEqual({
+        languageOp: 'is', language: 'hu', pagesOp: 'atLeast', pages: '100',
+      });
+    });
+
+    it('needs a language', () => {
+      for (const text of ['list books whose language', 'list books whose language is',
+        'list books whose language is not', 'list books whose language is 42']) {
+        expect(checkCommand(text).valid).toBe(false);
+      }
+    });
+  });
+
   describe('list books published', () => {
     const cases: [string, Record<string, string>][] = [
       ['in 1965', { publishedOp: 'in', published: '1965' }],

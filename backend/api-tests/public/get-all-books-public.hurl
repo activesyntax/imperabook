@@ -51,3 +51,8 @@ GET {{host}}/api/search?q=dune
 HTTP 401
 [Asserts]
 jsonpath "$.code" == "not_authenticated"
+
+GET {{host}}/api/books/languages
+HTTP 401
+[Asserts]
+jsonpath "$.code" == "not_authenticated"

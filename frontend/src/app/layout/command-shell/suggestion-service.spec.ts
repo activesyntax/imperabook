@@ -22,9 +22,11 @@ describe('applyCompletion', () => {
       return getDSLCompletions(text, text.length).map(c => c.label);
     }
 
-    it('is offered after list books, property first, beside the other filters', () => {
-      expect(labels('list books ')).toContain('whose page count is');
-      expect(accept('list books wh|', 'whose page count is')).toBe('list books whose page count is |');
+    it('is offered in two steps: whose, then the property', () => {
+      expect(labels('list books ')).toContain('whose');
+      expect(accept('list books wh|', 'whose')).toBe('list books whose |');
+      expect(labels('list books whose ').sort()).toEqual(['language is', 'page count is']);
+      expect(accept('list books whose p|', 'page count is')).toBe('list books whose page count is |');
     });
 
     it('offers the comparisons in their usual words, and names a page count for "is 120"', () => {
@@ -43,16 +45,20 @@ describe('applyCompletion', () => {
     });
 
     it('offers the other filters from the end of a filter line, not the one used', () => {
-      expect(labels('list books whose page count is 120')).not.toContain('whose page count is');
       expect(labels('list books whose page count is 120')).toContain('written by');
       expect(labels('list books written by herbert')).not.toContain('written by');
-      expect(labels('list books written by herbert')).toContain('whose page count is');
+      expect(labels('list books written by herbert')).toContain('whose');
       expect(accept('list books whose page count is 120|', 'written by'))
         .toBe('list books whose page count is 120\nwritten by |');
     });
 
+    it('offers only the whose property not yet used, and whose no more once both are', () => {
+      expect(labels('list books whose page count is 120\n    whose ')).toEqual(['language is']);
+      expect(labels('list books whose page count is 1\n    whose language is hu')).not.toContain('whose');
+    });
+
     it('offers one chip per filter, published among them', () => {
-      expect(labels('list books ')).toEqual(['whose page count is', 'written by', 'published']);
+      expect(labels('list books ')).toEqual(['whose', 'written by', 'published']);
     });
 
     it('offers how a year compares once published is chosen', () => {
@@ -67,12 +73,17 @@ describe('applyCompletion', () => {
     });
 
     it('offers published no more once it is used, in any form', () => {
-      expect(labels('list books published after 1950')).toEqual(['whose page count is', 'written by']);
-      expect(labels('list books published in 1965\n    written by x')).toEqual(['whose page count is']);
+      expect(labels('list books published after 1950')).toEqual(['whose', 'written by']);
+      expect(labels('list books published in 1965\n    written by x')).toEqual(['whose']);
     });
 
     it('keeps published in as one chip when adding a book', () => {
       expect(labels('add book Dune\n    ')).toContain('published in');
+    });
+
+    it('offers not, and names the language, after language is', () => {
+      expect(labels('list books whose language is ')).toEqual(['not', 'language']);
+      expect(labels('list books whose language is not ')).toEqual(['language']);
     });
 
     it('names the author after written by', () => {

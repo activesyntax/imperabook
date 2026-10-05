@@ -9,11 +9,31 @@ namespace ImperaBook.Infrastructure.Data.Queries;
 public sealed class BookQueries(ImperaBookDbContext db, ICurrentUser user) : IBookQueries
 {
     public Task<BookListItem[]> List(BookFilter filter, CancellationToken ct) =>
-        PublishedIn(WrittenBy(WithPages(Owned(), filter.Pages), filter.Author), filter.Published)
+        InLanguage(
+            PublishedIn(WrittenBy(WithPages(Owned(), filter.Pages), filter.Author), filter.Published),
+            filter.Language
+        )
             .OrderBy(b => b.Title)
             .ThenBy(b => b.Id)
             .Select(ToListItem)
             .ToArrayAsync(ct);
+
+    public Task<string[]> Languages(CancellationToken ct) =>
+        Owned()
+            .Where(b => b.Language != null)
+            .Select(b => b.Language!)
+            .Distinct()
+            .ToArrayAsync(ct);
+
+    // As with "other than" for pages, an unknown language is not "not English": C#'s != would
+    // count null as different, so "is not" says outright that the language must be known.
+    private static IQueryable<BookEntity> InLanguage(IQueryable<BookEntity> books, LanguageFilter? f) =>
+        f switch
+        {
+            null => books,
+            { Negated: false } => books.Where(b => b.Language == f.Code),
+            _ => books.Where(b => b.Language != null && b.Language != f.Code),
+        };
 
     // Unknown years drop out: a comparison with null is false in SQL.
     private static IQueryable<BookEntity> PublishedIn(IQueryable<BookEntity> books, YearFilter? f) =>

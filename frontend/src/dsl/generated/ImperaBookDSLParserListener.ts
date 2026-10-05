@@ -19,6 +19,10 @@ import { YearAndContext } from "./ImperaBookDSLParser.js";
 import { YearContext } from "./ImperaBookDSLParser.js";
 import { AuthorFilterContext } from "./ImperaBookDSLParser.js";
 import { WriterNameContext } from "./ImperaBookDSLParser.js";
+import { WhoseFilterContext } from "./ImperaBookDSLParser.js";
+import { LanguageFilterContext } from "./ImperaBookDSLParser.js";
+import { LanguageNotContext } from "./ImperaBookDSLParser.js";
+import { LanguageNameContext } from "./ImperaBookDSLParser.js";
 import { PagesFilterContext } from "./ImperaBookDSLParser.js";
 import { PageComparisonContext } from "./ImperaBookDSLParser.js";
 import { PagesMoreThanContext } from "./ImperaBookDSLParser.js";
@@ -231,6 +235,46 @@ export class ImperaBookDSLParserListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitWriterName?: (ctx: WriterNameContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.whoseFilter`.
+     * @param ctx the parse tree
+     */
+    enterWhoseFilter?: (ctx: WhoseFilterContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.whoseFilter`.
+     * @param ctx the parse tree
+     */
+    exitWhoseFilter?: (ctx: WhoseFilterContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.languageFilter`.
+     * @param ctx the parse tree
+     */
+    enterLanguageFilter?: (ctx: LanguageFilterContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.languageFilter`.
+     * @param ctx the parse tree
+     */
+    exitLanguageFilter?: (ctx: LanguageFilterContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.languageNot`.
+     * @param ctx the parse tree
+     */
+    enterLanguageNot?: (ctx: LanguageNotContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.languageNot`.
+     * @param ctx the parse tree
+     */
+    exitLanguageNot?: (ctx: LanguageNotContext) => void;
+    /**
+     * Enter a parse tree produced by `ImperaBookDSLParser.languageName`.
+     * @param ctx the parse tree
+     */
+    enterLanguageName?: (ctx: LanguageNameContext) => void;
+    /**
+     * Exit a parse tree produced by `ImperaBookDSLParser.languageName`.
+     * @param ctx the parse tree
+     */
+    exitLanguageName?: (ctx: LanguageNameContext) => void;
     /**
      * Enter a parse tree produced by `ImperaBookDSLParser.pagesFilter`.
      * @param ctx the parse tree

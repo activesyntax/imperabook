@@ -148,25 +148,13 @@ public static class BookViews
     private static Paragraph Field(string label, string value) =>
         new([new StrongRun([label]), $" {value}"]);
 
-    /// <summary>
-    /// An ISO 639-1 code is stored; a reader wants a language. Resolution is invariant rather than
-    /// request-culture-dependent, so the same catalog reads the same way regardless of who asks —
-    /// and an unrecognised code falls back to itself rather than throwing.
-    /// </summary>
-    private static string? LanguageValue(string? code)
-    {
-        if (string.IsNullOrWhiteSpace(code))
-            return null;
+    // An ISO 639-1 code is stored; a reader wants a language.
+    private static string? LanguageValue(string? code) =>
+        string.IsNullOrWhiteSpace(code) ? null : LanguageNames.NameOf(code);
 
-        try
-        {
-            return CultureInfo.GetCultureInfo(code).EnglishName;
-        }
-        catch (CultureNotFoundException)
-        {
-            return code;
-        }
-    }
+    /// <summary>A language filter as typed, for headings: "whose language is Hungarian".</summary>
+    public static string Describe(this LanguageFilter f) =>
+        $"whose language is {(f.Negated ? "not " : "")}{LanguageNames.NameOf(f.Code)}";
 
     private static string? ImageSrcOf(string? hash) => hash is { } h ? $"/api/images/{h}" : null;
 }

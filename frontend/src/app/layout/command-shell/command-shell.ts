@@ -14,12 +14,13 @@ import {
 } from '@angular/core';
 
 import { AuthorLookup } from '@app/commands/author-lookup';
+import { LanguageLookup } from '@app/commands/language-lookup';
 import { CommandRunner } from '@app/commands/command-runner';
 import { GridDirection, ItemOpener } from '@app/commands/item-opener';
 import type { ItemView } from '@workspace/views/view-node';
 import { WorkspaceStore } from '@app/state/workspace-store';
 import { AppliedCompletion, applyCompletion, SuggestionService } from './suggestion-service';
-import { authorValueAt, canContinueOnNewLine, CompletionItem } from './autocomplete';
+import { authorValueAt, canContinueOnNewLine, CompletionItem, languageValueAt } from './autocomplete';
 import { Index, IndexMove, indexRange, IndexRange, nextCyclicIndex, prevCyclicIndex } from '@core/index';
 import { checkCommand } from './command-visitor';
 import { COMMAND_DESCRIPTIONS } from './command-descriptions';
@@ -105,6 +106,7 @@ export class CommandShell {
   private readonly store = inject(WorkspaceStore);
   private readonly opener = inject(ItemOpener);
   private readonly authors = inject(AuthorLookup);
+  private readonly languageLookup = inject(LanguageLookup);
 
   /** Screen readers announce the highlighted item while focus stays in the bar. */
   protected readonly activeItemId = computed(() => this.opener.selectedElementId() ?? null);
@@ -184,12 +186,40 @@ export class CommandShell {
       }));
   });
 
+  // The language being typed ("whose language is hun"), if any.
+  private readonly languageValue = computed(() => languageValueAt(this.query(), this.cursorPosition()));
+
+  // The catalog's languages, fetched while a language is being typed; idle otherwise.
+  private readonly catalogLanguages = resource({
+    params: () => (this.languageValue() !== undefined ? true : undefined),
+    loader: ({ abortSignal }) => this.languageLookup.languages(abortSignal),
+  });
+
+  // Matching by English name or code; the name goes in, lower case like the
+  // rest of the command. One already typed exactly is not offered again.
+  private readonly languageChips = computed<CompletionItem[]>(() => {
+    const span = this.languageValue();
+    if (span === undefined || !this.catalogLanguages.hasValue()) return [];
+
+    const typed = span.text.trim().toLowerCase();
+    return this.catalogLanguages.value()
+      .filter(l => (l.name.toLowerCase().startsWith(typed) || l.code === typed) && l.name.toLowerCase() !== typed)
+      .map(l => ({
+        label: l.name,
+        insertText: l.name.toLowerCase(),
+        replaceStart: span.start,
+        replaceEnd: span.end,
+        caret: l.name.length,
+      }));
+  });
+
   // Catalog names first: while one is being typed, they are what Tab should take.
   protected readonly suggestions = computed<SuggestionList>(() => suggestionList(
     this.pendingRemoval() !== undefined
       ? this.answerChips()
       : [
           ...this.authorChips(),
+          ...this.languageChips(),
           ...this.grammarChips(),
         ]));
 

@@ -131,14 +131,25 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
   // wording ("is more than" is still "over"): pagesOp names
   // the comparison, pages its number, pagesTo the upper bound of a "between".
   // "written by" becomes author, matched by the server against the books' authors;
-  // "published …" becomes publishedOp, published and (for a range) publishedTo.
+  // "published …" becomes publishedOp, published and (for a range) publishedTo;
+  // "whose language is …" becomes languageOp and language.
   // As with add book, the first of a repeated filter wins.
   override visitListBooksCmd = (ctx: ListBooksCmdContext): ParsedCommand => {
     let params: Record<string, string> = {};
 
     for (const filter of ctx.listFilter()) {
-      const comparison = filter.pagesFilter()?.pageComparison();
+      const comparison = filter.whoseFilter()?.pagesFilter()?.pageComparison();
       if (comparison && !('pagesOp' in params)) params = { ...params, ...pageFilter(comparison) };
+
+      // "whose language is [not] hungarian": the name as typed; the server knows names and codes.
+      const language = filter.whoseFilter()?.languageFilter();
+      if (language && !('languageOp' in params)) {
+        params = {
+          ...params,
+          languageOp: language.languageNot() ? 'not' : 'is',
+          language: (language.languageName()?.LANGUAGE_WORD() ?? []).map(w => w.getText()).join(' '),
+        };
+      }
 
       const writer = filter.authorFilter()?.writerName();
       if (writer && !('author' in params)) params = { ...params, author: this.text(writer.VALUE()?.getText()) };

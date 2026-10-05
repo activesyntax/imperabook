@@ -22,6 +22,7 @@ public static class HelpViews
                     TextNode.Hint(["add book Dune"], "the title, then a detail per line: by author, with isbn…"),
                     TextNode.Hint(["list books"], "see the whole catalog"),
                     TextNode.Hint(["list books whose page count is more than 300"], "only the long ones — also less than, at least, at most, not"),
+                    TextNode.Hint(["list books whose language is hungarian"], "by name or code (hu); or is not english"),
                     TextNode.Hint(["list books whose page count is between 100 and 200"], "a range, both ends included; or just is 120"),
                     TextNode.Hint(["list books written by herbert"], "by any part of an author's name; a second filter goes on a new line"),
                     TextNode.Hint(["list books published before 1950"], "also published in, after, between 1950 and 1960"),

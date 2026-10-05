@@ -40,7 +40,7 @@ removeBookCmd  : REMOVE BOOK ;
 //       written by Frank Herbert
 listBooksCmd   : LIST BOOKS listFilter? (NL+ listFilter)* ;
 
-listFilter     : pagesFilter
+listFilter     : whoseFilter
                | authorFilter
                | publishedFilter
                ;
@@ -66,7 +66,15 @@ year           : NUMBER ;
 authorFilter   : WRITTEN BY writerName ;
 writerName     : VALUE ;
 
-pagesFilter    : WHOSE PAGE COUNT IS pageComparison ;
+// Two steps: "whose" beside the other filters, then the property it is about.
+whoseFilter    : WHOSE (pagesFilter | languageFilter) ;
+
+// whose language is hungarian / is not english — by name or code.
+languageFilter : LANGUAGE IS languageNot? languageName ;
+languageNot    : NOT ;
+languageName   : LANGUAGE_WORD+ ;
+
+pagesFilter    : PAGE COUNT IS pageComparison ;
 pageComparison : pagesMoreThan    // is more than 300   (or greater than)
                | pagesLessThan    // is less than 100   (or fewer than)
                | pagesAtLeast     // is at least 120

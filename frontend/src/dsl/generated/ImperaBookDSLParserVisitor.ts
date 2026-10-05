@@ -19,6 +19,10 @@ import { YearAndContext } from "./ImperaBookDSLParser.js";
 import { YearContext } from "./ImperaBookDSLParser.js";
 import { AuthorFilterContext } from "./ImperaBookDSLParser.js";
 import { WriterNameContext } from "./ImperaBookDSLParser.js";
+import { WhoseFilterContext } from "./ImperaBookDSLParser.js";
+import { LanguageFilterContext } from "./ImperaBookDSLParser.js";
+import { LanguageNotContext } from "./ImperaBookDSLParser.js";
+import { LanguageNameContext } from "./ImperaBookDSLParser.js";
 import { PagesFilterContext } from "./ImperaBookDSLParser.js";
 import { PageComparisonContext } from "./ImperaBookDSLParser.js";
 import { PagesMoreThanContext } from "./ImperaBookDSLParser.js";
@@ -166,6 +170,30 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      * @return the visitor result
      */
     visitWriterName?: (ctx: WriterNameContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.whoseFilter`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitWhoseFilter?: (ctx: WhoseFilterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.languageFilter`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitLanguageFilter?: (ctx: LanguageFilterContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.languageNot`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitLanguageNot?: (ctx: LanguageNotContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.languageName`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitLanguageName?: (ctx: LanguageNameContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.pagesFilter`.
      * @param ctx the parse tree

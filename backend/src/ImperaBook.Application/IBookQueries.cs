@@ -76,21 +76,36 @@ public sealed record YearFilter(YearComparison Comparison, int Year, int UpTo = 
         new(YearComparison.Between, Math.Min(one, other), Math.Max(one, other));
 }
 
+/// <summary>
+/// Books by language code ("hu"), or by any other ("is not"). A book whose language is unknown
+/// matches neither: an unknown language is not "not English".
+/// </summary>
+public sealed record LanguageFilter(string Code, bool Negated = false);
+
 /// <summary>What a book list is narrowed to; every filter given must hold, none means all books.</summary>
 /// <param name="Pages">By page count.</param>
 /// <param name="Author">
 /// By an author whose full name contains this, ignoring case and accents, as "by author" matches.
 /// </param>
 /// <param name="Published">By publication year.</param>
-public sealed record BookFilter(PageFilter? Pages = null, string? Author = null, YearFilter? Published = null)
+/// <param name="Language">By language.</param>
+public sealed record BookFilter(
+    PageFilter? Pages = null,
+    string? Author = null,
+    YearFilter? Published = null,
+    LanguageFilter? Language = null
+)
 {
-    public bool IsEmpty => Pages is null && Author is null && Published is null;
+    public bool IsEmpty => Pages is null && Author is null && Published is null && Language is null;
 }
 
 public interface IBookQueries
 {
     /// <summary>The current user's books matching every filter given in <paramref name="filter"/>.</summary>
     Task<BookListItem[]> List(BookFilter filter, CancellationToken ct);
+
+    /// <summary>The language codes the current user's books are in, each once.</summary>
+    Task<string[]> Languages(CancellationToken ct);
 
     Task<Maybe<BookDetail>> Get(Guid id, CancellationToken ct);
 }

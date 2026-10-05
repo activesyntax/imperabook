@@ -17,6 +17,11 @@ public static class BookEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
+        app.MapGet("/api/books/languages", GetLanguages)
+            .WithName("GetBookLanguages")
+            .Produces<CatalogLanguage[]>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+
         app.MapGet("/api/books/{id:guid}", GetBook)
             .WithName("GetBook")
             .Produces<CommandResult>(StatusCodes.Status200OK)
@@ -51,6 +56,8 @@ public static class BookEndpoints
         string? publishedOp,
         string? published,
         string? publishedTo,
+        string? languageOp,
+        string? language,
         IBookQueries books,
         CancellationToken ct
     )
@@ -63,10 +70,15 @@ public static class BookEndpoints
         if (yearFilter.IsFailure)
             return InvalidFilter("Invalid publication filter", yearFilter.Error, "invalid_published_filter");
 
+        var languageFilter = ParseLanguageFilter(languageOp, language);
+        if (languageFilter.IsFailure)
+            return InvalidFilter("Invalid language filter", languageFilter.Error, "invalid_language_filter");
+
         var filter = new BookFilter(
             pageFilter.Value,
             string.IsNullOrWhiteSpace(author) ? null : author.Trim(),
-            yearFilter.Value
+            yearFilter.Value,
+            languageFilter.Value
         );
         var bookList = await books.List(filter, ct);
         var page = new PageInfo(1, 1, bookList.Length, "books");
@@ -76,15 +88,19 @@ public static class BookEndpoints
                 bookList.ToCommandResult("No books yet. Add one to start your library.", page)
             );
 
-        // The filters said back as one phrase, in reading order:
-        // "written by herbert published before 1970 whose page count is at least 300".
+        // The filters said back as one phrase, in reading order: "written by herbert published
+        // before 1970 whose language is Hungarian and whose page count is at least 300".
+        var whose = string.Join(
+            " and ",
+            new[] { filter.Language?.Describe(), filter.Pages?.Describe() }.OfType<string>()
+        );
         var which = string.Join(
             ' ',
             new[]
             {
                 filter.Author is null ? null : $"written by {filter.Author}",
                 filter.Published?.Describe(),
-                filter.Pages?.Describe(),
+                whose.Length == 0 ? null : whose,
             }.OfType<string>()
         );
 
@@ -97,6 +113,43 @@ public static class BookEndpoints
                 showYear: filter.Published is not null
             )
         );
+    }
+
+    // The languages the user's books are in, named, for the command bar's suggestions.
+    private static async Task<Ok<CatalogLanguage[]>> GetLanguages(IBookQueries books, CancellationToken ct)
+    {
+        var codes = await books.Languages(ct);
+
+        return TypedResults.Ok(
+            codes
+                .Select(code => new CatalogLanguage(code, LanguageNames.NameOf(code)))
+                .OrderBy(l => l.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray()
+        );
+    }
+
+    /// <summary>No languageOp is no filter; a language that cannot be identified is an error.</summary>
+    private static CSharpFunctionalExtensions.Result<LanguageFilter?, string> ParseLanguageFilter(
+        string? op,
+        string? language
+    )
+    {
+        if (string.IsNullOrWhiteSpace(op))
+            return CSharpFunctionalExtensions.Result.Success<LanguageFilter?, string>(null);
+
+        var negated = op.ToLowerInvariant() switch
+        {
+            "is" => false,
+            "not" => true,
+            _ => (bool?)null,
+        };
+        if (negated is null)
+            return $"Unknown language comparison \"{op}\".";
+
+        if (string.IsNullOrWhiteSpace(language) || LanguageNames.CodeOf(language) is not { } code)
+            return $"\"{language}\" is not a language I know. Try its English name, like hungarian, or its code, like hu.";
+
+        return new LanguageFilter(code, negated.Value);
     }
 
     private static ProblemHttpResult InvalidFilter(string title, string detail, string code) =>
@@ -240,3 +293,5 @@ public static class BookEndpoints
         );
     }
 }
+
+public sealed record CatalogLanguage(string Code, string Name);

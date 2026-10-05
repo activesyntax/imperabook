@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AuthorLookup } from '@app/commands/author-lookup';
+import { LanguageLookup } from '@app/commands/language-lookup';
 import { CommandRunner } from '@app/commands/command-runner';
 import { ItemOpener } from '@app/commands/item-opener';
 import { WorkspaceStore } from '@app/state/workspace-store';
@@ -27,6 +28,7 @@ describe('CommandShell', () => {
   let fixture: ComponentFixture<CommandShell>;
   let runner: { run: ReturnType<typeof vi.fn>; remove: ReturnType<typeof vi.fn> };
   let authors: { search: ReturnType<typeof vi.fn> };
+  let languages: { languages: ReturnType<typeof vi.fn> };
   let opener: {
     openSelected: ReturnType<typeof vi.fn>;
     back: ReturnType<typeof vi.fn>;
@@ -41,6 +43,7 @@ describe('CommandShell', () => {
       remove: vi.fn(() => Promise.resolve(REMOVED_RESULT)),
     };
     authors = { search: vi.fn(() => Promise.resolve([])) };
+    languages = { languages: vi.fn(() => Promise.resolve([])) };
     opener = {
       openSelected: vi.fn(() => true),
       back: vi.fn(() => true),
@@ -55,6 +58,7 @@ describe('CommandShell', () => {
         { provide: CommandRunner, useValue: runner },
         { provide: ItemOpener, useValue: opener },
         { provide: AuthorLookup, useValue: authors },
+        { provide: LanguageLookup, useValue: languages },
       ],
     }).compileComponents();
 
@@ -287,7 +291,8 @@ describe('CommandShell', () => {
 
       press(input, 'Tab');
 
-      expect(input.value).toBe('list books whose page count is 120\n    written by ');
+      // "whose" still leads to the language, so it comes first.
+      expect(input.value).toBe('list books whose page count is 120\n    whose ');
     });
 
     it('treats a list spanning lines like any multi-line command', async () => {
@@ -304,12 +309,20 @@ describe('CommandShell', () => {
     });
 
     it('runs a list at once when every filter is there', async () => {
-      press(type('list books whose page count is 120\n    written by herbert\n    published after 1950'), 'Enter');
+      press(type([
+        'list books whose page count is 120',
+        'written by herbert',
+        'published after 1950',
+        'whose language is not english',
+      ].join('\n    ')), 'Enter');
       await fixture.whenStable();
 
       expect(runner.run).toHaveBeenCalledWith({
         command: 'list books',
-        params: { pagesOp: 'equal', pages: '120', author: 'herbert', publishedOp: 'after', published: '1950' },
+        params: {
+          pagesOp: 'equal', pages: '120', author: 'herbert', publishedOp: 'after', published: '1950',
+          languageOp: 'not', language: 'english',
+        },
       });
     });
 
@@ -394,6 +407,23 @@ describe('CommandShell', () => {
 
       expect(authors.search).toHaveBeenCalledWith('her', expect.anything());
       expect(chips()[0]).toBe('Frank Herbert');
+    });
+
+    it('offers the catalog\'s languages after whose language is, by name or code', async () => {
+      languages.languages.mockResolvedValue([
+        { code: 'en', name: 'English' },
+        { code: 'hu', name: 'Hungarian' },
+      ]);
+
+      const input = await typeAndSettle('list books whose language is hun');
+      expect(chips()[0]).toBe('Hungarian');
+
+      await typeAndSettle('list books whose language is not hu');
+      expect(chips()[0]).toBe('Hungarian');
+
+      const again = await typeAndSettle('list books whose language is hun');
+      press(again, 'Tab');
+      expect(input.value).toBe('list books whose language is hungarian');
     });
 
     it('does not look anything up outside an author name', async () => {
