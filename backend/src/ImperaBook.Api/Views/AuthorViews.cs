@@ -9,12 +9,13 @@ public static class AuthorViews
     public static CommandResult ToCommandResult(
         this IReadOnlyList<AuthorListItem> authors,
         string emptyMessage,
-        PageInfo? page = null
+        PageInfo? page = null,
+        string heading = "All authors"
     ) =>
         new(
             new ViewNode[]
             {
-                new HeadingView("All authors", page),
+                new HeadingView(heading, page),
                 new ItemCollectionView(authors.Select(ToItem).ToArray(), emptyMessage),
             }
         );
@@ -109,10 +110,10 @@ public static class AuthorViews
     internal static string LifeRange(this AuthorListItem a) =>
         a.Vitality switch
         {
-            VitalityKind.Living => $"{a.BirthYear?.ToString() ?? "?"}–",
+            VitalityKind.Living => $"{a.BirthYear?.AsYear() ?? "?"}–",
             VitalityKind.Deceased =>
-                $"{a.BirthYear?.ToString() ?? "?"}–{a.DeathYear?.ToString() ?? "?"}",
-            VitalityKind.Unknown when a.BirthYear is { } b => $"{b}–",
+                $"{a.BirthYear?.AsYear() ?? "?"}–{a.DeathYear?.AsYear() ?? "?"}",
+            VitalityKind.Unknown when a.BirthYear is { } b => $"{b.AsYear()}–",
             VitalityKind.Unknown => "",
             _ => throw new InvalidOperationException($"Unmapped vitality kind: {a.Vitality}"),
         };

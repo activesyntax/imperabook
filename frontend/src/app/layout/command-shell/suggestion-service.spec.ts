@@ -107,6 +107,11 @@ describe('applyCompletion', () => {
       expect(labels('list books having no page count\n    whose page count is at least ')).toEqual(['page count']);
     });
 
+    it('offers having no books for authors, and nothing of the books\' filters', () => {
+      expect(labels('list authors ')).toEqual(['having no']);
+      expect(labels('list authors having no ')).toEqual(['books']);
+    });
+
     it('names the author after written by', () => {
       expect(labels('list books written by ')).toEqual(['author name']);
     });
@@ -171,7 +176,7 @@ describe('applyCompletion', () => {
   });
 
   it('offers no next line when nothing more can follow, or the text is not a command', () => {
-    expect(getDSLCompletions('add author Homer', 'add author Homer'.length)).toEqual([]);
+    expect(getDSLCompletions('list authors having no books', 'list authors having no books'.length)).toEqual([]);
     expect(getDSLCompletions('xyz', 3)).toEqual([]);
   });
 
@@ -220,6 +225,29 @@ describe('parameters already used', () => {
     ].join('\n    ');
 
     expect(labels(`${all}\n    |`)).toEqual([]);
+  });
+});
+
+describe('an author\'s life range', () => {
+  function labels(text: string): string[] {
+    return getDSLCompletions(text, text.length).map(c => c.label);
+  }
+
+  it('is offered under the name', () => {
+    expect(labels('add author Plato')).toEqual(['born in', 'died', 'living']);
+  });
+
+  it('offers "in" after died, for the year', () => {
+    expect(accept('add author X\ndied|', 'in')).toBe('add author X\ndied in |');
+  });
+
+  it('offers died and living no more once either is used', () => {
+    expect(labels('add author X\n    living\n    ')).toEqual(['born in']);
+    expect(labels('add author X\n    died in 1986\n    ')).toEqual(['born in']);
+  });
+
+  it('names the year still to type', () => {
+    expect(labels('add author X\n    born in ')).toEqual(['year']);
   });
 });
 

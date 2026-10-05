@@ -65,6 +65,25 @@ jsonpath "$.views[3].items" count == 1
 jsonpath "$.views[3].items[0].open" == "{{book_url}}"
 
 
+# --- Years before the common era read as BC -----------------------------------
+POST {{host}}/api/authors
+Content-Type: application/json
+{
+  "lastName": "Ancient{{newUuid}}",
+  "birthYear": "-428",
+  "deathYear": "-348",
+  "vitality": "deceased"
+}
+HTTP 201
+[Captures]
+ancient_url: header "Location"
+
+GET {{host}}{{ancient_url}}
+HTTP 200
+[Asserts]
+jsonpath "$.views[2].blocks[0].content[1].text" == " 428 BC–348 BC"
+
+
 # --- Not in this user's catalog -----------------------------------------------
 GET {{host}}/api/authors/99999999-9999-9999-9999-999999999999
 HTTP 404

@@ -24,6 +24,7 @@ builder.Services.AddImperaBookAuthentication(builder.Environment);
 builder.Services.AddScoped<AddBookCommandHandler>();
 builder.Services.AddScoped<AddAuthorCommandHandler>();
 builder.Services.AddScoped<RemoveBookCommandHandler>();
+builder.Services.AddScoped<RemoveAuthorCommandHandler>();
 
 builder.Services.AddProblemDetails();
 builder.Services.ConfigureHttpJsonOptions(options =>

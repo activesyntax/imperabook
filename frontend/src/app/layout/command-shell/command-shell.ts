@@ -39,9 +39,13 @@ const COMMAND_FIELD: FieldAttrs = {
 type EnterAction = 'open' | 'run' | 'newline';
 
 /** A removal waiting for the user's yes or no. */
+/** What "remove …" can remove: the selected list item, if it is one of these. */
+type Removable = 'book' | 'author';
+
 interface PendingRemoval {
   readonly url: string;
-  readonly title: string;
+  /** The question asked, naming what is removed: Remove "Dune"? / Remove author "Frank Herbert"? */
+  readonly question: string;
 }
 
 /** A short word in the status bar after an action; any typing clears it. */
@@ -64,13 +68,21 @@ const NO = ['no', 'n'];
 const ANSWERS = ['yes', 'no'];
 
 /** Only list items that open as a book can be removed as one. */
-function isBook(item: ItemView): boolean {
-  return item.open?.startsWith('/api/books/') ?? false;
+/** The kind of an item, read from where it opens: /api/books/… or /api/authors/…. */
+function kindOf(item: ItemView): Removable | undefined {
+  if (item.open?.startsWith('/api/books/')) return 'book';
+  if (item.open?.startsWith('/api/authors/')) return 'author';
+  return undefined;
 }
 
-function titleOf(item: ItemView): string {
-  return item.properties.find(p => p.role === 'primary')?.value ?? 'this book';
+function nameOf(item: ItemView, kind: Removable): string {
+  return item.properties.find(p => p.role === 'primary')?.value ?? `this ${kind}`;
 }
+
+const REMOVE_QUESTION: Record<Removable, (name: string) => string> = {
+  book: name => `Remove "${name}"?`,
+  author: name => `Remove author "${name}"?`,
+};
 
 const ENTER_HINT: Record<EnterAction, string> = {
   open: 'open the selection',
@@ -142,7 +154,7 @@ export class CommandShell {
     return valid && command !== null ? COMMAND_DESCRIPTIONS[command.command] : undefined;
   });
 
-  /** "remove book" asked; the next Enter answers it. */
+  /** "remove book" or "remove author" asked; the next Enter answers it. */
   protected readonly pendingRemoval = signal<PendingRemoval | undefined>(undefined);
 
   protected readonly notice = signal<Notice | undefined>(undefined);
@@ -445,15 +457,15 @@ export class CommandShell {
   // --- Remove book: confirm first -------------------------------------------------
 
   /** Asks about the highlighted book; says what to do when there is none. */
-  private askToRemove(): void {
+  private askToRemove(kind: Removable): void {
     const item = this.opener.selectedItem();
     this.query.set('');
 
-    if (item === undefined || !isBook(item) || item.open === undefined) {
-      this.notice.set({ kind: 'error', text: 'Select a book in the list first, then run remove book.' });
+    if (item === undefined || kindOf(item) !== kind || item.open === undefined) {
+      this.notice.set({ kind: 'error', text: `Select ${kind === 'author' ? 'an' : 'a'} ${kind} in the list first, then run remove ${kind}.` });
       return;
     }
-    this.pendingRemoval.set({ url: item.open, title: titleOf(item) });
+    this.pendingRemoval.set({ url: item.open, question: REMOVE_QUESTION[kind](nameOf(item, kind)) });
   }
 
   private async answerRemoval(pending: PendingRemoval): Promise<void> {
@@ -533,8 +545,8 @@ export class CommandShell {
       return;
     }
 
-    if (command.command === 'remove book') {
-      this.askToRemove();
+    if (command.command === 'remove book' || command.command === 'remove author') {
+      this.askToRemove(command.command === 'remove book' ? 'book' : 'author');
       return;
     }
 

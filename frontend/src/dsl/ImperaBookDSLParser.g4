@@ -78,7 +78,7 @@ yearAfter      : AFTER year ;
 yearBetween    : BETWEEN year yearAnd ;
 yearAnd        : AND year ;
 // A rule of its own so the bar can name what goes here ("year") while it is still to type.
-year           : NUMBER ;
+year           : NUMBER BC? ;
 
 // The rest of the line, matched against the book's authors: written by herbert
 authorFilter   : WRITTEN BY writerName ;
@@ -113,10 +113,33 @@ andBound       : AND pageCount ;
 // A rule of its own so the bar can name what goes here ("page count") while it is still to type.
 pageCount      : NUMBER ;
 
-addAuthorCmd   : ADD AUTHOR authorName ;
+// The name on the first line; the life range, all optional, one detail per line:
+//
+//   add author Plato
+//       born in 428 BC
+//       died in 348 BC
+//
+// "died" alone means dead, year unknown; "living" means alive. The two exclude
+// each other — the server refuses a death year for a living author.
+addAuthorCmd   : ADD AUTHOR authorName (NL+ authorDetailParam)* ;
+
+authorDetailParam
+               : bornParam
+               | diedParam
+               | livingParam
+               ;
+bornParam      : BORN IN year ;
+diedParam      : DIED diedYear? ;
+// A rule of its own so "in" can be suggested after "died".
+diedYear       : IN year ;
+livingParam    : LIVING ;
 updateAuthorCmd: UPDATE AUTHOR ;
 removeAuthorCmd: REMOVE AUTHOR ;
-listAuthorsCmd : LIST AUTHORS ;
+// One filter, so on the command's own line: list authors having no books
+listAuthorsCmd : LIST AUTHORS authorsWithoutBooks? ;
+authorsWithoutBooks
+               : HAVING NO noBooks ;
+noBooks        : BOOKS ;
 
 // Keywords to look for in books and authors, the rest of the line: find dune herbert
 findCmd        : FIND keywords ;

@@ -37,6 +37,9 @@ SUBTITLED      : 'subtitled' -> pushMode(VALUE_MODE) ;
 WHOSE          : 'whose' -> pushMode(AFTER_WHOSE) ;
 WRITTEN        : 'written' -> pushMode(AFTER_WRITTEN) ;
 HAVING         : 'having' -> pushMode(AFTER_HAVING) ;
+BORN           : 'born' -> pushMode(AFTER_LIFE_EVENT) ;
+DIED           : 'died' -> pushMode(AFTER_LIFE_EVENT) ;
+LIVING         : 'living' ;
 
 NL             : '\r'? '\n' ;
 WS             : [ \t]+ -> skip ;
@@ -94,6 +97,7 @@ YEAR           : 'year' ;
 MISSING_LANGUAGE : 'language' -> type(LANGUAGE) ;
 MISSING_ISBN   : 'isbn' -> type(ISBN) ;
 COVER          : 'cover' ;
+MISSING_BOOKS  : 'books' -> type(BOOKS) ;   // "list authors having no books"
 MISSING_NL     : '\r'? '\n' -> type(NL), popMode ;
 MISSING_WS     : [ \t]+ -> skip ;
 
@@ -146,8 +150,16 @@ NUMBER         : [0-9]+ ;
 COMPARISON_NL  : '\r'? '\n' -> type(NL), popMode ;
 COMPARISON_WS  : [ \t]+ -> skip ;
 
+// --- born in 1920 / died in 1986 / died (year unknown) ---------------------------
+mode AFTER_LIFE_EVENT;
+LIFE_EVENT_IN  : 'in' -> type(IN), mode(YEAR_MODE) ;
+LIFE_EVENT_NL  : '\r'? '\n' -> type(NL), popMode ;
+LIFE_EVENT_WS  : [ \t]+ -> skip ;
+
+// A year, optionally before the common era: 1965, 428 BC.
 mode YEAR_MODE;
 YEAR_NUMBER    : [0-9]+ -> type(NUMBER) ;
+BC             : [bB][cC] ;
 YEAR_AND       : 'and' -> type(AND) ;
 YEAR_NL        : '\r'? '\n' -> type(NL), popMode ;
 YEAR_WS        : [ \t]+ -> skip ;

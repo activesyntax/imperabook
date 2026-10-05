@@ -56,3 +56,8 @@ GET {{host}}/api/books/languages
 HTTP 401
 [Asserts]
 jsonpath "$.code" == "not_authenticated"
+
+DELETE {{host}}/api/authors/00000000-0000-0000-0000-000000000000
+HTTP 401
+[Asserts]
+jsonpath "$.code" == "not_authenticated"

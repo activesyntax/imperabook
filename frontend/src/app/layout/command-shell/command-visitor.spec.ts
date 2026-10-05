@@ -79,6 +79,39 @@ describe('CommandVisitor', () => {
     });
   });
 
+  describe('add author with a life range', () => {
+    it('reads born, died and living, one per line', () => {
+      expect(parse('add author Frank Herbert\n    born in 1920\n    died in 1986')?.params).toEqual({
+        name: 'Frank Herbert', birthYear: '1920', vitality: 'deceased', deathYear: '1986',
+      });
+      expect(parse('add author Ursula K. Le Guin\n    born in 1929\n    living')?.params).toEqual({
+        name: 'Ursula K. Le Guin', birthYear: '1929', vitality: 'living',
+      });
+    });
+
+    it('reads "died" alone as dead, year unknown', () => {
+      expect(parse('add author Homer\n    died')?.params).toEqual({ name: 'Homer', vitality: 'deceased' });
+    });
+
+    it('reads years before the common era as negative', () => {
+      expect(parse('add author Plato\n    born in 428 BC\n    died in 348 bc')?.params).toEqual({
+        name: 'Plato', birthYear: '-428', vitality: 'deceased', deathYear: '-348',
+      });
+    });
+
+    it('takes BC on book years and filters too', () => {
+      expect(parse('add book Iliad\n    published in 750 BC')?.params).toEqual({ title: 'Iliad', published: '-750' });
+      expect(parse('list books published before 500 BC')?.params).toEqual({ publishedOp: 'before', published: '-500' });
+    });
+
+    it('needs a year after "in", and only digits with an optional BC', () => {
+      for (const text of ['add author X\n    born in', 'add author X\n    born in BC', 'add author X\n    born in 12 AD',
+        'add author X\n    died in']) {
+        expect(checkCommand(text).valid).toBe(false);
+      }
+    });
+  });
+
   it('takes the rest of the line as the author name', () => {
     expect(parse('add author Ursula K. Le Guin')).toEqual({
       command: 'add author',
@@ -194,6 +227,19 @@ describe('CommandVisitor', () => {
     it('needs a known property', () => {
       for (const text of ['list books having', 'list books having no', 'list books having no pages',
         'list books having no publisher']) {
+        expect(checkCommand(text).valid).toBe(false);
+      }
+    });
+  });
+
+  describe('list authors having no books', () => {
+    it('reads the filter on the command line', () => {
+      expect(parse('list authors having no books')).toEqual({ command: 'list authors', params: { missing: 'books' } });
+      expect(parse('list authors')).toEqual({ command: 'list authors', params: {} });
+    });
+
+    it('knows only books as what an author can lack', () => {
+      for (const text of ['list authors having no', 'list authors having no cover', 'list books having no books']) {
         expect(checkCommand(text).valid).toBe(false);
       }
     });

@@ -35,10 +35,10 @@ public static class BookViews
     public static string Describe(this YearFilter f) =>
         f.Comparison switch
         {
-            YearComparison.In => $"published in {f.Year}",
-            YearComparison.Before => $"published before {f.Year}",
-            YearComparison.After => $"published after {f.Year}",
-            YearComparison.Between => $"published between {f.Year} and {f.UpTo}",
+            YearComparison.In => $"published in {f.Year.AsYear()}",
+            YearComparison.Before => $"published before {f.Year.AsYear()}",
+            YearComparison.After => $"published after {f.Year.AsYear()}",
+            YearComparison.Between => $"published between {f.Year.AsYear()} and {f.UpTo.AsYear()}",
             _ => throw new InvalidOperationException($"Unhandled year comparison: {f.Comparison}"),
         };
 
@@ -75,7 +75,7 @@ public static class BookViews
         blocks.Add(AuthorsField(b.Authors));
 
         AddField(blocks, "ISBN", b.Isbn);
-        AddField(blocks, "Published", b.Published?.ToString(CultureInfo.InvariantCulture));
+        AddField(blocks, "Published", b.Published?.AsYear());
         AddField(blocks, "Publisher", b.Publisher);
         AddField(blocks, "Language", LanguageValue(b.Language));
         AddField(blocks, "Pages", b.Pages?.ToString(CultureInfo.InvariantCulture));
@@ -105,7 +105,7 @@ public static class BookViews
         };
 
         if (showYear && b.Published is { } year)
-            properties.Add(new("Published", $"published {year}", PropertyRole.Meta));
+            properties.Add(new("Published", $"published {year.AsYear()}", PropertyRole.Meta));
 
         if (showPages && b.Pages is { } pages)
             properties.Add(new("Pages", $"{pages} {"page".Plural(pages)}", PropertyRole.Meta));

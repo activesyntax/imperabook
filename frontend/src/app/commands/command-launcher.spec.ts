@@ -25,13 +25,19 @@ describe('CommandLauncher', () => {
   });
 
   it('says a command it does not know is not available, and sends nothing', async () => {
-    await launcher.run('list authors having no books');
+    await launcher.run('list publishers having no books');
 
     expect(runner.run).not.toHaveBeenCalled();
     expect(TestBed.inject(WorkspaceStore).views()[0]).toMatchObject({
       type: 'message',
       kind: 'warning',
-      text: "'list authors having no books' is not available yet.",
+      text: "'list publishers having no books' is not available yet.",
     });
+  });
+
+  it('runs the dashboard\'s author finding too', async () => {
+    await launcher.run('list authors having no books');
+
+    expect(runner.run).toHaveBeenCalledWith({ command: 'list authors', params: { missing: 'books' } });
   });
 });

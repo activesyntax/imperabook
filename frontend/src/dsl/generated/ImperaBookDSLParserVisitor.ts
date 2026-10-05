@@ -43,9 +43,16 @@ import { PagesEqualContext } from "./ImperaBookDSLParser.js";
 import { AndBoundContext } from "./ImperaBookDSLParser.js";
 import { PageCountContext } from "./ImperaBookDSLParser.js";
 import { AddAuthorCmdContext } from "./ImperaBookDSLParser.js";
+import { AuthorDetailParamContext } from "./ImperaBookDSLParser.js";
+import { BornParamContext } from "./ImperaBookDSLParser.js";
+import { DiedParamContext } from "./ImperaBookDSLParser.js";
+import { DiedYearContext } from "./ImperaBookDSLParser.js";
+import { LivingParamContext } from "./ImperaBookDSLParser.js";
 import { UpdateAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { RemoveAuthorCmdContext } from "./ImperaBookDSLParser.js";
 import { ListAuthorsCmdContext } from "./ImperaBookDSLParser.js";
+import { AuthorsWithoutBooksContext } from "./ImperaBookDSLParser.js";
+import { NoBooksContext } from "./ImperaBookDSLParser.js";
 import { FindCmdContext } from "./ImperaBookDSLParser.js";
 import { KeywordsContext } from "./ImperaBookDSLParser.js";
 import { DashboardCmdContext } from "./ImperaBookDSLParser.js";
@@ -323,6 +330,36 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      */
     visitAddAuthorCmd?: (ctx: AddAuthorCmdContext) => Result;
     /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.authorDetailParam`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitAuthorDetailParam?: (ctx: AuthorDetailParamContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.bornParam`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitBornParam?: (ctx: BornParamContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.diedParam`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitDiedParam?: (ctx: DiedParamContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.diedYear`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitDiedYear?: (ctx: DiedYearContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.livingParam`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitLivingParam?: (ctx: LivingParamContext) => Result;
+    /**
      * Visit a parse tree produced by `ImperaBookDSLParser.updateAuthorCmd`.
      * @param ctx the parse tree
      * @return the visitor result
@@ -340,6 +377,18 @@ export class ImperaBookDSLParserVisitor<Result> extends AbstractParseTreeVisitor
      * @return the visitor result
      */
     visitListAuthorsCmd?: (ctx: ListAuthorsCmdContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.authorsWithoutBooks`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitAuthorsWithoutBooks?: (ctx: AuthorsWithoutBooksContext) => Result;
+    /**
+     * Visit a parse tree produced by `ImperaBookDSLParser.noBooks`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitNoBooks?: (ctx: NoBooksContext) => Result;
     /**
      * Visit a parse tree produced by `ImperaBookDSLParser.findCmd`.
      * @param ctx the parse tree

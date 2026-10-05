@@ -55,9 +55,16 @@ const ENDPOINTS: Partial<Record<CommandName, CommandEndpoint>> = {
   'list books': get('/api/books', params => ({ ...params })),
   // The params are already the request's fields; "author" is search text the server resolves.
   'add book': post('/api/books', params => params),
-  'list authors': get('/api/authors'),
+  // "having no books" arrives as missing=books.
+  'list authors': get('/api/authors', params => ({ ...params })),
   'find': get('/api/search', ({ keywords }) => ({ q: keywords ?? '' })),
-  'add author': post('/api/authors', ({ name }) => splitAuthorName(name ?? '')),
+  // The name split into first and last; the life range, when given, as it is.
+  'add author': post('/api/authors', ({ name, birthYear, deathYear, vitality }) => ({
+    ...splitAuthorName(name ?? ''),
+    ...(birthYear !== undefined && { birthYear }),
+    ...(deathYear !== undefined && { deathYear }),
+    ...(vitality !== undefined && { vitality }),
+  })),
   'settings': get('/api/settings'),
   'about': get('/api/about'),
   'help': get('/api/help'),

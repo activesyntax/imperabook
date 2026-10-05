@@ -4,6 +4,7 @@ import {
   AddAuthorCmdContext,
   AddBookCmdContext,
   FindCmdContext,
+  ListAuthorsCmdContext,
   ListBooksCmdContext,
   MissingPropertyContext,
   PublishedFilterContext,
@@ -51,8 +52,10 @@ function missingName(p: MissingPropertyContext): string {
   return 'cover';
 }
 
+// "428 BC" is year -428, as the server stores years before the common era.
 function yearText(year: YearContext | null | undefined): string {
-  return year?.NUMBER()?.getText() ?? '';
+  const digits = year?.NUMBER()?.getText() ?? '';
+  return year?.BC() && digits !== '' ? `-${digits}` : digits;
 }
 
 function yearFilter(f: PublishedFilterContext): Record<string, string> {
@@ -123,10 +126,26 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
     return { command: 'add book', params };
   };
 
-  override visitAddAuthorCmd = (ctx: AddAuthorCmdContext): ParsedCommand => ({
-    command: 'add author',
-    params: { name: this.text(ctx.authorName()?.VALUE()?.getText()) },
-  });
+  // The name, then the life range as the server reads it: birthYear, deathYear and
+  // vitality (living or deceased; left out when unknown). As elsewhere, the first
+  // of a repeated detail wins — "died" and "living" both set vitality.
+  override visitAddAuthorCmd = (ctx: AddAuthorCmdContext): ParsedCommand => {
+    const params: Record<string, string> = { name: this.text(ctx.authorName()?.VALUE()?.getText()) };
+
+    for (const p of ctx.authorDetailParam()) {
+      const born = p.bornParam();
+      if (born && !('birthYear' in params)) params['birthYear'] = yearText(born.year());
+
+      const died = p.diedParam();
+      if (died && !('vitality' in params)) params['vitality'] = 'deceased';
+      const deathYear = died?.diedYear()?.year();
+      if (deathYear && !('deathYear' in params)) params['deathYear'] = yearText(deathYear);
+
+      if (p.livingParam() && !('vitality' in params)) params['vitality'] = 'living';
+    }
+
+    return { command: 'add author', params };
+  };
 
   // The keywords as one string, blanks between them collapsed; splitting them up
   // is the search's business.
@@ -181,7 +200,11 @@ export class CommandVisitor extends ImperaBookDSLParserVisitor<ParsedCommand | n
   };
   override visitUpdateAuthorCmd = noParams('update author');
   override visitRemoveAuthorCmd = noParams('remove author');
-  override visitListAuthorsCmd = noParams('list authors');
+  // "having no books" becomes missing=books, as the server reads it.
+  override visitListAuthorsCmd = (ctx: ListAuthorsCmdContext): ParsedCommand => ({
+    command: 'list authors',
+    params: ctx.authorsWithoutBooks() ? { missing: 'books' } : {},
+  });
   override visitDashboardCmd = noParams('dashboard');
   override visitLibraryCmd = noParams('library');
   override visitSettingsCmd = noParams('settings');

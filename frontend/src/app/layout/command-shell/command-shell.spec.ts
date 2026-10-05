@@ -268,6 +268,18 @@ describe('CommandShell', () => {
       expect(runner.run).toHaveBeenCalledWith({ command: 'find', params: { keywords: 'dune herbert' } });
     });
 
+    it('runs an author list at once, filtered or not, as nothing can follow', async () => {
+      press(type('list authors'), 'Enter');
+      await fixture.whenStable();
+      press(type('list authors having no books'), 'Enter');
+      await fixture.whenStable();
+
+      expect(runner.run.mock.calls).toEqual([
+        [{ command: 'list authors', params: {} }],
+        [{ command: 'list authors', params: { missing: 'books' } }],
+      ]);
+    });
+
     it('runs a bare list at once', async () => {
       press(type('list books'), 'Enter');
       await fixture.whenStable();
@@ -570,6 +582,51 @@ describe('CommandShell', () => {
     } finally {
       HTMLElement.prototype.scrollIntoView = original;
     }
+  });
+
+  describe('remove author', () => {
+    const HERBERT: ItemView = {
+      ref: 'a1',
+      open: '/api/authors/a1',
+      properties: [{ name: 'Name', value: 'Frank Herbert', role: 'primary' }],
+    };
+
+    async function run(text: string): Promise<HTMLTextAreaElement> {
+      const input = type(text);
+      press(input, 'Enter');
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return input;
+    }
+
+    it('asks before removing the selected author, naming them as an author', async () => {
+      opener.selectedItem.set(HERBERT);
+
+      await run('remove author');
+
+      expect(statusMessage()).toBe('Remove author "Frank Herbert"? Type yes or no.');
+      expect(runner.remove).not.toHaveBeenCalled();
+    });
+
+    it('removes them on yes, through the link the server gave the item', async () => {
+      opener.selectedItem.set(HERBERT);
+      await run('remove author');
+
+      await run('yes');
+
+      expect(runner.remove).toHaveBeenCalledWith('/api/authors/a1');
+    });
+
+    it('says to select an author when a book is selected, or nothing is', async () => {
+      opener.selectedItem.set(DUNE);
+      await run('remove author');
+      expect(statusMessage()).toBe('Select an author in the list first, then run remove author.');
+
+      opener.selectedItem.set(undefined);
+      await run('remove author');
+      expect(statusMessage()).toBe('Select an author in the list first, then run remove author.');
+      expect(runner.remove).not.toHaveBeenCalled();
+    });
   });
 
   it('moves within the line with bare Home/End instead of scrolling the workspace', () => {

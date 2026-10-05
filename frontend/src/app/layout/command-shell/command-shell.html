@@ -48,9 +48,9 @@
             Not a valid command.
           } @else if (notice(); as n) {
             {{ n.text }}
-            @if (pendingRemoval(); as pending) { Remove "{{ pending.title }}"? }
+            @if (pendingRemoval(); as pending) { {{ pending.question }} }
           } @else if (pendingRemoval(); as pending) {
-            Remove "{{ pending.title }}"? Type <span class="cmd">yes</span> or <span class="cmd">no</span>.
+            {{ pending.question }} Type <span class="cmd">yes</span> or <span class="cmd">no</span>.
           } @else if (!hasText()) {
             Type a command like <span class="cmd">list books</span>
           } @else if (description(); as text) {

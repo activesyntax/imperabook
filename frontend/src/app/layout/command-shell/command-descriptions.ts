@@ -12,7 +12,7 @@ export const COMMAND_DESCRIPTIONS: Record<CommandName, string> = {
   'list books': 'All the books in your library',
   'add author': 'Add an author to your catalog',
   'update author': 'Change the details of an author',
-  'remove author': 'Remove an author from your catalog',
+  'remove author': 'Remove the selected author; their books stay',
   'list authors': 'All the authors in your catalog',
   'dashboard': 'Your library at a glance, and what needs attention',
   'library': 'Statistics about your library',

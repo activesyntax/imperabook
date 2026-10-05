@@ -178,4 +178,25 @@ describe('CommandRunner', () => {
     req.flush({ views: [] });
     await result;
   });
+
+  it('sends the author filter as the author list query', async () => {
+    const result = runner.run({ command: 'list authors', params: { missing: 'books' } });
+
+    const req = http.expectOne(r => r.url === '/api/authors');
+    expect(req.request.params.get('missing')).toBe('books');
+    req.flush({ views: [] });
+    await result;
+  });
+
+  it('posts an author with their life range', async () => {
+    const result = runner.run({
+      command: 'add author',
+      params: { name: 'Plato', birthYear: '-428', vitality: 'deceased', deathYear: '-348' },
+    });
+
+    const req = http.expectOne('/api/authors');
+    expect(req.request.body).toEqual({ lastName: 'Plato', birthYear: '-428', deathYear: '-348', vitality: 'deceased' });
+    req.flush({ views: [] }, { status: 201, statusText: 'Created' });
+    await result;
+  });
 });

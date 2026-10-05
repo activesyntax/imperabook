@@ -28,6 +28,13 @@ internal static class ApplicationErrorResults
                 "no_library"
             ),
 
+            ApplicationError.AuthorNotFound => Problem(
+                StatusCodes.Status404NotFound,
+                "Author not found",
+                "That author is not in your catalog.",
+                "author_not_found"
+            ),
+
             ApplicationError.BookNotFound => Problem(
                 StatusCodes.Status404NotFound,
                 "Book not found",

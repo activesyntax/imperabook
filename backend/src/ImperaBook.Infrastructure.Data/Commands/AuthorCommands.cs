@@ -1,15 +1,44 @@
 using CSharpFunctionalExtensions;
 using ImperaBook.Application;
+using ImperaBook.Domain;
 using ImperaBook.Domain.Catalog;
 using ImperaBook.Infrastructure.Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace ImperaBook.Infrastructure.Data.Commands;
 
 public class AuthorCommands : IAuthorCommands
 {
     private readonly ImperaBookDbContext _db;
+    private readonly ICurrentUser _user;
 
-    public AuthorCommands(ImperaBookDbContext db) => _db = db;
+    public AuthorCommands(ImperaBookDbContext db, ICurrentUser user) => (_db, _user) = (db, user);
+
+    // One transaction: the links go first (book_authors restricts deleting an author still
+    // linked), then the author. A book whose only author this was keeps its place in the
+    // library with its attribution now unknown — "list books having no author" finds it. The
+    // portrait stays: images are content-addressed and may be shared.
+    public async Task<int?> Remove(Id<Author> id, CancellationToken ct)
+    {
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+
+        var owned = await _db.Authors.AnyAsync(a => a.Id == id.Value && a.OwnerId == _user.Id, ct);
+        if (!owned)
+            return null;
+
+        var links = _db.Set<BookAuthorEntity>();
+        var leftWithoutAuthor = await _db.Books.CountAsync(
+            b => links.Any(ba => ba.BookId == b.Id && ba.AuthorId == id.Value)
+                && !links.Any(ba => ba.BookId == b.Id && ba.AuthorId != id.Value),
+            ct
+        );
+
+        await links.Where(ba => ba.AuthorId == id.Value).ExecuteDeleteAsync(ct);
+        await _db.Authors.Where(a => a.Id == id.Value).ExecuteDeleteAsync(ct);
+
+        await tx.CommitAsync(ct);
+        return leftWithoutAuthor;
+    }
 
     public async Task Add(Author author, CancellationToken ct)
     {

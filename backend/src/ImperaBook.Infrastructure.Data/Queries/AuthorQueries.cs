@@ -20,10 +20,12 @@ public sealed class AuthorQueries(ImperaBookDbContext db, ICurrentUser user) : I
             a.DeathYear
         );
 
-    public Task<AuthorListItem[]> List(CancellationToken ct) =>
+    public Task<AuthorListItem[]> List(AuthorFilter filter, CancellationToken ct) =>
         db
             .Authors.AsNoTracking()
             .Where(a => a.OwnerId == user.Id)
+            // The same test the dashboard counts with, so its finding and this list agree.
+            .Where(a => !filter.WithoutBooks || !db.Set<BookAuthorEntity>().Any(ba => ba.AuthorId == a.Id))
             .OrderBy(a => a.LastName)
             .ThenBy(a => a.FirstName)
             .ThenBy(a => a.Id)

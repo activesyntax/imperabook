@@ -13,6 +13,7 @@ public static class AuthorEndpoints
         app.MapGet("/api/authors", ListAuthors)
             .WithName("ListAuthors")
             .Produces<CommandResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         app.MapGet("/api/authors/search", SearchAuthors)
@@ -22,6 +23,12 @@ public static class AuthorEndpoints
 
         app.MapGet("/api/authors/{id:guid}", GetAuthor)
             .WithName("GetAuthor")
+            .Produces<CommandResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        app.MapDelete("/api/authors/{id:guid}", RemoveAuthor)
+            .WithName("RemoveAuthor")
             .Produces<CommandResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
@@ -37,18 +44,29 @@ public static class AuthorEndpoints
         return app;
     }
 
-    private static async Task<Ok<CommandResult>> ListAuthors(
+    // "list authors", optionally "having no books", which arrives as missing=books.
+    private static async Task<IResult> ListAuthors(
+        string? missing,
         IAuthorQueries authors,
         CancellationToken ct
     )
     {
-        var authorList = await authors.List(ct);
+        var withoutBooks = !string.IsNullOrWhiteSpace(missing);
+        if (withoutBooks && !string.Equals(missing!.Trim(), "books", StringComparison.OrdinalIgnoreCase))
+            return TypedResults.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid having-no filter",
+                detail: $"An author can only lack books, not \"{missing}\".",
+                extensions: new Dictionary<string, object?> { ["code"] = "invalid_missing_filter" }
+            );
+
+        var authorList = await authors.List(new AuthorFilter(withoutBooks), ct);
+        var page = new PageInfo(1, 1, authorList.Length, "authors");
 
         return TypedResults.Ok(
-            authorList.ToCommandResult(
-                "No authors yet.",
-                new PageInfo(1, 1, authorList.Count(), "authors")
-            )
+            withoutBooks
+                ? authorList.ToCommandResult("Every author has a book.", page, "Authors having no books")
+                : authorList.ToCommandResult("No authors yet.", page)
         );
     }
 
@@ -96,6 +114,30 @@ public static class AuthorEndpoints
                 detail: "That author is not in your catalog.",
                 extensions: new Dictionary<string, object?> { ["code"] = "author_not_found" }
             );
+    }
+
+    // Says what happened to the books, since that is the part the user cannot see.
+    private static async Task<IResult> RemoveAuthor(
+        Guid id,
+        RemoveAuthorCommandHandler handler,
+        CancellationToken ct
+    )
+    {
+        var result = await handler.Handle(id, ct);
+        if (result.IsFailure)
+            return result.Error.ToProblem();
+
+        var removed = result.Value;
+        var books = removed.BooksLeftWithoutAuthor switch
+        {
+            0 => "",
+            1 => " 1 book no longer has an author.",
+            var n => $" {n} books no longer have an author.",
+        };
+
+        return TypedResults.Ok(
+            new CommandResult([new MessageView($"Removed {removed.Name}.{books}", MessageKind.Success)])
+        );
     }
 
     private static async Task<IResult> AddAuthor(

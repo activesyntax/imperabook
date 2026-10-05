@@ -54,11 +54,13 @@ hurl --variables-file vars.env --variable host=https://api.example.com --test *.
 | `list-books-published.hurl`  | `GET /api/books` year filter ("published …"): in, before, after, between; bad filter → 400 |
 | `list-books-language.hurl`   | `GET /api/books` language filter ("whose language is [not] …"): by name, native name or code; `/api/books/languages` |
 | `list-books-having-no.hurl`  | `GET /api/books?missing=` ("having no …"): each property, several together, with other filters; bad name → 400 |
+| `list-authors-having-no.hurl` | `GET /api/authors?missing=books`: authors no book credits; matches the dashboard finding |
 | `search.hurl`                | `GET /api/search?q=` (find): title, part of a word, stemming, author name, all keywords |
 | `get-book.hurl`             | `GET /api/books/{id}` detail, list items link to it via `open` |
 | `public/about-help-public.hurl` | `GET /api/about`, `/api/help` without a session → 200 |
 | `public/routing-public.hurl` | unknown `/api` paths → JSON 404, not the SPA |
 | `remove-book.hurl`          | `DELETE /api/books/{id}`: removed, then 404; its author stays |
+| `remove-author.hurl`        | `DELETE /api/authors/{id}`: their books stay, with no author; then 404 |
 | `add-book.hurl`             | `POST /api/books` author search: unknown / new / existing / ambiguous |
 | `add-book-errors.hurl`      | `POST /api/books` validation / 422 / 400s, no stray author |
 

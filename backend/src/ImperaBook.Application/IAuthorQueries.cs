@@ -22,9 +22,13 @@ public sealed record AuthorListItem(
 /// <summary>One author in full: the list row's facts plus the books they are credited on.</summary>
 public sealed record AuthorDetail(AuthorListItem Author, IReadOnlyList<BookListItem> Books);
 
+/// <summary>What an author list is narrowed to; the default is every author.</summary>
+/// <param name="WithoutBooks">Only authors no book is credited to.</param>
+public sealed record AuthorFilter(bool WithoutBooks = false);
+
 public interface IAuthorQueries
 {
-    Task<AuthorListItem[]> List(CancellationToken ct);
+    Task<AuthorListItem[]> List(AuthorFilter filter, CancellationToken ct);
 
     /// <summary>The current user's author with that id, or none.</summary>
     Task<Maybe<AuthorDetail>> Get(Guid id, CancellationToken ct);

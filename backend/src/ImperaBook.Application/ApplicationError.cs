@@ -13,6 +13,8 @@ public abstract record ApplicationError
 
     public sealed record BookNotFound() : ApplicationError;
 
+    public sealed record AuthorNotFound() : ApplicationError;
+
     public sealed record ImageNotFound(ContentHash Hash) : ApplicationError;
 
     public sealed record DuplicateAuthor(AuthorListItem Existing) : ApplicationError;

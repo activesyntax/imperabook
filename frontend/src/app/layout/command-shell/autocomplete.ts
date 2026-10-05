@@ -57,6 +57,8 @@ const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_pagesFilter]: { label: 'page count is', insertText: 'page count is ' },
   [ImperaBookDSLParser.RULE_languageFilter]: { label: 'language is', insertText: 'language is ' },
   [ImperaBookDSLParser.RULE_missingFilter]: { label: 'having no', insertText: 'having no ' },
+  [ImperaBookDSLParser.RULE_authorsWithoutBooks]: { label: 'having no', insertText: 'having no ' },
+  [ImperaBookDSLParser.RULE_noBooks]: { label: 'books', insertText: 'books' },
   // Complete filters: nothing follows on their line, so no trailing space.
   [ImperaBookDSLParser.RULE_missingAuthor]: { label: 'author', insertText: 'author' },
   [ImperaBookDSLParser.RULE_missingPages]: { label: 'page count', insertText: 'page count' },
@@ -85,6 +87,11 @@ const RULE_PHRASES: Record<number, Phrase> = {
   [ImperaBookDSLParser.RULE_year]: { label: 'year', insertText: '' },
   [ImperaBookDSLParser.RULE_writerName]: { label: 'author name', insertText: '' },
   [ImperaBookDSLParser.RULE_authorName]: { label: 'first and last name', insertText: '' },
+  [ImperaBookDSLParser.RULE_bornParam]: { label: 'born in', insertText: 'born in ' },
+  // "died" is complete on its own (year unknown); "in" then adds the year.
+  [ImperaBookDSLParser.RULE_diedParam]: { label: 'died', insertText: 'died' },
+  [ImperaBookDSLParser.RULE_diedYear]: { label: 'in', insertText: 'in ' },
+  [ImperaBookDSLParser.RULE_livingParam]: { label: 'living', insertText: 'living' },
   [ImperaBookDSLParser.RULE_authorParam]: { label: 'by author', insertText: 'by author ' },
   [ImperaBookDSLParser.RULE_subtitleParam]: { label: 'subtitled', insertText: 'subtitled ' },
   [ImperaBookDSLParser.RULE_languageParam]: { label: 'in language', insertText: 'in language ' },
@@ -126,7 +133,11 @@ const COMMAND_RULES = [
 const PARAM_RULES = [
   ImperaBookDSLParser.RULE_keywords,
   ImperaBookDSLParser.RULE_whoseFilter,
+  ImperaBookDSLParser.RULE_bornParam,
+  ImperaBookDSLParser.RULE_diedParam,
+  ImperaBookDSLParser.RULE_livingParam,
   ImperaBookDSLParser.RULE_missingFilter,
+  ImperaBookDSLParser.RULE_authorsWithoutBooks,
   ImperaBookDSLParser.RULE_authorFilter,
   ImperaBookDSLParser.RULE_publishedFilter,
   ImperaBookDSLParser.RULE_bookTitle,
@@ -149,6 +160,7 @@ const PROPERTY_RULES = [
   ImperaBookDSLParser.RULE_missingLanguage,
   ImperaBookDSLParser.RULE_missingIsbn,
   ImperaBookDSLParser.RULE_missingCover,
+  ImperaBookDSLParser.RULE_noBooks,
 ];
 
 /**
@@ -169,6 +181,7 @@ const COMPARISON_RULES = [
   ImperaBookDSLParser.RULE_yearAfter,
   ImperaBookDSLParser.RULE_yearBetween,
   ImperaBookDSLParser.RULE_languageNot,
+  ImperaBookDSLParser.RULE_diedYear,
 ];
 
 const COMPARISON_END_RULES = [
@@ -225,8 +238,16 @@ const LEADS_TO: Readonly<Record<string, readonly string[]>> = {
   'having no': ['author', 'page count', 'publication year', 'language', 'isbn', 'cover'],
 };
 
+/** Details that contradict each other: once one is used, the others are not offered. */
+const EXCLUSIVE: readonly (readonly string[])[] = [
+  ['died', 'living'],
+];
+
 function withoutUsedParams(items: CompletionItem[], input: string, caretOffset: number): CompletionItem[] {
   const used = usedParams(input, lineOf(input, caretOffset));
+  for (const group of EXCLUSIVE) {
+    if (group.some(label => used.has(label))) group.forEach(label => used.add(label));
+  }
   for (const [chip, choices] of Object.entries(LEADS_TO)) {
     if (choices.every(choice => used.has(choice))) used.add(chip);
   }
@@ -249,6 +270,9 @@ const PARAM_OPENERS: ReadonlyArray<readonly [label: string, ...tokens: number[]]
   ['published', ImperaBookDSLLexer.PUBLISHED],
   ['page count is', ImperaBookDSLLexer.WHOSE, ImperaBookDSLLexer.PAGE],
   ['language is', ImperaBookDSLLexer.WHOSE, ImperaBookDSLLexer.LANGUAGE],
+  ['born in', ImperaBookDSLLexer.BORN],
+  ['died', ImperaBookDSLLexer.DIED],
+  ['living', ImperaBookDSLLexer.LIVING],
   // What "having no" leads to, one property per line.
   ['author', ImperaBookDSLLexer.HAVING, ImperaBookDSLLexer.NO, ImperaBookDSLLexer.AUTHOR],
   ['page count', ImperaBookDSLLexer.HAVING, ImperaBookDSLLexer.NO, ImperaBookDSLLexer.PAGE],
