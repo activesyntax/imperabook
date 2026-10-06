@@ -1995,8 +1995,8 @@ the parse tree into `ParsedCommand { command, params }`; `CommandRunner` maps ea
 ordinary REST endpoint (`GET /api/books?pagesOp=atLeast&pages=300`, `POST /api/authors`,
 `DELETE /api/books/{id}`, `GET /api/search?q=`), sending the params as query or JSON body. The
 backend validates every *value* it receives — domain validation never moved (ADR 3) — but no longer
-sees command text. `POST /api/command` and `GET /api/commands` are gone; `CommandCatalog.cs` remains
-only as a leftover.
+sees command text. `POST /api/command`, `GET /api/commands` and the `CommandCatalog` that fed it are
+gone.
 
 **What this reverses, and what it keeps.** ADR 18's single endpoint is reversed: its argument was that
 once the backend parsed the text, the URL said nothing the `command` field did not. With parsing on

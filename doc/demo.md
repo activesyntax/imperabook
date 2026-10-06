@@ -1,108 +1,104 @@
 # ImperaBook — Demo Video Script (~4 minutes)
 
-Narration is plain text; *on-screen actions are in italics*. About 530 spoken words: roughly 3½
-minutes at a relaxed ~150 words a minute, plus pauses while the actions play out on screen.
+Audience: hiring managers and technical leads. Goal: show original ideas and deliberate decision
+making in as little of their time as possible. The demo goes from one-word commands to full
+sentences: navigation first, then `add book`, `find` and `list books`. Each feature shows one or two
+decisions and names the trade-off. Narration is plain text; *on-screen actions are in italics*.
+About 510 spoken words: roughly 3½ minutes, plus pauses while the actions play out, about 4 minutes
+in all.
 
 ---
 
-### 0:00 — Hook
+### 0:00 — What this is
 
-*The empty ImperaBook dashboard. The cursor blinks in the command bar.*
+*The ImperaBook dashboard, command bar at the bottom.*
 
-Most software asks you for data the same way: a form. Find the field, click it, type, find the next
-one, hope you didn't miss a required one. Or the opposite: a command line, fast, but you have to
-remember every flag.
+ImperaBook is a home library catalog with one unusual idea. Instead of forms, you type short English
+sentences, and the interface guides every keystroke. I'll go from the simplest commands to full
+sentences, and show the decisions behind each step, including what they cost.
 
-ImperaBook does neither. You just say what you want.
+### 0:15 — One word: `library`, `dashboard`, `help`
 
-### 0:20 — One sentence, one line per detail
+*Type `library`, Enter. Type `dashboard`, Enter. Click `help` in the side nav.*
 
-*Type `add book Dune`. Press Enter — a new indented line appears.*
+The simplest commands are a single word. `library` shows statistics, `dashboard` shows what needs
+attention, and `help` lists everything. The same commands sit in the side nav, and clicking one runs
+exactly what typing it would.
 
-This is how you add a book. The title goes right after the command. Enter starts a new line,
-and each detail gets a line of its own.
+**Decision: the GUI teaches the CLI.** Every clickable element is a real command and shows its name.
+Each dashboard finding, like *books having no ISBN*, displays the command behind it and runs it on
+click. Clicking today teaches typing tomorrow.
 
-*Type `by author frank herbert`, Enter, `published in 1965`, Enter, `in language english`, Enter
-twice. The book appears with generated cover art.*
+### 0:50 — `add book`: the newline is the separator
 
-No quotes, no flags, no fields to hunt for, no order to remember. Write it the way you'd write it on
-a sticky note. Notice I typed "frank herbert" in lowercase: the name was capitalized for me, and since
-he wasn't in my library yet, he was added as an author. There's no cover image yet, so ImperaBook
-generated one.
-
-### 0:55 — Suggestions that know what comes next
-
-*Clear the bar. Type `ad` — chips: add book, add author. Accept with Tab. Ghost text: "author name".*
-
-You never have to memorize any of this. The row above the bar always shows what can come next. When
-a value goes here, the faint ghost text tells you what kind: an author name, a year, a page count.
-
-*Start a new book, type `by author her` — the chip "Frank Herbert" appears.*
-
-Where the answer is already in your own library, it suggests that too: your authors, the languages
-your books are in. And once you've used a detail, it's gone from the list. The suggestions only ever
-offer things that will actually work.
-
-### 1:30 — The status bar: no surprises
-
-*Point at the dot turning green, the description, and the "Ctrl+Enter run" hint.*
-
-Under the bar, a small dot turns green when what you typed is a complete command. Next to it is a
-one-line description of what that command does, and what Enter is about to do: run it, or start a
-new line. You never press a key just to find out what it does.
-
-### 1:50 — Asking questions in plain English
-
-*Type the filter, one line at a time.*
+*Type `ad`: chips for add book and add author. Tab. Ghost text "book title". Type the rest, Enter
+between lines; `by author her` offers "Frank Herbert". Enter twice; the book appears.*
 
 ```
-list books whose page count is more than 300
-    written by herbert
+add book Dune
+    by author frank herbert
+    published in 1965
+```
+
+**Decision: suggestions come from the grammar itself.** The grammar is ANTLR, written once and
+compiled into the frontend. The parser decides validity, and antlr4-c3 computes what can come next
+at the caret, so suggestions can't drift from what the system accepts. Ghost text names each value,
+and the user's own catalog fills in authors. Recognition over recall: nobody memorizes syntax.
+
+**Decision: no quotes.** The first version quoted every value, like a classic command line. It was
+slow to type, and a title containing a quote couldn't be entered at all. Now the first words of a
+line name the field, and the value runs to the end of the line.
+
+**The cost:** Enter now has two meanings, run or new line. That's a mode, and modes cause errors, so
+the status bar always says in advance what Enter will do, and a dot turns green when the command is
+valid. A heuristic is acceptable only if it announces itself.
+
+### 2:05 — `find`: search is a command, not a fallback
+
+*Type `find jokai`. Results show "Jókai Mór" under Authors and his books under Books.*
+
+`find` matches any part of a title, summary or name, ignores accents, and understands English word
+forms. Originally, any unrecognized text ran as a search. I removed that: a typo silently becoming a
+search hides the mistake. Now invalid text doesn't run, and the status bar explains why.
+
+**The cost:** five more characters to type.
+
+### 2:30 — `list books`: words, not symbols
+
+*Type the filter; then Alt+arrows across the result grid, Enter to open a book, Esc to go back.*
+
+```
+list books whose page count is at least 300
     published before 1970
+    having no isbn
 ```
 
-Searching works the same way. Each filter is a phrase you could say out loud, and the results say
-your question back to you as their title. Find also forgives: `find jokai` finds Jókai, accents or
-not, and `flies` finds "flying".
+`At least` is longer than `>=`, but symbols interrupt typing and have to be learned. The filters read
+as English, use the dashboard's own phrases, and the result is titled with the same words. The grid
+is fully keyboard-navigable.
 
-### 2:20 — The dashboard is a teacher
+**The cost:** English only, and no `or`, both deliberately left for a later, composable grammar.
 
-*Run `dashboard`. Point at "Needs attention: 7 books have no ISBN — list books having no isbn".*
+### 3:00 — No AI, deliberately
 
-The dashboard shows what your library is missing: books without a page count, authors with no books.
-Every finding shows the command that lists those records, and clicking it runs that command. Use
-the mouse today, and tomorrow you'll just type it.
+There's no language model here. A closed grammar, the user's own data and explicit rules are
+deterministic, instant, testable and never confidently wrong: intelligent enough, and no more.
 
-### 2:45 — CLI and GUI, in harmony
+### 3:15 — How it's built
 
-*Click "help" in the side nav. Then use Alt+arrows across the result grid, Enter to open, Esc to go back.*
+*Scroll quickly through `doc/DECISIONS.md`, then the test runs.*
 
-That's the idea behind the whole interface. Everything in the side nav is a real command, and
-clicking runs exactly what typing would. The results are a visual grid of covers and portraits that
-you can click or walk with Alt and the arrow keys. Enter opens an item, and Escape takes you back to
-exactly where you were.
-
-*Select a book, type `remove book`. The status bar asks: Remove "Dune"? yes / no.*
-
-Even deleting stays in the flow: no pop-up, just a clear question in the place you're already
-looking.
-
-### 3:15 — Not AI. IE.
-
-*Slow pan across the command bar and grid.*
-
-There's no AI here. Nothing guesses, nothing is sent to a model, nothing will confidently do the
-wrong thing. ImperaBook is IE: *intelligent enough*. It has a small, exact grammar, your own catalog,
-and a few honest rules. That turns out to be enough to know what you mean, suggest what comes next,
-and stay out of your way.
+It's built with Angular signals, ASP.NET Core minimal APIs, EF Core and PostgreSQL, using type-driven
+domain modeling, and covered by frontend, domain and HTTP-level API tests. Every significant choice
+is recorded as an architecture decision with its context, alternatives and trade-off, including the
+ones I later reversed, like moving parsing from the server to the client.
 
 ### 3:40 — Close
 
-*Back to the empty bar.*
+*Back to the command bar.*
 
-Fewer clicks. Less to remember. No forms, no flags, no surprises. Just say what you want, and get
-back to your books.
+The point isn't a book catalog. It's that a friendly interface and a fast one don't have to be
+different products, and that getting there is a series of decisions you can explain. That's how I
+like to work.
 
-ImperaBook.
-
-*Logo.*
+*Name, contact, repository link.*

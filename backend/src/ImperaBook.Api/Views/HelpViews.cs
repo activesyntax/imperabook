@@ -53,26 +53,34 @@ public static class HelpViews
                         "The command bar always holds focus, so plain letters are typing, "
                             + "never shortcuts. Movement is split by key instead: PgUp and "
                             + "PgDn move the view, Alt with the arrows moves the selection, "
-                            + "Ctrl fetches more results."
+                            + "and Enter and Esc on an empty bar open and go back."
                     ),
                     TextNode.Hint(["PgUp", "PgDn"], "scroll the workspace"),
+                    TextNode.Hint(["Home", "End"], "jump to the top or bottom, while the command fits on one line"),
                     TextNode.Hint(["Alt + ↑ ↓ ← →"], "move the selection through the grid"),
-                    TextNode.Hint(["Ctrl + ←", "Ctrl + →"], "previous or next page"),
                     TextNode.Hint(["Enter", "Esc"], "open the selection, or go back"),
+                    TextNode.Hint(["Esc"], "with text in the bar, clear it"),
                     TextNode.H2("All commands"),
                     TextNode.Para(
-                        "The full grammar. Nothing else is a command — anything not on this list runs as a search."
+                        "The full grammar. Nothing else is a command: text that is not one "
+                            + "does not run, and the status bar says why."
                     ),
                     TextNode.Command("add book", "catalog a new book"),
-                    TextNode.Command("list books", "the whole catalog"),
-                    TextNode.Command("list incomplete books", "books with a missing field"),
-                    TextNode.Command("list authors", "everyone in your collection"),
-                    TextNode.Command("search", "multi-token full-text search"),
+                    TextNode.Command("add author", "add an author to your catalog"),
+                    TextNode.Command("list books", "the whole catalog, or the books matching a filter"),
+                    TextNode.Command("list authors", "everyone in your catalog, or those matching a filter"),
+                    TextNode.Command("find", "search books and authors by keywords"),
+                    TextNode.Command("remove book", "remove the selected book, after a yes or no"),
+                    TextNode.Command("remove author", "remove the selected author; their books stay"),
                     TextNode.Command(
                         "dashboard",
                         "your library at a glance, and what needs attention"
                     ),
-                    TextNode.Command("help", "this page, or one command in detail"),
+                    TextNode.Command("library", "statistics about your library"),
+                    TextNode.Command("settings", "your settings"),
+                    TextNode.Command("about", "about ImperaBook"),
+                    TextNode.Command("help", "this page"),
+                    TextNode.Command("logout", "sign out and leave your library"),
                 ]),
             }
         );

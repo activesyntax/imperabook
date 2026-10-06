@@ -35,7 +35,7 @@ export class SideNav {
 
 const SIGNED_OUT: ReadonlySet<string> = new Set(['about', 'help']);
 
-// Mirrors the Fixed, Application and Account groups of the backend CommandCatalog, in catalog order.
+// Grouped as the nav shows them: pinned, application, account.
 /** A nav entry: a real command (the grammar's name for it), so a click can run it as is. */
 interface NavCommand {
   readonly command: CommandName;
