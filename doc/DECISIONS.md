@@ -332,8 +332,13 @@ grows.)
 
 ## 13. Command input: autocomplete over a closed grammar, not a lenient reverse-parser
 
-> **Extended by ADRs 33 and 35.** Everything below stands. The registry it matched against is now an
-> ANTLR grammar compiled into the frontend, and suggestions are computed from that grammar at the caret.
+> **Extended by ADRs 33, 35 and 40; its search fall-through removed.** The closed grammar and the
+> rejection of a reverse-parser and of word-order guessing all stand. Three things below no longer
+> describe the system. The registry is now an ANTLR grammar compiled into the frontend (ADR 33).
+> Suggestions are computed from that grammar at the caret, not by token-match over command names
+> (ADR 35). And text that is not a command no longer falls through to search: it does not run, the
+> status bar says why, and searching is the explicit `find` command (ADR 40). The `/commands`
+> endpoint floated at the end of this entry was built and then removed again by ADR 33.
 
 > **Extended by ADR 27.** Token-match, the ranking rules and the rejection of a reverse-parser all
 > stand. What changed is what accepting a suggestion *does*: the matcher now runs on the whole buffer
@@ -2103,10 +2108,14 @@ language to learn. Several English phrasings were tried; the page filter went th
 is at least 300`, `whose language is not english`, `written by herbert`, `published between 1950 and
 1960`, `having no isbn`; and for authors `born before 1900`, `died in 1950`, `living`, `having no
 books`. Synonyms are accepted where English has them (`more than` / `greater than`). Several filters
-combine with AND, one per line. Each maps to plain query parameters (`pagesOp`/`pages`/`pagesTo`,
-`languageOp`/`language`, `author`, `publishedOp`/`published`/`publishedTo`, `missing=pages,cover`,
-`bornOp`…, `vitality=living`), and the server says the active filters back in the result heading
-in the same words. `having no …` uses the dashboard's vocabulary, so a finding and the command that
+combine with AND, one per line. Each maps to plain query parameters: `pagesOp`/`pages`/`pagesTo`,
+`languageOp`/`language`, `author`, `publishedOp`/`published`/`publishedTo` and
+`missing=pages,cover` for books; `bornOp`/`born`/`bornTo`, `diedOp`/`died`/`diedTo`,
+`vitality=living` and `missing=books` for authors. The operators are the server's words, not the
+sentence's: `pagesOp` is one of `over`, `under`, `equal`, `atLeast`, `atMost`, `otherThan` and
+`between`, so `more than` and `greater than` both send `over`, and the year operators are `in`,
+`before`, `after` and `between`. The server says the active filters back in the result heading in the
+same words. `having no …` uses the dashboard's vocabulary, so a finding and the command that
 lists it are the same phrase (ADR 23). Languages are matched by English name, native name or ISO code
 (`CultureInfo`), and resolved to the code the book stores.
 
@@ -2151,6 +2160,65 @@ books in the same transaction and says how many were left without an author.
 **Trade-off.** The sentence no longer says what it acts on, so it cannot be re-run with a value
 changed and a bug report carrying it misses the target. The confirmation is where the target is
 restated, which is why it names the record instead of asking "are you sure".
+
+---
+
+## 40. The grammar's final shape: one keyword phrase per line, and modes decide what a word means
+
+**Context.** The grammar in `frontend/src/dsl` grew one feature at a time across ADRs 33–39: the
+page and language filters, `having no …`, the author life range and the author filters. Each step
+followed the same few patterns, but nowhere were they written down. This entry records the shape the
+grammar settled into, so the next command follows it rather than inventing a new one.
+
+**Decision.**
+
+- **One command per entry, one phrase per line.** `entry` is a command surrounded by optional blank
+  lines. A command is its own line, then any number of detail or filter lines (`(NL+ detail)*`),
+  in any order. Every line begins with a keyword phrase.
+- **Keywords exist only where they can occur.** The default lexer mode holds the line-start words.
+  A phrase's word pushes a small mode that lists only what may follow it: `AFTER_ADD`, `AFTER_BY`,
+  `AFTER_WITH`, `AFTER_IN`, `AFTER_PUBLISHED`, `AFTER_WRITTEN`, `AFTER_WHOSE`, `AFTER_HAVING` /
+  `MISSING`, and `AFTER_LIFE_EVENT`. Every mode pops on a newline. So `in`, `author`, `language` and
+  `page` each mean one thing in each place, and none of them can collide with a value.
+- **Three kinds of value, three lexer treatments.**
+  - **Free text** is the rest of the line, as one `VALUE` token. This covers the book title, the
+    author name, `by author`, `subtitled`, `in language`, `with isbn`, `with summary`, `written by`
+    and `find`'s keywords (ADR 34).
+  - **Numbers** are tokens: a `year` is `NUMBER BC?` (`YEAR_MODE`), and a page count is a `NUMBER`
+    after a comparison phrase (`COMPARISON`). They are validated as they are typed.
+  - **Language names** are words of letters, read one at a time (`LANGUAGE_NAME`), so a leading
+    `not` can still be told apart from the name.
+- **One year comparison, shared.** `yearComparison` (`in`, `before`, `after`, `between … and …`)
+  serves `published`, `born` and `died` alike. The lexer accepts all four after `born` / `died`
+  everywhere, and the parser narrows `add author` to `born in` / `died in`.
+- **Every value position is a named rule**: `bookTitle`, `authorName`, `writerName`, `keywords`,
+  `year`, `pageCount`, `languageName`, plus `andBound` and `diedYear` for the optional second steps.
+  Those rules exist so the completion engine can name what goes there as ghost text and offer the
+  token that follows (ADR 35). A rule that looks redundant in the grammar is usually there for the
+  bar.
+- **Adding needs its first value; listing does not.** `add book` and `add author` require their
+  value on the command's line. `list books` and `list authors` take an optional first filter on the
+  command's line (`listFilter?`), so a one-filter list stays one sentence. An incomplete value, such
+  as `add book` with no title or `by author` with no name, does not parse. The bar says so rather than
+  sending what the server can only refuse.
+- **"Once each" and "not both" live outside the grammar.** The grammar lists detail alternatives and
+  allows repeats. The completion policy hides used and mutually exclusive details (ADR 35). The
+  visitor keeps the first of a repeated detail, and the server refuses contradictions, such as a
+  death year for a living author.
+- **The command set is closed and explicit.** `add` / `update` / `remove` / `list` for books and
+  authors, `find`, and the bare navigation commands (`dashboard`, `library`, `settings`, `about`,
+  `help`, `account`, `login`, `logout`). `update book` and `update author` parse but have no
+  endpoint yet, and `CommandRunner` answers them as unsupported. There is no search fall-through:
+  `find` is the only way to search, and text that does not parse does not run.
+
+**Trade-off.** Modes make the lexer context-sensitive. A new word after `whose` needs a lexer mode
+edit as well as a parser rule, and the two must agree with no compiler between them. The generated
+parser and the spec suite are the check. A misspelled keyword at the start of a line is a token
+error, not a value, which is correct but gives a blunter message than a parser error would. The same
+word can take two grammars: `died` alone is valid when adding an author (dead, year unknown), but as
+a list filter it always needs a year comparison. So "every dead author" is not expressible yet, and
+the closest is listing authors not marked `living`, which the grammar cannot say either. Free text
+still cannot span lines (ADR 34).
 
 
 # Known limitations

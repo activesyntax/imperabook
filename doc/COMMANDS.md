@@ -19,7 +19,12 @@ ImperaBook is driven by plain-text commands typed into a single command bar.
 - **Details are order-free and given once.** The leading words of a line name the field, so the
   lines can come in whatever order the sentence comes out in. A repeated detail is ignored after
   its first appearance.
-- Required values are marked `*`. Optional ones are simply left out.
+- Required values are marked `*`. Optional ones are simply left out. A command with a required value
+  missing (`add book` with no title, `by author` with no name) is not valid yet: the status bar says
+  so and nothing is sent.
+- **Keywords only count where they can occur.** Each line starts with a keyword phrase, and the
+  phrase decides what may follow it. Inside a value nothing is a keyword, so `add book In the
+  Heart of the Sea` needs no escaping (DECISIONS 40).
 - The grammar is **closed**: an ANTLR grammar in the frontend (`frontend/src/dsl`) defines every
   command, and nothing outside it runs (DECISIONS 33). To search, say so with `find`.
 - **Indenting is automatic.** Every line after the first gets a 4-space indent when you start it with
@@ -182,7 +187,8 @@ many books were left without an author, and `list books having no author` lists 
 | `living` | authors marked alive |
 | `having no books` | authors no book is credited to |
 
-Unknown birth or death years drop out of a comparison, as with books.
+Unknown birth or death years drop out of a comparison, as with books. As a filter, `died` always
+takes one of the four comparisons: unlike `add author`, a bare `died` is not a filter.
 
 ## Find
 

@@ -23,79 +23,112 @@ journey across the screen.
 
 ## What Makes ImperaBook Different?
 
-- **Command-driven control.** A single command bar drives the whole app. As you type, it
-  autocompletes from a closed command grammar using token-match: typing `book` surfaces every book
-  command (`add book`, `list books`, `update book`, …), typing `add` surfaces every `add` command.
-  Anything that isn't a recognized command falls through to full-text search — there is no mode to
-  toggle. Inspired by modern terminal tools like Vim and Helix.
-- **The whole command is one visible sentence.** Parameters are written inline, each named by a
-  connective — `add book with title "1984" by author "George Orwell"` — so nothing is hidden behind
-  a prompt you have already answered. Order is free, the bar grows to fit as you type, and a finished
-  command is ordinary text: editable, recallable, copyable, re-runnable with one value changed.
+- **Command-driven control.** A single command bar drives the whole app. Its language is a closed
+  ANTLR grammar compiled into the frontend, and the suggestion row is computed from that grammar at
+  the caret, so it always offers exactly what may come next: a command, the next word of it, a
+  detail line, or the name of the value to type. Nothing outside the grammar runs. To search, you
+  say so with `find`. Inspired by modern terminal tools like Vim and Helix.
+- **The whole command is one visible sentence.** The first value shares the command's line, and
+  each further detail is a line of its own, opened by the words that name it. There are no quotes
+  and no flags:
+
+  ```
+  add book Nineteen Eighty-Four
+      by author George Orwell
+      published in 1949
+  ```
+
+  Detail order is free, nothing is hidden behind a prompt you have already answered, and a finished
+  command is ordinary text: editable, copyable, re-runnable with one line changed.
 - **Typography-driven aesthetic.** A dark, minimalist interface built to maximize legibility,
   screen real estate, and scannability — the text *is* the interface.
 - **Type-driven domain modeling.** A pure, immutable C# core using closed sealed-record hierarchies,
   smart-constructor value objects, and phantom-typed identifiers (`Id<TEntity>`) to make invalid
   library states literally unrepresentable. (The reasoning behind these choices, including their
-  trade-offs and limits, lives in `DECISIONS.md`.)
+  trade-offs and limits, lives in [`doc/DECISIONS.md`](doc/DECISIONS.md).)
 
 <img src="./ux/imperabook-all-books.png" alt="ImperaBook UI Concept" width="100%">
 ---
 
 ## How It Works — Commands in Practice
 
-A command is a sentence you write in one place. The verb comes first, then any number of parameters,
-each introduced by a connective that names it and a value in quotes. There are no flags to memorize
-and no dialog to tab through, and your hands never leave the keyboard.
+A command is a sentence you write in one place. A keyword phrase opens every line, and a phrase that
+takes a value takes **the rest of its line** as that value. Nothing inside a value is read as a
+keyword, so titles with commas, colons or quote marks are just typed. There are no flags to memorize
+and no dialog to tab through, and your hands never leave the keyboard. The full reference is in
+[`doc/COMMANDS.md`](doc/COMMANDS.md).
 
-**Add a book.** Type `add b` — autocomplete offers `add book`; `Tab` moves the highlight if several
-commands match, `Enter` accepts the highlighted one.
-Completion then keeps going: the suggestion row offers the command's next parameter — `with title`
-first, since it is required — and accepting it appends `with title ""` with the caret between the
-quotes. Type the value, and the row offers the next one. Optional parameters (`subtitled`,
-`in language`, `published in`, `with isbn`) appear the same way, so you discover them rather than
-memorize them, and any of them can be given in any order:
+**Add a book.** Type `ad` and the row offers `add book` and `add author`. `Tab` accepts the
+highlighted one. After `add book`, the bar shows muted ghost text naming what goes there
+(`book title`). Type the title and press `Enter`: the book can take more, so `Enter` starts an
+indented new line, and the row offers the details (`by author`, `subtitled`, `in language`,
+`published in`, `with isbn`, `with summary`). After `by author`, it suggests matching authors from
+your catalog. Details can come in any order, each one once, and a detail already given drops out of
+the row:
 
 ```
-add book
-  with title "Nineteen Eighty-Four"
-  by author "George Orwell"
-  published in "1949"
+add book Nineteen Eighty-Four
+    by author George Orwell
+    published in 1949
+    in language english
 ```
 
-The bar lays the segments out one per line and grows to fit, and the workspace renders a *draft* of
-the book that fills in beside it as each value lands. `Enter` saves; `Esc` clears the bar and nothing
-is ever persisted. Because the command stays on screen as text, a typo four fields back is a cursor
-move — and the next book by the same author is the same line with one value replaced.
+`Enter` on the blank line after the last detail runs the command, and `Ctrl + Enter` runs at any
+point. The status bar under the bar says in advance which one `Enter` will do. It also shows a
+validity dot and the command's description, and when text cannot run it keeps the text and says
+why. `by author` is search text, not an exact name: one match is credited, no match creates the
+author, and several matches keep your sentence in the bar so narrowing the name is one edit.
 
-**Sign in.** The first screen is the smallest the shell ever gets: one command available, so it
-starts itself. You see `login` appear in the bar, then dedicated fields for username and password —
-a password is never typed into the command bar, because that buffer is visible, editable, logged,
-and parsed by a grammar with no escape rules. Signing in lands you on the dashboard; the command set
-widens the moment the session exists. `logout` is an ordinary command and takes you back.
+**Add an author.** The name is the rest of the first line, and the life range is optional, one
+detail per line. Years may be BC:
 
-**Browse and read.** `list books` renders the collection. Because the command bar always holds
-focus, bare letters are typing rather than shortcuts — so movement is separated by modifier instead:
-plain `↑` `↓` scroll the viewport, `Alt` + arrows move the selection across the grid, and
-`Ctrl + →` / `Ctrl + ←` (`next page` / `prev page`) fetch the adjacent batch of results. `Enter`
-opens the selected row into detail, `Esc` steps back, `Home` / `End` (`top` / `bottom`) jump to the
-first or last item on the page. These are navigation affordances — they read views, they never
-mutate data.
+```
+add author Plato
+    born in 428 BC
+    died in 348 BC
+```
 
-**Search.** Just start typing words that aren't a command — `tolkien hobbit` — and the input falls
-through to multi-token full-text search across the catalog: titles, subtitles, author names,
-publishers. No button, no separate search box. Results arrive with the first row already selected,
-so `Enter` opens it — which is why there is no `show book` verb. Finding a record and looking at one
-are the same gesture here, and search is the tool people already reach for.
+`died` alone means dead with the year unknown. `living` means alive, and the two exclude each other.
 
-**Filter and summarize.** `filter` walks you through structured filtering (language, publication
-year). `dashboard` renders the collection's language breakdown and totals. `help` lists everything;
-`help add book` explains one command.
+**List and filter.** `list books` lists the collection, and each filter is an English phrase that
+continues the sentence. The first filter may share the command's line, and every filter must hold:
 
-**Where this is going (MVP2).** *Composition*: grouping, boolean conditions, and chaining one
-command's result into another — filtering a set and acting on the whole of it at once. That is where
-the efficiency gain stops being a percentage and becomes an order of magnitude, and it is also the
-point at which the flat grammar needs a real parser rather than the tokenizer that serves it today.
+```
+list books whose page count is at least 300
+    written by herbert
+    published before 1970
+    whose language is not english
+    having no isbn
+```
+
+Page counts take `more than`, `less than`, `at least`, `at most`, `between … and …`, `not` or a
+plain number. Years take `in`, `before`, `after` and `between`. `having no …` uses the dashboard's
+own vocabulary (`author`, `page count`, `publication year`, `language`, `isbn`, `cover`). Authors
+filter the same way: `list authors born before 1900`, `died after 1950`, `living`,
+`having no books`.
+
+**Find.** `find tolkien hobbit` searches titles, subtitles, summaries and author names. Every keyword
+must match, accents are ignored, and English stems match too. Results arrive with the first one
+already selected, so `Enter` opens it. That is why there is no `show book` verb.
+
+**Browse and act on the selection.** Because the command bar always holds focus, bare letters are
+always typing, so movement uses modifiers: `Alt` + arrows move the selection across the grid,
+`Page Up` / `Page Down` scroll, `Enter` on an empty bar opens the selected item, and `Esc` steps
+back. `remove book` and `remove author` act on the selected item and ask a yes/no question in the
+status bar that names it.
+
+**Sign in.** Signed out, there is no command bar. The side nav offers `login`, `about` and `help`,
+and `login` swaps in dedicated username and password fields. A password is never typed into the
+command bar, because that buffer is visible, editable and parsed. `logout` is an ordinary command.
+
+**Dashboard.** `dashboard` shows collection metrics and the *Needs attention* findings: books with no
+author, page count, year, language, ISBN or cover, and authors with no books. Each finding shows the
+command that lists those records, so reading the dashboard teaches the command.
+
+**Where this is going (MVP2).** *Composition*: grouping, `or` conditions, and chaining one command's
+result into another, so a filtered set can be acted on as a whole. That is where the efficiency gain
+stops being a percentage and becomes an order of magnitude. The grammar is already a real parser
+with nested rules, so composition is a grammar change rather than a rewrite.
 
 <img src="./ux/imperabook-command-line.png" alt="ImperaBook UI Concept" width="100%">
 ---
@@ -106,7 +139,7 @@ The keyboard-first model is a deliberate efficiency bet, not just an aesthetic o
 Keystroke-Level Model (KLM) analysis of common operations — using the standard, empirically derived
 operator times from HCI — estimates roughly **50–65% less time** on everyday CRUD and filtering
 tasks versus a typical mouse-driven library GUI, for an experienced user. The full breakdown is in
-`efficiency-analysis.md`.
+[`doc/efficiency-analysis.md`](doc/efficiency-analysis.md).
 
 An honest note on those numbers: they are **model-derived estimates, not yet measured results**. The
 KLM gives a principled order-of-magnitude projection, and the intent is to back it with real usage
@@ -176,26 +209,39 @@ domain modeling** in C#.
   ProblemDetails shape at the boundary. **ASP.NET Core Identity** with cookie sessions lives here
   rather than in Infrastructure: issuing and validating a session cookie is an HTTP concern, and the
   persistence library should not depend on the web stack to store a row. Authorization is
-  default-deny, and per-command rather than per-route — there is only one route.
+  default-deny: every route requires a session unless it explicitly opts out.
 
-### Two channels, not a REST surface
+### The grammar lives in the frontend; the backend speaks REST
 
-The HTTP surface is split by purpose rather than by resource. A **control channel** —
-`POST /api/command` — handles every command in the closed grammar: one request shape, one dispatch
-path, one response contract. A **content channel** moves opaque bytes (cover images today, exports
-and bulk import later) and never introduces meaning the command response didn't already state. The
-command registry itself — every command and the connectives it accepts — is served by the backend at
-`GET /api/commands`, so completion is driven by the backend's own vocabulary. What the frontend sends
-is the raw text the user typed; the backend tokenizes and validates it, and that pass is the only one
-that decides anything.
+The command language is defined once, as split ANTLR grammars in
+[`frontend/src/dsl`](frontend/src/dsl): `ImperaBookDSLLexer.g4` and `ImperaBookDSLParser.g4`,
+compiled to TypeScript with antlr-ng (`npm run antlr`). The grammar is line-oriented:
 
-Both channels are closed to an unauthenticated caller, which creates a problem worth naming: the
-registry that would tell a browser `login` exists is itself behind the session. The answer is a
-third, deliberately tiny surface — a bootstrap route that hands out the `login` descriptor and the
-login view, both republished from the same definitions the control channel uses, plus the sign-in
-route itself. Credentials never travel as command text: it is logged, visible in the bar, and parsed
-by a grammar with no escape rules, so `login` posts to its own endpoint. `logout` carries no secret
-and stays an ordinary command.
+- **Lexer modes** do the work that quotes used to do. Every line starts with a keyword phrase. The
+  phrase's last word pushes a small mode that knows what may follow it, and a phrase that takes free
+  text hands the rest of the line to a value mode as a single token. Years (`1965`, `428 BC`), page
+  counts and closed choices (`having no isbn`) stay ordinary tokens, so they are validated as you
+  type. Language names are read word by word, so that `not` can still be recognized in
+  `whose language is not english`.
+- **The parser** takes one command per entry: the command's own line, then any number of detail or
+  filter lines, in any order. Values that the bar needs to name, such as `bookTitle`, `year` and
+  `pageCount`, are rules of their own, so the completion engine (antlr4-c3) can show them as ghost
+  text.
+- **A visitor** turns the parse tree into `ParsedCommand { command, params }`, and `CommandRunner`
+  maps each command to an ordinary REST endpoint. For example, `list books whose page count is at
+  least 300` becomes `GET /api/books?pagesOp=atLeast&pages=300`, `add author` becomes
+  `POST /api/authors`, and `find` becomes `GET /api/search?q=`.
+
+The backend never sees command text. It validates every value it receives in the domain, and it
+parses query parameters defensively, so a value it cannot read is a 400 with a reason, never
+"everything". Views, headings, empty messages and error wording still come from the server, so the
+client knows the *language* but not what a command *does*. Cover images and portraits travel
+separately, as content-addressed URLs the backend serves.
+
+Credentials never travel as command text. `login` is in the grammar so it can be offered, but the
+credential step uses dedicated fields that post to `POST /api/auth/login`. Only the sign-in routes
+(`/api/auth/login`, `/api/auth/session`), `about`, `help` and the static frontend are open without a
+session. `logout` carries no secret and stays an ordinary command.
 
 ### Database
 
@@ -225,12 +271,15 @@ application from starting; the alternative, letting it run against a half-built 
 
 ### MVP1 — Keyboard-Driven Core Management & Dashboard
 
-- **Command execution.** Core CRUD via inline, connective-tagged commands with an anticipatory draft
-  preview; autocomplete guides you to the canonical command and then through its parameters, one
-  step at a time.
-- **Dashboard.** Analytical widgets: language breakdown and total collection metrics.
-- **Query engine.** Multi-token full-text search plus structured filtering (language, publication
-  year).
+- **Command execution.** `add` / `list` / `remove` for books and authors as line-oriented sentences
+  over a closed ANTLR grammar. Suggestions, ghost text and catalog lookups come from the grammar at
+  the caret, and a status bar says what `Enter` will do. `update book` / `update author` are in the
+  grammar but not implemented yet.
+- **Dashboard.** Collection metrics, plus *Needs attention* findings that each link to the
+  `list … having no …` command that lists them.
+- **Query engine.** `find` for multi-keyword, accent-insensitive search with English stemming.
+  English-phrase filters for books (page count, language, author, publication year, missing
+  fields) and for authors (born, died, living, having no books).
 - **Accounts.** Cookie-based sign-in over ASP.NET Core Identity, and per-user catalogs — every read
   is scoped to its owner in the query itself rather than by a filter each caller has to remember to
   pass. An instance can safely be reached by more than the machine it runs on. Self-service
@@ -336,7 +385,7 @@ Restoring into a fresh stack:
 docker compose exec -T db psql -U imperabook -d imperabook < imperabook-backup.sql
 ```
 
-The trade-off is named plainly in `DECISIONS.md` (ADR 19): storing image bytes in the database makes
+The trade-off is named plainly in [`doc/DECISIONS.md`](doc/DECISIONS.md) (ADR 19): storing image bytes in the database makes
 dumps larger than they would be with a separate volume, and buys a backup that cannot be half-taken.
 A dump taken without its image volume restores into a catalog where every cover is silently gone;
 that failure mode is the one worth designing against.
@@ -377,10 +426,14 @@ Then `docker compose up -d` again, and use `http://localhost:9090`.
 
 ## Documentation
 
-- `DECISIONS.md` — architecture decisions, with trade-offs and known limitations stated plainly.
-- `COMMANDS.md` — the full command reference and suggestion model.
-- `UX.md` — UX patterns and their rationale.
-- `efficiency-analysis.md` — the keystroke-level efficiency analysis (estimates pending real data).
+- [`doc/DECISIONS.md`](doc/DECISIONS.md) — architecture decisions, with trade-offs and known
+  limitations stated plainly.
+- [`doc/COMMANDS.md`](doc/COMMANDS.md) — the full command reference and suggestion model.
+- [`doc/UX.md`](doc/UX.md) — UX patterns and their rationale.
+- [`doc/efficiency-analysis.md`](doc/efficiency-analysis.md) — the keystroke-level efficiency
+  analysis (estimates pending real data).
+- [`frontend/src/dsl`](frontend/src/dsl) — the command grammar itself (`ImperaBookDSLLexer.g4`,
+  `ImperaBookDSLParser.g4`).
 
 ---
 
