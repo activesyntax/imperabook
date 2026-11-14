@@ -16,7 +16,7 @@ HTTP 401
 
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 
@@ -48,7 +48,7 @@ Content-Type: application/json
 }
 HTTP 201
 [Captures]
-new_author: jsonpath "$.views[0].text" regex "by (Robert Smith[0-9a-f-]{36}) \\(new author\\)"
+new_author: jsonpath "$.views[0].text" regex "by (Robert Smith[0-9a-fA-F-]{36}) \\(new author\\)"
 [Asserts]
 jsonpath "$.views[0].text" contains "(new author)"
 
@@ -96,7 +96,7 @@ Content-Type: application/json
 { "firstName": "Ann", "lastName": "Twin{{newUuid}}" }
 HTTP 201
 [Captures]
-twin: jsonpath "$.views[0].text" regex "Added author Ann (Twin[0-9a-f-]{36})\\."
+twin: jsonpath "$.views[0].text" regex "Added author Ann (Twin[0-9a-fA-F-]{36})\\."
 
 POST {{host}}/api/authors
 Content-Type: application/json

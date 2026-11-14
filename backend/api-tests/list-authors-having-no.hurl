@@ -4,7 +4,7 @@
 # Mutates state: adds two authors and one book per run.
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 
@@ -20,7 +20,7 @@ Content-Type: application/json
 { "title": "Busy Book {{newUuid}}", "author": "Busy Writer{{newUuid}}" }
 HTTP 201
 [Captures]
-busy_name: jsonpath "$.views[0].text" regex "by (Busy Writer[0-9a-f-]{36}) \\(new author\\)"
+busy_name: jsonpath "$.views[0].text" regex "by (Busy Writer[0-9a-fA-F-]{36}) \\(new author\\)"
 
 GET {{host}}/api/authors/search
 [Query]

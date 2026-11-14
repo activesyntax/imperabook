@@ -6,7 +6,7 @@
 # Mutates state: adds three authors per run.
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 

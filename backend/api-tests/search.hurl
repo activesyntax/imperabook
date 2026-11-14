@@ -6,7 +6,7 @@
 # Mutates state: adds one book and its new author per run, both carrying a unique token.
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 
@@ -20,8 +20,8 @@ Content-Type: application/json
 HTTP 201
 [Captures]
 book_url: header "Location"
-token: jsonpath "$.views[0].text" regex "Added \"(Zeppelin[0-9a-f-]{36}) Voyage\""
-author_name: jsonpath "$.views[0].text" regex "by (Searchy Writer[0-9a-f-]{36}) \\(new author\\)"
+token: jsonpath "$.views[0].text" regex "Added \"(Zeppelin[0-9a-fA-F-]{36}) Voyage\""
+author_name: jsonpath "$.views[0].text" regex "by (Searchy Writer[0-9a-fA-F-]{36}) \\(new author\\)"
 
 GET {{host}}/api/authors/search
 [Query]

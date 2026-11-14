@@ -56,7 +56,19 @@ if (!app.Environment.IsDevelopment())
     );
 }
 
-app.UseExceptionHandler();
+// A body that cannot be bound (malformed JSON, a required member missing) is the client's
+// error. In Development minimal APIs throw it as BadHttpRequestException rather than answering
+// 400 themselves, and without a selector the handler would report it as a 500 — so the same
+// request would get a different status depending on the environment.
+app.UseExceptionHandler(
+    new ExceptionHandlerOptions
+    {
+        StatusCodeSelector = exception =>
+            exception is BadHttpRequestException badRequest
+                ? badRequest.StatusCode
+                : StatusCodes.Status500InternalServerError,
+    }
+);
 
 app.UseStatusCodePages(async context =>
 {

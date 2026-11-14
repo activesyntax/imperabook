@@ -5,7 +5,7 @@
 # Mutates state: adds two authors and one book per run, then removes both authors.
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 
@@ -16,7 +16,7 @@ HTTP 201
 [Captures]
 book_url: header "Location"
 book_id: header "Location" regex "/api/books/(.+)$"
-writer: jsonpath "$.views[0].text" regex "by (Leaving Writer[0-9a-f-]{36}) \\(new author\\)"
+writer: jsonpath "$.views[0].text" regex "by (Leaving Writer[0-9a-fA-F-]{36}) \\(new author\\)"
 
 GET {{host}}/api/authors/search
 [Query]
@@ -31,7 +31,7 @@ Content-Type: application/json
 HTTP 201
 [Captures]
 bookless_url: header "Location"
-bookless: jsonpath "$.views[0].text" regex "Added author (Bookless Writer[0-9a-f-]{36})\\."
+bookless: jsonpath "$.views[0].text" regex "Added author (Bookless Writer[0-9a-fA-F-]{36})\\."
 
 
 # --- An author with a book: removed, the book stays with no author ----------------------

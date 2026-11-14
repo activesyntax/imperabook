@@ -5,7 +5,7 @@
 # Mutates state: adds four books per run.
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 

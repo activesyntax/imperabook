@@ -5,7 +5,7 @@
 # Mutates state: adds one author and one book per run.
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 
@@ -22,7 +22,7 @@ HTTP 201
 [Captures]
 author_url: header "Location"
 author_id: header "Location" regex "/api/authors/(.+)$"
-name: jsonpath "$.views[0].text" regex "Added author (Detail Author[0-9a-f-]{36})\\."
+name: jsonpath "$.views[0].text" regex "Added author (Detail Author[0-9a-fA-F-]{36})\\."
 
 
 # --- The list links each author to their detail -------------------------------

@@ -6,4 +6,7 @@ if [ -z "${1:-}" ]; then
   exit 1
 fi
 
-hurl --variables-file vars.env --verbose "$1"
+# The seeded users' password: Seed__Password if set, else the API's development settings.
+password="${Seed__Password:-$(jq -r '.Seed.Password // empty' ../src/ImperaBook.Api/appsettings.Development.json)}"
+
+hurl --variables-file vars.env --variable "password=$password" --verbose "$1"

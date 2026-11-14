@@ -1,11 +1,11 @@
 # POST /api/books — error paths. ApplicationError cases map to:
 #   Validation     -> 400 (validation problem, codes under "failures")
-#   NoLibrary      -> 409 (not reachable with the dev seed: john owns a library)
+#   NoLibrary      -> 409 (not reachable with the dev seed: bill owns a library)
 #   ImageNotFound  -> 422
 #   AmbiguousAuthor -> 409 (covered in add-book.hurl, where the matching authors are set up)
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 # --- Blank title, bad pages: every failure is reported at once ----------------

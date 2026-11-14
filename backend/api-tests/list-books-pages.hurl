@@ -5,7 +5,7 @@
 # Mutates state: adds four books per run.
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 
@@ -109,7 +109,7 @@ HTTP 200
 jsonpath "$.views[0].text" == "All books"
 jsonpath "$.views[1].items[*].ref" contains "{{bnone}}"
 # Unfiltered, the page count is not part of the list.
-jsonpath "$.views[1].items[?(@.ref=='{{b150}}')].properties[?(@.name=='Pages')]" count == 0
+jsonpath "$.views[1].items[?(@.ref=='{{b150}}')].properties[?(@.name=='Pages')]" not exists
 
 
 # --- A filter that cannot be read is an error, not "all books" -------------------------

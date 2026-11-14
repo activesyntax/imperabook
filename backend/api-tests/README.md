@@ -6,35 +6,45 @@ beside `src/` rather than inside the API project.
 
 ## Prerequisites
 
-- The API running locally with the development seed applied
-  (`DevelopmentDataSeeder` inserts the user, library, and three books these
-  assertions expect).
+- The API running locally with the development seed applied. `DevelopmentDataSeeder`
+  creates two users, `bill` and `mary`, each with a library, books and authors. The
+  tests sign in as `bill` and use `mary`'s data to check that each user sees only their own
+  catalog.
 - [Hurl](https://hurl.dev) installed: `pacman -S hurl` on Arch, or see the docs.
 
 ## Configure
 
 Edit `host` in `vars.env` to match your Kestrel dev port (check
-`launchSettings.json`). The seeded `libraryId` / `ownerId` are also there and
-must stay in sync with `DevelopmentDataSeeder`.
+`launchSettings.json`).
+
+The seeded users' password is `Seed:Password` from the API's configuration
+(`appsettings.Development.json`, user secrets, or the `Seed__Password` environment
+variable). It is not kept in `vars.env`; pass it with `--variable password=…`. The
+examples below read it from `appsettings.Development.json`.
 
 ## Run
 
 Whole suite:
 
 ```sh
-hurl --variables-file vars.env --test *.hurl
+pw=$(jq -r .Seed.Password ../src/ImperaBook.Api/appsettings.Development.json)
+hurl --variables-file vars.env --variable password="$pw" --test --jobs 1 *.hurl public/*.hurl
 ```
+
+`--jobs 1` is required. Hurl runs files in parallel by default, and several files add
+books and authors. `dashboard.hurl` compares the dashboard's counts with the lists' counts,
+so a file adding a book between those two requests makes it fail.
 
 A single file, with full request/response output:
 
 ```sh
-hurl --variables-file vars.env --verbose auth.hurl
+hurl --variables-file vars.env --variable password="$pw" --verbose auth.hurl
 ```
 
 Override the host without editing the file (e.g. a deployed environment):
 
 ```sh
-hurl --variables-file vars.env --variable host=https://api.example.com --test *.hurl
+hurl --variables-file vars.env --variable password="$pw" --variable host=https://api.example.com --test --jobs 1 *.hurl public/*.hurl
 ```
 
 ## Files
@@ -44,8 +54,8 @@ hurl --variables-file vars.env --variable host=https://api.example.com --test *.
 | `public/dashboard-public.hurl` | anonymous `GET /api/dashboard` → 401 with the login screen |
 | `public/get-all-books-public.hurl` | anonymous book/author endpoints → 401 |
 | `dashboard.hurl`            | signed-in dashboard shape; each finding's count matches the list its command shows |
-| `search-books.hurl`         | `GET /books/search` (library and/or title)    |
-| `get-library-books.hurl`    | `GET /libraries/{id}/books`                    |
+| `list-books.hurl`           | `GET /api/books` unfiltered: "All books", only the signed-in user's |
+| `list-authors.hurl`         | `GET /api/authors` unfiltered: "All authors", only the signed-in user's |
 | `search-authors.hurl`       | `GET /api/authors/search?q=` author suggestions for the command bar |
 | `add-author-errors.hurl`    | `POST /api/authors` same full name twice → 409 with the existing author |
 | `get-author.hurl`           | `GET /api/authors/{id}` detail with the author's books; list items link via `open` |
@@ -70,5 +80,12 @@ hurl --variables-file vars.env --variable host=https://api.example.com --test *.
 - `add-book.hurl` mutates state. Re-running accumulates "Clean Architecture"
   and "Refactoring" rows; assertions use the captured returned id, so they stay correct, but a
   clean run starts from a fresh DB (drop the Docker volume to reset).
-- Title filtering is case-sensitive (Postgres `LIKE`); the substrings here match
-  the seeded casing.
+- Files that add records give them a `{{newUuid}}` suffix, so they don't clash across
+  re-runs. Name casing capitalizes the letter after a hyphen (as in *Smith-Jones*), so a
+  captured name's suffix is matched with `[0-9a-fA-F-]`, not `[0-9a-f-]`.
+- An author's detail has a life-range text view only when there is a life range to show, so
+  the author's books are selected by type (`$.views[?(@.type=='itemCollection')]`), not by
+  index.
+- Hurl 8 evaluates JSONPath per RFC 9535. A filter query with exactly one match returns
+  the value itself, not a list, and one with no match is "missing", so assert absence with
+  `not exists` rather than `count == 0`.

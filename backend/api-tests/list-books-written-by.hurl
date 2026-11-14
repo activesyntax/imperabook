@@ -6,7 +6,7 @@
 # Mutates state: adds three books and one author per run.
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 
@@ -16,8 +16,8 @@ Content-Type: application/json
 HTTP 201
 [Captures]
 short: header "Location" regex "/api/books/(.+)$"
-writer: jsonpath "$.views[0].text" regex "by (Éva Írónő[0-9a-f-]{36}) \\(new author\\)"
-suffix: jsonpath "$.views[0].text" regex "by Éva Írónő([0-9a-f-]{36}) \\(new author\\)"
+writer: jsonpath "$.views[0].text" regex "by (Éva Írónő[0-9a-fA-F-]{36}) \\(new author\\)"
+suffix: jsonpath "$.views[0].text" regex "by Éva Írónő([0-9a-fA-F-]{36}) \\(new author\\)"
 
 POST {{host}}/api/books
 Content-Type: application/json

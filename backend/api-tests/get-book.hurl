@@ -9,7 +9,7 @@ HTTP 401
 
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 
@@ -24,7 +24,7 @@ HTTP 201
 [Captures]
 detail_url: header "Location"
 book_id: header "Location" regex "/api/books/(.+)$"
-title: jsonpath "$.views[0].text" regex "Added \"(Detail [0-9a-f-]{36})\""
+title: jsonpath "$.views[0].text" regex "Added \"(Detail [0-9a-fA-F-]{36})\""
 
 
 # --- The list links each item to its detail -----------------------------------
@@ -59,15 +59,15 @@ linked_book_url: header "Location"
 GET {{host}}{{linked_book_url}}
 HTTP 200
 [Captures]
-author_link: jsonpath "$.views[2].blocks[?(@.type=='paragraph')].content[?(@.type=='link')].href" nth 0
+author_link: jsonpath "$.views[2].blocks[?(@.type=='paragraph')].content[?(@.type=='link')].href"
 [Asserts]
-jsonpath "$.views[2].blocks[?(@.type=='paragraph')].content[?(@.type=='link')].href" nth 0 startsWith "/api/authors/"
+jsonpath "$.views[2].blocks[?(@.type=='paragraph')].content[?(@.type=='link')].href" startsWith "/api/authors/"
 
 GET {{host}}{{author_link}}
 HTTP 200
 [Asserts]
 jsonpath "$.views[0].text" startsWith "Linked Author"
-jsonpath "$.views[3].items[*].open" contains "{{linked_book_url}}"
+jsonpath "$.views[?(@.type=='itemCollection')].items[*].open" contains "{{linked_book_url}}"
 
 
 # --- Not in this user's library -----------------------------------------------

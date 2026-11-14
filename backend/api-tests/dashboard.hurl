@@ -4,7 +4,7 @@
 # The anonymous answer is asserted in public/dashboard-public.hurl.
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 

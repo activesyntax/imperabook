@@ -4,7 +4,7 @@
 # Mutates state: adds one book and one author per run, then removes the book.
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 
@@ -18,8 +18,8 @@ HTTP 201
 [Captures]
 book_url: header "Location"
 book_id: header "Location" regex "/api/books/(.+)$"
-title: jsonpath "$.views[0].text" regex "Added \"(Doomed [0-9a-f-]{36})\""
-author: jsonpath "$.views[0].text" regex "by (Remaining Author[0-9a-f-]{36}) \\(new author\\)"
+title: jsonpath "$.views[0].text" regex "Added \"(Doomed [0-9a-fA-F-]{36})\""
+author: jsonpath "$.views[0].text" regex "by (Remaining Author[0-9a-fA-F-]{36}) \\(new author\\)"
 
 
 # --- Remove it -----------------------------------------------------------------
@@ -54,7 +54,8 @@ jsonpath "$" count == 1
 GET {{host}}/api/authors/{{author_id}}
 HTTP 200
 [Asserts]
-jsonpath "$.views[3].items" count == 0
+jsonpath "$.views[?(@.type=='itemCollection')].emptyMessage" exists
+jsonpath "$.views[?(@.type=='itemCollection')].items[*]" not exists
 
 
 # --- Removing it again, or a book that is not there ---------------------------

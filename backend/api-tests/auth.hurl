@@ -25,7 +25,7 @@ jsonpath "$.views[*].type" contains "loginForm"
 # Wrong password returns the login screen with the error on the problem, not a bare error.
 # The successful sign-in below resets the failure count, so re-runs never trigger lockout.
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "wrong" }
+{ "username": "bill", "password": "wrong" }
 HTTP 401
 [Asserts]
 jsonpath "$.code" == "invalid_credentials"
@@ -33,7 +33,7 @@ jsonpath "$.views[*].type" contains "loginForm"
 jsonpath "$.views[?(@.type=='message')].kind" contains "error"
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 [Asserts]
 header "Set-Cookie" contains "imperabook.session"
@@ -53,7 +53,7 @@ jsonpath "$.libraryName" isString
 
 # The already-signed-in branch: same route, different answer.
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 [Asserts]
 jsonpath "$.views[0].text" contains "already signed in"

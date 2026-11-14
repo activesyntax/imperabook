@@ -5,7 +5,7 @@
 # Mutates state: adds two authors per run, sharing a unique last name.
 
 POST {{host}}/api/auth/login
-{ "username": "john", "password": "{{password}}" }
+{ "username": "bill", "password": "{{password}}" }
 HTTP 200
 
 
@@ -14,7 +14,7 @@ Content-Type: application/json
 { "firstName": "Ann", "lastName": "Suggest{{newUuid}}" }
 HTTP 201
 [Captures]
-family: jsonpath "$.views[0].text" regex "Added author Ann (Suggest[0-9a-f-]{36})\\."
+family: jsonpath "$.views[0].text" regex "Added author Ann (Suggest[0-9a-fA-F-]{36})\\."
 
 POST {{host}}/api/authors
 Content-Type: application/json
@@ -56,7 +56,7 @@ Content-Type: application/json
 { "firstName": "Éva", "lastName": "Bárány{{newUuid}}" }
 HTTP 201
 [Captures]
-accented_suffix: jsonpath "$.views[0].text" regex "Added author Éva Bárány([0-9a-f-]{36})\\."
+accented_suffix: jsonpath "$.views[0].text" regex "Added author Éva Bárány([0-9a-fA-F-]{36})\\."
 
 GET {{host}}/api/authors/search
 [Query]
